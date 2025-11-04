@@ -21,13 +21,6 @@ function App() {
             <>
               <StickyNavbar />
               <Routes>
-                <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/verify-otp" element={<VerifyOtp />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        {/* Trang dashboard (tạm thời, có thể thêm sau) */}
-        <Route path="/dashboard" element={<div>Chào mừng đến với Dashboard!</div>} />
-        <Route path="/" element={<HomePage />} />
                 <Route path="/" element={<HomePage />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/services" element={<ServicesPage />} />
