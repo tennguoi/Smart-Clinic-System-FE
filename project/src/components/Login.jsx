@@ -19,7 +19,7 @@ const Login = () => {
       setSuccess('Đăng nhập thành công!');
       setError('');
       console.log('Login response:', response.data);
-      navigate('/dashboard');
+      navigate('/admin', { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || 'Đăng nhập thất bại!');
       setSuccess('');
