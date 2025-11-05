@@ -14,6 +14,7 @@ import ResetPassword from './components/ResetPassword';
 import AdminPage from './pages/AdminPage';
 import ProfilePage from './pages/ProfilePage';
 import DoctorManagementPage from './pages/DoctorManagementPage';
+import ReceptionPage from './pages/ReceptionPage';
 
 function App() {
   return (
@@ -47,7 +48,6 @@ function App() {
         {/* Admin/Doctor Routes – KHÔNG có StickyNavbar */}
         <Route path="/admin/*" element={<AdminPage />} />
         <Route path="/doctor/*" element={<DoctorManagementPage />} />
-          {/* Receptionist Route */}
         <Route path="/receptionist/*" element={<ReceptionPage />} />
       </Routes>
     </div>
