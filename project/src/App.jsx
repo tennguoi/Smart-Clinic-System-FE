@@ -12,6 +12,7 @@ import ForgotPassword from './components/ForgotPassword';
 import VerifyOtp from './components/VerifyOtp';
 import ResetPassword from './components/ResetPassword';
 import AdminPage from './pages/AdminPage';
+import DoctorManagementPage from './pages/DoctorManagementPage';
 
 function App() {
   return (
@@ -42,8 +43,9 @@ function App() {
           }
         />
 
-        {/* Admin Routes – KHÔNG có StickyNavbar */}
+        {/* Admin/Doctor Routes – KHÔNG có StickyNavbar */}
         <Route path="/admin/*" element={<AdminPage />} />
+        <Route path="/doctor/*" element={<DoctorManagementPage />} />
       </Routes>
     </div>
   );
