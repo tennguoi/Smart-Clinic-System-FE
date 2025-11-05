@@ -46,8 +46,8 @@ export default function AppointmentForm() {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-2xl p-8 border-2 border-teal-100">
-      <h3 className="text-2xl font-bold text-gray-900 mb-6">
+    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 max-w-3xl mx-auto">
+      <h3 className="text-xl font-semibold text-gray-900 mb-4">
         ĐẶT LỊCH HẸN & MÔ TẢ TRIỆU CHỨNG
       </h3>
 
@@ -64,36 +64,38 @@ export default function AppointmentForm() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-            Họ và Tên <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            id="fullName"
-            name="fullName"
-            required
-            value={formData.fullName}
-            onChange={handleChange}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-            placeholder="Nhập họ và tên"
-          />
-        </div>
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+              Họ và Tên <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="fullName"
+              name="fullName"
+              required
+              value={formData.fullName}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+              placeholder="Nhập họ và tên"
+            />
+          </div>
 
-        <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-            Số Điện Thoại <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            required
-            value={formData.phone}
-            onChange={handleChange}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-            placeholder="0123 456 789"
-          />
+          <div>
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+              Số Điện Thoại <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              required
+              value={formData.phone}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+              placeholder="0123 456 789"
+            />
+          </div>
         </div>
 
         <div>
@@ -107,18 +109,18 @@ export default function AppointmentForm() {
             required
             value={formData.email}
             onChange={handleChange}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
             placeholder="email@example.com"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid md:grid-cols-2 gap-4">
           <div>
             <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
               Ngày Mong Muốn <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <Calendar className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+              <Calendar className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
               <input
                 type="date"
                 id="date"
@@ -127,7 +129,7 @@ export default function AppointmentForm() {
                 value={formData.date}
                 onChange={handleChange}
                 min={new Date().toISOString().split('T')[0]}
-                className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
               />
             </div>
           </div>
@@ -137,7 +139,7 @@ export default function AppointmentForm() {
               Giờ Mong Muốn <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <Clock className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+              <Clock className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
               <input
                 type="time"
                 id="time"
@@ -145,7 +147,7 @@ export default function AppointmentForm() {
                 required
                 value={formData.time}
                 onChange={handleChange}
-                className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
               />
             </div>
           </div>
@@ -159,10 +161,10 @@ export default function AppointmentForm() {
             id="symptoms"
             name="symptoms"
             required
-            rows={4}
+            rows={3}
             value={formData.symptoms}
             onChange={handleChange}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none text-sm"
             placeholder="Mô tả ngắn gọn về tình trạng sức khỏe của bạn..."
           />
         </div>
@@ -170,7 +172,7 @@ export default function AppointmentForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-teal-500 hover:bg-teal-600 text-white py-3 rounded-lg transition-colors font-semibold text-base flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-teal-500 hover:bg-teal-600 text-white py-2.5 rounded-lg transition-colors font-semibold text-sm flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (
             <>
