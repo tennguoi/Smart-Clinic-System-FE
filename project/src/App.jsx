@@ -12,7 +12,7 @@ import ForgotPassword from './components/ForgotPassword';
 import VerifyOtp from './components/VerifyOtp';
 import ResetPassword from './components/ResetPassword';
 import AdminPage from './pages/AdminPage';
-
+import ProfilePage from './pages/ProfilePage';
 function App() {
   return (
     <div className="min-h-screen bg-white">
@@ -22,7 +22,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-
+        <Route path="/profile" element={<ProfilePage />} />
         {/* Public Routes – CÓ StickyNavbar */}
         <Route
           path="/*"
