@@ -13,6 +13,8 @@ import VerifyOtp from './components/VerifyOtp';
 import ResetPassword from './components/ResetPassword';
 import AdminPage from './pages/AdminPage';
 import ProfilePage from './pages/ProfilePage';
+import DoctorManagementPage from './pages/DoctorManagementPage';
+
 function App() {
   return (
     <div className="min-h-screen bg-white">
@@ -42,8 +44,9 @@ function App() {
           }
         />
 
-        {/* Admin Routes – KHÔNG có StickyNavbar */}
+        {/* Admin/Doctor Routes – KHÔNG có StickyNavbar */}
         <Route path="/admin/*" element={<AdminPage />} />
+        <Route path="/doctor/*" element={<DoctorManagementPage />} />
       </Routes>
     </div>
   );
