@@ -47,6 +47,8 @@ function App() {
         {/* Admin/Doctor Routes – KHÔNG có StickyNavbar */}
         <Route path="/admin/*" element={<AdminPage />} />
         <Route path="/doctor/*" element={<DoctorManagementPage />} />
+          {/* Receptionist Route */}
+        <Route path="/receptionist/*" element={<ReceptionPage />} />
       </Routes>
     </div>
   );
