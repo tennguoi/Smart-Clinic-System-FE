@@ -10,7 +10,6 @@ export default function StickyNavbar() {
     { label: 'Giới Thiệu', path: '/about' },
     { label: 'Dịch Vụ', path: '/services' },
     { label: 'Đội Ngũ Bác Sĩ', path: '/doctors' },
-    { label: 'Bảng Giá & Gói Khám', path: '/pricing' },
     { label: 'Tin Tức', path: '/news' },
   ];
 

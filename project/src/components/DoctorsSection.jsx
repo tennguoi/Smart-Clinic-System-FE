@@ -1,3 +1,4 @@
+// src/components/DoctorsSection.jsx
 import { doctors } from '../data/doctors';
 import { Award } from 'lucide-react';
 
@@ -20,13 +21,13 @@ export default function DoctorsSection() {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {doctors.map((doctor) => (
             <div
-              key={doctor.id}
+              key={doctor.userId}
               className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all group"
             >
               <div className="relative overflow-hidden">
                 <img
-                  src={doctor.image}
-                  alt={doctor.name}
+                  src={doctor.photoUrl}
+                  alt={doctor.fullName}
                   className="w-full h-72 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full p-2">
@@ -36,16 +37,13 @@ export default function DoctorsSection() {
 
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-1">
-                  {doctor.name}
+                  {doctor.fullName}
                 </h3>
-                <p className="text-blue-600 font-medium mb-2">
-                  {doctor.title}
-                </p>
                 <p className="text-sm text-gray-600 mb-2">
-                  {doctor.specialty}
+                  {doctor.bio}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {doctor.experience}
+                  {doctor.experienceYears} năm kinh nghiệm
                 </p>
               </div>
             </div>

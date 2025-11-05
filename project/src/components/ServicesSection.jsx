@@ -1,3 +1,4 @@
+// src/components/ServicesSection.jsx
 import { useState } from 'react';
 import { entServices } from '../data/services';
 import ServiceCard from './ServiceCard';
@@ -6,15 +7,7 @@ import { ArrowRight } from 'lucide-react';
 export default function ServicesSection() {
   const [selectedService, setSelectedService] = useState(null);
 
-  const featuredServices = entServices.slice(0, 6);
-
-  const handleBooking = (serviceId) => {
-    setSelectedService(serviceId);
-    const appointmentSection = document.getElementById('appointment');
-    if (appointmentSection) {
-      appointmentSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  const featuredServices = entServices.filter(service => service.isActive).slice(0, 6);
 
   const scrollToFullServices = () => {
     const element = document.getElementById('full-services');
@@ -41,9 +34,8 @@ export default function ServicesSection() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
           {featuredServices.map((service) => (
             <ServiceCard
-              key={service.id}
+              key={service.serviceId}
               service={service}
-              onBooking={handleBooking}
             />
           ))}
         </div>

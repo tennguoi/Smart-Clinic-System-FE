@@ -7,14 +7,23 @@ import DoctorsPage from './pages/DoctorsPage';
 import PricingPage from './pages/PricingPage';
 import NewsPage from './pages/NewsPage';
 import AppointmentPage from './pages/AppointmentPage';
-import AdminPage from './pages/AdminPage'; // Thêm import
+import Login from './components/Login';
+import ForgotPassword from './components/ForgotPassword';
+import VerifyOtp from './components/VerifyOtp';
+import ResetPassword from './components/ResetPassword';
+import AdminPage from './pages/AdminPage';
 
 function App() {
   return (
     <div className="min-h-screen bg-white">
-      {/* StickyNavbar chỉ hiển thị ở các trang public */}
       <Routes>
-        {/* Public Routes – có Navbar */}
+        {/* Authentication Routes – KHÔNG có StickyNavbar */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-otp" element={<VerifyOtp />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Public Routes – CÓ StickyNavbar */}
         <Route
           path="/*"
           element={
@@ -33,7 +42,7 @@ function App() {
           }
         />
 
-        {/* Admin Route – KHÔNG có Navbar */}
+        {/* Admin Routes – KHÔNG có StickyNavbar */}
         <Route path="/admin/*" element={<AdminPage />} />
       </Routes>
     </div>

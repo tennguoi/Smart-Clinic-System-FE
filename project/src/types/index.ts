@@ -8,13 +8,14 @@ export interface Service {
   icon?: string;
 }
 
+
 export interface Doctor {
-  id: string;
-  name: string;
-  title: string;
-  specialty: string;
-  experience: string;
-  image: string;
+  userId: string;
+  fullName: string;
+  experienceYears: number;
+  photoUrl: string;
+  bio: string;
+  twoFactorEnabled: boolean;
 }
 
 export interface Testimonial {

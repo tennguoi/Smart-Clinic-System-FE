@@ -1,3 +1,4 @@
+// src/pages/DoctorsPage.jsx
 import { Award, Stethoscope } from 'lucide-react';
 import { doctors } from '../data/doctors';
 import Footer from '../components/Footer';
@@ -22,13 +23,13 @@ export default function DoctorsPage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           {doctors.map((doctor) => (
             <div
-              key={doctor.id}
+              key={doctor.userId}
               className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all group"
             >
               <div className="relative overflow-hidden h-80">
                 <img
-                  src={doctor.image}
-                  alt={doctor.name}
+                  src={doctor.photoUrl}
+                  alt={doctor.fullName}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full p-2">
@@ -38,17 +39,14 @@ export default function DoctorsPage() {
 
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  {doctor.name}
+                  {doctor.fullName}
                 </h3>
-                <p className="text-blue-600 font-semibold mb-2">
-                  {doctor.title}
-                </p>
                 <p className="text-sm text-gray-600 mb-2">
-                  {doctor.specialty}
+                  {doctor.bio}
                 </p>
                 <p className="text-sm text-gray-500 flex items-center space-x-1">
                   <Stethoscope className="w-4 h-4" />
-                  <span>{doctor.experience}</span>
+                  <span>{doctor.experienceYears} năm kinh nghiệm</span>
                 </p>
               </div>
             </div>

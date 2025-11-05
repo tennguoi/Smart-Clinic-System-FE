@@ -1,36 +1,37 @@
+// src/data/doctors.ts
 import { Doctor } from '../types';
 
 export const doctors: Doctor[] = [
   {
-    id: 'bs-nguyen-van-a',
-    name: 'BS. Nguyễn Văn A',
-    title: 'Trưởng Khoa Tai-Mũi-Họng',
-    specialty: 'Chuyên khoa II Tai-Mũi-Họng',
-    experience: '15 năm kinh nghiệm',
-    image: 'https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=800'
+    userId: '550e8400-e29b-41d4-a716-446655440000',
+    fullName: 'Nguyễn Minh Khánh',
+    experienceYears: 15,
+    photoUrl: 'https://img.lovepik.com/element/40203/0838.png_1200.png',
+    bio: 'Bác sĩ chuyên khoa Tai-Mũi-Họng với 15 năm kinh nghiệm, chuyên điều trị các bệnh lý phức tạp về tai, mũi, họng.',
+    twoFactorEnabled: true,
   },
   {
-    id: 'bs-tran-thi-b',
-    name: 'BS. Trần Thị B',
-    title: 'Bác Sĩ Chuyên Khoa',
-    specialty: 'Chuyên khoa I Tai-Mũi-Họng',
-    experience: '10 năm kinh nghiệm',
-    image: 'https://images.pexels.com/photos/5327656/pexels-photo-5327656.jpeg?auto=compress&cs=tinysrgb&w=800'
+    userId: '550e8400-e29b-41d4-a716-446655440001',
+    fullName: 'Trần Thị B',
+    experienceYears: 10,
+    photoUrl: 'https://images.pexels.com/photos/5327656/pexels-photo-5327656.jpeg?auto=compress&cs=tinysrgb&w=800',
+    bio: 'Bác sĩ Tai-Mũi-Họng tận tâm, chuyên về nội soi và điều trị viêm xoang.',
+    twoFactorEnabled: false,
   },
   {
-    id: 'bs-le-van-c',
-    name: 'BS. Lê Văn C',
-    title: 'Bác Sĩ Chuyên Khoa',
-    specialty: 'Chuyên khoa I Tai-Mũi-Họng',
-    experience: '8 năm kinh nghiệm',
-    image: 'https://images.pexels.com/photos/5327580/pexels-photo-5327580.jpeg?auto=compress&cs=tinysrgb&w=800'
+    userId: '550e8400-e29b-41d4-a716-446655440002',
+    fullName: 'Lê Văn C',
+    experienceYears: 8,
+    photoUrl: 'https://images.pexels.com/photos/5327580/pexels-photo-5327580.jpeg?auto=compress&cs=tinysrgb&w=800',
+    bio: 'Bác sĩ chuyên khoa Tai-Mũi-Họng, có kinh nghiệm trong phẫu thuật và điều trị bệnh lý tai.',
+    twoFactorEnabled: true,
   },
   {
-    id: 'bs-pham-thi-d',
-    name: 'BS. Phạm Thị D',
-    title: 'Bác Sĩ Chuyên Khoa',
-    specialty: 'Chuyên khoa I Tai-Mũi-Họng',
-    experience: '7 năm kinh nghiệm',
-    image: 'https://images.pexels.com/photos/5327921/pexels-photo-5327921.jpeg?auto=compress&cs=tinysrgb&w=800'
-  }
+    userId: '550e8400-e29b-41d4-a716-446655440003',
+    fullName: 'Phạm Thị D',
+    experienceYears: 7,
+    photoUrl: 'https://images.pexels.com/photos/5327921/pexels-photo-5327921.jpeg?auto=compress&cs=tinysrgb&w=800',
+    bio: 'Bác sĩ trẻ, nhiệt huyết, chuyên về điều trị bệnh lý họng và thanh quản.',
+    twoFactorEnabled: false,
+  },
 ];
