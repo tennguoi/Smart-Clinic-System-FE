@@ -12,6 +12,7 @@ import ForgotPassword from './components/ForgotPassword';
 import VerifyOtp from './components/VerifyOtp';
 import ResetPassword from './components/ResetPassword';
 import AdminPage from './pages/AdminPage';
+import ReceptionPage from './pages/ReceptionPage';
 
 function App() {
   return (

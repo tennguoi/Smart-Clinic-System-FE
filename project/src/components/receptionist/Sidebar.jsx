@@ -1,19 +1,22 @@
-import { UserCheck, CalendarDays, Pill, Cloud } from 'lucide-react';
+import { FolderOpen, CalendarDays, FileText, Cloud } from "lucide-react";
 
 const menuItems = [
-  { id: 'patients', label: 'Quản lý bệnh nhân', icon: UserCheck },
-  { id: 'appointments', label: 'Quản lý lịch hẹn', icon: CalendarDays },
-  { id: 'prescriptions', label: 'Quản lý toa thuốc', icon: Pill },
+
+  { id: "appointments", label: "Quản lý lịch hẹn", icon: CalendarDays },
+  { id: "records", label: "Quản lý hồ sơ", icon: FolderOpen },
+  { id: "invoices", label: "Hóa đơn", icon: FileText },
 ];
 
 export default function ReceptionSidebar({ activeMenu, onMenuChange }) {
   return (
     <aside className="w-64 bg-[#1e3a5f] text-white flex flex-col shadow-xl">
+      {/* Header */}
       <div className="p-6 flex items-center gap-3 border-b border-blue-800">
         <Cloud className="w-8 h-8" />
         <h1 className="text-xl font-semibold">Reception Panel</h1>
       </div>
 
+      {/* Menu */}
       <nav className="flex-1 py-6">
         {menuItems.map((item) => {
           const Icon = item.icon;
@@ -25,8 +28,8 @@ export default function ReceptionSidebar({ activeMenu, onMenuChange }) {
               onClick={() => onMenuChange(item.id)}
               className={`w-full flex items-center gap-3 px-6 py-3.5 transition-all duration-200 ${
                 isActive
-                  ? 'bg-blue-600 border-r-4 border-white text-white'
-                  : 'text-blue-200 hover:bg-blue-900/50 hover:text-white'
+                  ? "bg-blue-600 border-r-4 border-white text-white"
+                  : "text-blue-200 hover:bg-blue-900/50 hover:text-white"
               }`}
             >
               <Icon className="w-5 h-5" />
