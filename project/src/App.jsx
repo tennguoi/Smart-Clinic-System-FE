@@ -15,6 +15,7 @@ import AdminPage from './pages/AdminPage';
 import ProfilePage from './pages/ProfilePage';
 import DoctorManagementPage from './pages/DoctorManagementPage';
 import ReceptionPage from './pages/ReceptionPage';
+import NewsDetailPage from "./pages/NewsDetailPage";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profile" element={<ProfilePage />} />
+        
         {/* Public Routes – CÓ StickyNavbar */}
         <Route
           path="/*"
@@ -40,6 +42,7 @@ function App() {
                 <Route path="/pricing" element={<PricingPage />} />
                 <Route path="/news" element={<NewsPage />} />
                 <Route path="/appointment" element={<AppointmentPage />} />
+                <Route path="/news/:id" element={<NewsDetailPage />} />
               </Routes>
             </>
           }

@@ -1,127 +1,103 @@
-import { Calendar, User, ArrowRight } from 'lucide-react';
-import Footer from '../components/Footer';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Search } from "lucide-react";
 
 export default function NewsPage() {
-  const news = [
-    {
-      id: '1',
-      title: 'Công Nghệ Nội Soi Mới: Chẩn Đoán Chính Xác Hơn',
-      excerpt: 'Phòng khám đã trang bị thiết bị nội soi 4K mới nhất, giúp chẩn đoán các bệnh lý Tai-Mũi-Họng với độ chính xác cao hơn 99%.',
-      content: 'Phòng khám ENT tự hào công bố việc trang bị thiết bị nội soi 4K được nhập khẩu từ Nhật Bản. Công nghệ này cho phép bác sĩ quan sát chi tiết các cấu trúc bên trong tai, mũi và họng với độ phóng đại 40x, giúp phát hiện sớm các bệnh lý.',
-      image: 'https://images.pexels.com/photos/3861457/pexels-photo-3861457.jpeg?auto=compress&cs=tinysrgb&w=800',
-      author: 'BS. Nguyễn Văn A',
-      date: '15 Tháng 10, 2024'
-    },
-    {
-      id: '2',
-      title: 'Lợi Ích Của Nội Soi Tai Mũi Họng Định Kỳ',
-      excerpt: 'Khám nội soi định kỳ giúp phát hiện sớm các bệnh lý và ngăn chặn biến chứng nguy hiểm.',
-      content: 'Việc khám nội soi định kỳ có nhiều lợi ích quan trọng: phát hiện sớm viêm mũi xoang, polyp, ù tai, giảm thính lực... Các chuyên gia khuyến cáo nên khám ít nhất 1 lần mỗi năm để bảo vệ sức khỏe.',
-      image: 'https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=800',
-      author: 'BS. Trần Thị B',
-      date: '8 Tháng 10, 2024'
-    },
-    {
-      id: '3',
-      title: 'Phương Pháp Điều Trị Viêm Xoang Hiệu Quả',
-      excerpt: 'Khám phá những phương pháp điều trị viêm xoang mới giúp bệnh nhân nhanh chóng hồi phục.',
-      content: 'Viêm xoang là bệnh phổ biến ảnh hưởng đến chất lượng sống. Phòng khám ENT áp dụng nhiều phương pháp điều trị hiệu quả: thuốc, nội soi, kỹ thuật rửa xoang... Bác sĩ sẽ lựa chọn phương pháp phù hợp với tình trạng từng bệnh nhân.',
-      image: 'https://images.pexels.com/photos/4021808/pexels-photo-4021808.jpeg?auto=compress&cs=tinysrgb&w=800',
-      author: 'BS. Lê Văn C',
-      date: '1 Tháng 10, 2024'
-    }
-  ];
+  const navigate = useNavigate();
+  const [news, setNews] = useState([]);
+  const [category, setCategory] = useState("");
+  const [keyword, setKeyword] = useState("");
+  const [page, setPage] = useState(0);
+
+  const loadArticles = () => {
+    let url = `http://localhost:8080/api/articles?page=${page}&size=6`;
+    if (category) url = `http://localhost:8080/api/articles/category/${category}`;
+    if (keyword) url = `http://localhost:8080/api/articles/search?keyword=${keyword}`;
+
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => setNews(data.content ? data.content : data));
+  };
+
+  useEffect(() => {
+    loadArticles();
+  }, [category, keyword, page]);
 
   return (
-    <div className="pt-20">
-      <div className="bg-gradient-to-br from-blue-50 to-teal-50 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Tin Tức & Cập Nhật
-            </h1>
-            <p className="text-xl text-gray-600">
-              Cập nhật kiến thức y khoa và thông tin mới nhất từ phòng khám
-            </p>
-          </div>
+    <div className="pt-24 max-w-7xl mx-auto px-4 pb-20">
+      
+      <h1 className="text-4xl font-bold text-center mb-10">Tin Tức Y Khoa</h1>
+
+      <div className="flex flex-col md:flex-row gap-4 mb-10">
+        <div className="relative w-full md:w-1/2">
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo tiêu đề..."
+            className="w-full border rounded-lg py-3 px-4 pl-10"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+          />
+          <Search className="absolute left-3 top-3.5 text-gray-400 w-5 h-5" />
         </div>
+
+              <select
+        className="border rounded-lg py-3 px-4 w-full md:w-1/4"
+        value={category}
+        onChange={(e) => setCategory(e.target.value)}
+      >
+        <option value="">Tất cả chuyên mục</option>
+        <option value="Công nghệ">Công nghệ</option>
+        <option value="Sức khỏe">Sức khỏe</option>
+        <option value="Điều trị">Điều trị</option>
+        <option value="Cảnh báo">Cảnh báo</option>
+        <option value="Tư vấn">Tư vấn</option>
+      </select>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="space-y-8">
-          {news.map((article, index) => (
-            <div
-              key={article.id}
-              className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200"
-            >
-              {index === 0 ? (
-                <>
-                  <div className="relative h-96">
-                    <img
-                      src={article.image}
-                      alt={article.title}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    <div className="absolute bottom-6 left-6 right-6 text-white">
-                      <h2 className="text-2xl font-bold mb-2">{article.title}</h2>
-                      <p className="mb-4 leading-relaxed">{article.content}</p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4 text-sm">
-                          <div className="flex items-center space-x-1">
-                            <User className="w-4 h-4" />
-                            <span>{article.author}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Calendar className="w-4 h-4" />
-                            <span>{article.date}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="md:grid md:grid-cols-4 gap-6 items-center p-8">
-                  <div className="h-48 md:h-56 rounded-lg overflow-hidden">
-                    <img
-                      src={article.image}
-                      alt={article.title}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  <div className="col-span-3 mt-4 md:mt-0">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
-                      {article.title}
-                    </h3>
-                    <p className="text-gray-600 mb-4 leading-relaxed">
-                      {article.excerpt}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <div className="flex items-center space-x-1">
-                          <User className="w-4 h-4" />
-                          <span>{article.author}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="w-4 h-4" />
-                          <span>{article.date}</span>
-                        </div>
-                      </div>
-                      <button className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 font-medium">
-                        <span>Đọc Thêm</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+      <div className="grid md:grid-cols-3 gap-8">
+        {news.map((a) => (
+          <div
+            key={a.id}
+            className="bg-white shadow-lg rounded-xl overflow-hidden border hover:shadow-2xl transition"
+          >
+            <img
+              src={a.image || "https://via.placeholder.com/400x200"}
+              alt={a.title}
+              className="w-full h-48 object-cover"
+            />
+
+            <div className="p-5">
+              <h2 className="text-lg font-bold mb-2">{a.title}</h2>
+              <p className="text-gray-600 text-sm line-clamp-3 mb-4">
+                {a.content}
+              </p>
+              <button
+                onClick={() => navigate(`/news/${a.id}`)}
+                className="text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Đọc thêm →
+              </button>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
 
-      <Footer />
+      <div className="flex justify-center mt-10 space-x-3">
+        <button
+          disabled={page === 0}
+          onClick={() => setPage(page - 1)}
+          className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+        >
+          Trang trước
+        </button>
+
+        <button
+          onClick={() => setPage(page + 1)}
+          className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+        >
+          Trang sau
+        </button>
+      </div>
     </div>
   );
 }
