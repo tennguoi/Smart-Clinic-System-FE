@@ -1,28 +1,75 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../services/authService';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
     try {
       const response = await axios.post('http://localhost:8082/api/auth/login', {
         email,
         password,
       });
+
+      const { token, roles, userId, fullName, message } = response.data;
+
+      console.log('Login response received:', response.data);
+
+      // Kiểm tra nếu cần xác thực 2FA
+      if (message && message.includes('2FA required')) {
+        setError('Vui lòng kiểm tra email để lấy mã OTP xác thực 2FA.');
+        setLoading(false);
+        // Có thể điều hướng đến trang nhập OTP
+        // navigate('/verify-2fa', { state: { email, userId } });
+        return;
+      }
+
+      // Kiểm tra có token không
+      if (!token) {
+        setError('Đăng nhập thất bại! Không nhận được token.');
+        setLoading(false);
+        return;
+      }
+
+      // Lưu thông tin đăng nhập
+      console.log('Saving to authService - token:', token.substring(0, 50) + '...');
+      console.log('Saving to authService - roles:', roles);
+      authService.login(token, { userId, email, fullName }, roles);
+
+      // Verify saved
+      console.log('After login - token in storage:', authService.getToken() ? 'YES' : 'NO');
+      console.log('After login - roles in storage:', authService.getRoles());
+
       setSuccess('Đăng nhập thành công!');
-      setError('');
       console.log('Login response:', response.data);
-      navigate('/admin', { replace: true });
+      console.log('User roles:', roles);
+
+      // Điều hướng dựa trên role
+      const defaultRoute = authService.getDefaultRoute();
+      console.log('Redirecting to:', defaultRoute);
+      
+      setTimeout(() => {
+        navigate(defaultRoute, { replace: true });
+      }, 500);
+
     } catch (err) {
-      setError(err.response?.data?.message || 'Đăng nhập thất bại!');
+      console.error('Login error:', err);
+      setError(err.response?.data?.message || 'Đăng nhập thất bại! Vui lòng kiểm tra email và mật khẩu.');
       setSuccess('');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -69,9 +116,10 @@ const Login = () => {
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition disabled:bg-blue-400 disabled:cursor-not-allowed"
           >
-            Đăng nhập
+            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
           <p className="mt-4 text-center text-sm">
             Quên mật khẩu?{' '}
