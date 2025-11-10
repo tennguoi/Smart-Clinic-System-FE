@@ -1,7 +1,8 @@
 'use client';
 
-import { Star, Send } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import ReviewForm from './ReviewForm';
 
 export default function Testimonials() {
   const [reviews, setReviews] = useState([]);
@@ -9,16 +10,7 @@ export default function Testimonials() {
   const [totalReviews, setTotalReviews] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Form state
-  const [showForm, setShowForm] = useState(false);
-  const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
-  const [comment, setComment] = useState('');
-  const [reviewerName, setReviewerName] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [submitError, setSubmitError] = useState('');
+  const [showAll, setShowAll] = useState(false);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Không rõ';
@@ -56,51 +48,12 @@ export default function Testimonials() {
     fetchSummary();
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setSubmitError('');
-    setSubmitSuccess(false);
-
-    if (!rating || !comment.trim() || !reviewerName.trim()) {
-      setSubmitError('Vui lòng điền đủ sao, nội dung và tên');
-      setSubmitting(false);
-      return;
-    }
-
-    try {
-      const res = await fetch('http://localhost:8080/api/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          rating,
-          comment: comment.trim(),
-          reviewerName: reviewerName.trim(),
-        }),
-      });
-
-      if (!res.ok) throw new Error('Gửi thất bại');
-
-      const newReview = await res.json();
-      setReviews([newReview, ...reviews]);
-      setTotalReviews(totalReviews + 1);
-      setAverageRating(((averageRating * totalReviews) + rating) / (totalReviews + 1));
-
-      // Reset
-      setRating(0);
-      setComment('');
-      setReviewerName('');
-      setShowForm(false);
-      setSubmitSuccess(true);
-      setTimeout(() => setSubmitSuccess(false), 3000);
-    } catch (err) {
-      setSubmitError('Gửi thất bại, vui lòng thử lại');
-    } finally {
-      setSubmitting(false);
-    }
+  const handleReviewAdded = (newReview, newRating) => {
+    setReviews([newReview, ...reviews]);
+    setTotalReviews(totalReviews + 1);
+    setAverageRating(((averageRating * totalReviews) + newRating) / (totalReviews + 1));
   };
 
-  // Loading
   if (loading) {
     return (
       <section className="py-16 bg-gray-50">
@@ -121,6 +74,8 @@ export default function Testimonials() {
     );
   }
 
+  const displayedReviews = showAll ? reviews : reviews.slice(0, 6);
+
   return (
     <section className="py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -138,7 +93,7 @@ export default function Testimonials() {
           </p>
         </div>
 
-        {/* Tóm tắt + Nút thêm */}
+        {/* Tóm tắt + Nút Viết đánh giá (bên phải) */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-12">
           <div className="inline-flex items-center bg-white rounded-xl shadow-md p-6">
             <div className="text-center mr-6">
@@ -163,83 +118,11 @@ export default function Testimonials() {
             </div>
           </div>
 
-          {/* Nút thêm đánh giá */}
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2 shadow-md"
-          >
-            <Star className="w-5 h-5" />
-            Viết Đánh Giá
-          </button>
-        </div>
-
-        {/* Form nhỏ gọn (ẩn/hiện) */}
-        {showForm && (
-          <div className="mb-12 bg-white rounded-xl shadow-md p-6 border border-gray-100">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Sao */}
-              <div className="flex justify-center gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setRating(star)}
-                    onMouseEnter={() => setHoverRating(star)}
-                    onMouseLeave={() => setHoverRating(0)}
-                  >
-                    <Star
-                      className={`w-8 h-8 transition-all ${
-                        star <= (hoverRating || rating)
-                          ? 'text-yellow-400 fill-current'
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  </button>
-                ))}
-              </div>
-
-              {/* Nội dung */}
-              <textarea
-                rows={2}
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Chia sẻ trải nghiệm của bạn..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-
-              {/* Tên */}
-              <input
-                type="text"
-                value={reviewerName}
-                onChange={(e) => setReviewerName(e.target.value)}
-                placeholder="Tên của bạn"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-                required
-              />
-
-              {/* Nút gửi + thông báo */}
-              <div className="flex items-center justify-between">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className={`px-5 py-2 rounded-lg font-medium text-white flex items-center gap-2 transition-all ${
-                    submitting ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
-                >
-                  {submitting ? 'Đang gửi...' : <><Send className="w-4 h-4" /> Gửi</>}
-                </button>
-
-                {submitSuccess && (
-                  <span className="text-green-600 text-sm font-medium">Gửi thành công!</span>
-                )}
-                {submitError && (
-                  <span className="text-red-600 text-sm">{submitError}</span>
-                )}
-              </div>
-            </form>
+          {/* NÚT VIẾT ĐÁNH GIÁ - BÊN PHẢI */}
+          <div className="flex justify-end w-full md:w-auto">
+            <ReviewForm onReviewAdded={handleReviewAdded} />
           </div>
-        )}
+        </div>
 
         {/* Danh sách đánh giá */}
         {reviews.length === 0 ? (
@@ -247,43 +130,53 @@ export default function Testimonials() {
             <p className="text-gray-500">Chưa có đánh giá nào.</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-3 gap-6">
-            {reviews.slice(0, 6).map((review) => (
-              <div
-                key={review.id}
-                className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
-              >
-                <div className="flex mb-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-                    />
-                  ))}
-                </div>
-                <p className="text-gray-700 text-sm italic line-clamp-3 mb-4">
-                  "{review.comment}"
-                </p>
-                <div className="flex items-center justify-between text-sm">
-                  <div>
-                    <p className="font-medium text-gray-900">{review.reviewerName}</p>
-                    <p className="text-gray-500">{formatDate(review.createdAt)}</p>
+          <>
+            <div className="grid md:grid-cols-3 gap-6">
+              {displayedReviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                      />
+                    ))}
                   </div>
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm">
-                    {review.reviewerName[0]?.toUpperCase() || '?'}
+                  <p className="text-gray-700 text-sm italic line-clamp-3 mb-4">
+                    "{review.comment}"
+                  </p>
+                  <div className="flex items-center justify-between text-sm">
+                    <div>
+                      <p className="font-medium text-gray-900">{review.reviewerName}</p>
+                      <p className="text-gray-500">{formatDate(review.createdAt)}</p>
+                    </div>
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm">
+                      {review.reviewerName[0]?.toUpperCase() || '?'}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
 
-        {reviews.length > 6 && (
-          <div className="text-center mt-8">
-            <button className="text-blue-600 font-medium hover:underline">
-              Xem thêm {reviews.length - 6} đánh giá khác
-            </button>
-          </div>
+            {/* NÚT XEM THÊM / ẨN BỚT – ĐÃ SỬA LỖI JSX */}
+            {reviews.length > 6 && (
+              <div className="text-center mt-8">
+                <button
+                  onClick={() => setShowAll(!showAll)}
+                  className="text-blue-600 font-medium hover:underline flex items-center justify-center mx-auto gap-1"
+                >
+                  {showAll ? (
+                    <>Ẩn bớt đánh giá</>
+                  ) : (
+                    <>Xem thêm {reviews.length - 6} đánh giá khác</>
+                  )}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>
