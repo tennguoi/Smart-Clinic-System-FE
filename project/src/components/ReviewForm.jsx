@@ -1,129 +1,151 @@
-// src/components/ReviewForm.jsx
-import { Star, Loader2, CheckCircle } from 'lucide-react';
+'use client';
+
+import { Star, Send } from 'lucide-react';
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext'; // ĐÃ CÓ JWT
 
-export default function ReviewForm({ onReviewSubmitted }) {
-  const { user } = useAuth(); // LẤY USER ĐÃ ĐĂNG NHẬP
-  const [form, setForm] = useState({
-    service: '',
-    content: '',
-    rating: 0
-  });
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-
-  const services = ['Nhi khoa', 'Nha khoa', 'Nội khoa', 'Da liễu', 'Sản phụ khoa'];
+export default function ReviewForm({ onReviewAdded }) {
+  const [showForm, setShowForm] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [reviewerName, setReviewerName] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.service || !form.content || form.rating === 0) return;
+    setSubmitting(true);
+    setSubmitError('');
+    setSubmitSuccess(false);
 
-    setLoading(true);
+    if (!rating || !comment.trim() || !reviewerName.trim()) {
+      setSubmitError('Vui lòng điền đủ sao, nội dung và tên');
+      setSubmitting(false);
+      return;
+    }
+
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch('http://localhost:8080/api/reviews', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          service: form.service,
-          content: form.content,
-          rating: form.rating
-        })
+          rating,
+          comment: comment.trim(),
+          reviewerName: reviewerName.trim(),
+        }),
       });
 
-      if (res.ok) {
-        setSuccess(true);
-        setForm({ service: '', content: '', rating: 0 });
-        setTimeout(() => setSuccess(false), 3000);
-        onReviewSubmitted?.(); // TẢI LẠI ĐÁNH GIÁ
-      }
+      if (!res.ok) throw new Error('Gửi thất bại');
+
+      const newReview = await res.json();
+      onReviewAdded(newReview, rating);
+
+      setRating(0);
+      setComment('');
+      setReviewerName('');
+      setShowForm(false);
+      setSubmitSuccess(true);
+      setTimeout(() => setSubmitSuccess(false), 3000);
     } catch (err) {
-      console.error(err);
+      setSubmitError('Gửi thất bại, vui lòng thử lại');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
-  if (!user) return null; // CHỈ HIỆN NẾU ĐÃ LOGIN
-
   return (
-    <div className="bg-blue-50 p-6 rounded-xl border border-blue-200 mb-12">
-      <h3 className="text-xl font-bold text-gray-900 mb-4">
-        Chia sẻ trải nghiệm của bạn
-      </h3>
+    <div className="flex flex-col items-end">
+      {/* NÚT VIẾT ĐÁNH GIÁ - NHỎ GỌN, CÙNG KIỂU VỚI TÓM TẮT */}
+      <button
+        onClick={() => setShowForm(!showForm)}
+        className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2 shadow-md text-sm whitespace-nowrap"
+      >
+        <Star className="w-4 h-4" />
+        Viết Đánh Giá
+      </button>
 
-      {success && (
-        <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-lg flex items-center gap-2">
-          <CheckCircle className="w-5 h-5" />
-          Cảm ơn bạn! Đánh giá đã được gửi.
-        </div>
-      )}
+      {/* FORM MỞ RA – CÂN ĐỐI, ĐẸP NHƯ HÌNH */}
+      {showForm && (
+        <div className="mt-4 w-full max-w-md">
+          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* SAO ĐÁNH GIÁ */}
+              <div className="flex justify-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="focus:outline-none"
+                  >
+                    <Star
+                      className={`w-8 h-8 transition-all ${
+                        star <= (hoverRating || rating)
+                          ? 'text-yellow-400 fill-current'
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Dịch vụ đã khám</label>
-          <select
-            value={form.service}
-            onChange={e => setForm(prev => ({ ...prev, service: e.target.value }))}
-            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            <option value="">Chọn dịch vụ</option>
-            {services.map(s => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
+              {/* Ô NỘI DUNG */}
+              <textarea
+                rows={3}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Chia sẻ trải nghiệm..."
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                required
+              />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Đánh giá sao</label>
-          <div className="flex gap-1">
-            {[1, 2, 3, 4, 5].map(star => (
-              <button
-                key={star}
-                type="button"
-                onClick={() => setForm(prev => ({ ...prev, rating: star }))}
-                className="p-1"
-              >
-                <Star
-                  className={`w-7 h-7 ${star <= form.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-                />
-              </button>
-            ))}
+              {/* Ô TÊN */}
+              <input
+                type="text"
+                value={reviewerName}
+                onChange={(e) => setReviewerName(e.target.value)}
+                placeholder="Tên của bạn"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              />
+
+              {/* NÚT GỬI + THÔNG BÁO */}
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className={`px-5 py-2 rounded-lg font-medium text-white text-sm flex items-center gap-1.5 transition-all shadow-sm ${
+                    submitting
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
+                >
+                  {submitting ? (
+                    'Đang gửi...'
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Gửi
+                    </>
+                  )}
+                </button>
+
+                <div className="text-xs">
+                  {submitSuccess && (
+                    <span className="text-green-600 font-medium">Gửi thành công!</span>
+                  )}
+                  {submitError && (
+                    <span className="text-red-600">{submitError}</span>
+                  )}
+                </div>
+              </div>
+            </form>
           </div>
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nội dung đánh giá</label>
-          <textarea
-            value={form.content}
-            onChange={e => setForm(prev => ({ ...prev, content: e.target.value }))}
-            rows={3}
-            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            placeholder="Hãy chia sẻ cảm nhận của bạn..."
-            required
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading || form.rating === 0 || !form.service || !form.content}
-          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Đang gửi...
-            </>
-          ) : (
-            'Gửi đánh giá'
-          )}
-        </button>
-      </form>
+      )}
     </div>
   );
 }
