@@ -20,14 +20,13 @@ import ResetPassword from './components/ResetPassword';
 import AdminPage from './pages/AdminPage';
 import DoctorPage from './pages/DoctorPage';
 import ProfilePage from './pages/ProfilePage';
-
-
-
 // === ADMIN / STAFF PAGES ===
 import DoctorManagementPage from './pages/DoctorManagementPage';
 import ReceptionPage from './pages/ReceptionPage';
 // import AppointmentChatbotForm from './components/chatbot/AppointmentChatbotForm'; // KHÔNG CẦN IMPORT TRỰC TIẾP Ở ĐÂY NỮA
 import ChatbotAvatar from './components/chatbot/ChatbotAvatar';
+import NewsDetailPage from "./pages/NewsDetailPage";
+
 
 function App() {
   
@@ -57,6 +56,7 @@ function App() {
                 <Route path="/news" element={<NewsPage />} />
                 <Route path="/appointment" element={<AppointmentPage />} />
                 <Route path="/danh-gia" element={<ReviewsPage />} /> {/* ĐÃ CÓ */}
+                <Route path="/news/:id" element={<NewsDetailPage />} />
               </Routes>
                    <ChatbotAvatar />
             </>
