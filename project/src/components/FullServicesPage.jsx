@@ -1,106 +1,139 @@
-// src/pages/FullServicesPage.jsx
-import { useState } from 'react';
-import { Filter } from 'lucide-react';
-import { entServices, getCategoryLabel, formatPrice } from '../data/services';
-
-const categories = [
-  { value: 'all', label: 'Tất Cả' },
-  { value: 'Consultation', label: 'Khám Bệnh' },
-  { value: 'Test', label: 'Thăm Dò' },
-  { value: 'Procedure', label: 'Thủ Thuật' },
-];
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { serviceApi, getCategoryLabel } from '../api/serviceApi';
+import ServiceCard from './ServiceCard';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function FullServicesPage() {
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const loc = useLocation();
+  const initialServices = loc.state?.initialServices || [];
+  const initialPagination = loc.state?.initialPagination || {};
 
-  const filteredServices = selectedCategory === 'all'
-    ? entServices.filter(service => service.isActive)
-    : entServices.filter(service => service.isActive && service.category === selectedCategory);
+  const [services, setServices] = useState(initialServices);
+  const [pagination, setPagination] = useState(initialPagination);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // ✅ Gọi API khi thay đổi category hoặc page
+  useEffect(() => {
+    fetchServices(0);
+  }, [selectedCategory]);
+
+  const fetchServices = async (page = 0) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      let data;
+      if (selectedCategory === 'all') {
+        data = await serviceApi.getAllServices(page, 6);
+      } else {
+        data = await serviceApi.getServicesByCategory(selectedCategory, page, 6);
+      }
+
+      setServices(data.services || []);
+      setPagination({
+        totalPages: data.totalPages ?? 0,
+        totalElements: data.totalElements ?? 0,
+        currentPage: data.currentPage ?? page,
+        isFirst: data.isFirst ?? false,
+        isLast: data.isLast ?? false,
+      });
+    } catch (err) {
+      console.error('Error loading services:', err);
+      setError('Không thể tải danh sách dịch vụ. Vui lòng thử lại sau.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 0 && newPage < pagination.totalPages) {
+      fetchServices(newPage);
+    }
+  };
 
   return (
-    <section id="full-services" className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Danh Sách Dịch Vụ
-          </h2>
-          <p className="text-lg text-gray-600">
-            Các dịch vụ khám và điều trị chuyên khoa Tai-Mũi-Họng
-          </p>
+    <section className="py-16 bg-gray-50 min-h-screen">
+      <div className="container mx-auto px-6 text-center">
+        <h2 className="text-3xl font-bold mb-6">Tất cả dịch vụ Tai - Mũi - Họng</h2>
+
+        {/* Filter */}
+        <div className="flex justify-center mb-8 space-x-3">
+          {[
+            { id: 'all', label: 'Tất cả' },
+            { id: 'Consultation', label: getCategoryLabel('Consultation') },
+            { id: 'Test', label: getCategoryLabel('Test') },
+            { id: 'Procedure', label: getCategoryLabel('Procedure') },
+          ].map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`px-5 py-2 rounded-full border text-sm font-medium transition-all duration-200
+              ${
+                selectedCategory === cat.id
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-white hover:bg-blue-50 border-gray-300 text-gray-700'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
         </div>
 
-        <div className="flex items-center justify-center mb-12">
-          <div className="inline-flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
-            <Filter className="w-4 h-4 text-gray-600 ml-2" />
-            {categories.map((cat) => (
-              <button
-                key={cat.value}
-                onClick={() => setSelectedCategory(cat.value)}
-                className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
-                  selectedCategory === cat.value
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {error && <p className="text-red-500 mb-4">{error}</p>}
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200 rounded-lg">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Tên Dịch Vụ</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Mô Tả</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Loại Dịch Vụ</th>
-                <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">Giá</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredServices.map((service) => (
-                <tr key={service.serviceId} className="border-t border-gray-200">
-                  <td className="px-6 py-4 text-gray-900">{service.name}</td>
-                  <td className="px-6 py-4 text-gray-600">{service.description}</td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                      {getCategoryLabel(service.category)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <span className="font-semibold text-blue-600">{formatPrice(service.price)}</span>
-                  </td>
-                </tr>
+        {loading ? (
+          <p className="text-gray-600">Đang tải dịch vụ...</p>
+        ) : (
+          <>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {services.map((service, index) => (
+                <ServiceCard key={index} service={service} index={index} />
               ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-12 bg-blue-50 border border-blue-200 rounded-xl p-8">
-          <div className="text-center">
-            <h3 className="text-xl font-bold text-gray-900 mb-3">
-              Cần Tư Vấn Thêm?
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Liên hệ với chúng tôi để được tư vấn chi tiết về dịch vụ phù hợp với tình trạng sức khỏe của bạn
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a
-                href="tel:0123456789"
-                className="bg-white text-blue-600 px-8 py-3 rounded-lg hover:bg-gray-50 transition-colors font-medium border-2 border-blue-600"
-              >
-                Gọi Ngay: 0123 456 789
-              </a>
-              <a
-                href="/appointment"
-                className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                Đặt Lịch Online
-              </a>
             </div>
-          </div>
-        </div>
+
+            {services.length === 0 && (
+              <p className="text-gray-500 mt-6">Không có dịch vụ nào trong danh mục này.</p>
+            )}
+
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="flex justify-center mt-8 space-x-4">
+                <button
+                  onClick={() => handlePageChange(pagination.currentPage - 1)}
+                  disabled={pagination.isFirst}
+                  className={`px-4 py-2 border rounded-lg flex items-center space-x-1 ${
+                    pagination.isFirst
+                      ? 'text-gray-400 border-gray-200'
+                      : 'text-blue-600 border-blue-400 hover:bg-blue-50'
+                  }`}
+                >
+                  <ChevronLeft size={18} />
+                  <span>Trước</span>
+                </button>
+
+                <span className="px-3 py-2 text-gray-700">
+                  Trang {pagination.currentPage + 1} / {pagination.totalPages}
+                </span>
+
+                <button
+                  onClick={() => handlePageChange(pagination.currentPage + 1)}
+                  disabled={pagination.isLast}
+                  className={`px-4 py-2 border rounded-lg flex items-center space-x-1 ${
+                    pagination.isLast
+                      ? 'text-gray-400 border-gray-200'
+                      : 'text-blue-600 border-blue-400 hover:bg-blue-50'
+                  }`}
+                >
+                  <span>Tiếp</span>
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </section>
   );
