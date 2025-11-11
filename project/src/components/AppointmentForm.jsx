@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Send, Calendar, Clock } from 'lucide-react';
+import axios from 'axios';
 
 export default function AppointmentForm() {
   const [formData, setFormData] = useState({
@@ -13,29 +14,64 @@ export default function AppointmentForm() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState('idle');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitStatus('idle');
+    setErrorMessage('');
 
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      const appointmentDateTime = `${formData.date}T${formData.time}:00`;
 
-    setSubmitStatus('success');
-    setIsSubmitting(false);
+      const payload = {
+        patientName: formData.fullName,
+        phone: formData.phone,
+        email: formData.email,
+        appointmentTime: appointmentDateTime,
+        notes: formData.symptoms
+      };
 
-    setFormData({
-      fullName: '',
-      phone: '',
-      email: '',
-      date: '',
-      time: '',
-      symptoms: ''
-    });
+      console.log('Sending appointment request:', payload);
 
-    setTimeout(() => {
-      setSubmitStatus('idle');
-    }, 5000);
+      const response = await axios.post(
+        'http://localhost:8082/api/public/appointments/quick-book',
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('Appointment created successfully:', response.data);
+
+      setSubmitStatus('success');
+      setIsSubmitting(false);
+
+      setFormData({
+        fullName: '',
+        phone: '',
+        email: '',
+        date: '',
+        time: '',
+        symptoms: ''
+      });
+
+      setTimeout(() => {
+        setSubmitStatus('idle');
+      }, 5000);
+    } catch (error) {
+      console.error('Error creating appointment:', error);
+      setErrorMessage(
+        error.response?.data?.message ||
+        error.message ||
+        'Có lỗi xảy ra. Vui lòng thử lại.'
+      );
+      setSubmitStatus('error');
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -59,6 +95,18 @@ export default function AppointmentForm() {
           <div>
             <p className="font-semibold text-green-900">Gửi thành công!</p>
             <p className="text-sm text-green-700">Chúng tôi sẽ liên hệ với bạn sớm nhất.</p>
+          </div>
+        </div>
+      )}
+
+      {submitStatus === 'error' && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
+          <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-white text-lg">✕</span>
+          </div>
+          <div>
+            <p className="font-semibold text-red-900">Có lỗi xảy ra!</p>
+            <p className="text-sm text-red-700">{errorMessage}</p>
           </div>
         </div>
       )}

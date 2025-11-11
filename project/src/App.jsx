@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import StickyNavbar from './components/StickyNavbar';
+import ProtectedRoute from './components/ProtectedRoute';
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import ServicesPage from './pages/ServicesPage';
@@ -12,6 +13,7 @@ import ForgotPassword from './components/ForgotPassword';
 import VerifyOtp from './components/VerifyOtp';
 import ResetPassword from './components/ResetPassword';
 import AdminPage from './pages/AdminPage';
+import DoctorPage from './pages/DoctorPage';
 import ProfilePage from './pages/ProfilePage';
 import DoctorManagementPage from './pages/DoctorManagementPage';
 import ReceptionPage from './pages/ReceptionPage';
@@ -45,10 +47,38 @@ function App() {
           }
         />
 
-        {/* Admin/Doctor Routes – KHÔNG có StickyNavbar */}
-        <Route path="/admin/*" element={<AdminPage />} />
-        <Route path="/doctor/*" element={<DoctorManagementPage />} />
-        <Route path="/receptionist/*" element={<ReceptionPage />} />
+
+        {/* Protected Routes – KHÔNG có StickyNavbar */}
+        {/* Admin Route - Chỉ cho ROLE_ADMIN */}
+        <Route 
+          path="/admin/*" 
+          element={
+            <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
+              <AdminPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Doctor Route - Cho ROLE_BAC_SI và ROLE_ADMIN */}
+        <Route 
+          path="/doctor/*" 
+          element={
+            <ProtectedRoute allowedRoles={['ROLE_BAC_SI', 'ROLE_ADMIN']}>
+              <DoctorPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Reception Route - Cho ROLE_TIEP_TAN và ROLE_ADMIN */}
+        <Route 
+          path="/reception/*" 
+          element={
+            <ProtectedRoute allowedRoles={['ROLE_TIEP_TAN', 'ROLE_ADMIN']}>
+              <ReceptionPage />
+            </ProtectedRoute>
+          } 
+        />
+      
       </Routes>
     </div>
   );
