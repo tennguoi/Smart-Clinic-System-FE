@@ -17,7 +17,8 @@ export default function ServiceCard({ service, index }) {
         {/* Header with number and price */}
         <div className="flex items-start justify-between mb-4">
           <div className={`w-12 h-12 rounded-lg ${getCategoryColor(service.category)} flex items-center justify-center font-bold text-lg`}>
-            {index}
+            {/* Hiển thị STT 1-based */}
+            {index + 1}
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-blue-600">
