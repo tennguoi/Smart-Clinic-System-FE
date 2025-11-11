@@ -21,6 +21,7 @@ const Login = () => {
       const response = await axios.post('http://localhost:8082/api/auth/login', {
         email,
         password,
+
       });
 
       const { token, roles, userId, fullName, message } = response.data;
@@ -67,6 +68,7 @@ const Login = () => {
     } catch (err) {
       console.error('Login error:', err);
       setError(err.response?.data?.message || 'Đăng nhập thất bại! Vui lòng kiểm tra email và mật khẩu.');
+
       setSuccess('');
     } finally {
       setLoading(false);
@@ -77,16 +79,19 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
         <h2 className="text-2xl font-bold text-center mb-6">Đăng nhập</h2>
+        
         {error && (
           <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
             {error}
           </div>
         )}
+        
         {success && (
           <div className="bg-green-100 text-green-700 p-3 rounded mb-4">
             {success}
           </div>
         )}
+        
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -101,6 +106,7 @@ const Login = () => {
               required
             />
           </div>
+          
           <div className="mb-4">
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Mật khẩu
@@ -114,6 +120,7 @@ const Login = () => {
               required
             />
           </div>
+          
           <button
             type="submit"
             disabled={loading}
@@ -121,6 +128,7 @@ const Login = () => {
           >
             {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
+          
           <p className="mt-4 text-center text-sm">
             Quên mật khẩu?{' '}
             <a href="/forgot-password" className="text-blue-600 hover:underline">

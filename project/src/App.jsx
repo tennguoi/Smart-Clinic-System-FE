@@ -14,6 +14,8 @@ import VerifyOtp from './components/VerifyOtp';
 import ResetPassword from './components/ResetPassword';
 import AdminPage from './pages/AdminPage';
 import DoctorPage from './pages/DoctorPage';
+import ProfilePage from './pages/ProfilePage';
+import DoctorManagementPage from './pages/DoctorManagementPage';
 import ReceptionPage from './pages/ReceptionPage';
 
 function App() {
@@ -25,7 +27,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-
+        <Route path="/profile" element={<ProfilePage />} />
         {/* Public Routes – CÓ StickyNavbar */}
         <Route
           path="/*"
@@ -44,6 +46,7 @@ function App() {
             </>
           }
         />
+
 
         {/* Protected Routes – KHÔNG có StickyNavbar */}
         {/* Admin Route - Chỉ cho ROLE_ADMIN */}
@@ -75,6 +78,7 @@ function App() {
             </ProtectedRoute>
           } 
         />
+      
       </Routes>
     </div>
   );
