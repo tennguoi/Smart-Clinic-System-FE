@@ -1,118 +1,181 @@
-import { Star } from 'lucide-react';
-import Footer from '../components/Footer';
+// src/pages/ReviewsPage.jsx
+import { Star, Search, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { getReviews } from '../lib/api';
+
+const SERVICES = ['Tất cả', 'Nhi khoa', 'Nha khoa', 'Nội khoa', 'Da liễu', 'Sản phụ khoa'];
 
 export default function ReviewsPage() {
-  const reviews = [
-    {
-      id: '1',
-      name: 'Chị Nguyễn Mai',
-      title: 'Khách hàng',
-      rating: 5,
-      date: '15 Tháng 10, 2024',
-      content: 'Bác sĩ tận tâm, nhiệt tình, khám rất kỹ. Phòng khám sạch sẽ, thiết bị hiện đại. Tôi rất hài lòng với dịch vụ. Sẽ quay lại lần tới!'
-    },
-    {
-      id: '2',
-      name: 'Anh Trần Văn B',
-      title: 'Khách hàng',
-      rating: 5,
-      date: '12 Tháng 10, 2024',
-      content: 'Đặt lịch online rất tiện, không phải chờ lâu. Bác sĩ tư vấn chi tiết, giải thích dễ hiểu. Giá cả hợp lý. Rất đáng giá!'
-    },
-    {
-      id: '3',
-      name: 'Chị Lê Thị C',
-      title: 'Khách hàng',
-      rating: 5,
-      date: '10 Tháng 10, 2024',
-      content: 'Phòng khám đẹp, nhân viên thân thiện. Con tôi bị viêm amidan, sau khi điều trị đã khỏe hẳn. Cảm ơn bác sĩ nhiều!'
-    },
-    {
-      id: '4',
-      name: 'Anh Phạm Minh D',
-      title: 'Khách hàng',
-      rating: 5,
-      date: '8 Tháng 10, 2024',
-      content: 'Bị ù tai suốt mấy năm, đã khám ở nhiều nơi nhưng không khỏi. Ở đây bác sĩ tìm ra nguyên nhân và chỉ định điều trị đúng. Giờ đã cảm thấy tốt hơn nhiều.'
-    },
-    {
-      id: '5',
-      name: 'Chị Hoàng Linh E',
-      title: 'Khách hàng',
-      rating: 5,
-      date: '5 Tháng 10, 2024',
-      content: 'Khám rất chuyên nghiệp, bác sĩ giải thích rõ tình trạng bệnh và cách điều trị. Tôi cảm thấy yên tâm và tin tưởng. Khuyên các bạn nên khám ở đây!'
-    },
-    {
-      id: '6',
-      name: 'Anh Ngô Hữu F',
-      title: 'Khách hàng',
-      rating: 5,
-      date: '2 Tháng 10, 2024',
-      content: 'Chảy máu cam suốt. Đến đây bác sĩ xử lý cầm máu rất nhanh và hiệu quả. Không đau, không khó chịu. Giá cả công bằng. Rất hài lòng!'
+  const [reviews, setReviews] = useState([]);
+  const [stats, setStats] = useState({ average: 0, total: 0 });
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    service: 'Tất cả',
+    search: '',
+    page: 1,
+    limit: 6
+  });
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    const loadReviews = async () => {
+      setLoading(true);
+      try {
+        const data = await getReviews(filters);
+        setReviews(data.reviews || []);
+        setStats(data.stats || { average: 0, total: 0 });
+        setTotalPages(Math.ceil((data.stats?.total || 0) / filters.limit));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadReviews();
+  }, [filters]);
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setFilters(prev => ({ ...prev, page: newPage }));
     }
-  ];
+  };
+
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+
+  const anonymizeName = (name) => {
+    if (!name) return 'Ẩn danh';
+    const parts = name.trim().split(' ');
+    if (parts.length === 1) return name.charAt(0) + '***';
+    const last = parts.pop();
+    return parts.map(p => p.charAt(0) + '***').join(' ') + ' ' + last;
+  };
 
   return (
-    <div className="pt-20">
-      <div className="bg-gradient-to-br from-blue-50 to-teal-50 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Đánh Giá Từ Bệnh Nhân
-            </h1>
-            <p className="text-xl text-gray-600">
-              Nghe những câu chuyện thực tế từ bệnh nhân đã trải nghiệm dịch vụ của chúng tôi
-            </p>
+    <div className="min-h-screen bg-gray-50 pt-20">
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            Đánh Giá Từ Bệnh Nhân
+          </h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Hàng ngàn bệnh nhân đã tin tưởng và chia sẻ trải nghiệm tại phòng khám của chúng tôi.
+          </p>
+        </div>
+
+        {/* Stats */}
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+          <div className="bg-white p-6 rounded-xl shadow-sm text-center">
+            <div className="text-4xl font-bold text-blue-600">{stats.average || '0.0'}</div>
+            <p className="text-gray-600 mt-1">Điểm trung bình</p>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-sm text-center">
+            <div className="text-4xl font-bold text-green-600">{stats.total || 0}</div>
+            <p className="text-gray-600 mt-1">Tổng đánh giá</p>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-sm text-center">
+            <div className="text-4xl font-bold text-yellow-500">★ ★ ★ ★ ★</div>
+            <p className="text-gray-600 mt-1">Dựa trên phản hồi thực</p>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="space-y-6">
-          {reviews.map((review) => (
-            <div
-              key={review.id}
-              className="bg-white rounded-xl p-8 shadow-md hover:shadow-lg transition-shadow border-l-4 border-blue-600"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900">{review.name}</h3>
-                  <p className="text-sm text-gray-600">{review.title}</p>
-                </div>
-                <div className="text-right">
-                  <div className="flex items-center justify-end space-x-1 mb-1">
-                    {[...Array(review.rating)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-500">{review.date}</p>
-                </div>
-              </div>
-
-              <p className="text-gray-700 leading-relaxed italic">
-                "{review.content}"
-              </p>
+        {/* Filters */}
+        <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Chọn dịch vụ</label>
+              <select
+                value={filters.service}
+                onChange={e => setFilters(prev => ({ ...prev, service: e.target.value, page: 1 }))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {SERVICES.map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
             </div>
-          ))}
-        </div>
-
-        <div className="mt-12 text-center">
-          <div className="bg-gradient-to-br from-blue-50 to-teal-50 rounded-xl p-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Bạn Có Kinh Nghiệm Tốt Với Phòng Khám Của Chúng Tôi?
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Chia sẻ đánh giá của bạn giúp chúng tôi cải thiện dịch vụ và hỗ trợ bệnh nhân khác
-            </p>
-            <button className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
-              Để Lại Đánh Giá Của Bạn
-            </button>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tìm kiếm</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Tìm theo tên, nội dung..."
+                  value={filters.search}
+                  onChange={e => setFilters(prev => ({ ...prev, search: e.target.value, page: 1 }))}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <Footer />
+        {/* Reviews List */}
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+          </div>
+        ) : reviews.length === 0 ? (
+          <div className="text-center py-20 text-gray-500">
+            <p className="text-xl">Không tìm thấy đánh giá nào.</p>
+          </div>
+        ) : (
+          <>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {reviews.map(r => (
+                <div key={r.id} className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-5 h-5 ${i < r.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                        />
+                      ))}
+                    </div>
+                    {r.verified && (
+                      <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">
+                        Đã xác thực
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-gray-700 mb-4 italic leading-relaxed">"{r.content}"</p>
+                  <div className="text-sm">
+                    <p className="font-semibold text-gray-900">{anonymizeName(r.name)}</p>
+                    <p className="text-gray-500">{r.service} • {formatDate(r.date)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-10">
+                <button
+                  onClick={() => handlePageChange(filters.page - 1)}
+                  disabled={filters.page === 1}
+                  className="p-2 rounded-lg border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <span className="px-4 py-2 text-sm font-medium">
+                  Trang {filters.page} / {totalPages}
+                </span>
+                <button
+                  onClick={() => handlePageChange(filters.page + 1)}
+                  disabled={filters.page === totalPages}
+                  className="p-2 rounded-lg border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
