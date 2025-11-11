@@ -6,7 +6,7 @@ export default function NewsDetailPage() {
   const [article, setArticle] = useState(null);
 
   useEffect(() => {
-    fetch(`http://localhost:8080/api/articles/${id}`)
+    fetch(`http://localhost:8080/api/public/articles/${id}`)
       .then((res) => res.json())
       .then((data) => setArticle(data));
   }, [id]);
@@ -19,12 +19,18 @@ export default function NewsDetailPage() {
       <p className="text-gray-500 mb-6">
         {article.author} • {new Date(article.publishedAt).toLocaleDateString()}
       </p>
-      <img
-        src={article.image || "https://via.placeholder.com/800x400"}
-        alt={article.title}
-        className="rounded-xl w-full mb-6"
-      />
-      <p className="leading-relaxed text-lg whitespace-pre-line">
+
+      {/* Ảnh bài viết - thu nhỏ, căn giữa, responsive */}
+      <div className="flex justify-center mb-6">
+        <img
+          src={article.image || "https://via.placeholder.com/800x400"}
+          alt={article.title}
+          className="rounded-xl w-[70%] max-w-2xl object-contain shadow-md"
+        />
+      </div>
+
+      {/* Nội dung bài viết */}
+      <p className="leading-relaxed text-lg whitespace-pre-line text-justify">
         {article.content}
       </p>
     </div>
