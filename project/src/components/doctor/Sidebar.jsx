@@ -1,4 +1,4 @@
-import { CalendarDays, Users, FileText, Pill, ClipboardList, UserCircle, Cloud } from 'lucide-react';
+import { CalendarDays, Users, FileText, Pill, ClipboardList, UserCircle, Shield, Cloud } from 'lucide-react';
 
 const menuItems = [
   { id: 'schedule', label: 'Lịch Khám', icon: CalendarDays },
@@ -6,7 +6,8 @@ const menuItems = [
   { id: 'prescriptions', label: 'Đơn Thuốc', icon: Pill },
   { id: 'records', label: 'Hồ Sơ Khám', icon: ClipboardList },
   { id: 'invoices', label: 'Hóa Đơn', icon: FileText },
-  { id: 'account', label: 'Tài Khoản', icon: UserCircle },
+  { id: 'profile', label: 'Hồ Sơ Cá Nhân', icon: UserCircle },
+  { id: 'security', label: 'Bảo Mật', icon: Shield },
 ];
 
 export default function Sidebar({ activeMenu, onMenuChange }) {

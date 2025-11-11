@@ -1,9 +1,27 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ReceptionHeader from '../components/receptionist/Header';
 import ReceptionSidebar from '../components/receptionist/Sidebar';
-import { useNavigate } from 'react-router-dom';
+import ProfileSection from '../components/admin/ProfileSection';
+import SecuritySection from '../components/admin/SecuritySection';
 import { authService } from '../services/authService';
 import axiosInstance from '../utils/axiosConfig';
+
+const initialUserData = {
+  fullName: '',
+  email: '',
+  phone: '',
+  dateOfBirth: '',
+  gender: '',
+  address: '',
+  photoUrl: '',
+  twoFactorEnabled: false,
+};
+
+const persistUserData = (data) => {
+  localStorage.setItem('user_info', JSON.stringify(data));
+  localStorage.setItem('user', JSON.stringify(data));
+};
 
 export default function ReceptionPage() {
   const [activeMenu, setActiveMenu] = useState('appointments');
@@ -13,16 +31,53 @@ export default function ReceptionPage() {
   const [appointmentsError, setAppointmentsError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [confirmingId, setConfirmingId] = useState(null);
+
+  const [userData, setUserData] = useState(initialUserData);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState('');
+
   const navigate = useNavigate();
+
+  const loadProfile = useCallback(async () => {
+    setProfileLoading(true);
+    setProfileError('');
+    try {
+      const { data } = await axiosInstance.get('/api/auth/user');
+      const mapped = {
+        fullName: data?.fullName || '',
+        email: data?.email || '',
+        phone: data?.phone || '',
+        dateOfBirth: data?.dob || '',
+        gender: data?.gender || '',
+        address: data?.address || '',
+        photoUrl: data?.photoUrl || '',
+        twoFactorEnabled: Boolean(data?.twoFactorEnabled),
+      };
+      setUserData(mapped);
+      persistUserData(mapped);
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Không thể tải hồ sơ.';
+      setProfileError(message);
+      if (error.response?.status === 401) {
+        authService.logout();
+        navigate('/login', { replace: true });
+      }
+    } finally {
+      setProfileLoading(false);
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   const handleLogout = async () => {
     try {
-      // Gọi API logout
       await axiosInstance.post('/api/auth/logout');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Xóa thông tin đăng nhập
       authService.logout();
       navigate('/login', { replace: true });
     }
@@ -50,14 +105,11 @@ export default function ReceptionPage() {
       } catch (error) {
         if (!ignore) {
           console.error('Failed to fetch appointments:', error);
-          console.error('Error status:', error.response?.status);
-          console.error('Error data:', error.response?.data);
-          console.error('Error message:', error.message);
-          console.log('Current roles:', authService.getRoles());
-          console.log('Current token:', authService.getToken()?.substring(0, 50) + '...');
-          setAppointmentsError(
-            `Lỗi ${error.response?.status || 'không xác định'}: ${error.response?.data?.message || error.message || 'Không thể tải danh sách lịch hẹn. Vui lòng thử lại.'}`
-          );
+          const message =
+            error.response?.data?.message ||
+            error.message ||
+            'Không thể tải danh sách lịch hẹn. Vui lòng thử lại.';
+          setAppointmentsError(`Lỗi ${error.response?.status || 'không xác định'}: ${message}`);
         }
       } finally {
         if (!ignore) {
@@ -114,6 +166,133 @@ export default function ReceptionPage() {
       });
     } catch (error) {
       return value;
+    }
+  };
+
+  const handleFieldChange = (field, value) => {
+    setUserData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleUpdateProfile = async () => {
+    setProfileError('');
+    setProfileSuccess('');
+    try {
+      const payload = {
+        fullName: userData.fullName,
+        phone: userData.phone,
+        dob: userData.dateOfBirth,
+        gender: userData.gender,
+        address: userData.address,
+      };
+      const { data } = await axiosInstance.post('/api/auth/update-profile', payload);
+      if (data?.success) {
+        setProfileSuccess('Cập nhật hồ sơ thành công!');
+        persistUserData(userData);
+        setTimeout(() => setProfileSuccess(''), 2500);
+      } else {
+        throw new Error(data?.message || 'Cập nhật thất bại');
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Không thể cập nhật hồ sơ';
+      setProfileError(message);
+    }
+  };
+
+  const handlePhotoChange = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('photo', file);
+
+      setProfileError('');
+      setProfileSuccess('');
+      try {
+        const { data } = await axiosInstance.post('/api/auth/upload-photo', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        if (data?.success) {
+          setUserData((prev) => {
+            const updated = { ...prev, photoUrl: data.data };
+            persistUserData(updated);
+            return updated;
+          });
+          setProfileSuccess('Tải ảnh lên thành công!');
+          setTimeout(() => setProfileSuccess(''), 2500);
+        } else {
+          throw new Error(data?.message || 'Tải ảnh thất bại');
+        }
+      } catch (error) {
+        const message = error.response?.data?.message || error.message || 'Tải ảnh thất bại';
+        setProfileError(message);
+      }
+    };
+    input.click();
+  };
+
+  const handleToggle2FA = async () => {
+    setProfileError('');
+    setProfileSuccess('');
+    try {
+      if (userData.twoFactorEnabled) {
+        const { data } = await axiosInstance.post('/api/auth/disable-2fa');
+        if (data?.success) {
+          setUserData((prev) => {
+            const updated = { ...prev, twoFactorEnabled: false };
+            persistUserData(updated);
+            return updated;
+          });
+          setProfileSuccess('Đã tắt xác thực 2 yếu tố.');
+          setTimeout(() => setProfileSuccess(''), 2500);
+          return true;
+        }
+        throw new Error(data?.message || 'Tắt 2FA thất bại');
+      } else {
+        const { data } = await axiosInstance.post('/api/auth/enable-2fa', {
+          email: userData.email,
+        });
+        if (data?.success) {
+          setProfileSuccess('Đã gửi mã OTP đến email của bạn.');
+          setTimeout(() => setProfileSuccess(''), 2500);
+          return true;
+        }
+        throw new Error(data?.message || 'Bật 2FA thất bại');
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Không thể cập nhật 2FA';
+      setProfileError(message);
+      return false;
+    }
+  };
+
+  const handleVerify2FA = async (otpCode) => {
+    setProfileError('');
+    setProfileSuccess('');
+    try {
+      const { data } = await axiosInstance.post('/api/auth/verify-2fa-enable', {
+        email: userData.email,
+        otpCode,
+      });
+      if (data?.success) {
+        setUserData((prev) => {
+          const updated = { ...prev, twoFactorEnabled: true };
+          persistUserData(updated);
+          return updated;
+        });
+        setProfileSuccess('Bật xác thực 2 yếu tố thành công!');
+        setTimeout(() => setProfileSuccess(''), 2500);
+        return true;
+      }
+      setProfileError(data?.message || 'Xác thực OTP thất bại');
+      return false;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Xác thực OTP thất bại';
+      setProfileError(message);
+      return false;
     }
   };
 
@@ -254,21 +433,93 @@ export default function ReceptionPage() {
     </div>
   );
 
+  const renderProfileSection = () => (
+    <div className="space-y-6">
+      {profileError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+          {profileError}
+        </div>
+      )}
+      {profileSuccess && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
+          {profileSuccess}
+        </div>
+      )}
+
+      {profileLoading ? (
+        <div className="bg-white rounded-lg shadow border border-gray-200 p-6 text-center text-gray-500">
+          Đang tải hồ sơ...
+        </div>
+      ) : (
+        <>
+          <ProfileSection
+            fullName={userData.fullName}
+            email={userData.email}
+            phone={userData.phone}
+            dateOfBirth={userData.dateOfBirth}
+            gender={userData.gender}
+            address={userData.address}
+            photoUrl={userData.photoUrl}
+            onPhotoChange={handlePhotoChange}
+            onChange={handleFieldChange}
+          />
+          <div className="flex justify-end">
+            <button
+              onClick={handleUpdateProfile}
+              className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              Cập nhật thông tin
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  const renderSecuritySection = () => (
+    <div className="space-y-6">
+      {profileError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+          {profileError}
+        </div>
+      )}
+      {profileSuccess && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
+          {profileSuccess}
+        </div>
+      )}
+      <SecuritySection
+        twoFactorEnabled={userData.twoFactorEnabled}
+        onToggle2FA={handleToggle2FA}
+        onVerify2FA={handleVerify2FA}
+        onChangePassword={() => {}}
+      />
+    </div>
+  );
+
+  const receptionistName = useMemo(() => userData.fullName, [userData.fullName]);
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
       <ReceptionSidebar activeMenu={activeMenu} onMenuChange={setActiveMenu} />
 
-      {/* Main area */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <ReceptionHeader onLogout={handleLogout} />
+        <ReceptionHeader onLogout={handleLogout} fullName={receptionistName} />
 
-        {/* Nội dung chính */}
-        <main className="flex-1 p-8">
-          {activeMenu === 'patients' && <div>📋 Danh sách bệnh nhân</div>}
+        <main className="flex-1 p-8 space-y-8">
           {activeMenu === 'appointments' && renderAppointmentsSection()}
-          {activeMenu === 'prescriptions' && <div>💊 Quản lý toa thuốc</div>}
+          {activeMenu === 'records' && (
+            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 text-gray-500">
+              Tính năng quản lý hồ sơ đang được phát triển.
+            </div>
+          )}
+          {activeMenu === 'invoices' && (
+            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 text-gray-500">
+              Tính năng quản lý hóa đơn đang được phát triển.
+            </div>
+          )}
+          {activeMenu === 'profile' && renderProfileSection()}
+          {activeMenu === 'security' && renderSecuritySection()}
         </main>
       </div>
     </div>

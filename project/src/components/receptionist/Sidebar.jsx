@@ -1,10 +1,12 @@
-import { FolderOpen, CalendarDays, FileText, Cloud } from "lucide-react";
+import { FolderOpen, CalendarDays, FileText, Cloud, UserCircle, Shield } from "lucide-react";
 
 const menuItems = [
 
   { id: "appointments", label: "Quản lý lịch hẹn", icon: CalendarDays },
   { id: "records", label: "Quản lý hồ sơ", icon: FolderOpen },
   { id: "invoices", label: "Hóa đơn", icon: FileText },
+  { id: "profile", label: "Hồ sơ cá nhân", icon: UserCircle },
+  { id: "security", label: "Bảo mật", icon: Shield },
 ];
 
 export default function ReceptionSidebar({ activeMenu, onMenuChange }) {
