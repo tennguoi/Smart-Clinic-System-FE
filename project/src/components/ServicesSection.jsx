@@ -82,12 +82,19 @@ export default function ServicesSection() {
   };
 
   return (
-    <section id="services" className="py-16 bg-gray-50">
-      <div className="container mx-auto px-6 text-center">
-        <h2 className="text-3xl font-bold mb-6">Dịch vụ chuyên khoa Tai - Mũi - Họng</h2>
+    <section id="services" className="py-20 bg-gradient-to-b from-cyan-50/30 to-white">
+      <div className="container mx-auto px-6">
+        <div className="text-center mb-12">
+          <span className="text-cyan-600 font-semibold text-sm uppercase tracking-wide">
+            Dịch Vụ
+          </span>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-3 mb-4">
+            Dịch vụ chuyên khoa Tai - Mũi - Họng
+          </h2>
+        </div>
 
         {/* Filter */}
-        <div className="flex justify-center mb-8 space-x-3">
+        <div className="flex justify-center mb-10 space-x-3 flex-wrap gap-3">
           {[
             { id: 'all', label: 'Tất cả' },
             { id: 'Consultation', label: getCategoryLabel('Consultation') },
@@ -97,11 +104,11 @@ export default function ServicesSection() {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-5 py-2 rounded-full border text-sm font-medium transition-all duration-200
+              className={`px-6 py-2.5 rounded-full border text-sm font-semibold transition-all duration-300 transform hover:scale-105
               ${
                 selectedCategory === cat.id
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white hover:bg-blue-50 border-gray-300 text-gray-700'
+                  ? 'bg-gradient-to-r from-cyan-500 to-emerald-500 text-white border-transparent shadow-lg shadow-cyan-500/30'
+                  : 'bg-white hover:bg-cyan-50 border-gray-300 text-gray-700 hover:border-cyan-400 shadow-md hover:shadow-lg'
               }`}
             >
               {cat.label}
@@ -125,16 +132,16 @@ export default function ServicesSection() {
               <p className="text-gray-500 mt-6">Không có dịch vụ nào thuộc danh mục này.</p>
             )}
 
-            <div className="mt-10 flex justify-center">
+            <div className="mt-12 flex justify-center">
               <button
                 onClick={handleViewAll}
-                className="px-6 py-2 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition"
+                className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-emerald-500 text-white rounded-full font-semibold hover:from-cyan-600 hover:to-emerald-600 transition-all shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/40 hover:scale-105 transform duration-300"
               >
                 Xem tất cả dịch vụ
               </button>
 
               {refreshing && (
-                <RefreshCw className="ml-3 animate-spin text-blue-500" size={20} />
+                <RefreshCw className="ml-3 animate-spin text-cyan-500" size={20} />
               )}
             </div>
           </>
