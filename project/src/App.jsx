@@ -1,3 +1,4 @@
+// src/App.jsx (ĐÃ SỬA ĐỔI)
 // src/App.jsx
 import { Routes, Route } from 'react-router-dom';
 import StickyNavbar from './components/StickyNavbar';
@@ -24,8 +25,11 @@ import ProfilePage from './pages/ProfilePage';
 import AdminPage from './pages/AdminPage';
 import DoctorManagementPage from './pages/DoctorManagementPage';
 import ReceptionPage from './pages/ReceptionPage';
+// import AppointmentChatbotForm from './components/chatbot/AppointmentChatbotForm'; // KHÔNG CẦN IMPORT TRỰC TIẾP Ở ĐÂY NỮA
+import ChatbotAvatar from './components/chatbot/ChatbotAvatar';
 
 function App() {
+  
   return (
     <div className="min-h-screen bg-white">
       <Routes>
@@ -53,6 +57,7 @@ function App() {
                 <Route path="/appointment" element={<AppointmentPage />} />
                 <Route path="/danh-gia" element={<ReviewsPage />} /> {/* ĐÃ CÓ */}
               </Routes>
+                   <ChatbotAvatar />
             </>
           }
         />

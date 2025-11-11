@@ -7,6 +7,7 @@ import Testimonials from '../components/Testimonials'; // ĐÃ IMPORT
 import Contact from '../components/Contact';
 import Footer from '../components/Footer';
 
+
 export default function HomePage() {
   return (
     <div className="pt-20 min-h-screen bg-white">
