@@ -21,8 +21,9 @@ import AdminPage from './pages/AdminPage';
 import DoctorPage from './pages/DoctorPage';
 import ProfilePage from './pages/ProfilePage';
 
+
+
 // === ADMIN / STAFF PAGES ===
-import AdminPage from './pages/AdminPage';
 import DoctorManagementPage from './pages/DoctorManagementPage';
 import ReceptionPage from './pages/ReceptionPage';
 // import AppointmentChatbotForm from './components/chatbot/AppointmentChatbotForm'; // KHÔNG CẦN IMPORT TRỰC TIẾP Ở ĐÂY NỮA

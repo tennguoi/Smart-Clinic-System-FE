@@ -1,8 +1,24 @@
 // src/components/DoctorsSection.jsx
-import { doctors } from '../data/doctors';
+import { useEffect, useState } from 'react';
 import { Award } from 'lucide-react';
+import { getDoctors } from '../api/doctorApi';
 
-export default function DoctorsSection() {
+export default function DoctorsSection({ doctors = [] }) {
+  const [internalDoctors, setInternalDoctors] = useState(null);
+
+  const providedCount = Array.isArray(doctors) ? doctors.length : 0;
+  const data = providedCount > 0 ? doctors : (Array.isArray(internalDoctors) ? internalDoctors : []);
+
+  useEffect(() => {
+    if (providedCount === 0) {
+      getDoctors()
+        .then((arr) => {
+          setInternalDoctors(Array.isArray(arr) ? arr : []);
+        })
+        .catch(() => setInternalDoctors([]));
+    }
+  }, [providedCount]);
+
   return (
     <section id="doctors" className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -18,16 +34,20 @@ export default function DoctorsSection() {
           </p>
         </div>
 
+        {(!Array.isArray(data) || data.length === 0) && (
+          <div className="text-center text-gray-500">Không có bác sĩ nào để hiển thị.</div>
+        )}
+
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {doctors.map((doctor) => (
+          {Array.isArray(data) && data.map((doctor, i) => (
             <div
-              key={doctor.userId}
+              key={`${doctor.fullName || 'doctor'}-${i}`}
               className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all group"
             >
               <div className="relative overflow-hidden">
                 <img
-                  src={doctor.photoUrl}
-                  alt={doctor.fullName}
+                  src={doctor.photoUrl || 'https://via.placeholder.com/400x300?text=Doctor'}
+                  alt={doctor.fullName || 'Bác sĩ'}
                   className="w-full h-72 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full p-2">
@@ -37,13 +57,13 @@ export default function DoctorsSection() {
 
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-1">
-                  {doctor.fullName}
+                  {doctor.fullName || 'Chưa có tên'}
                 </h3>
                 <p className="text-sm text-gray-600 mb-2">
-                  {doctor.bio}
+                  {doctor.bio || '—'}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {doctor.experienceYears} năm kinh nghiệm
+                  {typeof doctor.experienceYears === 'number' ? doctor.experienceYears : 0} năm kinh nghiệm
                 </p>
               </div>
             </div>
