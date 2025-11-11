@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import logo from '../images/logo.png';
+import backgroundImage from '../images/background.png'; // Import ảnh nền
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -16,52 +18,33 @@ const Login = () => {
         email,
         password,
       }, { timeout: 5000 });
-      
+
       const { data } = response;
-      console.log('Full login response:', data);
-      
-      // Kiểm tra nếu có token => đăng nhập thành công
+
       if (data.token) {
-        // Lưu token và thông tin người dùng vào localStorage
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify({
           userId: data.userId,
           fullName: data.fullName,
-          email: data.email,
           roles: data.roles || [],
         }));
-        
+
         setSuccess('Đăng nhập thành công!');
-        setError('');
-        
-        // Chuyển hướng đến /admin ngay lập tức
+       Error('');
         setTimeout(() => navigate('/admin', { replace: true }), 500);
-      } 
-      // Nếu message chứa "2FA required" => cần xác thực 2FA
-      else if (data.message && data.message.includes('2FA required')) {
+      } else if (data.message && data.message.includes('2FA required')) {
         setError('Vui lòng xác thực OTP đã được gửi đến email của bạn.');
         setSuccess('');
-        // Có thể chuyển hướng đến trang verify 2FA
-        // setTimeout(() => navigate('/verify-2fa', { state: { email } }), 1500);
-      } 
-      // Trường hợp khác
-      else {
+      } else {
         setError(data.message || 'Đăng nhập thất bại! Dữ liệu không hợp lệ.');
         setSuccess('');
       }
     } catch (err) {
-      console.error('Lỗi đăng nhập:', err.response || err);
-      
-      // Xử lý lỗi chi tiết hơn
       if (err.response) {
-        // Server trả về response với status code lỗi
-        const errorMessage = err.response.data?.message || 'Đăng nhập thất bại!';
-        setError(errorMessage);
+        setError(err.response.data?.message || 'Đăng nhập thất bại!');
       } else if (err.request) {
-        // Request đã được gửi nhưng không nhận được response
         setError('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.');
       } else {
-        // Lỗi khác
         setError('Đã xảy ra lỗi: ' + err.message);
       }
       setSuccess('');
@@ -69,22 +52,47 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold text-center mb-6">Đăng nhập</h2>
-        
+    <div
+      className="min-h-screen flex items-center justify-center relative overflow-hidden"
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      {/* Overlay gradient động */}
+      <div className="absolute inset-0 bg-gradient-to-br from-teal-50/70 to-blue-100/70 animate-pulse"></div>
+
+      {/* Hiệu ứng vòng tròn mờ */}
+      <div className="absolute w-72 h-72 bg-teal-300 rounded-full opacity-30 blur-3xl animate-ping top-10 left-10"></div>
+      <div className="absolute w-96 h-96 bg-blue-400 rounded-full opacity-20 blur-3xl animate-pulse bottom-10 right-10"></div>
+
+      {/* Form */}
+      <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl relative z-10 animate-fadeIn">
+        {/* Logo */}
+        <div className="flex justify-center mb-6">
+          <img src={logo} alt="Logo" className="w-full max-w-[150px] h-auto object-contain" />
+        </div>
+
+        {/* Tiêu đề */}
+        <h2 className="text-3xl font-bold text-center text-teal-700 mb-6">
+          Đăng nhập phòng khám
+        </h2>
+
+        {/* Thông báo */}
         {error && (
-          <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
+          <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">
             {error}
           </div>
         )}
-        
         {success && (
-          <div className="bg-green-100 text-green-700 p-3 rounded mb-4">
+          <div className="bg-green-100 text-green-700 p-3 rounded mb-4 text-sm">
             {success}
           </div>
         )}
-        
+
+        {/* Form */}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -95,11 +103,12 @@ const Login = () => {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              placeholder="Nhập email của bạn"
               required
             />
           </div>
-          
+
           <div className="mb-4">
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Mật khẩu
@@ -109,21 +118,22 @@ const Login = () => {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              placeholder="Nhập mật khẩu"
               required
             />
           </div>
-          
+
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition"
+            className="w-full bg-teal-600 text-white p-3 rounded-lg hover:bg-teal-700 hover:scale-105 transition-transform duration-300 font-semibold"
           >
             Đăng nhập
           </button>
-          
-          <p className="mt-4 text-center text-sm">
+
+          <p className="mt-4 text-center text-sm text-gray-600">
             Quên mật khẩu?{' '}
-            <a href="/forgot-password" className="text-blue-600 hover:underline">
+            <a href="/forgot-password" className="text-teal-600 hover:underline">
               Nhấn vào đây
             </a>
           </p>
