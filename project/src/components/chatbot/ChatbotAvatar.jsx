@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, User, X, MessageCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import AppointmentChatbotForm from './AppointmentChatbotForm'; // Đảm bảo đúng đường dẫn
+import AppointmentChatbotForm from './AppointmentChatbotForm';
 
 function MarkdownRenderer({ children, onLinkClick }) {
   const components = {
@@ -33,6 +33,7 @@ function ChatbotWindow({ isOpen, onClose }) {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const [sessionId] = useState('user-' + Date.now());
+  const [conversationId, setConversationId] = useState(localStorage.getItem('conversation_id') || null);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formInitialUrl, setFormInitialUrl] = useState('');
@@ -45,6 +46,12 @@ function ChatbotWindow({ isOpen, onClose }) {
     scrollToBottom();
   }, [messages, isFormOpen]);
 
+  useEffect(() => {
+    if (conversationId) {
+      localStorage.setItem('conversation_id', conversationId);
+    }
+  }, [conversationId]);
+
   const handleLinkClick = useCallback((url) => {
     setFormInitialUrl(url);
     setIsFormOpen(true);
@@ -55,6 +62,22 @@ function ChatbotWindow({ isOpen, onClose }) {
     setFormInitialUrl('');
   };
 
+  const handleFormSuccess = useCallback((result) => {
+    const successMsg = {
+      id: Date.now(),
+      text: `**Đặt lịch thành công!**\n\n` +
+            `**Mã lịch:** \`${result.code}\`\n` +
+            `**Họ tên:** ${result.patient_name}\n` +
+            `**Thời gian:** ${new Date(result.appointment_time).toLocaleString('vi-VN')}\n` +
+            `**SĐT:** ${result.phone}\n\n` +
+            `Nhân viên sẽ gọi xác nhận trong 30 phút. Cảm ơn anh/chị!`,
+      sender: 'bot',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, successMsg]);
+    handleFormClose();
+  }, []);
+
   const handleSend = async () => {
     if (!inputText.trim()) return;
     const userMessage = { id: Date.now(), text: inputText, sender: 'user', timestamp: new Date() };
@@ -64,14 +87,21 @@ function ChatbotWindow({ isOpen, onClose }) {
     setIsTyping(true);
 
     try {
-      const res = await fetch('https://n8n.quanliduan-pms.site/webhook/chat', {
+      const res = await fetch('http://localhost:8082/webhook/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, message: { text: currentInput } })
+        body: JSON.stringify({
+          sessionId,
+          conversationId,
+          message: { text: currentInput }
+        })
       });
       if (!res.ok) throw new Error('API error');
       const data = await res.json();
       const botText = data.output || 'Xin lỗi, em không hiểu.';
+      if (data.conversationId && !conversationId) {
+        setConversationId(data.conversationId);
+      }
       const botMessage = {
         id: Date.now() + 1,
         text: botText,
@@ -106,7 +136,6 @@ function ChatbotWindow({ isOpen, onClose }) {
   return (
     <div className="fixed bottom-24 right-6 w-96 h-[500px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50 animate-slideUp">
       
-      {/* HEADER – LUÔN HIỂN THỊ */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
@@ -122,10 +151,8 @@ function ChatbotWindow({ isOpen, onClose }) {
         </button>
       </div>
 
-      {/* NỘI DUNG CHÍNH */}
       <div className="flex-1 flex flex-col relative overflow-hidden">
         
-        {/* CHAT – ẨN KHI MỞ FORM */}
         <div className={`absolute inset-0 flex flex-col transition-opacity duration-300 ${isFormOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 chat-messages-container">
             {messages.length === 0 && (
@@ -175,7 +202,6 @@ function ChatbotWindow({ isOpen, onClose }) {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* INPUT */}
           <div className="border-t bg-white p-3">
             <div className="flex gap-2">
               <input
@@ -197,10 +223,14 @@ function ChatbotWindow({ isOpen, onClose }) {
           </div>
         </div>
 
-        {/* FORM MODAL – ĐÈ LÊN */}
         {isFormOpen && (
           <div className="absolute inset-0 bg-white p-4 overflow-y-auto animate-fadeIn">
-            <AppointmentChatbotForm onClose={handleFormClose} initialUrl={formInitialUrl} />
+            <AppointmentChatbotForm
+              onClose={handleFormClose}
+              initialUrl={formInitialUrl}
+              conversationId={conversationId}
+              onSuccess={handleFormSuccess}
+            />
           </div>
         )}
       </div>
@@ -241,7 +271,6 @@ export default function ChatbotAvatar() {
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
         .prose a { color: #3b82f6; text-decoration: underline; font-weight: 500; }
         .prose a:hover { color: #1d4ed8; }
-
         .chat-messages-container {
           -webkit-overflow-scrolling: touch;
         }
