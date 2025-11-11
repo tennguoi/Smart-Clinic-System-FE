@@ -1,5 +1,3 @@
-'use client';
-
 import { Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import ReviewForm from './ReviewForm';
@@ -30,7 +28,8 @@ export default function Testimonials() {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch('http://localhost:8080/api/reviews/summary');
+      const API_URL = import.meta?.env?.VITE_API_URL || 'http://localhost:8082';
+      const res = await fetch(`${API_URL}/api/reviews/summary`);
       if (!res.ok) throw new Error('Không thể tải đánh giá');
       const data = await res.json();
 
@@ -82,22 +81,22 @@ export default function Testimonials() {
 
         {/* Tiêu đề + Tóm tắt */}
         <div className="text-center mb-12">
-          <span className="text-blue-600 font-semibold text-sm uppercase tracking-wide">
+          <span className="text-cyan-600 font-semibold text-sm uppercase tracking-wide">
             Đánh Giá Khách Hàng
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-3">
             Bệnh Nhân Nói Gì Về Chúng Tôi
           </h2>
-          <p className="text-gray-600">
-            Hơn <strong>{totalReviews.toLocaleString()}</strong> đánh giá
+          <p className="text-gray-700">
+            Hơn <strong className="text-cyan-600">{totalReviews.toLocaleString()}</strong> đánh giá
           </p>
         </div>
 
         {/* Tóm tắt + Nút Viết đánh giá (bên phải) */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-12">
-          <div className="inline-flex items-center bg-white rounded-xl shadow-md p-6">
+          <div className="inline-flex items-center bg-white rounded-2xl shadow-lg border border-cyan-100 p-6 hover:shadow-xl transition-shadow">
             <div className="text-center mr-6">
-              <div className="text-3xl font-bold text-blue-600">
+              <div className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-emerald-600 bg-clip-text text-transparent">
                 {averageRating?.toFixed(1) || '—'}/5
               </div>
               <div className="flex justify-center mt-1">
@@ -109,9 +108,9 @@ export default function Testimonials() {
                 ))}
               </div>
             </div>
-            <div className="h-12 w-px bg-gray-300"></div>
+            <div className="h-12 w-px bg-gradient-to-b from-transparent via-cyan-200 to-transparent"></div>
             <div className="text-center ml-6">
-              <div className="text-3xl font-bold text-blue-600">
+              <div className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-emerald-600 bg-clip-text text-transparent">
                 {averageRating ? Math.round((averageRating / 5) * 100) : 0}%
               </div>
               <div className="text-sm text-gray-600">Khuyến nghị</div>
@@ -135,7 +134,7 @@ export default function Testimonials() {
               {displayedReviews.map((review) => (
                 <div
                   key={review.id}
-                  className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                  className="bg-white rounded-xl p-6 shadow-md border border-gray-100 hover:shadow-xl hover:border-cyan-200 transition-all duration-300 transform hover:-translate-y-1"
                 >
                   <div className="flex mb-3">
                     {[...Array(5)].map((_, i) => (
@@ -150,10 +149,10 @@ export default function Testimonials() {
                   </p>
                   <div className="flex items-center justify-between text-sm">
                     <div>
-                      <p className="font-medium text-gray-900">{review.reviewerName}</p>
+                      <p className="font-semibold text-gray-900">{review.reviewerName}</p>
                       <p className="text-gray-500">{formatDate(review.createdAt)}</p>
                     </div>
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm">
+                    <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-emerald-400 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md">
                       {review.reviewerName[0]?.toUpperCase() || '?'}
                     </div>
                   </div>
@@ -166,7 +165,7 @@ export default function Testimonials() {
               <div className="text-center mt-8">
                 <button
                   onClick={() => setShowAll(!showAll)}
-                  className="text-blue-600 font-medium hover:underline flex items-center justify-center mx-auto gap-1"
+                  className="text-cyan-600 font-semibold hover:text-emerald-600 hover:underline flex items-center justify-center mx-auto gap-1 transition-colors"
                 >
                   {showAll ? (
                     <>Ẩn bớt đánh giá</>
