@@ -6,7 +6,7 @@ export default function NewsDetailPage() {
   const [article, setArticle] = useState(null);
 
   useEffect(() => {
-    fetch(`http://localhost:8080/api/public/articles/${id}`)
+    fetch(`http://localhost:8082/api/public/articles/${id}`)
       .then((res) => res.json())
       .then((data) => setArticle(data));
   }, [id]);

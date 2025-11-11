@@ -10,9 +10,9 @@ export default function NewsPage() {
   const [page, setPage] = useState(0);
 
   const loadArticles = () => {
-let url = `http://localhost:8080/api/public/articles?page=${page}&size=6`;
-if (category) url = `http://localhost:8080/api/public/articles/category/${category}`;
-if (keyword) url = `http://localhost:8080/api/public/articles/search?keyword=${keyword}`;
+let url = `http://localhost:8082/api/public/articles?page=${page}&size=6`;
+if (category) url = `http://localhost:8082/api/public/articles/category/${category}`;
+if (keyword) url = `http://localhost:8082/api/public/articles/search?keyword=${keyword}`;
 
 
 

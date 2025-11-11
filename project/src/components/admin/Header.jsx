@@ -1,6 +1,7 @@
 import { Search, Bell, User, LogOut, User2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authService, authRoleUtils } from '../../services/authService';
 
 export default function Header() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -11,9 +12,9 @@ export default function Header() {
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const userRole = user.roles?.[0] || 'User';
+  const token = authService.getToken();
+  const user = authService.getUserInfo() || {};
+  const userRole = authService.getRoles()?.[0] || 'User';
 
   // Lấy thông tin người dùng khi component được mount
   useEffect(() => {
@@ -32,19 +33,27 @@ export default function Header() {
         })
         .then((data) => {
           if (data.userId) {
+            const normalizedRoles = authRoleUtils.normalizeRoles(data.roles || []);
             setUserData({
               fullName: data.fullName || '',
               email: data.email || '',
-              roles: data.roles || [],
+              roles: normalizedRoles,
             });
-            localStorage.setItem('user', JSON.stringify(data));
+            authService.login(
+              token,
+              {
+                userId: data.userId,
+                email: data.email || '',
+                fullName: data.fullName || '',
+              },
+              normalizedRoles,
+            );
           }
         })
         .catch((err) => {
           console.error('Lỗi lấy thông tin người dùng:', err);
           if (err.message.includes('401')) {
-            localStorage.removeItem('token');
-            localStorage.setItem('user', JSON.stringify({}));
+            authService.logout();
             navigate('/login');
           }
         })
@@ -65,8 +74,7 @@ export default function Header() {
       });
       const data = await response.json();
       if (data.success) {
-        localStorage.removeItem('token');
-        localStorage.setItem('user', JSON.stringify({}));
+        authService.logout();
         navigate('/login');
       } else {
         console.error('Đăng xuất thất bại:', data.message);

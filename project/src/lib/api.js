@@ -7,7 +7,7 @@ export const getReviews = async (params = {}) => {
     limit: params.limit || 6,
   });
 
-  const res = await fetch(`http://localhost:8080/api/reviews?${searchParams}`);
+  const res = await fetch(`http://localhost:8082/api/public/reviews?${searchParams}`);
   if (!res.ok) throw new Error('Lỗi tải đánh giá');
   return res.json();
 };
