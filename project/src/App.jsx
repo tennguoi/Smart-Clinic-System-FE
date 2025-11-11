@@ -15,6 +15,8 @@ import AdminPage from './pages/AdminPage';
 import ProfilePage from './pages/ProfilePage';
 import DoctorManagementPage from './pages/DoctorManagementPage';
 import ReceptionPage from './pages/ReceptionPage';
+import AppointmentChatbotForm from './components/chatbot/AppointmentChatbotForm';
+import ChatbotAvatar from './components/chatbot/ChatbotAvatar';
 
 function App() {
   return (
@@ -26,6 +28,7 @@ function App() {
         <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/chatbot/appointment" element={<AppointmentChatbotForm />} />
         {/* Public Routes – CÓ StickyNavbar */}
         <Route
           path="/*"
@@ -41,6 +44,7 @@ function App() {
                 <Route path="/news" element={<NewsPage />} />
                 <Route path="/appointment" element={<AppointmentPage />} />
               </Routes>
+              <ChatbotAvatar />
             </>
           }
         />

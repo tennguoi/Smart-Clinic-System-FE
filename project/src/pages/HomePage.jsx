@@ -8,6 +8,7 @@ import Testimonials from '../components/Testimonials';
 import Contact from '../components/Contact'; // Import Contact
 import Footer from '../components/Footer';
 
+
 export default function HomePage() {
   return (
     <div className="pt-20">
