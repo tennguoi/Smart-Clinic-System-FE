@@ -1,3 +1,4 @@
+// src/App.jsx (ĐÃ SỬA ĐỔI)
 import { Routes, Route } from 'react-router-dom';
 import StickyNavbar from './components/StickyNavbar';
 import HomePage from './pages/HomePage';
@@ -15,47 +16,47 @@ import AdminPage from './pages/AdminPage';
 import ProfilePage from './pages/ProfilePage';
 import DoctorManagementPage from './pages/DoctorManagementPage';
 import ReceptionPage from './pages/ReceptionPage';
-import AppointmentChatbotForm from './components/chatbot/AppointmentChatbotForm';
+// import AppointmentChatbotForm from './components/chatbot/AppointmentChatbotForm'; // KHÔNG CẦN IMPORT TRỰC TIẾP Ở ĐÂY NỮA
 import ChatbotAvatar from './components/chatbot/ChatbotAvatar';
 
 function App() {
-  return (
-    <div className="min-h-screen bg-white">
-      <Routes>
-        {/* Authentication Routes – KHÔNG có StickyNavbar */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/verify-otp" element={<VerifyOtp />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/chatbot/appointment" element={<AppointmentChatbotForm />} />
-        {/* Public Routes – CÓ StickyNavbar */}
-        <Route
-          path="/*"
-          element={
-            <>
-              <StickyNavbar />
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="/services" element={<ServicesPage />} />
-                <Route path="/doctors" element={<DoctorsPage />} />
-                <Route path="/pricing" element={<PricingPage />} />
-                <Route path="/news" element={<NewsPage />} />
-                <Route path="/appointment" element={<AppointmentPage />} />
-              </Routes>
-              <ChatbotAvatar />
-            </>
-          }
-        />
+  return (
+    <div className="min-h-screen bg-white">
+      <Routes>
+        {/* Authentication Routes – KHÔNG có StickyNavbar */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-otp" element={<VerifyOtp />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        {/* ĐÃ XÓA ROUTE /chatbot/appointment - Form giờ là Modal trong ChatbotAvatar */}
+        {/* Public Routes – CÓ StickyNavbar */}
+        <Route
+          path="/*"
+          element={
+            <>
+              <StickyNavbar />
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/services" element={<ServicesPage />} />
+                <Route path="/doctors" element={<DoctorsPage />} />
+                <Route path="/pricing" element={<PricingPage />} />
+                <Route path="/news" element={<NewsPage />} />
+                <Route path="/appointment" element={<AppointmentPage />} />
+              </Routes>
+              <ChatbotAvatar />
+            </>
+          }
+        />
 
-        {/* Admin/Doctor Routes – KHÔNG có StickyNavbar */}
-        <Route path="/admin/*" element={<AdminPage />} />
-        <Route path="/doctor/*" element={<DoctorManagementPage />} />
-        <Route path="/receptionist/*" element={<ReceptionPage />} />
-      </Routes>
-    </div>
-  );
+        {/* Admin/Doctor Routes – KHÔNG có StickyNavbar */}
+        <Route path="/admin/*" element={<AdminPage />} />
+        <Route path="/doctor/*" element={<DoctorManagementPage />} />
+        <Route path="/receptionist/*" element={<ReceptionPage />} />
+      </Routes>
+    </div>
+  );
 }
 
 export default App;
