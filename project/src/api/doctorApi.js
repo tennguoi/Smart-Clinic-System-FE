@@ -1,16 +1,36 @@
-// src/api.js
-export async function getDoctors() {
-  const API =
-    (import.meta?.env?.VITE_API_URL) ||
-    'http://localhost:8082';
+// src/api/doctorApi.js
+const API_BASE_URL = 'http://localhost:8082';
 
-  const url = `${API}/api/public/doctors`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('Failed to fetch doctors');
-  const json = await res.json();
+/**
+ * 🩺 Lấy danh sách tất cả bác sĩ (public endpoint)
+ * @returns {Promise<Array>} Danh sách bác sĩ
+ */
+export const getDoctors = async () => {
+  try {
+    const url = `${API_BASE_URL}/api/public/doctors`;
+    console.log('Fetching doctors from:', url);
 
-  if (Array.isArray(json)) return json;
-  if (json && Array.isArray(json.data)) return json.data;
-  if (json && Array.isArray(json.result)) return json.result;
-  return [];
-}
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error response:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Doctors data:', data);
+
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('Error fetching doctors:', error);
+    throw error;
+  }
+};
+
+export default {
+  getDoctors,
+};

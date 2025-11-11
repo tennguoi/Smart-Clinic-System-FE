@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { UserPlus, Edit, Trash2, X, Eye, EyeOff } from 'lucide-react';
-import { authService } from '../../services/authService';
+import { UserPlus, Edit, Trash2, X, Eye, EyeOff, User } from 'lucide-react';
+import axiosInstance from '../../utils/axiosConfig';
 
 export default function AccountManagement() {
   const [users, setUsers] = useState([]);
@@ -46,22 +46,10 @@ export default function AccountManagement() {
     setLoading(true);
     setError('');
     try {
-      const token = authService.getToken();
-      const response = await fetch('http://localhost:8082/api/admin/users', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Không thể tải danh sách người dùng');
-      }
-
-      const data = await response.json();
-      setUsers(data);
+      const response = await axiosInstance.get('/api/admin/users');
+      setUsers(response.data);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || 'Không thể tải danh sách người dùng');
     } finally {
       setLoading(false);
     }
@@ -136,35 +124,20 @@ export default function AccountManagement() {
     setSuccess('');
 
     try {
-      const token = authService.getToken();
-      let url = 'http://localhost:8082/api/admin/users/create';
-      let method = 'POST';
+      let url = '/api/admin/users/create';
       let body = { ...formData };
 
       if (modalMode === 'edit' && selectedUser) {
-        url = `http://localhost:8082/api/admin/users/${selectedUser.userId}`;
-        method = 'PUT';
+        url = `/api/admin/users/${selectedUser.userId}`;
         // Không gửi password nếu để trống khi edit
         if (!formData.password) {
           delete body.password;
         }
         // Không gửi email khi edit (email không thay đổi)
         delete body.email;
-      }
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Có lỗi xảy ra');
+        await axiosInstance.put(url, body);
+      } else {
+        await axiosInstance.post(url, body);
       }
 
       setSuccess(modalMode === 'create' ? 'Tạo tài khoản thành công!' : 'Cập nhật thành công!');
@@ -173,7 +146,7 @@ export default function AccountManagement() {
         fetchUsers();
       }, 1500);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || 'Có lỗi xảy ra');
     } finally {
       setLoading(false);
     }
@@ -188,23 +161,12 @@ export default function AccountManagement() {
     setError('');
 
     try {
-      const token = authService.getToken();
-      const response = await fetch(`http://localhost:8082/api/admin/users/${userId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Không thể xóa tài khoản');
-      }
-
+      await axiosInstance.delete(`/api/admin/users/${userId}`);
       setSuccess('Xóa tài khoản thành công!');
       fetchUsers();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || 'Không thể xóa tài khoản');
       setTimeout(() => setError(''), 3000);
     } finally {
       setLoading(false);
@@ -218,6 +180,12 @@ export default function AccountManagement() {
       tiep_tan: 'Tiếp tân',
     };
     return roleMap[role] || role;
+  };
+
+  const getAvatarUrl = (photoUrl) => {
+    if (!photoUrl) return null;
+    if (photoUrl.startsWith('http')) return photoUrl;
+    return `http://localhost:8082${photoUrl}`;
   };
 
   return (
@@ -256,6 +224,9 @@ export default function AccountManagement() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Ảnh
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Email
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -275,6 +246,20 @@ export default function AccountManagement() {
             <tbody className="bg-white divide-y divide-gray-200">
               {users.map((user) => (
                 <tr key={user.userId} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="w-12 h-12 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center border border-gray-200">
+                      {getAvatarUrl(user.photoUrl) ? (
+                        <img
+                          src={getAvatarUrl(user.photoUrl)}
+                          alt={user.fullName || 'Ảnh tài khoản'}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <User className="w-6 h-6 text-gray-400" />
+                      )}
+                    </div>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {user.email}
                   </td>

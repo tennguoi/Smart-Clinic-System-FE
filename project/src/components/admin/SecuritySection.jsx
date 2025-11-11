@@ -1,5 +1,6 @@
 import { Lock, Shield, Key, X } from 'lucide-react';
 import { useState } from 'react';
+import axiosInstance from '../../utils/axiosConfig';
 
 export default function SecuritySection({ twoFactorEnabled, onToggle2FA, onVerify2FA, onChangePassword }) {
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
@@ -13,7 +14,6 @@ export default function SecuritySection({ twoFactorEnabled, onToggle2FA, onVerif
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [otpError, setOtpError] = useState('');
-  const token = localStorage.getItem('token');
 
   const handleChangePasswordSubmit = async (e) => {
     e.preventDefault();
@@ -26,19 +26,11 @@ export default function SecuritySection({ twoFactorEnabled, onToggle2FA, onVerif
     }
 
     try {
-      const response = await fetch('http://localhost:8082/api/auth/change-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          oldPassword: changePasswordData.oldPassword,
-          newPassword: changePasswordData.newPassword,
-        }),
+      const { data } = await axiosInstance.post('/api/auth/change-password', {
+        oldPassword: changePasswordData.oldPassword,
+        newPassword: changePasswordData.newPassword,
       });
-      const data = await response.json();
-      if (data.success) {
+      if (data?.success) {
         setSuccess('Đổi mật khẩu thành công!');
         setChangePasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
         setTimeout(() => {
@@ -47,10 +39,10 @@ export default function SecuritySection({ twoFactorEnabled, onToggle2FA, onVerif
           setError('');
         }, 1500);
       } else {
-        setError(data.message || 'Đổi mật khẩu thất bại.');
+        setError(data?.message || 'Đổi mật khẩu thất bại.');
       }
     } catch (err) {
-      setError('Lỗi khi đổi mật khẩu: ' + err.message);
+      setError(err.response?.data?.message || err.message || 'Lỗi khi đổi mật khẩu');
     }
   };
 

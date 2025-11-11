@@ -2,6 +2,7 @@ import { Search, Bell, User, LogOut, User2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService, authRoleUtils } from '../../services/authService';
+import axiosInstance from '../../utils/axiosConfig';
 
 export default function Header() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -18,66 +19,34 @@ export default function Header() {
 
   // Lấy thông tin người dùng khi component được mount
   useEffect(() => {
-    if (token) {
-      setLoading(true);
-      fetch('http://localhost:8082/api/auth/user', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      })
-        .then((res) => {
-          if (!res.ok) throw new Error('Lỗi khi lấy thông tin người dùng');
-          return res.json();
-        })
-        .then((data) => {
-          if (data.userId) {
-            const normalizedRoles = authRoleUtils.normalizeRoles(data.roles || []);
-            setUserData({
-              fullName: data.fullName || '',
-              email: data.email || '',
-              roles: normalizedRoles,
-            });
-            authService.login(
-              token,
-              {
-                userId: data.userId,
-                email: data.email || '',
-                fullName: data.fullName || '',
-              },
-              normalizedRoles,
-            );
-          }
-        })
-        .catch((err) => {
-          console.error('Lỗi lấy thông tin người dùng:', err);
-          if (err.message.includes('401')) {
-            authService.logout();
-            navigate('/login');
-          }
-        })
-        .finally(() => setLoading(false));
-    } else {
+    if (!token) {
       navigate('/login');
+      return;
     }
+
+    // Lấy thông tin từ localStorage trước
+    const storedUser = authService.getUserInfo();
+    const storedRoles = authService.getRoles();
+    
+    if (storedUser && storedUser.fullName) {
+      // Nếu đã có thông tin trong localStorage, dùng luôn
+      setUserData({
+        fullName: storedUser.fullName || '',
+        email: storedUser.email || '',
+        roles: storedRoles,
+      });
+    }
+    // Không cần fetch lại từ server vì thông tin đã được lưu khi login
   }, [token, navigate]);
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('http://localhost:8082/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      if (data.success) {
+      const { data } = await axiosInstance.post('/api/auth/logout');
+      if (data?.success) {
         authService.logout();
         navigate('/login');
       } else {
-        console.error('Đăng xuất thất bại:', data.message);
+        console.error('Đăng xuất thất bại:', data?.message);
       }
     } catch (error) {
       console.error('Lỗi khi đăng xuất:', error);

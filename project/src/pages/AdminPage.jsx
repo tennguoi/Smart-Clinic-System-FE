@@ -3,6 +3,9 @@ import { useState } from 'react';
 import Header from '../components/admin/Header';
 import Sidebar from '../components/admin/Sidebar';
 import AccountManagement from '../components/admin/AccountManagement';
+import ServiceManagement from '../components/admin/ServiceManagement';
+import ArticleManagement from '../components/admin/ArticleManagement';
+import DoctorManagement from '../components/admin/DoctorManagement';
 
 export default function AdminPage() {
   const [activeMenu, setActiveMenu] = useState('accounts');
@@ -11,10 +14,14 @@ export default function AdminPage() {
     switch (activeMenu) {
       case 'accounts':
         return <AccountManagement />;
+      case 'services':
+        return <ServiceManagement />;
+      case 'articles':
+        return <ArticleManagement />;
+      case 'doctors':
+        return <DoctorManagement />;
       case 'revenue':
         return <div className="p-8"><h2 className="text-2xl font-bold">Doanh Thu</h2></div>;
-      case 'doctors':
-        return <div className="p-8"><h2 className="text-2xl font-bold">Bác Sĩ</h2></div>;
       case 'staff':
         return <div className="p-8"><h2 className="text-2xl font-bold">Nhân Viên</h2></div>;
       case 'patients':

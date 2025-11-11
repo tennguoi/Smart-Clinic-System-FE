@@ -1,8 +1,10 @@
-import { TrendingUp, Stethoscope, Users, UserCheck, FileText, Pill, UserCircle, Cloud } from 'lucide-react';
+import { TrendingUp, Stethoscope, Users, UserCheck, FileText, Pill, UserCircle, Cloud, Briefcase, Newspaper } from 'lucide-react';
 
 const menuItems = [
   { id: 'revenue', label: 'Doanh Thu', icon: TrendingUp },
-  { id: 'doctors', label: 'Bác Sĩ', icon: Stethoscope },
+  { id: 'doctors', label: 'Đội Ngũ Bác Sĩ', icon: Stethoscope },
+  { id: 'services', label: 'Quản Lý Dịch Vụ', icon: Briefcase },
+  { id: 'articles', label: 'Quản Lý Bài Viết', icon: Newspaper },
   { id: 'staff', label: 'Nhân Viên', icon: Users },
   { id: 'patients', label: 'Bệnh Nhân', icon: UserCheck },
   { id: 'invoices', label: 'Hóa Đơn', icon: FileText },
