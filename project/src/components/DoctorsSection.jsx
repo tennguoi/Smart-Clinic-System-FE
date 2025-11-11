@@ -20,60 +20,64 @@ export default function DoctorsSection({ doctors = [] }) {
   }, [providedCount]);
 
   return (
-    <section id="doctors" className="py-20 bg-white">
+    <section id="doctors" className="py-20 bg-gradient-to-b from-white to-cyan-50/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <span className="text-blue-600 font-semibold text-sm uppercase tracking-wide">
+          <span className="text-cyan-600 font-semibold text-sm uppercase tracking-wide">
             Đội Ngũ Chuyên Gia
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-3 mb-4">
             Bác Sĩ Chuyên Khoa Hàng Đầu
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-700 max-w-2xl mx-auto">
             Đội ngũ bác sĩ giàu kinh nghiệm, tận tâm với nghề, luôn cập nhật kiến thức y khoa mới nhất
           </p>
         </div>
 
         {(!Array.isArray(data) || data.length === 0) && (
-          <div className="text-center text-gray-500">Không có bác sĩ nào để hiển thị.</div>
+          <div className="text-center text-gray-500 py-12">Không có bác sĩ nào để hiển thị.</div>
         )}
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {Array.isArray(data) && data.map((doctor, i) => (
             <div
               key={`${doctor.fullName || 'doctor'}-${i}`}
-              className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all group"
+              className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-2xl hover:shadow-cyan-500/20 transition-all duration-300 group transform hover:-translate-y-2"
             >
               <div className="relative overflow-hidden">
                 <img
                   src={doctor.photoUrl || 'https://via.placeholder.com/400x300?text=Doctor'}
                   alt={doctor.fullName || 'Bác sĩ'}
-                  className="w-full h-72 object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-72 object-cover group-hover:scale-110 transition-transform duration-500"
                 />
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full p-2">
-                  <Award className="w-5 h-5 text-blue-600" />
+                <div className="absolute top-4 right-4 bg-gradient-to-br from-cyan-500 to-emerald-500 backdrop-blur-sm rounded-full p-2.5 shadow-lg">
+                  <Award className="w-5 h-5 text-white" />
                 </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-cyan-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
 
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-1">
+              <div className="p-6 bg-white">
+                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-cyan-700 transition-colors">
                   {doctor.fullName || 'Chưa có tên'}
                 </h3>
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                   {doctor.bio || '—'}
                 </p>
-                <p className="text-sm text-gray-500">
-                  {typeof doctor.experienceYears === 'number' ? doctor.experienceYears : 0} năm kinh nghiệm
-                </p>
+                <div className="flex items-center space-x-2 text-sm">
+                  <span className="text-cyan-600 font-semibold">
+                    {typeof doctor.experienceYears === 'number' ? doctor.experienceYears : 0}
+                  </span>
+                  <span className="text-gray-500">năm kinh nghiệm</span>
+                </div>
               </div>
             </div>
           ))}
         </div>
 
         <div className="mt-12 text-center">
-          <div className="inline-flex items-center space-x-2 text-gray-600">
-            <Award className="w-5 h-5 text-blue-600" />
-            <span className="text-sm">
+          <div className="inline-flex items-center space-x-3 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-md border border-cyan-100">
+            <Award className="w-5 h-5 text-cyan-600" />
+            <span className="text-sm text-gray-700">
               Tất cả bác sĩ đều được Bộ Y Tế chứng nhận và có chứng chỉ hành nghề hợp lệ
             </span>
           </div>
