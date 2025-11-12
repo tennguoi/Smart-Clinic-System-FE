@@ -28,7 +28,7 @@ export default function Testimonials() {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch('http://localhost:8082/api/public/reviews/summary');
+      const res = await fetch('http://localhost:8082/api/reviews/summary');
       if (!res.ok) throw new Error('Không thể tải đánh giá');
       const data = await res.json();
 
