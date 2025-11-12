@@ -26,7 +26,7 @@ export default function ReviewForm({ onReviewAdded }) {
     }
 
     try {
-      const res = await fetch('http://localhost:8082/api/public/reviews', {
+      const res = await fetch('http://localhost:8082/api/reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
