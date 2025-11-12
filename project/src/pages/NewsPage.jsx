@@ -9,16 +9,27 @@ export default function NewsPage() {
   const [keyword, setKeyword] = useState("");
   const [page, setPage] = useState(0);
 
-  const loadArticles = () => {
-let url = `http://localhost:8082/api/public/articles?page=${page}&size=6`;
-if (category) url = `http://localhost:8082/api/public/articles/category/${category}`;
-if (keyword) url = `http://localhost:8082/api/public/articles/search?keyword=${keyword}`;
+  const loadArticles = async () => {
+    let url = `http://localhost:8082/api/public/articles?page=${page}&size=6`;
+    if (category) {
+      url = `http://localhost:8082/api/public/articles/category/${encodeURIComponent(category)}`;
+    }
+    if (keyword) {
+      url = `http://localhost:8082/api/public/articles/search?title=${encodeURIComponent(keyword)}`;
+    }
 
-
-
-    fetch(url)
-      .then((res) => res.json())
-      .then((data) => setNews(data.content ? data.content : data));
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || `Failed to load articles (${response.status})`);
+      }
+      const data = await response.json();
+      setNews(data.content ? data.content : data);
+    } catch (error) {
+      console.error("Error loading articles:", error);
+      setNews([]);
+    }
   };
 
   useEffect(() => {
