@@ -25,24 +25,26 @@ const Login = () => {
         password,
       });
 
-      const { token, roles, userId, fullName, message } = response.data;
+      const { token, roles, userId, fullName, message, requires2FA } = response.data;
 
-      // Nếu yêu cầu xác thực 2FA
-      if (message && message.includes('2FA required')) {
-        setError('Vui lòng kiểm tra email để lấy mã OTP xác thực 2FA.');
-        setLoading(false);
+      // ✅ Kiểm tra nếu cần xác thực 2FA
+      if (requires2FA === true) {
+        setSuccess('OTP đã được gửi đến email của bạn!');
+        setTimeout(() => {
+          // Chuyển đến trang verify 2FA (không phải verify-otp)
+          navigate('/verify-2fa', { state: { email } });
+        }, 1000);
         return;
       }
 
+      // ✅ Đăng nhập bình thường (không có 2FA)
       if (!token) {
         setError('Đăng nhập thất bại! Không nhận được token.');
         setLoading(false);
         return;
       }
 
-      // Lưu thông tin vào authService
       authService.login(token, { userId, email, fullName }, roles);
-
       setSuccess('Đăng nhập thành công!');
 
       const defaultRoute = authService.getDefaultRoute();
@@ -68,26 +70,19 @@ const Login = () => {
         backgroundRepeat: 'no-repeat',
       }}
     >
-      {/* Overlay gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-teal-50/70 to-blue-100/70 animate-pulse"></div>
-
-      {/* Hiệu ứng nền */}
       <div className="absolute w-72 h-72 bg-teal-300 rounded-full opacity-30 blur-3xl animate-ping top-10 left-10"></div>
       <div className="absolute w-96 h-96 bg-blue-400 rounded-full opacity-20 blur-3xl animate-pulse bottom-10 right-10"></div>
 
-      {/* Form đăng nhập */}
       <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl relative z-10 animate-fadeIn">
-        {/* Logo */}
         <div className="flex justify-center mb-6">
           <img src={logo} alt="Logo" className="w-full max-w-[150px] h-auto object-contain" />
         </div>
 
-        {/* Tiêu đề */}
         <h2 className="text-3xl font-bold text-center text-teal-700 mb-6">
           Đăng nhập phòng khám
-        </h2>
+          </h2>
 
-        {/* Thông báo */}
         {error && (
           <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">
             {error}
@@ -99,7 +94,6 @@ const Login = () => {
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">

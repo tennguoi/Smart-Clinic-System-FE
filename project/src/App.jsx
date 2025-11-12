@@ -26,7 +26,7 @@ import ReceptionPage from './pages/ReceptionPage';
 // import AppointmentChatbotForm from './components/chatbot/AppointmentChatbotForm'; // KHÔNG CẦN IMPORT TRỰC TIẾP Ở ĐÂY NỮA
 import ChatbotAvatar from './components/chatbot/ChatbotAvatar';
 import NewsDetailPage from "./pages/NewsDetailPage";
-
+import Verify2FA from './components/Verify2FA';
 
 function App() {
   
@@ -40,7 +40,7 @@ function App() {
         <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profile" element={<ProfilePage />} />
-
+        <Route path="/verify-2fa" element={<Verify2FA />} />
         {/* === PUBLIC ROUTES – CÓ STICKYNAVBAR === */}
         <Route
           path="/*"
