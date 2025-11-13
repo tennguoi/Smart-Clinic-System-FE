@@ -89,7 +89,7 @@ export default function ServicesSection() {
             Dịch Vụ
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-3 mb-4">
-            Dịch vụ chuyên khoa Tai - Mũi - Họng
+            Bảng giá dịch vụ  tai - mũi - họng
           </h2>
         </div>
 
