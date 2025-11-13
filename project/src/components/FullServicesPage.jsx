@@ -59,8 +59,8 @@ export default function FullServicesPage() {
       <div className="container mx-auto px-6 text-center">
         <h2 className="text-3xl font-bold mb-6">Tất cả dịch vụ Tai - Mũi - Họng</h2>
 
-        {/* Filter */}
-        <div className="flex justify-center mb-8 space-x-3">
+   {/* Filter */}
+        <div className="flex justify-center mb-10 space-x-3 flex-wrap gap-3">
           {[
             { id: 'all', label: 'Tất cả' },
             { id: 'Consultation', label: getCategoryLabel('Consultation') },
@@ -70,11 +70,11 @@ export default function FullServicesPage() {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-5 py-2 rounded-full border text-sm font-medium transition-all duration-200
+              className={`px-6 py-2.5 rounded-full border text-sm font-semibold transition-all duration-300 transform hover:scale-105
               ${
                 selectedCategory === cat.id
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white hover:bg-blue-50 border-gray-300 text-gray-700'
+                  ? 'bg-gradient-to-r from-cyan-500 to-emerald-500 text-white border-transparent shadow-lg shadow-cyan-500/30'
+                  : 'bg-white hover:bg-cyan-50 border-gray-300 text-gray-700 hover:border-cyan-400 shadow-md hover:shadow-lg'
               }`}
             >
               {cat.label}
