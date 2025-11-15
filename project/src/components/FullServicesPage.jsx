@@ -55,12 +55,16 @@ export default function FullServicesPage() {
   };
 
   return (
-    <section className="py-16 bg-gray-50 min-h-screen">
-      <div className="container mx-auto px-6 text-center">
-        <h2 className="text-3xl font-bold mb-6">Tất cả dịch vụ Tai - Mũi - Họng</h2>
+    <section className="bg-gradient-to-b from-cyan-50 via-white to-cyan-50/30 min-h-screen -mt-12 sm:-mt-16 lg:-mt-20 pt-18 sm:pt-20 lg:pt-24 pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
+        <div>
+          <h2 className="text-4xl font-bold text-gray-900 mt-4">Danh mục dịch vụ Tai - Mũi - Họng</h2>
+          <p className="text-lg text-gray-600 mt-3">
+            Lựa chọn phù hợp cho từng nhu cầu khám – từ tư vấn, chẩn đoán đến thủ thuật chuyên sâu.
+          </p>
+        </div>
 
-   {/* Filter */}
-        <div className="flex justify-center mb-10 space-x-3 flex-wrap gap-3">
+        <div className="flex justify-center flex-wrap gap-3">
           {[
             { id: 'all', label: 'Tất cả' },
             { id: 'Consultation', label: getCategoryLabel('Consultation') },

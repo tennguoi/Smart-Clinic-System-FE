@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 export default function Hero() {
   return (
-    <section id="home" className="relative bg-gradient-to-br from-cyan-50 via-blue-50 to-emerald-50 pt-20 pb-16 md:pt-24 md:pb-20 overflow-hidden">
+    <section id="home" className="relative bg-gradient-to-br from-cyan-50 via-blue-50 to-emerald-50 pt-16 pb-12 md:pt-20 md:pb-16 overflow-hidden">
       {/* Decorative elements */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-cyan-200/30 to-transparent rounded-full blur-3xl"></div>
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-emerald-200/30 to-transparent rounded-full blur-3xl"></div>
@@ -18,8 +18,12 @@ export default function Hero() {
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-              Chăm Sóc<br />
-              <span className="bg-gradient-to-r from-cyan-600 to-emerald-600 bg-clip-text text-transparent">Tai-Mũi-Họng</span><br />
+              Chăm Sóc
+              <br />
+              <span className="bg-gradient-to-r from-cyan-600 to-emerald-600 bg-clip-text text-transparent">
+                Tai-Mũi-Họng
+              </span>
+              <br />
               Toàn Diện
             </h1>
 

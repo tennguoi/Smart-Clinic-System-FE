@@ -47,6 +47,7 @@ function App() {
           element={
             <>
               <StickyNavbar />
+              <div className="w-full h-16 sm:h-20 lg:h-24" aria-hidden="true"></div>
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/about" element={<AboutPage />} />

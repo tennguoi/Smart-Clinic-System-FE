@@ -4,7 +4,7 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gray-900 text-gray-300">
+    <footer id="contact" className="bg-gray-900 text-gray-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div>
@@ -12,7 +12,7 @@ export default function Footer() {
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-teal-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold">ENT</span>
               </div>
-              <span className="text-white font-bold text-lg">Phòng Khám ENT</span>
+              <span className="text-white font-bold text-lg">Phòng Khám thông minh</span>
             </div>
             <p className="text-sm mb-4">
               Chuyên khoa Tai-Mũi-Họng uy tín, chất lượng hàng đầu Việt Nam
@@ -60,11 +60,7 @@ export default function Footer() {
                   Thủ Thuật ENT
                 </a>
               </li>
-              <li>
-                <a href="#services" className="hover:text-blue-400 transition-colors">
-                  Gói Khám Tổng Quát
-                </a>
-              </li>
+              
             </ul>
           </div>
 
@@ -86,11 +82,7 @@ export default function Footer() {
                   Tin Tức
                 </a>
               </li>
-              <li>
-                <a href="#" className="hover:text-blue-400 transition-colors">
-                  Tuyển Dụng
-                </a>
-              </li>
+
             </ul>
           </div>
 

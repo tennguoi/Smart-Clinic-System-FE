@@ -82,12 +82,9 @@ export default function ServicesSection() {
   };
 
   return (
-    <section id="services" className="py-20 bg-gradient-to-b from-cyan-50/30 to-white">
-      <div className="container mx-auto px-6">
+    <section id="services" className="py-12 md:py-14 bg-gradient-to-b from-cyan-50/30 to-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <span className="text-cyan-600 font-semibold text-sm uppercase tracking-wide">
-            Dịch Vụ
-          </span>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-3 mb-4">
             Bảng giá dịch vụ  tai - mũi - họng
           </h2>

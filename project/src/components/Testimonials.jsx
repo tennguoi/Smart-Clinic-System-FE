@@ -46,7 +46,7 @@ export default function Testimonials() {
 
   if (loading) {
     return (
-      <section className="py-16 bg-gray-50">
+      <section className="py-6 md:py-10 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="text-gray-500">Đang tải đánh giá...</p>
         </div>
@@ -68,11 +68,11 @@ export default function Testimonials() {
   const displayedReviews = reviews.slice(0, 8);
 
   return (
-    <section className="py-16 bg-gray-50">
+    <section className="py-6 md:py-10 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Tiêu đề + Tóm tắt */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
        
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-3">
             Bệnh Nhân Nói Gì Về Chúng Tôi

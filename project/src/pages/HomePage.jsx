@@ -36,8 +36,6 @@ export default function HomePage() {
       <div className="bg-gray-50">
         <Testimonials />
       </div>
-
-      <Contact />
       <Footer />
     </main>
   );
