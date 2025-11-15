@@ -28,10 +28,34 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response && error.response.status === 401) {
-      // Token hết hạn hoặc không hợp lệ
-      authService.logout();
-      window.location.href = '/login';
+    if (error.response) {
+      const status = error.response.status;
+      const url = error.config?.url || '';
+      const isRoomEndpoint = url.includes('/rooms');
+      
+      // Nếu là lỗi 404 (Not Found) - endpoint chưa được triển khai, không đăng xuất
+      if (status === 404) {
+        return Promise.reject(error);
+      }
+      
+      // Nếu là lỗi 403 (Forbidden) - không có quyền, không đăng xuất
+      if (status === 403) {
+        return Promise.reject(error);
+      }
+      
+      // Nếu là lỗi 401 (Unauthorized)
+      if (status === 401) {
+        // Nếu là endpoint rooms, không đăng xuất (có thể endpoint chưa được triển khai hoặc chưa có quyền)
+        // Chỉ reject error để component xử lý
+        if (isRoomEndpoint) {
+          return Promise.reject(error);
+        }
+        
+        // Đăng xuất chỉ khi thực sự là lỗi authentication (token hết hạn hoặc không hợp lệ)
+        // Và không phải là endpoint rooms
+        authService.logout();
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

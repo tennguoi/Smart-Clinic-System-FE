@@ -4,6 +4,7 @@ import ReceptionHeader from '../components/receptionist/Header';
 import ReceptionSidebar from '../components/receptionist/Sidebar';
 import ProfileSection from '../components/admin/ProfileSection';
 import SecuritySection from '../components/admin/SecuritySection';
+import ClinicRoomManagement from '../components/receptionist/ClinicRoomManagement';
 import { authService } from '../services/authService';
 import axiosInstance from '../utils/axiosConfig';
 
@@ -508,6 +509,7 @@ export default function ReceptionPage() {
 
         <main className="flex-1 p-8 space-y-8">
           {activeMenu === 'appointments' && renderAppointmentsSection()}
+          {activeMenu === 'rooms' && <ClinicRoomManagement />}
           {activeMenu === 'records' && (
             <div className="bg-white rounded-lg shadow border border-gray-200 p-6 text-gray-500">
               Tính năng quản lý hồ sơ đang được phát triển.

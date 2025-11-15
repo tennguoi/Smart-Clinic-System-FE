@@ -1,8 +1,9 @@
-import { FolderOpen, CalendarDays, FileText, Cloud, UserCircle, Shield } from "lucide-react";
+import { FolderOpen, CalendarDays, FileText, Cloud, UserCircle, Shield, Building2 } from "lucide-react";
 
 const menuItems = [
 
   { id: "appointments", label: "Quản lý lịch hẹn", icon: CalendarDays },
+  { id: "rooms", label: "Quản lý phòng khám", icon: Building2 },
   { id: "records", label: "Quản lý hồ sơ", icon: FolderOpen },
   { id: "invoices", label: "Hóa đơn", icon: FileText },
   { id: "profile", label: "Hồ sơ cá nhân", icon: UserCircle },
