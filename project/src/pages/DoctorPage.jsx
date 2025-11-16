@@ -120,19 +120,24 @@ export default function DoctorPage() {
     }
     setFormSubmitting(true);
     try {
-      await medicalRecordApi.create({
+      const created = await medicalRecordApi.create({
         // Hiện chỉ gửi diagnosis và ghi chú; patientId để null (tùy chọn)
         patientId: null,
         diagnosis: formDiagnosis.trim(),
         treatmentNotes: formTreatmentNotes?.trim() || '',
       });
       setFormSuccess('Tạo hồ sơ khám thành công!');
+      // Hiển thị tên bệnh nhân vừa nhập ở UI (vì backend không lưu patientName)
+      const createdWithName = {
+        ...created,
+        patientName: (formPatientName && formPatientName.trim()) || created.patientName || null,
+      };
+      setRecords((prev) => [createdWithName, ...(Array.isArray(prev) ? prev : [])]);
       setFormPatientId('');
       setFormPatientName('');
       setFormDiagnosis('');
       setFormTreatmentNotes('');
       setShowCreateForm(false);
-      await fetchMyRecords();
       setTimeout(() => setFormSuccess(''), 2500);
     } catch (error) {
       const msg = error.response?.data?.message || error.message || 'Tạo hồ sơ khám thất bại';
