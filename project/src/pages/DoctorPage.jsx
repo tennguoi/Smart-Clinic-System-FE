@@ -5,6 +5,7 @@ import ProfileSection from '../components/admin/ProfileSection';
 import SecuritySection from '../components/admin/SecuritySection';
 import axiosInstance from '../utils/axiosConfig';
 import { authService } from '../services/authService';
+import CurrentPatientView from '../components/doctor/CurrentPatientView';
 
 const initialUserData = {
   fullName: '',
@@ -358,7 +359,7 @@ export default function DoctorPage() {
 
         <main className="flex-1 p-8 space-y-8">
           {activeMenu === 'schedule' && renderSchedule()}
-          {activeMenu === 'patients' && renderPlaceholder('Danh sách bệnh nhân')}
+          {activeMenu === 'current-patient' && <CurrentPatientView />}
           {activeMenu === 'prescriptions' && renderPlaceholder('Quản lý đơn thuốc')}
           {activeMenu === 'records' && renderPlaceholder('Hồ sơ khám bệnh')}
           {activeMenu === 'invoices' && renderPlaceholder('Quản lý hóa đơn')}

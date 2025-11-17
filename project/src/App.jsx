@@ -1,4 +1,3 @@
-// src/App.jsx (ĐÃ SỬA ĐỔI)
 // src/App.jsx
 import { Routes, Route } from 'react-router-dom';
 import StickyNavbar from './components/StickyNavbar';
@@ -10,9 +9,7 @@ import DoctorsPage from './pages/DoctorsPage';
 import PricingPage from './pages/PricingPage';
 import NewsPage from './pages/NewsPage';
 import AppointmentPage from './pages/AppointmentPage';
-import ReviewsPage from './pages/ReviewsPage'; // ĐÃ THÊM
-
-// === AUTH PAGES ===
+import ReviewsPage from './pages/ReviewsPage';
 import Login from './components/Login';
 import ForgotPassword from './components/ForgotPassword';
 import VerifyOtp from './components/VerifyOtp';
@@ -20,28 +17,24 @@ import ResetPassword from './components/ResetPassword';
 import AdminPage from './pages/AdminPage';
 import DoctorPage from './pages/DoctorPage';
 import ProfilePage from './pages/ProfilePage';
-// === ADMIN / STAFF PAGES ===
-import DoctorManagementPage from './pages/DoctorManagementPage';
 import ReceptionPage from './pages/ReceptionPage';
-// import AppointmentChatbotForm from './components/chatbot/AppointmentChatbotForm'; // KHÔNG CẦN IMPORT TRỰC TIẾP Ở ĐÂY NỮA
 import ChatbotAvatar from './components/chatbot/ChatbotAvatar';
 import NewsDetailPage from "./pages/NewsDetailPage";
 import Verify2FA from './components/Verify2FA';
-
+import CurrentPatientView from './components/doctor/CurrentPatientView'
 function App() {
-  
   return (
     <div className="min-h-screen bg-white">
       <Routes>
-
-        {/* === AUTH ROUTES – KHÔNG CÓ NAVBAR === */}
+        {/* AUTH ROUTES */}
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/verify-2fa" element={<Verify2FA />} />
-        {/* === PUBLIC ROUTES – CÓ STICKYNAVBAR === */}
+
+        {/* PUBLIC ROUTES */}
         <Route
           path="/*"
           element={
@@ -56,48 +49,46 @@ function App() {
                 <Route path="/pricing" element={<PricingPage />} />
                 <Route path="/news" element={<NewsPage />} />
                 <Route path="/appointment" element={<AppointmentPage />} />
-                <Route path="/danh-gia" element={<ReviewsPage />} /> {/* ĐÃ CÓ */}
+                <Route path="/danh-gia" element={<ReviewsPage />} />
                 <Route path="/news/:id" element={<NewsDetailPage />} />
               </Routes>
-                   <ChatbotAvatar />
+              <ChatbotAvatar />
             </>
           }
         />
 
-
-
-        {/* Protected Routes – KHÔNG có StickyNavbar */}
-        {/* Admin Route - Chỉ cho ROLE_ADMIN */}
-        <Route 
-          path="/admin/*" 
+        {/* ADMIN */}
+        <Route
+          path="/admin/*"
           element={
             <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
               <AdminPage />
             </ProtectedRoute>
-          } 
+          }
         />
-        
-        {/* Doctor Route - Cho ROLE_BAC_SI và ROLE_ADMIN */}
-        <Route 
-          path="/doctor/*" 
+
+        {/* DOCTOR – CÓ NESTED ROUTE */}
+        <Route
+          path="/doctor"
           element={
             <ProtectedRoute allowedRoles={['ROLE_BAC_SI', 'ROLE_ADMIN']}>
               <DoctorPage />
             </ProtectedRoute>
-          } 
-        />
-        
-        {/* Reception Route - Cho ROLE_TIEP_TAN và ROLE_ADMIN */}
-        <Route 
-          path="/reception/*" 
+          }
+        >
+          <Route index element={<DoctorPage />} /> {/* trang mặc định */}
+          <Route path="current-patient" element={<CurrentPatientView />} />
+        </Route>
+
+        {/* RECEPTION */}
+        <Route
+          path="/reception/*"
           element={
             <ProtectedRoute allowedRoles={['ROLE_TIEP_TAN', 'ROLE_ADMIN']}>
               <ReceptionPage />
             </ProtectedRoute>
-          } 
+          }
         />
-      
-
       </Routes>
     </div>
   );
