@@ -4,6 +4,9 @@ import ReceptionHeader from '../components/receptionist/Header';
 import ReceptionSidebar from '../components/receptionist/Sidebar';
 import ProfileSection from '../components/admin/ProfileSection';
 import SecuritySection from '../components/admin/SecuritySection';
+import PatientManagementPage from './PatientManagementPage';
+import TestApiPage from '../components/TestApiPage';
+import PrescriptionExportPage from '../components/PrescriptionExportPage';
 import { authService } from '../services/authService';
 import axiosInstance from '../utils/axiosConfig';
 
@@ -148,6 +151,39 @@ export default function ReceptionPage() {
       console.error('Failed to confirm appointment:', error);
       setAppointmentsError(
         error.response?.data?.message || 'Xác nhận lịch hẹn thất bại. Vui lòng thử lại.'
+      );
+    } finally {
+      setConfirmingId(null);
+    }
+  };
+
+  const handleCancelAppointment = async (appointmentId, patientName) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn hủy lịch hẹn của bệnh nhân ${patientName}?`)) {
+      return;
+    }
+
+    setConfirmingId(appointmentId);
+    setAppointmentsError('');
+    setSuccessMessage('');
+
+    try {
+      await axiosInstance.patch(`/api/appointments/${appointmentId}/status`, null, {
+        params: { status: 'Cancelled' },
+      });
+
+      setAppointments((prev) =>
+        prev.map((appt) =>
+          appt.appointmentId === appointmentId
+            ? { ...appt, status: 'Cancelled', cancelledAt: new Date().toISOString() }
+            : appt
+        )
+      );
+
+      setSuccessMessage('Lịch hẹn đã được hủy thành công.');
+    } catch (error) {
+      console.error('Failed to cancel appointment:', error);
+      setAppointmentsError(
+        error.response?.data?.message || 'Hủy lịch hẹn thất bại. Vui lòng thử lại.'
       );
     } finally {
       setConfirmingId(null);
@@ -390,6 +426,10 @@ export default function ReceptionPage() {
                       className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${
                         appointment.status === 'Confirmed'
                           ? 'bg-green-100 text-green-700'
+                          : appointment.status === 'In_Progress'
+                          ? 'bg-blue-100 text-blue-700'
+                          : appointment.status === 'Completed'
+                          ? 'bg-purple-100 text-purple-700'
                           : appointment.status === 'Cancelled'
                           ? 'bg-red-100 text-red-700'
                           : 'bg-yellow-100 text-yellow-700'
@@ -399,18 +439,31 @@ export default function ReceptionPage() {
                         ? 'Chờ xác nhận'
                         : appointment.status === 'Confirmed'
                         ? 'Đã xác nhận'
+                        : appointment.status === 'In_Progress'
+                        ? 'Đang khám'
+                        : appointment.status === 'Completed'
+                        ? 'Hoàn thành'
                         : 'Đã hủy'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-center">
                     {appointment.status === 'Pending' ? (
-                      <button
-                        onClick={() => handleConfirmAppointment(appointment.appointmentId)}
-                        disabled={confirmingId === appointment.appointmentId}
-                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition"
-                      >
-                        {confirmingId === appointment.appointmentId ? 'Đang xác nhận...' : 'Xác nhận'}
-                      </button>
+                      <div className="flex justify-center space-x-2">
+                        <button
+                          onClick={() => handleConfirmAppointment(appointment.appointmentId)}
+                          disabled={confirmingId === appointment.appointmentId}
+                          className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:bg-green-300 disabled:cursor-not-allowed transition"
+                        >
+                          {confirmingId === appointment.appointmentId ? 'Đang xử lý...' : 'Duyệt'}
+                        </button>
+                        <button
+                          onClick={() => handleCancelAppointment(appointment.appointmentId, appointment.patientName)}
+                          disabled={confirmingId === appointment.appointmentId}
+                          className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed transition"
+                        >
+                          {confirmingId === appointment.appointmentId ? 'Đang xử lý...' : 'Hủy'}
+                        </button>
+                      </div>
                     ) : appointment.confirmedAt ? (
                       <div className="text-xs text-gray-500">
                         Xác nhận lúc {formatDateTime(appointment.confirmedAt)}
@@ -508,16 +561,22 @@ export default function ReceptionPage() {
 
         <main className="flex-1 p-8 space-y-8">
           {activeMenu === 'appointments' && renderAppointmentsSection()}
+          {activeMenu === 'patients' && (
+            <div className="bg-transparent">
+              <PatientManagementPage />
+            </div>
+          )}
           {activeMenu === 'records' && (
             <div className="bg-white rounded-lg shadow border border-gray-200 p-6 text-gray-500">
-              Tính năng quản lý hồ sơ đang được phát triển.
+              Tính năng quản lý hồ sơ bệnh án đang được phát triển.
             </div>
           )}
           {activeMenu === 'invoices' && (
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 text-gray-500">
-              Tính năng quản lý hóa đơn đang được phát triển.
+            <div className="bg-transparent">
+              <PrescriptionExportPage />
             </div>
           )}
+          {activeMenu === 'test-api' && <TestApiPage />}
           {activeMenu === 'profile' && renderProfileSection()}
           {activeMenu === 'security' && renderSecuritySection()}
         </main>

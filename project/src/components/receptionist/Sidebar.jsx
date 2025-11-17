@@ -1,10 +1,11 @@
-import { FolderOpen, CalendarDays, FileText, Cloud, UserCircle, Shield } from "lucide-react";
+import { FolderOpen, CalendarDays, FileText, Cloud, UserCircle, Shield, Users, TestTube } from "lucide-react";
 
 const menuItems = [
-
   { id: "appointments", label: "Quản lý lịch hẹn", icon: CalendarDays },
-  { id: "records", label: "Quản lý hồ sơ", icon: FolderOpen },
-  { id: "invoices", label: "Hóa đơn", icon: FileText },
+  { id: "patients", label: "Quản lý bệnh nhân", icon: Users },
+  { id: "records", label: "Quản lý hồ sơ bệnh án", icon: FolderOpen },
+  { id: "invoices", label: "Xuất toa thuốc PDF", icon: FileText },
+  { id: "test-api", label: "🧪 Test API", icon: TestTube },
   { id: "profile", label: "Hồ sơ cá nhân", icon: UserCircle },
   { id: "security", label: "Bảo mật", icon: Shield },
 ];

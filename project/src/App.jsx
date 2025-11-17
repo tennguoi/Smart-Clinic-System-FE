@@ -1,6 +1,7 @@
 // src/App.jsx (ĐÃ SỬA ĐỔI)
 // src/App.jsx
 import { Routes, Route } from 'react-router-dom';
+import { LanguageProvider } from './contexts/LanguageContext';
 import StickyNavbar from './components/StickyNavbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import HomePage from './pages/HomePage';
@@ -20,18 +21,21 @@ import ResetPassword from './components/ResetPassword';
 import AdminPage from './pages/AdminPage';
 import DoctorPage from './pages/DoctorPage';
 import ProfilePage from './pages/ProfilePage';
+import PatientProfilePage from './pages/PatientProfilePage';
 // === ADMIN / STAFF PAGES ===
 import DoctorManagementPage from './pages/DoctorManagementPage';
 import ReceptionPage from './pages/ReceptionPage';
 // import AppointmentChatbotForm from './components/chatbot/AppointmentChatbotForm'; // KHÔNG CẦN IMPORT TRỰC TIẾP Ở ĐÂY NỮA
 import ChatbotAvatar from './components/chatbot/ChatbotAvatar';
 import NewsDetailPage from "./pages/NewsDetailPage";
+import FaqPage from './pages/FaqPage';
 
 
 function App() {
-  
+  
   return (
-    <div className="min-h-screen bg-white">
+    <LanguageProvider>
+      <div className="min-h-screen bg-white">
       <Routes>
 
         {/* === AUTH ROUTES – KHÔNG CÓ NAVBAR === */}
@@ -40,6 +44,7 @@ function App() {
         <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/patient-profile/:patientId" element={<PatientProfilePage />} />
 
         {/* === PUBLIC ROUTES – CÓ STICKYNAVBAR === */}
         <Route
@@ -56,6 +61,7 @@ function App() {
                 <Route path="/news" element={<NewsPage />} />
                 <Route path="/appointment" element={<AppointmentPage />} />
                 <Route path="/danh-gia" element={<ReviewsPage />} /> {/* ĐÃ CÓ */}
+                <Route path="/faq" element={<FaqPage />} />
                 <Route path="/news/:id" element={<NewsDetailPage />} />
               </Routes>
                    <ChatbotAvatar />
@@ -99,6 +105,7 @@ function App() {
 
       </Routes>
     </div>
+    </LanguageProvider>
   );
 }
 

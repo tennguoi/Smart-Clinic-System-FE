@@ -3,6 +3,8 @@
 import { Star, Send } from 'lucide-react';
 import { useState } from 'react';
 
+const API_BASE_URL = 'http://localhost:8082';
+
 export default function ReviewForm({ onReviewAdded }) {
   const [showForm, setShowForm] = useState(false);
   const [rating, setRating] = useState(0);
@@ -26,7 +28,7 @@ export default function ReviewForm({ onReviewAdded }) {
     }
 
     try {
-      const res = await fetch('http://localhost:8082/api/reviews', {
+      const res = await fetch(`${API_BASE_URL}/api/public/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -36,7 +38,10 @@ export default function ReviewForm({ onReviewAdded }) {
         }),
       });
 
-      if (!res.ok) throw new Error('Gửi thất bại');
+      if (!res.ok) {
+        const message = await res.text();
+        throw new Error(message || 'Gửi thất bại');
+      }
 
       const newReview = await res.json();
       onReviewAdded(newReview, rating);
@@ -48,6 +53,7 @@ export default function ReviewForm({ onReviewAdded }) {
       setSubmitSuccess(true);
       setTimeout(() => setSubmitSuccess(false), 3000);
     } catch (err) {
+      console.error('Error submitting review:', err);
       setSubmitError('Gửi thất bại, vui lòng thử lại');
     } finally {
       setSubmitting(false);

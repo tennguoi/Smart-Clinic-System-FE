@@ -5,6 +5,7 @@ import axios from 'axios';
 export default function AppointmentForm() {
   const [formData, setFormData] = useState({
     fullName: '',
+    age: '',
     phone: '',
     email: '',
     date: '',
@@ -23,10 +24,32 @@ export default function AppointmentForm() {
     setErrorMessage('');
 
     try {
+      // Validation: Ngày khám chỉ được đặt trong 3 ngày
+      const selectedDate = new Date(formData.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const maxDate = new Date(today);
+      maxDate.setDate(maxDate.getDate() + 3);
+
+      if (selectedDate < today) {
+        setErrorMessage('Ngày khám không được trong quá khứ');
+        setSubmitStatus('error');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (selectedDate > maxDate) {
+        setErrorMessage('Ngày khám chỉ được đặt trong vòng 3 ngày tới');
+        setSubmitStatus('error');
+        setIsSubmitting(false);
+        return;
+      }
+
       const appointmentDateTime = `${formData.date}T${formData.time}:00`;
 
       const payload = {
         patientName: formData.fullName,
+        age: formData.age ? parseInt(formData.age) : null,
         phone: formData.phone,
         email: formData.email,
         appointmentTime: appointmentDateTime,
@@ -52,6 +75,7 @@ export default function AppointmentForm() {
 
       setFormData({
         fullName: '',
+        age: '',
         phone: '',
         email: '',
         date: '',
@@ -130,20 +154,37 @@ export default function AppointmentForm() {
           </div>
 
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-              Số Điện Thoại <span className="text-red-500">*</span>
+            <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">
+              Tuổi
             </label>
             <input
-              type="tel"
-              id="phone"
-              name="phone"
-              required
-              value={formData.phone}
+              type="number"
+              id="age"
+              name="age"
+              min="0"
+              max="150"
+              value={formData.age}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-              placeholder="0123 456 789"
+              placeholder="Nhập tuổi"
             />
           </div>
+        </div>
+
+        <div>
+          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+            Số Điện Thoại <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            required
+            value={formData.phone}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+            placeholder="0123 456 789"
+          />
         </div>
 
         <div>
@@ -177,6 +218,11 @@ export default function AppointmentForm() {
                 value={formData.date}
                 onChange={handleChange}
                 min={new Date().toISOString().split('T')[0]}
+                max={(() => {
+                  const maxDate = new Date();
+                  maxDate.setDate(maxDate.getDate() + 3);
+                  return maxDate.toISOString().split('T')[0];
+                })()}
                 className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
               />
             </div>

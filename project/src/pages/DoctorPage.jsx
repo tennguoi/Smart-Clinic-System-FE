@@ -3,6 +3,7 @@ import DoctorSidebar from '../components/doctor/Sidebar';
 import DoctorHeader from '../components/doctor/Header';
 import ProfileSection from '../components/admin/ProfileSection';
 import SecuritySection from '../components/admin/SecuritySection';
+import DoctorPatientList from '../components/DoctorPatientList';
 import axiosInstance from '../utils/axiosConfig';
 import { authService } from '../services/authService';
 
@@ -347,6 +348,20 @@ export default function DoctorPage() {
     </div>
   );
 
+  // Handle create medical record
+  const handleCreateMedicalRecord = (patient) => {
+    console.log('Create medical record for patient:', patient);
+    // TODO: Navigate to medical record form
+    alert(`Sẽ tạo hồ sơ khám cho bệnh nhân: ${patient.fullName}`);
+  };
+
+  // Handle view patient history
+  const handleViewHistory = (patient) => {
+    console.log('View history for patient:', patient);
+    // TODO: Navigate to patient history
+    alert(`Xem lịch sử khám của bệnh nhân: ${patient.fullName}`);
+  };
+
   const doctorName = useMemo(() => userData.fullName, [userData.fullName]);
 
   return (
@@ -358,7 +373,12 @@ export default function DoctorPage() {
 
         <main className="flex-1 p-8 space-y-8">
           {activeMenu === 'schedule' && renderSchedule()}
-          {activeMenu === 'patients' && renderPlaceholder('Danh sách bệnh nhân')}
+          {activeMenu === 'patients' && (
+            <DoctorPatientList
+              onCreateMedicalRecord={handleCreateMedicalRecord}
+              onViewHistory={handleViewHistory}
+            />
+          )}
           {activeMenu === 'prescriptions' && renderPlaceholder('Quản lý đơn thuốc')}
           {activeMenu === 'records' && renderPlaceholder('Hồ sơ khám bệnh')}
           {activeMenu === 'invoices' && renderPlaceholder('Quản lý hóa đơn')}

@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, User, Shield, Save } from 'lucide-react';
+import { useTranslation } from '../hooks/useTranslation';
+import { authService } from '../services/authService';
 import ProfileSection from '../components/admin/ProfileSection';
 import SecuritySection from '../components/admin/SecuritySection';
 
 export default function ProfilePage() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('profile');
   const [userData, setUserData] = useState({
     fullName: '',
@@ -18,8 +21,10 @@ export default function ProfilePage() {
   });
   const [loading, setLoading] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
+  const token = authService.getToken();
+  const userRoles = authService.getRoles();
 
   // Lấy thông tin người dùng khi trang được tải
   useEffect(() => {
@@ -90,15 +95,17 @@ export default function ProfilePage() {
       const data = await response.json();
       if (data.success) {
         localStorage.setItem('user', JSON.stringify(userData));
-        setUpdateSuccess('Cập nhật hồ sơ thành công!');
+        setUpdateSuccess(t('profile.updateSuccess', 'Cập nhật hồ sơ thành công!'));
         setTimeout(() => setUpdateSuccess(''), 3000);
       } else {
         console.error('Cập nhật hồ sơ thất bại:', data.message);
-        alert('Cập nhật thất bại: ' + data.message);
+        setError('Cập nhật thất bại: ' + data.message);
+        setTimeout(() => setError(''), 5000);
       }
     } catch (error) {
       console.error('Lỗi khi cập nhật hồ sơ:', error);
-      alert('Lỗi khi cập nhật hồ sơ');
+      setError('Lỗi khi cập nhật hồ sơ');
+      setTimeout(() => setError(''), 5000);
     }
   };
 
@@ -210,22 +217,37 @@ export default function ProfilePage() {
       <div className="bg-white border-b border-gray-200 px-8 py-4 shadow-sm">
         <div className="container mx-auto flex items-center justify-between">
           <button
-            onClick={() => navigate('/admin')}
+            onClick={() => {
+              if (userRoles.includes('ROLE_ADMIN')) {
+                navigate('/admin');
+              } else if (userRoles.includes('ROLE_BAC_SI')) {
+                navigate('/doctor');
+              } else if (userRoles.includes('ROLE_TIEP_TAN')) {
+                navigate('/reception');
+              } else {
+                navigate('/');
+              }
+            }}
             className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-blue-600 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium">Quay lại</span>
+            <span className="font-medium">{t('common.back')}</span>
           </button>
-          <h1 className="text-2xl font-bold text-gray-900">Hồ Sơ Người Dùng</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('profile.title')}</h1>
           <div className="w-40"></div> {/* Spacer for centering */}
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Success Message */}
+        {/* Messages */}
         {updateSuccess && (
           <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
             {updateSuccess}
+          </div>
+        )}
+        {error && (
+          <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+            {error}
           </div>
         )}
 
@@ -233,18 +255,20 @@ export default function ProfilePage() {
           <div className="flex border-b border-gray-200 mb-6">
             <button
               onClick={() => setActiveTab('profile')}
-              className={`px-4 py-2 text-sm font-medium ${
+              className={`flex items-center px-4 py-2 text-sm font-medium ${
                 activeTab === 'profile' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'
               }`}
             >
-              Thông Tin Cá Nhân
+              <User className="w-4 h-4 mr-2" />
+              {t('nav.profile', 'Thông Tin Cá Nhân')}
             </button>
             <button
               onClick={() => setActiveTab('security')}
-              className={`px-4 py-2 text-sm font-medium ${
+              className={`flex items-center px-4 py-2 text-sm font-medium ${
                 activeTab === 'security' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'
               }`}
             >
+              <Shield className="w-4 h-4 mr-2" />
               Bảo Mật
             </button>
           </div>

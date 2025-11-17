@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, Phone } from 'lucide-react';
+import { useTranslation } from '../hooks/useTranslation';
+import LanguageToggle from './LanguageToggle';
 
 export default function StickyNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { t } = useTranslation();
 
   const navLinks = [
-    { label: 'Trang Chủ', path: '/' },
-    { label: 'Giới Thiệu', path: '/about' },
-    { label: 'Dịch Vụ', path: '/services' },
-    { label: 'Đội Ngũ Bác Sĩ', path: '/doctors' },
-    { label: 'Tin Tức', path: '/news' },
+    { label: t('nav.home'), path: '/' },
+    { label: t('nav.about'), path: '/about' },
+    { label: t('nav.services'), path: '/services' },
+    { label: t('nav.doctors'), path: '/doctors' },
+    { label: t('nav.news'), path: '/news' },
   ];
 
   return (
@@ -41,11 +44,12 @@ export default function StickyNavbar() {
           </div>
 
           <div className="hidden lg:flex items-center space-x-4">
+            <LanguageToggle />
             <Link
               to="/appointment"
               className="bg-gradient-to-r from-cyan-500 to-emerald-500 text-white px-7 py-3 rounded-xl hover:from-cyan-600 hover:to-emerald-600 transition-all font-semibold text-base shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/40 hover:scale-105 transform duration-300"
             >
-              ĐẶT LỊCH NHANH
+              {t('nav.appointment')}
             </Link>
           </div>
 
@@ -73,12 +77,15 @@ export default function StickyNavbar() {
               </Link>
             ))}
             <hr className="my-3 border-gray-200" />
+            <div className="px-4 py-2">
+              <LanguageToggle />
+            </div>
             <Link
               to="/appointment"
               onClick={() => setIsMenuOpen(false)}
               className="block w-full bg-gradient-to-r from-cyan-500 to-emerald-500 text-white px-6 py-3.5 rounded-xl hover:from-cyan-600 hover:to-emerald-600 transition-all font-semibold text-base text-center shadow-lg shadow-cyan-500/30"
             >
-              ĐẶT LỊCH NHANH
+              {t('nav.appointment')}
             </Link>
           </nav>
         </div>

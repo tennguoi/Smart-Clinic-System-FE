@@ -2,7 +2,10 @@ import { Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import ReviewForm from './ReviewForm';
 
+const API_BASE_URL = 'http://localhost:8082';
+
 export default function Testimonials() {
+
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(null);
   const [totalReviews, setTotalReviews] = useState(0);
@@ -28,14 +31,18 @@ export default function Testimonials() {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch('http://localhost:8082/api/reviews/summary');
-      if (!res.ok) throw new Error('Không thể tải đánh giá');
+      const res = await fetch(`${API_BASE_URL}/api/public/reviews/summary`);
+      if (!res.ok) {
+        const message = await res.text();
+        throw new Error(message || 'Không thể tải đánh giá');
+      }
       const data = await res.json();
 
       setReviews(data.reviews || []);
       setAverageRating(data.averageRating);
       setTotalReviews(data.totalReviews || 0);
     } catch (err) {
+      console.error('Error fetching review summary:', err);
       setError(err.message);
     } finally {
       setLoading(false);
