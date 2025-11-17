@@ -1,28 +1,25 @@
 // src/components/doctor/Sidebar.jsx
-import { CalendarDays, Users, FileText, Pill, ClipboardList, UserCircle, Shield, Cloud } from 'lucide-react';
+import { CalendarDays, Users, FileText, ClipboardList, UserCircle, Shield, Cloud } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const menuItems = [
   { id: 'schedule', label: 'Lịch Khám', icon: CalendarDays },
   { id: 'current-patient', label: 'Bệnh nhân', icon: Users },
-  { id: 'prescriptions', label: 'Đơn Thuốc', icon: Pill },
   { id: 'records', label: 'Hồ Sơ Khám', icon: ClipboardList },
   { id: 'invoices', label: 'Hóa Đơn', icon: FileText },
   { id: 'profile', label: 'Hồ Sơ Cá Nhân', icon: UserCircle },
   { id: 'security', label: 'Bảo Mật', icon: Shield },
 ];
 
-// QUAN TRỌNG: Nhận props từ DoctorPage
 export default function Sidebar({ activeMenu, onMenuChange }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Ưu tiên dùng prop activeMenu (từ DoctorPage), fallback về URL
   const currentActive = activeMenu || 
     (location.pathname.includes('/current-patient') ? 'current-patient' : 'schedule');
 
   const handleClick = (id) => {
-    onMenuChange(id);                     // Cập nhật state ở DoctorPage
+    onMenuChange(id);
     if (id === 'current-patient') {
       navigate('/doctor/current-patient');
     } else {

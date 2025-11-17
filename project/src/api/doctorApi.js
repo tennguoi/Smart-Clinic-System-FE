@@ -1,29 +1,9 @@
 // src/api/doctorApi.js
-const API_BASE_URL = 'http://localhost:8082';
+import axiosInstance from '../utils/axiosConfig';
 
-/**
- * 🩺 Lấy danh sách tất cả bác sĩ (public endpoint)
- * @returns {Promise<Array>} Danh sách bác sĩ
- */
 export const getDoctors = async () => {
   try {
-    const url = `${API_BASE_URL}/api/public/doctors`;
-    console.log('Fetching doctors from:', url);
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Error response:', errorText);
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log('Doctors data:', data);
-
+    const { data } = await axiosInstance.get('/api/public/doctors');
     return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error fetching doctors:', error);
@@ -31,6 +11,50 @@ export const getDoctors = async () => {
   }
 };
 
+export const getMyQueue = async () => {
+  try {
+    const { data } = await axiosInstance.get('/api/doctor/queue/waiting');
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('Error fetching doctor queue:', error);
+    throw error;
+  }
+};
+
+export const getCurrentPatient = async () => {
+  try {
+    const { data } = await axiosInstance.get('/api/doctor/current-patient');
+    return data;
+  } catch (error) {
+    console.error('Error fetching current patient:', error);
+    throw error;
+  }
+};
+
+export const callPatient = async (queueId) => {
+  try {
+    const { data } = await axiosInstance.patch(`/api/doctor/queue/${queueId}/call`);
+    return data;
+  } catch (error) {
+    console.error('Error calling patient:', error);
+    throw error;
+  }
+};
+
+export const completeExamination = async (queueId) => {
+  try {
+    const { data } = await axiosInstance.patch(`/api/doctor/queue/${queueId}/complete`);
+    return data;
+  } catch (error) {
+    console.error('Error completing examination:', error);
+    throw error;
+  }
+};
+
 export default {
   getDoctors,
+  getMyQueue,
+  getCurrentPatient,
+  callPatient,
+  completeExamination,
 };

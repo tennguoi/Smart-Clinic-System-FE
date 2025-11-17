@@ -223,7 +223,6 @@ export default function ReceptionPage() {
     setQueueError('');
     try {
       const data = await queueApi.getWaitingQueue();
-      console.log('API Response:', data);
       
       // Backend trả về đúng format QueuePatientResponse, không cần map phức tạp
       const mappedData = (data || []).map(item => ({
@@ -238,6 +237,8 @@ export default function ReceptionPage() {
         priority: item.priority || 'Normal',
         status: item.status || 'Waiting',
         checkInTime: item.checkInTime,
+        assignedRoomId: item.assignedRoomId || item.assignedRoom?.roomId || null,
+        assignedRoomName: item.assignedRoomName || item.assignedRoom?.roomName || null,
       }));
       
       const sorted = sortQueueByPriority(mappedData);
@@ -276,6 +277,8 @@ export default function ReceptionPage() {
         priority: item.priority || 'Normal',
         status: item.status || 'Waiting',
         checkInTime: item.checkInTime,
+        assignedRoomId: item.assignedRoomId || null,
+        assignedRoomName: item.assignedRoomName || null,
       }));
       
       const sorted = sortQueueByPriority(mappedData);

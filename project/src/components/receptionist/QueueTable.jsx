@@ -56,6 +56,19 @@ const getStatusColor = (status) => {
 };
 
 export default function QueueTable({ queueList, onEdit, onDelete, onStatusChange, onAssignRoom }) {
+  // Helper function để kiểm tra xem bệnh nhân có thể được phân phòng không
+  const canAssignRoom = (q) => {
+    if (!onAssignRoom) return false;
+    if (q.assignedRoomId) return false; // Đã có phòng rồi
+    
+    // Kiểm tra status - chấp nhận cả tiếng Anh và tiếng Việt
+    const status = (q.status || '').toLowerCase();
+    return status === 'waiting' || 
+           status.includes('chờ') || 
+           status === '' ||
+           !q.status;
+  };
+  
   return (
     <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
       <table className="min-w-full divide-y divide-gray-200">
@@ -142,29 +155,36 @@ export default function QueueTable({ queueList, onEdit, onDelete, onStatusChange
                 </td>
                 <td className="px-4 py-3 text-sm text-center">
                   <div className="flex items-center justify-center gap-2">
-                    {q.status === 'Waiting' && (
+                    {canAssignRoom(q) && (
                       <button
                         onClick={() => onAssignRoom(q)}
-                        className="text-green-600 hover:text-green-900 transition-colors"
+                        className="text-green-600 hover:text-green-900 transition-colors p-1 rounded hover:bg-green-50"
                         title="Phân phòng"
+                        type="button"
                       >
                         <DoorOpen className="w-5 h-5" />
                       </button>
                     )}
-                    <button
-                      onClick={() => onEdit(q)}
-                      className="text-blue-600 hover:text-blue-900 transition-colors"
-                      title="Chỉnh sửa"
-                    >
-                      <Edit className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => onDelete(q.queueId)}
-                      className="text-red-600 hover:text-red-900 transition-colors"
-                      title="Xóa"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+                    {onEdit && (
+                      <button
+                        onClick={() => onEdit(q)}
+                        className="text-blue-600 hover:text-blue-900 transition-colors p-1 rounded hover:bg-blue-50"
+                        title="Chỉnh sửa"
+                        type="button"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
+                        onClick={() => onDelete(q.queueId)}
+                        className="text-red-600 hover:text-red-900 transition-colors p-1 rounded hover:bg-red-50"
+                        title="Xóa"
+                        type="button"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

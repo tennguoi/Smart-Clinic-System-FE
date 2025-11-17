@@ -23,12 +23,18 @@ export const medicalRecordApi = {
 		return Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
 	},
 
-	update: async (recordId, { diagnosis, treatmentNotes }) => {
+	update: async (recordId, { patientId, patientName, diagnosis, treatmentNotes, prescription }) => {
 		const payload = {
-			diagnosis,
-			treatmentNotes: treatmentNotes || '',
+			patientId: patientId || null,
+			patientName: patientName || null,
+			diagnosis: diagnosis || null,
+			treatmentNotes: treatmentNotes || null,
+			prescription: prescription ? {
+				drugs: prescription.drugs || '',
+				instructions: prescription.instructions || ''
+			} : null
 		};
-		// Giả định backend có endpoint PUT /api/doctor/medical-records/{recordId}
+		// Backend endpoint: PUT /api/doctor/medical-records/{recordId}
 		const { data } = await axiosInstance.put(`/api/doctor/medical-records/${recordId}`, payload);
 		return data;
 	},
@@ -47,12 +53,29 @@ export const medicalRecordApi = {
             payload
         );
         return data; // Trả về 201 Created
-    }
+    },
+
+
+	getRecordDetail: async (recordId) => {
+		const { data } = await axiosInstance.get(`/api/doctor/medical-records/${recordId}`);
+		return data;
+	},
+
+	// Lưu ý: Backend trả về prescription (singular) trong getRecordDetail
+	// Nếu cần endpoint riêng để lấy danh sách đơn thuốc, thêm sau
+	getPrescriptions: async (recordId) => {
+		try {
+			const { data } = await axiosInstance.get(`/api/doctor/medical-records/${recordId}/prescriptions`);
+			return Array.isArray(data) ? data : [];
+		} catch (error) {
+			// Nếu endpoint chưa có, trả về empty array
+			return [];
+		}
+	}
 	
 };
 
 export default medicalRecordApi;
-addPrescription: medicalRecordApi.addPrescription
 
 
 																								

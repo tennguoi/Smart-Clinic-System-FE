@@ -135,7 +135,7 @@ export const roomApi = {
 assignRoom: async (queueId, roomId) => {
   try {
     const response = await axiosInstance.post(
-      `${RECEPTION_ENDPOINT}/assign`,
+      `${ADMIN_ENDPOINT}/assign`,
       {
         queueId,
         roomId
