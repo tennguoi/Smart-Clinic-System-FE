@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 const menuItems = [
   { id: 'schedule', label: 'Lịch Khám', icon: CalendarDays },
-  { id: 'current-patient', label: 'Bệnh Nhân', icon: Users },
+  { id: 'current-patient', label: 'Bệnh nhân', icon: Users },
   { id: 'prescriptions', label: 'Đơn Thuốc', icon: Pill },
   { id: 'records', label: 'Hồ Sơ Khám', icon: ClipboardList },
   { id: 'invoices', label: 'Hóa Đơn', icon: FileText },
@@ -12,13 +12,17 @@ const menuItems = [
   { id: 'security', label: 'Bảo Mật', icon: Shield },
 ];
 
-export default function Sidebar() {
+// QUAN TRỌNG: Nhận props từ DoctorPage
+export default function Sidebar({ activeMenu, onMenuChange }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const currentMenu = location.pathname.includes('current-patient') ? 'current-patient' : 'schedule';
+  // Ưu tiên dùng prop activeMenu (từ DoctorPage), fallback về URL
+  const currentActive = activeMenu || 
+    (location.pathname.includes('/current-patient') ? 'current-patient' : 'schedule');
 
   const handleClick = (id) => {
+    onMenuChange(id);                     // Cập nhật state ở DoctorPage
     if (id === 'current-patient') {
       navigate('/doctor/current-patient');
     } else {
@@ -36,20 +40,20 @@ export default function Sidebar() {
       <nav className="flex-1 py-6">
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = currentMenu === item.id;
+          const isActive = currentActive === item.id;
 
           return (
             <button
               key={item.id}
               onClick={() => handleClick(item.id)}
-              className={`w-full flex items-center gap-3 px-6 py-3.5 transition-all duration-200 ${
+              className={`w-full flex items-center gap-3 px-6 py-4 transition-all duration-200 text-lg ${
                 isActive
-                  ? 'bg-blue-600 border-r-4 border-white font-semibold'
-                  : 'text-blue-200 hover:bg-blue-900/50 hover:text-white'
+                  ? 'bg-blue-600 border-r-4 border-white font-bold shadow-lg'
+                  : 'text-blue-100 hover:bg-blue-900/50 hover:text-white'
               }`}
             >
-              <Icon className="w-5 h-5" />
-              <span className="font-medium">{item.label}</span>
+              <Icon className="w-6 h-6" />
+              <span>{item.label}</span>
             </button>
           );
         })}

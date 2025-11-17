@@ -19,14 +19,18 @@ import DoctorPage from './pages/DoctorPage';
 import ProfilePage from './pages/ProfilePage';
 import ReceptionPage from './pages/ReceptionPage';
 import ChatbotAvatar from './components/chatbot/ChatbotAvatar';
-import NewsDetailPage from "./pages/NewsDetailPage";
+import NewsDetailPage from './pages/NewsDetailPage';
 import Verify2FA from './components/Verify2FA';
-import CurrentPatientView from './components/doctor/CurrentPatientView'
+
+// Component khám bệnh chính thức cho bác sĩ
+import CurrentPatientExamination from './components/doctor/CurrentPatientExamination';
+
 function App() {
   return (
     <div className="min-h-screen bg-white">
       <Routes>
-        {/* AUTH ROUTES */}
+
+        {/* ====================== AUTH ROUTES ====================== */}
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
@@ -34,7 +38,7 @@ function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/verify-2fa" element={<Verify2FA />} />
 
-        {/* PUBLIC ROUTES */}
+        {/* ====================== PUBLIC ROUTES ====================== */}
         <Route
           path="/*"
           element={
@@ -57,7 +61,7 @@ function App() {
           }
         />
 
-        {/* ADMIN */}
+        {/* ====================== ADMIN ====================== */}
         <Route
           path="/admin/*"
           element={
@@ -67,7 +71,7 @@ function App() {
           }
         />
 
-        {/* DOCTOR – CÓ NESTED ROUTE */}
+        {/* ====================== DOCTOR – NESTED ROUTES ====================== */}
         <Route
           path="/doctor"
           element={
@@ -76,11 +80,14 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<DoctorPage />} /> {/* trang mặc định */}
-          <Route path="current-patient" element={<CurrentPatientView />} />
+          {/* Trang mặc định khi vào /doctor */}
+          <Route index element={<DoctorPage />} />
+
+          {/* Màn hình khám bệnh đầy đủ (chẩn đoán, kê đơn, hoàn thành, in phiếu...) */}
+          <Route path="current-patient" element={<CurrentPatientExamination />} />
         </Route>
 
-        {/* RECEPTION */}
+        {/* ====================== RECEPTION (LỄ TÂN) ====================== */}
         <Route
           path="/reception/*"
           element={
@@ -89,6 +96,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+
       </Routes>
     </div>
   );
