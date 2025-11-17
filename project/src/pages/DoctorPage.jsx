@@ -6,9 +6,9 @@ import SecuritySection from '../components/admin/SecuritySection';
 import axiosInstance from '../utils/axiosConfig';
 import { authService } from '../services/authService';
 import { medicalRecordApi } from '../api/medicalRecordApi';
-import { Pencil, Trash2 } from 'lucide-react';
 import CurrentPatientExamination from '../components/doctor/CurrentPatientExamination';
 
+import { Pencil, Trash2, Plus } from 'lucide-react'; // <<< 1. ĐÃ THÊM PLUS
 
 const initialUserData = {
   fullName: '',
@@ -315,6 +315,7 @@ export default function DoctorPage() {
   }, [appointments]);
 
   const renderSchedule = () => (
+    // ... (Code cũ, giữ nguyên) ...
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
@@ -380,6 +381,7 @@ export default function DoctorPage() {
   );
 
   const renderPlaceholder = (title) => (
+    // ... (Code cũ, giữ nguyên) ...
     <div className="bg-white rounded-lg border border-dashed border-gray-300 p-10 text-center text-gray-500">
       <h2 className="text-2xl font-semibold text-gray-700 mb-2">{title}</h2>
       <p className="text-sm">Chức năng đang được phát triển. Vui lòng quay lại sau.</p>
@@ -546,6 +548,9 @@ export default function DoctorPage() {
     const [localDiagnosis, setLocalDiagnosis] = useState(record.diagnosis || '');
     const [localNotes, setLocalNotes] = useState(record.treatmentNotes || '');
     const [deleting, setDeleting] = useState(false);
+    
+    // <<< 1. THÊM STATE MỚI
+    const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
 
     const handleSave = async () => {
       if (!localDiagnosis || !localDiagnosis.trim()) {
@@ -635,7 +640,22 @@ export default function DoctorPage() {
               </button>
             </div>
           ) : (
+            // --- ĐÂY LÀ KHỐI 'else' (KHI KHÔNG SỬA) ---
             <div className="flex items-center gap-3">
+              
+              {/* <<< 2. THÊM NÚT + VÀO ĐÚNG VỊ TRÍ NÀY */}
+              <button
+                  onClick={() => {
+                    onError(null); // Xóa lỗi cũ (nếu có)
+                    setShowPrescriptionModal(true); // Mở modal
+                  }}
+                  className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700"
+                  aria-label="Thêm toa thuốc"
+                  title="Thêm toa thuốc"
+                >
+                  <Plus className="w-4 h-4" />
+              </button>
+
               <button
                 onClick={() => setEditing(true)}
                 className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700"
@@ -657,11 +677,160 @@ export default function DoctorPage() {
           )}
         </td>
       </tr>
+
+      {/* <<< 3. THÊM MODAL CALL VÀO ĐÚNG VỊ TRÍ NÀY (BÊN NGOÀI <tr>) */}
+      {showPrescriptionModal && (
+        <PrescriptionFormModal
+          record={record}
+          onError={onError} // Dùng lại state 'recordsError' của cha
+          onClose={() => setShowPrescriptionModal(false)}
+          onSuccess={() => {
+            onUpdated(); // Tải lại bảng
+            setShowPrescriptionModal(false);
+          }}
+        />
+      )}
       </>
     );
   };
 
+  //
+  // --- 4. THÊM TOÀN BỘ ĐỊNH NGHĨA MODAL VÀO ĐÂY (ĐÃ VIỆT HÓA) ---
+  //
+  const PrescriptionFormModal = ({ record, onClose, onSuccess, onError }) => {
+    // State riêng của cái Form (Modal) này
+    const [drugs, setDrugs] = useState('');
+    const [instructions, setInstructions] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      setError('');
+      setSuccess('');
+      onError(null); // Xóa lỗi ở component cha
+
+      // Kiểm tra xem 2 ô đã được điền chưa
+      if (!drugs.trim() || !instructions.trim()) {
+        setError('Toa thuốc và Hướng dẫn sử dụng đều là bắt buộc.');
+        return;
+      }
+
+      setSubmitting(true);
+      try {
+        // Gọi API Bước 3 (API mới của bạn)
+        await medicalRecordApi.addPrescription({
+          recordId: record.recordId,
+          drugs: drugs.trim(),
+          instructions: instructions.trim(),
+        });
+
+        setSuccess('Thêm toa thuốc thành công!');
+        // Đợi 1.5 giây rồi tự động đóng modal và gọi onSuccess
+        setTimeout(() => {
+          onSuccess(); // Tải lại bảng
+        }, 1500);
+
+      } catch (err) {
+        const msg = err.response?.data?.message || err.message || 'Thêm toa thuốc thất bại';
+        setError(msg);
+      } finally {
+        setSubmitting(false);
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 z-40">
+        {/* Lớp nền mờ */}
+        <div
+          className="absolute inset-0 bg-black/30"
+          onClick={onClose}
+        />
+        {/* Nội dung Form */}
+        <div className="absolute inset-0 flex items-center justify-center px-4">
+          <form
+            onSubmit={handleSubmit}
+            className="w-full max-w-lg bg-white border border-gray-200 rounded-xl shadow-2xl p-6 space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-800">
+                Thêm Toa thuốc cho: <span className="text-blue-600">{record.diagnosis}</span>
+              </h3>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-100"
+                aria-label="Đóng"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Hiển thị lỗi hoặc thành công (nếu có) */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm">
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded-md text-sm">
+                {success}
+              </div>
+            )}
+
+            {/* 2 ô nhập liệu của bạn (ĐÃ SỬA) */}
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Toa thuốc</label>
+                <textarea
+                  value={drugs}
+                  onChange={(e) => setDrugs(e.target.value)}
+                  rows={5}
+                  required
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Nhập tên thuốc, hàm lượng, số lượng...&#10;Ví dụ:&#10;1. Paracetamol 500mg (10 viên)&#10;2. Amoxicillin 500mg (14 viên)"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Hướng dẫn sử dụng</label>
+                <textarea
+                  value={instructions}
+                  onChange={(e) => setInstructions(e.target.value)}
+                  rows={5}
+                  required
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Nhập liều dùng, cách dùng...&#10;Ví dụ:&#10;1. Uống 1 viên/lần, 3 lần/ngày sau ăn.&#10;2. Uống 1 viên/lần, 2 lần/ngày sau ăn."
+                />
+              </div>
+            </div>
+
+            {/* Nút Hủy và Lưu */}
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-60"
+              >
+                {submitting ? 'Đang lưu...' : 'Lưu Toa thuốc'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+  // --- KẾT THÚC ĐỊNH NGHĨA MODAL ---
+
   const renderProfileSection = () => (
+    // ... (Code cũ, giữ nguyên) ...
     <div className="space-y-6">
       {profileError && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
@@ -704,6 +873,7 @@ export default function DoctorPage() {
   );
 
   const renderSecuritySection = () => (
+    // ... (Code cũ, giữ nguyên) ...
     <div className="space-y-6">
       {profileError && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">

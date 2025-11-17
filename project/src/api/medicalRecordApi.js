@@ -38,8 +38,21 @@ export const medicalRecordApi = {
 		const { data } = await axiosInstance.delete(`/api/doctor/medical-records/${recordId}`);
 		return data;
 	},
+	addPrescription: async ({ recordId, drugs, instructions }) => {
+        const payload = { recordId, drugs, instructions };
+        
+        // Gọi API endpoint MỚI của bạn
+        const { data } = await axiosInstance.post(
+            '/api/doctor/medical-records/prescription', 
+            payload
+        );
+        return data; // Trả về 201 Created
+    }
+	
 };
 
 export default medicalRecordApi;
+addPrescription: medicalRecordApi.addPrescription
 
 
+																								
