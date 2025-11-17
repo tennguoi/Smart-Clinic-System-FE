@@ -1,12 +1,14 @@
-// ------------------ IMPORT ------------------
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ReceptionHeader from '../components/receptionist/Header';
 import ReceptionSidebar from '../components/receptionist/Sidebar';
+import SearchFilter from '../components/receptionist/SearchFilter';
+import PatientForm from '../components/receptionist/PatientForm';
+import QueueTable from '../components/receptionist/QueueTable';
+import { queueApi, userApi } from '../api/receptionApi';
 import { authService } from '../services/authService';
-import axiosInstance from '../utils/axiosConfig';
 
 // ------------------ CONSTANTS ------------------
 const initialUserData = {
@@ -20,10 +22,6 @@ const initialUserData = {
   twoFactorEnabled: false,
 };
 
-const priorityLabels = { Normal: 'Thường', Urgent: 'Ưu tiên', Emergency: 'Khẩn cấp' };
-const statusLabels = { Waiting: 'Chờ khám', InProgress: 'Đang khám', Completed: 'Đã hoàn thành', Cancelled: 'Hủy' };
-
-// Form khi thêm mới bệnh nhân
 const emptyPatientForm = {
   patientName: '',
   phone: '',
@@ -33,6 +31,16 @@ const emptyPatientForm = {
   address: '',
   priority: 'Normal',
   checkInTime: ''
+};
+
+// ------------------ HELPER FUNCTIONS ------------------
+const sortQueueByPriority = (list) => {
+  const priorityOrder = { Emergency: 3, Urgent: 2, Normal: 1 };
+  return list.slice().sort((a, b) => {
+    const diff = (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
+    if (diff !== 0) return diff;
+    return new Date(a.checkInTime) - new Date(b.checkInTime);
+  });
 };
 
 // ------------------ MAIN COMPONENT ------------------
@@ -47,7 +55,7 @@ export default function ReceptionPage() {
   const [searchPhone, setSearchPhone] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [showForm, setShowForm] = useState(false);
-  const [editPatientId, setEditPatientId] = useState(null); // null = tạo mới
+  const [editPatientId, setEditPatientId] = useState(null);
   const [patientForm, setPatientForm] = useState(emptyPatientForm);
   const navigate = useNavigate();
 
@@ -56,7 +64,7 @@ export default function ReceptionPage() {
     setProfileLoading(true);
     setProfileError('');
     try {
-      const { data } = await axiosInstance.get('/api/auth/user');
+      const data = await userApi.getProfile();
       const mapped = {
         fullName: data?.fullName || '',
         email: data?.email || '',
@@ -88,7 +96,7 @@ export default function ReceptionPage() {
   // ================= LOGOUT =================
   const handleLogout = async () => {
     try {
-      await axiosInstance.post('/api/auth/logout');
+      await userApi.logout();
     } catch (error) {
       console.error(error);
     } finally {
@@ -102,12 +110,30 @@ export default function ReceptionPage() {
     setLoadingQueue(true);
     setQueueError('');
     try {
-      const { data } = await axiosInstance.get('/api/reception/queue/waiting');
-      const sorted = sortQueueByPriority(data || []);
+      const data = await queueApi.getWaitingQueue();
+      console.log('API Response:', data); // 🔍 Debug: Xem cấu trúc data
+      
+      // Map data để đảm bảo có đúng field name
+      const mappedData = (data || []).map(item => ({
+        queueId: item.queueId || item.id || item.queue_id, // ✅ Xử lý nhiều trường hợp tên field
+        queueNumber: item.queueNumber || item.queue_number,
+        patientName: item.patientName || item.patient_name,
+        phone: item.phone,
+        email: item.email,
+        dob: item.dob,
+        gender: item.gender,
+        address: item.address,
+        priority: item.priority || 'Normal',
+        status: item.status || 'Waiting',
+        checkInTime: item.checkInTime || item.check_in_time || item.checkin_time,
+      }));
+      
+      const sorted = sortQueueByPriority(mappedData);
       setQueueList(sorted);
     } catch (error) {
       const message = error.response?.data?.message || error.message || 'Không thể tải danh sách bệnh nhân đang chờ.';
       setQueueError(message);
+      console.error('Load queue error:', error);
     } finally {
       setLoadingQueue(false);
     }
@@ -123,10 +149,27 @@ export default function ReceptionPage() {
       const params = {};
       if (searchPhone) params.phone = searchPhone;
       if (filterStatus) params.status = filterStatus;
-      const { data } = await axiosInstance.get('/api/reception/queue/search', { params });
-      const sorted = sortQueueByPriority(data || []);
+      const data = await queueApi.searchQueue(params);
+      
+      // Map data giống như loadQueueList
+      const mappedData = (data || []).map(item => ({
+        queueId: item.queueId || item.id || item.queue_id,
+        queueNumber: item.queueNumber || item.queue_number,
+        patientName: item.patientName || item.patient_name,
+        phone: item.phone,
+        email: item.email,
+        dob: item.dob,
+        gender: item.gender,
+        address: item.address,
+        priority: item.priority || 'Normal',
+        status: item.status || 'Waiting',
+        checkInTime: item.checkInTime || item.check_in_time || item.checkin_time,
+      }));
+      
+      const sorted = sortQueueByPriority(mappedData);
       setQueueList(sorted);
     } catch (error) {
+      console.error('Search error:', error);
       toast.error("Tìm kiếm thất bại!");
     }
   };
@@ -150,7 +193,7 @@ export default function ReceptionPage() {
 
   const handleEditPatient = async (patient) => {
     try {
-      const { data: full } = await axiosInstance.get(`/api/reception/queue/${patient.queueId}`);
+      const full = await queueApi.getQueueDetail(patient.queueId);
       setPatientForm({
         patientName: full.patientName || '',
         phone: full.phone || '',
@@ -172,7 +215,7 @@ export default function ReceptionPage() {
   // ================= DELETE PATIENT =================
   const handleDeletePatient = async (patientId) => {
     try {
-      await axiosInstance.delete(`/api/reception/queue/${patientId}`);
+      await queueApi.deletePatient(patientId);
       setQueueList(prev => prev.filter(p => p.queueId !== patientId));
       toast.success("Đã xoá bệnh nhân!");
     } catch {
@@ -197,11 +240,17 @@ export default function ReceptionPage() {
       }
 
       if (editPatientId) {
-        const res = await axiosInstance.put(`/api/reception/queue/${editPatientId}`, patientForm);
-        setQueueList(prev => sortQueueByPriority(prev.map(p => (p.queueId === editPatientId ? res.data : p))));
+        const res = await queueApi.updatePatient(editPatientId, patientForm);
+        setQueueList(prev => sortQueueByPriority(
+          prev.map(p => (p.queueId === editPatientId ? { 
+            ...p, 
+            ...res, 
+            queueId: editPatientId // ✅ Đảm bảo giữ lại queueId
+          } : p))
+        ));
         toast.success("Cập nhật bệnh nhân thành công!");
       } else {
-        const res = await axiosInstance.post('/api/reception/queue/add', {
+        const res = await queueApi.addPatient({
           patientName: patientForm.patientName,
           phone: patientForm.phone,
           email: patientForm.email,
@@ -212,12 +261,13 @@ export default function ReceptionPage() {
           checkInTime: patientForm.checkInTime,
           status: "Waiting"
         });
-        setQueueList(prev => sortQueueByPriority([...prev, res.data]));
+        setQueueList(prev => sortQueueByPriority([...prev, res]));
         toast.success("Thêm bệnh nhân thành công!");
       }
 
       setShowForm(false);
-    } catch {
+    } catch (error) {
+      console.error('Submit error:', error);
       toast.error("Có lỗi xảy ra!");
     }
   };
@@ -225,38 +275,14 @@ export default function ReceptionPage() {
   // ================= QUICK UPDATE STATUS =================
   const handleQuickUpdateStatus = async (queueId, status) => {
     try {
-      await axiosInstance.patch(`/api/reception/queue/${queueId}/status`, null, { params: { status } });
-      setQueueList(prev => sortQueueByPriority(prev.map(p => p.queueId === queueId ? { ...p, status } : p)));
+      await queueApi.updateStatus(queueId, status);
+      setQueueList(prev => sortQueueByPriority(
+        prev.map(p => p.queueId === queueId ? { ...p, status } : p)
+      ));
       toast.success("Cập nhật trạng thái thành công!");
     } catch {
       toast.error("Không thể cập nhật trạng thái!");
     }
-  };
-
-  // ================= HELPERS =================
-  const formatDateTime = (value) => {
-    if (!value) return '—';
-    try {
-      const date = new Date(value);
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      const hour = String(date.getHours()).padStart(2, '0');
-      const minute = String(date.getMinutes()).padStart(2, '0');
-      return `${day}/${month}/${year} ${hour}:${minute}`;
-    } catch {
-      return value;
-    }
-  };
-
-  const sortQueueByPriority = (list) => {
-    const priorityOrder = { Emergency: 3, Urgent: 2, Normal: 1 };
-    return list.slice().sort((a, b) => {
-      const diff = (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
-      if (diff !== 0) return diff;
-      // Nếu cùng priority, sắp xếp theo thời gian check-in
-      return new Date(a.checkInTime) - new Date(b.checkInTime);
-    });
   };
 
   const receptionistName = useMemo(() => userData.fullName, [userData.fullName]);
@@ -264,91 +290,32 @@ export default function ReceptionPage() {
   // ================= RENDER =================
   const renderQueueSection = () => (
     <div className="space-y-4">
-      {/* SEARCH */}
-      <div className="flex items-center justify-between space-x-4">
-        <div className="flex space-x-2">
-          <input type="text" placeholder="Tìm theo số điện thoại" value={searchPhone} onChange={(e) => setSearchPhone(e.target.value)} className="border border-gray-300 rounded px-3 py-1" />
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="border border-gray-300 rounded px-2 py-1">
-            <option value="">Tất cả trạng thái</option>
-            {Object.entries(statusLabels).map(([key, label]) => (<option key={key} value={key}>{label}</option>))}
-          </select>
-          <button className="px-3 py-1 bg-gray-200 rounded" onClick={handleSearchQueue}>Tìm kiếm</button>
-          <button className="px-3 py-1 bg-gray-200 rounded" onClick={handleClearFilters}>Xóa lọc</button>
-        </div>
-        <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700" onClick={handleAddPatient}>Thêm bệnh nhân</button>
-      </div>
+      <SearchFilter
+        searchPhone={searchPhone}
+        filterStatus={filterStatus}
+        onSearchPhoneChange={setSearchPhone}
+        onFilterStatusChange={setFilterStatus}
+        onSearch={handleSearchQueue}
+        onClear={handleClearFilters}
+        onAddPatient={handleAddPatient}
+      />
 
-      {/* FORM */}
       {showForm && (
-        <div className="bg-white p-4 border rounded shadow space-y-2">
-          <h3 className="font-semibold">{editPatientId ? 'Cập nhật bệnh nhân' : 'Thêm bệnh nhân mới'}</h3>
-          <div className="grid grid-cols-2 gap-2">
-            <input placeholder="Tên bệnh nhân" value={patientForm.patientName} onChange={(e) => handleFormChange('patientName', e.target.value)} className="border px-2 py-1 rounded" />
-            <input placeholder="Số điện thoại" value={patientForm.phone} onChange={(e) => handleFormChange('phone', e.target.value)} className="border px-2 py-1 rounded" />
-            <input placeholder="Email" value={patientForm.email} onChange={(e) => handleFormChange('email', e.target.value)} className="border px-2 py-1 rounded" />
-            <input type="date" placeholder="Ngày sinh" value={patientForm.dob} onChange={(e) => handleFormChange('dob', e.target.value)} className="border px-2 py-1 rounded" />
-            <select value={patientForm.gender} onChange={(e) => handleFormChange('gender', e.target.value)} className="border px-2 py-1 rounded">
-              <option value="">Chọn giới tính</option>
-              <option value="male">Nam</option>
-              <option value="female">Nữ</option>
-              <option value="other">Khác</option>
-            </select>
-            <input placeholder="Địa chỉ" value={patientForm.address} onChange={(e) => handleFormChange('address', e.target.value)} className="border px-2 py-1 rounded" />
-            <select value={patientForm.priority} onChange={(e) => handleFormChange('priority', e.target.value)} className="border px-2 py-1 rounded">
-              {Object.entries(priorityLabels).map(([key, label]) => (<option key={key} value={key}>{label}</option>))}
-            </select>
-            {editPatientId && (
-              <select value={patientForm.status} onChange={(e) => handleFormChange('status', e.target.value)} className="border px-2 py-1 rounded">
-                {Object.entries(statusLabels).map(([key, label]) => (<option key={key} value={key}>{label}</option>))}
-              </select>
-            )}
-            <input type="datetime-local" value={patientForm.checkInTime} onChange={(e) => handleFormChange('checkInTime', e.target.value)} className="border px-2 py-1 rounded" min={!editPatientId ? new Date().toISOString().slice(0, 16) : undefined} />
-          </div>
-          <div className="flex space-x-2 mt-2">
-            <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onClick={handleSubmitForm}>{editPatientId ? 'Cập nhật' : 'Thêm'}</button>
-            <button className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" onClick={() => setShowForm(false)}>Hủy</button>
-          </div>
-        </div>
+        <PatientForm
+          patientForm={patientForm}
+          isEdit={!!editPatientId}
+          onChange={handleFormChange}
+          onSubmit={handleSubmitForm}
+          onCancel={() => setShowForm(false)}
+        />
       )}
 
-      {/* TABLE */}
-      <div className="bg-white rounded-lg shadow border overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold">STT</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold">Mã hàng đợi</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold">Tên</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold">Liên hệ</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold">Ưu tiên</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold">Trạng thái</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold">Check-in</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {queueList.map((q, index) => (
-              <tr key={q.queueId} className="hover:bg-gray-50">
-                <td className="px-4 py-3">{index + 1}</td>
-                <td className="px-4 py-3">{q.queueNumber || '—'}</td>
-                <td className="px-4 py-3">{q.patientName}</td>
-                <td className="px-4 py-3">{q.phone || '—'}</td>
-                <td className="px-4 py-3">{priorityLabels[q.priority]}</td>
-                <td className="px-4 py-3">
-                  <select value={q.status} onChange={(e) => handleQuickUpdateStatus(q.queueId, e.target.value)} className="border rounded px-2 py-1 text-sm">
-                    {Object.entries(statusLabels).map(([key, label]) => (<option key={key} value={key}>{label}</option>))}
-                  </select>
-                </td>
-                <td className="px-4 py-3">{formatDateTime(q.checkInTime)}</td>
-                <td className="px-4 py-3 space-x-1">
-                  <button className="px-2 py-1 bg-blue-500 text-white rounded text-xs" onClick={() => handleEditPatient(q)}>Sửa</button>
-                  <button className="px-2 py-1 bg-red-500 text-white rounded text-xs" onClick={() => handleDeletePatient(q.queueId)}>Xóa</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <QueueTable
+        queueList={queueList}
+        onEdit={handleEditPatient}
+        onDelete={handleDeletePatient}
+        onStatusChange={handleQuickUpdateStatus}
+      />
 
       <ToastContainer position="top-right" autoClose={2000} hideProgressBar />
     </div>
