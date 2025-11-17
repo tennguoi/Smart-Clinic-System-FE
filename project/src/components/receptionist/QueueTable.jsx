@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, Trash2, User } from 'lucide-react';
+import { Edit, Trash2, User, DoorOpen } from 'lucide-react';
 
 const priorityLabels = { 
   Normal: 'Thường', 
@@ -55,7 +55,7 @@ const getStatusColor = (status) => {
   }
 };
 
-export default function QueueTable({ queueList, onEdit, onDelete, onStatusChange }) {
+export default function QueueTable({ queueList, onEdit, onDelete, onStatusChange, onAssignRoom }) {
   return (
     <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
       <table className="min-w-full divide-y divide-gray-200">
@@ -142,6 +142,15 @@ export default function QueueTable({ queueList, onEdit, onDelete, onStatusChange
                 </td>
                 <td className="px-4 py-3 text-sm text-center">
                   <div className="flex items-center justify-center gap-2">
+                    {q.status === 'Waiting' && (
+                      <button
+                        onClick={() => onAssignRoom(q)}
+                        className="text-green-600 hover:text-green-900 transition-colors"
+                        title="Phân phòng"
+                      >
+                        <DoorOpen className="w-5 h-5" />
+                      </button>
+                    )}
                     <button
                       onClick={() => onEdit(q)}
                       className="text-blue-600 hover:text-blue-900 transition-colors"

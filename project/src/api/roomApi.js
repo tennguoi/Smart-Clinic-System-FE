@@ -1,140 +1,139 @@
 import axiosInstance from '../utils/axiosConfig';
 
-const API_BASE_URL = 'http://localhost:8082';
+// ======================================
+// BASE URLS
+// ======================================
+const ADMIN_ENDPOINT = '/api/receptionist/examination-rooms';
+const RECEPTION_ENDPOINT = '/api/reception/rooms';
 
-// Endpoint base cho examination rooms
-const ENDPOINT_BASE = '/api/receptionist/examination-rooms';
+// helper: unwrap response -> prefers response.data.data, fallback response.data
+const unwrap = (response) => {
+  if (!response) return null;
+  // axios response: response.data usually holds server payload
+  const body = response.data;
+  if (body && typeof body === 'object') {
+    // nếu backend trả { success, message, data: [...] }
+    if (body.hasOwnProperty('data')) return body.data;
+    // nếu backend trả trực tiếp array/object
+    return body;
+  }
+  return body;
+};
 
-/**
- * API functions for managing examination rooms
- */
+// ======================================
+// roomApi
+// ======================================
 export const roomApi = {
-  /**
-   * Lấy danh sách tất cả phòng khám
-   * @param {Object} params - Query parameters: status, keyword, activeOnly
-   * @returns {Promise<Array>} Danh sách phòng khám
-   */
+  // ADMIN SIDE
   getAllRooms: async (params = {}) => {
     try {
-      const queryParams = new URLSearchParams();
-      if (params.status) queryParams.append('status', params.status);
-      if (params.keyword) queryParams.append('keyword', params.keyword);
-      if (params.activeOnly) queryParams.append('activeOnly', params.activeOnly.toString());
-      
-      const url = queryParams.toString() 
-        ? `${ENDPOINT_BASE}?${queryParams.toString()}`
-        : ENDPOINT_BASE;
-      
+      const queryParams = new URLSearchParams(params).toString();
+      const url = queryParams ? `${ADMIN_ENDPOINT}?${queryParams}` : ADMIN_ENDPOINT;
       const response = await axiosInstance.get(url);
-      return response.data || [];
+      return unwrap(response) || [];
     } catch (error) {
       console.error('Error fetching rooms:', error);
       throw error;
     }
   },
 
-  /**
-   * Lấy thông tin một phòng khám theo ID
-   * @param {string|UUID} roomId - ID của phòng (UUID)
-   * @returns {Promise<Object>} Thông tin phòng khám
-   */
   getRoomById: async (roomId) => {
     try {
-      const response = await axiosInstance.get(`${ENDPOINT_BASE}/${roomId}`);
-      return response.data;
+      const response = await axiosInstance.get(`${ADMIN_ENDPOINT}/${roomId}`);
+      return unwrap(response);
     } catch (error) {
       console.error('Error fetching room:', error);
       throw error;
     }
   },
 
-  /**
-   * Tạo phòng khám mới
-   * @param {Object} roomData - Dữ liệu phòng khám (ExaminationRoomRequest)
-   * @returns {Promise<Object>} Phòng khám vừa tạo
-   */
   createRoom: async (roomData) => {
     try {
-      const response = await axiosInstance.post(ENDPOINT_BASE, roomData);
-      return response.data;
+      const response = await axiosInstance.post(ADMIN_ENDPOINT, roomData);
+      return unwrap(response);
     } catch (error) {
       console.error('Error creating room:', error);
       throw error;
     }
   },
 
-  /**
-   * Cập nhật thông tin phòng khám
-   * @param {string|UUID} roomId - ID của phòng (UUID)
-   * @param {Object} roomData - Dữ liệu cập nhật (ExaminationRoomRequest)
-   * @returns {Promise<Object>} Phòng khám đã cập nhật
-   */
   updateRoom: async (roomId, roomData) => {
     try {
-      const response = await axiosInstance.put(`${ENDPOINT_BASE}/${roomId}`, roomData);
-      return response.data;
+      const response = await axiosInstance.put(`${ADMIN_ENDPOINT}/${roomId}`, roomData);
+      return unwrap(response);
     } catch (error) {
       console.error('Error updating room:', error);
       throw error;
     }
   },
 
-  /**
-   * Xóa phòng khám
-   * @param {string|UUID} roomId - ID của phòng (UUID)
-   * @returns {Promise<void>}
-   */
   deleteRoom: async (roomId) => {
     try {
-      await axiosInstance.delete(`${ENDPOINT_BASE}/${roomId}`);
+      const response = await axiosInstance.delete(`${ADMIN_ENDPOINT}/${roomId}`);
+      return unwrap(response);
     } catch (error) {
       console.error('Error deleting room:', error);
       throw error;
     }
   },
 
-  /**
-   * Lấy danh sách tất cả bác sĩ để chọn khi tạo/cập nhật phòng
-   * @returns {Promise<Array>} Danh sách bác sĩ (DoctorSimpleResponse)
-   */
   getAllDoctors: async () => {
     try {
-      const response = await axiosInstance.get(`${ENDPOINT_BASE}/doctors`);
-      return response.data || [];
+      const response = await axiosInstance.get(`${ADMIN_ENDPOINT}/doctors`);
+      return unwrap(response) || [];
     } catch (error) {
       console.error('Error fetching doctors:', error);
       throw error;
     }
   },
 
-  /**
-   * Lấy danh sách phòng theo bác sĩ
-   * @param {string|UUID} doctorId - ID của bác sĩ (UUID)
-   * @returns {Promise<Array>} Danh sách phòng khám
-   */
   getRoomsByDoctor: async (doctorId) => {
     try {
-      const response = await axiosInstance.get(`${ENDPOINT_BASE}/by-doctor/${doctorId}`);
-      return response.data || [];
+      const response = await axiosInstance.get(`${ADMIN_ENDPOINT}/by-doctor/${doctorId}`);
+      return unwrap(response) || [];
     } catch (error) {
       console.error('Error fetching rooms by doctor:', error);
       throw error;
     }
   },
 
-  /**
-   * Thống kê: Mỗi bác sĩ đang phụ trách bao nhiêu phòng
-   * @returns {Promise<Object>} Map với key là tên bác sĩ, value là số phòng
-   */
   getRoomCountByDoctor: async () => {
     try {
-      const response = await axiosInstance.get(`${ENDPOINT_BASE}/statistics/room-count-by-doctor`);
-      return response.data || {};
+      const response = await axiosInstance.get(`${ADMIN_ENDPOINT}/statistics/room-count-by-doctor`);
+      return unwrap(response) || {};
     } catch (error) {
-      console.error('Error fetching room count by doctor:', error);
+      console.error('Error fetching room-count-by-doctor:', error);
       throw error;
     }
   },
+
+  // RECEPTION SIDE
+  getAvailableRooms: async () => {
+    try {
+      const response = await axiosInstance.get(`${RECEPTION_ENDPOINT}/available`);
+      const data = unwrap(response);
+      // đảm bảo trả về array
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error('Error fetching available rooms:', error);
+      throw error;
+    }
+  },
+assignRoom: async (queueId, roomId) => {
+  try {
+    const response = await axiosInstance.post(
+      `${RECEPTION_ENDPOINT}/assign`,
+      {
+        queueId,
+        roomId
+      }
+    );
+    return unwrap(response);
+  } catch (error) {
+    console.error('Error assigning room:', error);
+    throw error;
+  }
+}
 };
 
 export default roomApi;

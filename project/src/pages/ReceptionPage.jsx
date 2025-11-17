@@ -7,10 +7,11 @@ import ReceptionSidebar from '../components/receptionist/Sidebar';
 import SearchFilter from '../components/receptionist/SearchFilter';
 import PatientForm from '../components/receptionist/PatientForm';
 import QueueTable from '../components/receptionist/QueueTable';
+import RoomAssignModal from '../components/receptionist/RoomAssignModal';
 import ProfileSection from '../components/admin/ProfileSection';
 import SecuritySection from '../components/admin/SecuritySection';
 import ClinicRoomManagement from '../components/receptionist/ClinicRoomManagement';
-import { queueApi, userApi } from '../api/receptionApi';
+import { queueApi, userApi, roomApi } from '../api/receptionApi';
 import { authService } from '../services/authService';
 import axiosInstance from '../utils/axiosConfig';
 
@@ -95,6 +96,10 @@ export default function ReceptionPage() {
   const [showForm, setShowForm] = useState(false);
   const [editPatientId, setEditPatientId] = useState(null);
   const [patientForm, setPatientForm] = useState(emptyPatientForm);
+
+  // ========== ROOM ASSIGN STATE ==========
+  const [showRoomModal, setShowRoomModal] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState(null);
 
   // ================= LOAD PROFILE =================
   const loadProfile = useCallback(async () => {
@@ -384,6 +389,28 @@ export default function ReceptionPage() {
       toast.success("Cập nhật trạng thái thành công!");
     } catch {
       toast.error("Không thể cập nhật trạng thái!");
+    }
+  };
+
+  // ================= ROOM ASSIGN HANDLERS =================
+  const handleAssignRoom = (patient) => {
+    setSelectedPatient(patient);
+    setShowRoomModal(true);
+  };
+
+  const handleRoomAssigned = async (queueId, roomId) => {
+    try {
+      // Cập nhật trạng thái sang "InProgress" sau khi phân phòng thành công
+      await queueApi.updateStatus(queueId, 'InProgress');
+      
+      setQueueList(prev => sortQueueByPriority(
+        prev.map(p => p.queueId === queueId ? { ...p, status: 'InProgress' } : p)
+      ));
+      
+      toast.success("Phân phòng thành công! Bệnh nhân đã chuyển sang trạng thái đang khám.");
+    } catch (error) {
+      console.error('Failed to update status after room assignment:', error);
+      toast.error("Phân phòng thành công nhưng không thể cập nhật trạng thái!");
     }
   };
 
@@ -682,7 +709,19 @@ export default function ReceptionPage() {
         onEdit={handleEditPatient}
         onDelete={handleDeletePatient}
         onStatusChange={handleQuickUpdateStatus}
+        onAssignRoom={handleAssignRoom}
       />
+
+      {showRoomModal && selectedPatient && (
+        <RoomAssignModal
+          patient={selectedPatient}
+          onClose={() => {
+            setShowRoomModal(false);
+            setSelectedPatient(null);
+          }}
+          onAssign={handleRoomAssigned}
+        />
+      )}
 
       <ToastContainer position="top-right" autoClose={2000} hideProgressBar />
     </div>
