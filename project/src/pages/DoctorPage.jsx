@@ -7,6 +7,8 @@ import axiosInstance from '../utils/axiosConfig';
 import { authService } from '../services/authService';
 import { medicalRecordApi } from '../api/medicalRecordApi';
 import { Pencil, Trash2 } from 'lucide-react';
+import CurrentPatientExamination from '../components/doctor/CurrentPatientExamination';
+
 
 const initialUserData = {
   fullName: '',
@@ -739,7 +741,7 @@ export default function DoctorPage() {
 
         <main className="flex-1 p-8 space-y-8">
           {activeMenu === 'schedule' && renderSchedule()}
-          {activeMenu === 'patients' && renderPlaceholder('Danh sách bệnh nhân')}
+          {activeMenu === 'current-patient' && <CurrentPatientExamination />}
           {activeMenu === 'prescriptions' && renderPlaceholder('Quản lý đơn thuốc')}
           {activeMenu === 'records' && renderMedicalRecords()}
           {activeMenu === 'invoices' && renderPlaceholder('Quản lý hóa đơn')}
