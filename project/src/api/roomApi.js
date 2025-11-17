@@ -87,6 +87,19 @@ export const roomApi = {
     }
   },
 
+  getDoctorsForUpdate: async (roomId) => {
+    try {
+      const url = roomId 
+        ? `${ADMIN_ENDPOINT}/doctors/for-update?roomId=${roomId}`
+        : `${ADMIN_ENDPOINT}/doctors/for-update`;
+      const response = await axiosInstance.get(url);
+      return unwrap(response) || [];
+    } catch (error) {
+      console.error('Error fetching doctors for update:', error);
+      throw error;
+    }
+  },
+
   getRoomsByDoctor: async (doctorId) => {
     try {
       const response = await axiosInstance.get(`${ADMIN_ENDPOINT}/by-doctor/${doctorId}`);

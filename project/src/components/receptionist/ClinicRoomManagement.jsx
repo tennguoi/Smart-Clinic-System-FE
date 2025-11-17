@@ -35,9 +35,15 @@ export default function ClinicRoomManagement() {
   }, [filterStatus, searchKeyword, activeOnly]);
 
   useEffect(() => {
-    // Load danh sách bác sĩ khi component mount
-    fetchDoctors();
-  }, []);
+    // Load danh sách bác sĩ khi component mount hoặc khi modal mở
+    if (showModal) {
+      if (modalMode === 'edit' && selectedRoom) {
+        fetchDoctorsForUpdate(selectedRoom.roomId);
+      } else {
+        fetchDoctors();
+      }
+    }
+  }, [showModal, modalMode, selectedRoom]);
 
   const fetchDoctors = async () => {
     setLoadingDoctors(true);
@@ -47,6 +53,20 @@ export default function ClinicRoomManagement() {
     } catch (err) {
       console.error('Error fetching doctors:', err);
       setDoctors([]);
+    } finally {
+      setLoadingDoctors(false);
+    }
+  };
+
+  const fetchDoctorsForUpdate = async (roomId) => {
+    setLoadingDoctors(true);
+    try {
+      const data = await roomApi.getDoctorsForUpdate(roomId);
+      setDoctors(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Error fetching doctors for update:', err);
+      // Fallback về getAllDoctors nếu endpoint không tồn tại
+      fetchDoctors();
     } finally {
       setLoadingDoctors(false);
     }
@@ -152,10 +172,26 @@ export default function ClinicRoomManagement() {
 
       if (modalMode === 'edit' && selectedRoom) {
         await roomApi.updateRoom(selectedRoom.roomId, payload);
-        setSuccess('Cập nhật phòng khám thành công!');
+        // Kiểm tra xem có bác sĩ được gán không và đã có phòng khác chưa
+        const doctorHasOtherRoom = payload.doctorId && rooms.some(
+          (r) => r.doctorId === payload.doctorId && r.isActive && r.roomId !== selectedRoom.roomId
+        );
+        if (doctorHasOtherRoom) {
+          setSuccess('Cập nhật phòng khám thành công! Bác sĩ đã được tự động gỡ khỏi phòng cũ.');
+        } else {
+          setSuccess('Cập nhật phòng khám thành công!');
+        }
       } else {
         await roomApi.createRoom(payload);
-        setSuccess('Tạo phòng khám thành công!');
+        // Kiểm tra xem có bác sĩ được gán không và đã có phòng khác chưa
+        const doctorHasOtherRoom = payload.doctorId && rooms.some(
+          (r) => r.doctorId === payload.doctorId && r.isActive
+        );
+        if (doctorHasOtherRoom) {
+          setSuccess('Tạo phòng khám thành công! Bác sĩ đã được tự động gỡ khỏi phòng cũ.');
+        } else {
+          setSuccess('Tạo phòng khám thành công!');
+        }
       }
 
       setTimeout(() => {
@@ -478,11 +514,20 @@ export default function ClinicRoomManagement() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">-- Chưa gán bác sĩ --</option>
-                      {doctors.map((doctor) => (
-                        <option key={doctor.doctorId} value={doctor.doctorId}>
-                          {doctor.fullName} {doctor.email ? `(${doctor.email})` : ''}
-                        </option>
-                      ))}
+                      {doctors.map((doctor) => {
+                        // Kiểm tra xem bác sĩ này đã có phòng chưa (trừ phòng hiện tại khi edit)
+                        const hasRoom = rooms.some(
+                          (r) => r.doctorId === doctor.doctorId && r.isActive && r.roomId !== selectedRoom?.roomId
+                        );
+                        // Kiểm tra xem đây có phải bác sĩ hiện tại của phòng đang edit không
+                        const isCurrentDoctor = modalMode === 'edit' && selectedRoom?.doctorId === doctor.doctorId;
+                        return (
+                          <option key={doctor.doctorId} value={doctor.doctorId}>
+                            {doctor.fullName} {doctor.email ? `(${doctor.email})` : ''}
+                            {isCurrentDoctor ? ' [Bác sĩ hiện tại]' : hasRoom ? ' [Đã có phòng]' : ''}
+                          </option>
+                        );
+                      })}
                     </select>
                   )}
                   <p className="text-xs text-gray-500 mt-1">

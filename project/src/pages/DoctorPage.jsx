@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import DoctorSidebar from '../components/doctor/Sidebar';
 import DoctorHeader from '../components/doctor/Header';
 import ProfileSection from '../components/admin/ProfileSection';
@@ -87,6 +87,9 @@ export default function DoctorPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formPatientName, setFormPatientName] = useState('');
 
+  // Lưu mapping patientName theo recordId để giữ lại khi reload
+  const patientNameMapRef = useRef(new Map());
+
   // (Toast removed)
 
   const fetchMyRecords = useCallback(async () => {
@@ -94,7 +97,16 @@ export default function DoctorPage() {
     setRecordsLoading(true);
     try {
       const list = await medicalRecordApi.listMine();
-      setRecords(Array.isArray(list) ? list : []);
+      // Ưu tiên patientName từ backend, fallback về mapping (cho các record cũ)
+      const recordsWithNames = (Array.isArray(list) ? list : []).map((record) => {
+        const storedPatientName = patientNameMapRef.current.get(record.recordId);
+        return {
+          ...record,
+          // Ưu tiên: backend response > mapping > null
+          patientName: record.patientName || storedPatientName || null,
+        };
+      });
+      setRecords(recordsWithNames);
     } catch (error) {
       const msg = error.response?.data?.message || error.message || 'Không thể tải hồ sơ khám';
       setRecordsError(msg);
@@ -121,16 +133,22 @@ export default function DoctorPage() {
     setFormSubmitting(true);
     try {
       const created = await medicalRecordApi.create({
-        // Hiện chỉ gửi diagnosis và ghi chú; patientId để null (tùy chọn)
+        // Gửi patientName lên backend để lưu vào database
         patientId: null,
+        patientName: formPatientName?.trim() || null,
         diagnosis: formDiagnosis.trim(),
         treatmentNotes: formTreatmentNotes?.trim() || '',
       });
       setFormSuccess('Tạo hồ sơ khám thành công!');
-      // Hiển thị tên bệnh nhân vừa nhập ở UI (vì backend không lưu patientName)
+      // Ưu tiên patientName từ backend response, fallback về form input
+      const patientNameValue = created.patientName || (formPatientName && formPatientName.trim()) || null;
+      // Chỉ lưu vào mapping nếu backend chưa trả về patientName (fallback cho record cũ)
+      if (patientNameValue && created.recordId && !created.patientName) {
+        patientNameMapRef.current.set(created.recordId, patientNameValue);
+      }
       const createdWithName = {
         ...created,
-        patientName: (formPatientName && formPatientName.trim()) || created.patientName || null,
+        patientName: patientNameValue,
       };
       setRecords((prev) => [createdWithName, ...(Array.isArray(prev) ? prev : [])]);
       setFormPatientId('');
@@ -430,13 +448,16 @@ export default function DoctorPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Chẩn đoán (bắt buộc)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Chẩn đoán <span className="text-red-500">*</span>
+                      </label>
                       <input
                         type="text"
                         value={formDiagnosis}
                         onChange={(e) => setFormDiagnosis(e.target.value)}
                         required
                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Nhập chẩn đoán"
                       />
                     </div>
                     <div>
@@ -503,6 +524,10 @@ export default function DoctorPage() {
                     record={r}
                     onUpdated={fetchMyRecords}
                     onError={setRecordsError}
+                    onDelete={(recordId) => {
+                      // Xóa patientName khỏi mapping khi xóa hồ sơ
+                      patientNameMapRef.current.delete(recordId);
+                    }}
                   />
                 ))
               )}
@@ -513,7 +538,7 @@ export default function DoctorPage() {
     </div>
   );
 
-  const RecordRow = ({ index, record, onUpdated, onError }) => {
+  const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
     const [localDiagnosis, setLocalDiagnosis] = useState(record.diagnosis || '');
@@ -546,6 +571,8 @@ export default function DoctorPage() {
       setDeleting(true);
       try {
         await medicalRecordApi.remove(record.recordId);
+        // Xóa patientName khỏi mapping
+        onDelete && onDelete(record.recordId);
         onUpdated && onUpdated();
       } catch (e) {
         const msg = e.response?.data?.message || e.message || 'Xóa hồ sơ thất bại';

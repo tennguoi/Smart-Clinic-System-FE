@@ -2,9 +2,10 @@
 import axiosInstance from '../utils/axiosConfig';
 
 export const medicalRecordApi = {
-	create: async ({ patientId, diagnosis, treatmentNotes }) => {
+	create: async ({ patientId, patientName, diagnosis, treatmentNotes }) => {
 		const payload = {
 			patientId: patientId || null,
+			patientName: patientName || null, // Gửi patientName lên backend
 			diagnosis,
 			treatmentNotes: treatmentNotes || '',
 		};

@@ -177,9 +177,10 @@ export const queueApi = {
 
   // Cập nhật trạng thái nhanh
   updateStatus: async (queueId, status) => {
-    await axiosInstance.patch(`/api/reception/queue/${queueId}/status`, null, { 
+    const { data } = await axiosInstance.patch(`/api/reception/queue/${queueId}/status`, null, { 
       params: { status } 
     });
+    return data;
   }
 };
 

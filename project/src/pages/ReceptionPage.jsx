@@ -225,10 +225,11 @@ export default function ReceptionPage() {
       const data = await queueApi.getWaitingQueue();
       console.log('API Response:', data);
       
+      // Backend trả về đúng format QueuePatientResponse, không cần map phức tạp
       const mappedData = (data || []).map(item => ({
-        queueId: item.queueId || item.id || item.queue_id,
-        queueNumber: item.queueNumber || item.queue_number,
-        patientName: item.patientName || item.patient_name,
+        queueId: item.queueId,
+        queueNumber: item.queueNumber,
+        patientName: item.patientName,
         phone: item.phone,
         email: item.email,
         dob: item.dob,
@@ -236,7 +237,7 @@ export default function ReceptionPage() {
         address: item.address,
         priority: item.priority || 'Normal',
         status: item.status || 'Waiting',
-        checkInTime: item.checkInTime || item.check_in_time || item.checkin_time,
+        checkInTime: item.checkInTime,
       }));
       
       const sorted = sortQueueByPriority(mappedData);
@@ -262,10 +263,11 @@ export default function ReceptionPage() {
       if (filterStatus) params.status = filterStatus;
       const data = await queueApi.searchQueue(params);
       
+      // Backend trả về đúng format QueuePatientResponse, không cần map phức tạp
       const mappedData = (data || []).map(item => ({
-        queueId: item.queueId || item.id || item.queue_id,
-        queueNumber: item.queueNumber || item.queue_number,
-        patientName: item.patientName || item.patient_name,
+        queueId: item.queueId,
+        queueNumber: item.queueNumber,
+        patientName: item.patientName,
         phone: item.phone,
         email: item.email,
         dob: item.dob,
@@ -273,7 +275,7 @@ export default function ReceptionPage() {
         address: item.address,
         priority: item.priority || 'Normal',
         status: item.status || 'Waiting',
-        checkInTime: item.checkInTime || item.check_in_time || item.checkin_time,
+        checkInTime: item.checkInTime,
       }));
       
       const sorted = sortQueueByPriority(mappedData);
@@ -348,7 +350,19 @@ export default function ReceptionPage() {
       }
 
       if (editPatientId) {
-        const res = await queueApi.updatePatient(editPatientId, patientForm);
+        // Chỉ gửi các field cần update, không gửi queueNumber (backend sẽ giữ nguyên)
+        const updateData = {
+          patientName: patientForm.patientName,
+          phone: patientForm.phone,
+          email: patientForm.email || null,
+          dob: patientForm.dob,
+          gender: patientForm.gender,
+          address: patientForm.address || null,
+          priority: patientForm.priority,
+          status: patientForm.status || "Waiting",
+          checkInTime: patientForm.checkInTime,
+        };
+        const res = await queueApi.updatePatient(editPatientId, updateData);
         setQueueList(prev => sortQueueByPriority(
           prev.map(p => (p.queueId === editPatientId ? { 
             ...p, 
@@ -361,13 +375,13 @@ export default function ReceptionPage() {
         const res = await queueApi.addPatient({
           patientName: patientForm.patientName,
           phone: patientForm.phone,
-          email: patientForm.email,
+          email: patientForm.email || null,
           dob: patientForm.dob,
           gender: patientForm.gender,
-          address: patientForm.address,
+          address: patientForm.address || null,
           priority: patientForm.priority,
           checkInTime: patientForm.checkInTime,
-          status: "Waiting"
+          // Backend tự động set status = Waiting, không cần gửi
         });
         setQueueList(prev => sortQueueByPriority([...prev, res]));
         toast.success("Thêm bệnh nhân thành công!");
@@ -376,19 +390,25 @@ export default function ReceptionPage() {
       setShowForm(false);
     } catch (error) {
       console.error('Submit error:', error);
-      toast.error("Có lỗi xảy ra!");
+      // Lấy error message từ backend response
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          "Có lỗi xảy ra!";
+      toast.error(errorMessage);
     }
   };
 
   const handleQuickUpdateStatus = async (queueId, status) => {
     try {
-      await queueApi.updateStatus(queueId, status);
+      const updated = await queueApi.updateStatus(queueId, status);
       setQueueList(prev => sortQueueByPriority(
-        prev.map(p => p.queueId === queueId ? { ...p, status } : p)
+        prev.map(p => p.queueId === queueId ? { ...p, ...updated } : p)
       ));
       toast.success("Cập nhật trạng thái thành công!");
-    } catch {
-      toast.error("Không thể cập nhật trạng thái!");
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || "Không thể cập nhật trạng thái!";
+      toast.error(errorMessage);
     }
   };
 
