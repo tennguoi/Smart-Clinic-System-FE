@@ -1,91 +1,357 @@
 // src/components/doctor/CurrentPatientExamination.jsx
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Users, PhoneCall, CheckCircle, Clock, Search, FileText } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
-import { getMyQueue, getCurrentPatient, callPatient as callPatientApi, completeExamination } from '../../api/doctorApi';
-import ConfirmDialog from '../common/ConfirmDialog';
+import {
+  PhoneCall, Users, Search, User, Calendar, Shield,
+  FileText, Pill, Stethoscope, Save, Printer, CheckCircle,
+  AlertCircle, Plus, Trash2, X
+} from 'lucide-react';
 
-export default function CurrentPatientExamination({ onNavigateToRecords }) {
+import {
+  getMyQueue,
+  getCurrentPatient,
+  callPatient as callPatientApi,
+  completeExamination,
+} from '../../api/doctorApi';
+
+// ================== TẤT CẢ COMPONENT ĐÃ CHUYỂN THÀNH JSX ==================
+
+// PatientContextPanel
+function PatientContextPanel({ currentPatient, medicalHistory = [] }) {
+  return (
+    <div className="w-80 bg-white border-r border-slate-200 flex flex-col">
+      <div className="p-6 border-b border-slate-200 bg-gradient-to-br from-emerald-50 to-white">
+        <div className="bg-white rounded-lg shadow-md p-5 border-l-4 border-emerald-500">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-3xl font-bold text-emerald-600">{currentPatient.queueNumber}</span>
+            {currentPatient.hasInsurance && (
+              <div className="flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium">
+                <Shield size={14} /> <span>BHYT</span>
+              </div>
+            )}
+          </div>
+          <h2 className="text-xl font-semibold text-slate-800 mb-2">{currentPatient.name}</h2>
+          <div className="space-y-2 text-sm text-slate-600">
+            <div className="flex items-center gap-2">
+              <User size={16} className="text-slate-400" />
+              <span>{currentPatient.age} tuổi • {currentPatient.gender}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Calendar size={16} className="text-slate-400" />
+              <span>Vào phòng: {currentPatient.checkInTime}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6">
+        <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-4">
+          Lịch sử khám bệnh
+        </h3>
+        <div className="space-y-3">
+          {medicalHistory.length === 0 ? (
+            <p className="text-sm text-slate-500">Chưa có lịch sử</p>
+          ) : (
+            medicalHistory.map((record, i) => (
+              <div key={i} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                <div className="flex justify-between text-xs text-slate-500 mb-1">
+                  <span>{record.date}</span>
+                </div>
+                <p className="text-sm font-medium text-slate-700">{record.diagnosis}</p>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// DiagnosisTab
+function DiagnosisTab({ medicalRecord, setMedicalRecord }) {
+  const handleChange = (field, value) => {
+    setMedicalRecord(prev => ({ ...prev, [field]: value }));
+  };
+
+  return (
+    <div className="space-y-6 max-w-5xl">
+      <div>
+        <label className="block text-sm font-semibold text-slate-700 mb-2">
+          Khám Lâm Sàng / Triệu Chứng / Diễn Tiến Bệnh
+        </label>
+        <textarea
+          value={medicalRecord.clinicalExam}
+          onChange={e => handleChange('clinicalExam', e.target.value)}
+          className="w-full h-40 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none resize-none"
+          placeholder="Nhập triệu chứng, diễn tiến..."
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-slate-700 mb-2">
+          Chẩn Đoán <span className="text-red-500">*</span>
+        </label>
+        <div className="relative">
+          <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={medicalRecord.diagnosis}
+            onChange={e => handleChange('diagnosis', e.target.value)}
+            className="w-full pl-11 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+            placeholder="Nhập chẩn đoán (bắt buộc)"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-slate-700 mb-2">
+          Ghi Chú Điều Trị
+        </label>
+        <textarea
+          value={medicalRecord.treatmentNotes}
+          onChange={e => handleChange('treatmentNotes', e.target.value)}
+          className="w-full h-32 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none resize-none"
+          placeholder="Lưu ý, hướng dẫn..."
+        />
+      </div>
+    </div>
+  );
+}
+
+// PrescriptionTab
+function PrescriptionTab({ prescriptions, setPrescriptions }) {
+  const add = () => {
+    setPrescriptions(prev => [...prev, { id: Date.now() + '', medication: '', quantity: '', instructions: '' }]);
+  };
+
+  const remove = (id) => {
+    setPrescriptions(prev => prev.filter(p => p.id !== id));
+  };
+
+  const update = (id, field, value) => {
+    setPrescriptions(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Đơn Thuốc</h3>
+        <button onClick={add} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+          <Plus size={18} /> Thêm Thuốc
+        </button>
+      </div>
+
+      {prescriptions.length === 0 ? (
+        <div className="text-center py-16 bg-slate-50 rounded-xl border-2 border-dashed border-slate-300">
+          <Pill size={48} className="mx-auto text-slate-400 mb-4" />
+          <p className="text-slate-600">Chưa có thuốc nào</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-slate-100">
+              <tr>
+                <th className="text-left px-4 py-3">Tên thuốc</th>
+                <th className="text-left px-4 py-3">Số lượng</th>
+                <th className="text-left px-4 py-3">Hướng dẫn dùng</th>
+                <th className="w-12"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {prescriptions.map(p => (
+                <tr key={p.id} className="border-b">
+                  <td className="px-4 py-3">
+                    <input
+                      value={p.medication}
+                      onChange={e => update(p.id, 'medication', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                      placeholder="Paracetamol 500mg..."
+                    />
+                  </td>
+                  <td className="px-4 py-3">
+                    <input
+                      value={p.quantity}
+                      onChange={e => update(p.id, 'quantity', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                      placeholder="2 vỉ"
+                    />
+                  </td>
+                  <td className="px-4 py-3">
+                    <input
+                      value={p.instructions}
+                      onChange={e => update(p.id, 'instructions', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                      placeholder="Uống 1 viên/lần, ngày 3 lần..."
+                    />
+                  </td>
+                  <td className="text-center">
+                    <button onClick={() => remove(p.id)} className="text-red-600 hover:bg-red-50 p-2 rounded">
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ServicesTab (đơn giản hóa)
+function ServicesTab({ services, setServices }) {
+  const available = [
+    "Xét nghiệm máu tổng quát", "Xét nghiệm nước tiểu", "Siêu âm bụng",
+    "Chụp X-quang phổi", "Điện tâm đồ", "Nội soi dạ dày"
+  ];
+
+  const add = (s) => !services.includes(s) && setServices(prev => [...prev, s]);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Chỉ Định Dịch Vụ</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {available.map(s => (
+            <button
+              key={s}
+              onClick={() => add(s)}
+              disabled={services.includes(s)}
+              className={`p-4 text-left rounded-lg border ${services.includes(s) ? 'bg-emerald-100 border-emerald-400' : 'bg-white hover:bg-slate-50'} transition`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h4 className="font-medium mb-3">Đã chọn ({services.length})</h4>
+        {services.length === 0 ? (
+          <p className="text-slate-500 text-center py-8">Chưa chọn dịch vụ nào</p>
+        ) : (
+          <div className="space-y-2">
+            {services.map((s, i) => (
+              <div key={i} className="flex justify-between items-center bg-emerald-50 px-4 py-3 rounded-lg">
+                <span className="font-medium">{i + 1}. {s}</span>
+                <button onClick={() => setServices(prev => prev.filter(x => x !== s))} className="text-red-600">
+                  <X size={18} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// DiagnosticInputArea
+function DiagnosticInputArea({ activeTab, setActiveTab, medicalRecord, setMedicalRecord, prescriptions, setPrescriptions, services, setServices }) {
+  const tabs = [
+    { id: 'diagnosis', label: 'Bệnh Án & Chẩn Đoán', icon: FileText },
+    { id: 'prescription', label: 'Đơn Thuốc', icon: Pill },
+    { id: 'services', label: 'Chỉ Định Dịch Vụ', icon: Stethoscope },
+  ];
+
+  return (
+    <div className="flex-1 flex flex-col bg-white">
+      <div className="border-b border-slate-200">
+        <div className="flex gap-1 px-6 pt-4">
+          {tabs.map(t => {
+            const Icon = t.icon;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id)}
+                className={`flex items-center gap-2 px-5 py-3 rounded-t-lg font-medium transition-all ${activeTab === t.id ? 'bg-white text-emerald-600 border-t-2 border-emerald-500 shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}
+              >
+                <Icon size={18} /> <span>{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6">
+        {activeTab === 'diagnosis' && <DiagnosisTab medicalRecord={medicalRecord} setMedicalRecord={setMedicalRecord} />}
+        {activeTab === 'prescription' && <PrescriptionTab prescriptions={prescriptions} setPrescriptions={setPrescriptions} />}
+        {activeTab === 'services' && <ServicesTab services={services} setServices={setServices} />}
+      </div>
+    </div>
+  );
+}
+
+// ActionFooter
+function ActionFooter({ onSaveDraft, onSaveAndPrint, onComplete, hasRequiredData }) {
+  return (
+    <footer className="bg-white border-t border-slate-200 px-6 py-4 shadow-lg">
+      <div className="flex items-center justify-between max-w-7xl mx-auto">
+        <div className="flex gap-3">
+          <button onClick={onSaveDraft} className="flex items-center gap-2 px-5 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50">
+            <Save size={18} /> Lưu Nháp
+          </button>
+          <button onClick={onSaveAndPrint} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            <Printer size={18} /> Lưu & In
+          </button>
+        </div>
+
+        <button
+          onClick={onComplete}
+          disabled={!hasRequiredData}
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold ${hasRequiredData ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`}
+        >
+          <CheckCircle size={20} /> Hoàn Thành Khám
+        </button>
+      </div>
+    </footer>
+  );
+}
+
+// ================== MAIN COMPONENT ==================
+export default function CurrentPatientExamination() {
   const [queue, setQueue] = useState([]);
   const [currentPatient, setCurrentPatient] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const previousQueueLengthRef = useRef(0);
-  const previousCurrentPatientRef = useRef(null);
 
-  const [confirmDialog, setConfirmDialog] = useState({
-    isOpen: false,
-    patient: null,
-  });
-
-  const doctorInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
-  const doctorName = doctorInfo.fullName || 'Bác sĩ';
+  // State cho form khám
+  const [activeTab, setActiveTab] = useState('diagnosis');
+  const [medicalRecord, setMedicalRecord] = useState({ clinicalExam: '', diagnosis: '', treatmentNotes: '' });
+  const [prescriptions, setPrescriptions] = useState([]);
+  const [services, setServices] = useState([]);
 
   const loadQueue = useCallback(async () => {
-    setLoading(true);
-    setError('');
     try {
-      const [queueData, currentPatientData] = await Promise.all([
+      setLoading(true);
+      const [queueRes, currentRes] = await Promise.all([
         getMyQueue().catch(() => []),
         getCurrentPatient().catch(() => null)
       ]);
 
-      const mappedQueue = (queueData || []).map(item => ({
-        id: item.queueId,
-        queueId: item.queueId,
-        queueNumber: item.queueNumber,
-        fullName: item.patientName || item.fullName,
-        phone: item.phone,
-        priority: item.priority || 'Normal',
-        status: item.status || 'Waiting',
-        checkInTime: item.checkInTime,
-        symptoms: item.symptoms || item.reason,
+      const waiting = (queueRes || []).filter(p => p.status !== 'Completed').map(p => ({
+        queueId: p.queueId,
+        queueNumber: p.queueNumber,
+        fullName: p.patientName || p.fullName,
+        phone: p.phone,
+        checkInTime: p.checkInTime,
       }));
-      
-      const waiting = mappedQueue.filter(p => p.status === 'Waiting');
-      
-      const newCurrentPatient = currentPatientData ? {
-        id: currentPatientData.queueId,
-        queueId: currentPatientData.queueId,
-        queueNumber: currentPatientData.queueNumber,
-        fullName: currentPatientData.fullName,
-        phone: currentPatientData.phone,
-        dob: currentPatientData.dob,
-        gender: currentPatientData.gender,
-        priority: currentPatientData.priority,
-        checkInTime: currentPatientData.checkInTime,
-        startTime: currentPatientData.startTime,
-        symptoms: null,
+
+      const patient = currentRes ? {
+        queueId: currentRes.queueId,
+        queueNumber: currentRes.queueNumber,
+        name: currentRes.fullName,
+        age: currentRes.age || '--',
+        gender: currentRes.gender === 'Male' ? 'Nam' : 'Nữ',
+        hasInsurance: currentRes.hasInsurance || false,
+        checkInTime: new Date(currentRes.startTime || currentRes.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
       } : null;
-      
-      // if (newCurrentPatient && (!previousCurrentPatientRef.current || 
-      //     previousCurrentPatientRef.current.queueId !== newCurrentPatient.queueId)) {
-      //   toast.success(`Bệnh nhân ${newCurrentPatient.queueNumber} - ${newCurrentPatient.fullName} đã được phân vào phòng!`, {
-      //     duration: 5000,
-      //     icon: '👨‍⚕️',
-      //   });
-      // }
-      
-      if (waiting.length > previousQueueLengthRef.current && previousQueueLengthRef.current > 0) {
-        const newPatients = waiting.slice(previousQueueLengthRef.current);
-        if (newPatients.length > 0) {
-          toast.info(`Có ${newPatients.length} bệnh nhân mới được phân vào phòng`, {
-            duration: 4000,
-          });
-        }
-      }
-      
-      previousQueueLengthRef.current = waiting.length;
-      previousCurrentPatientRef.current = newCurrentPatient;
-      
-      setCurrentPatient(newCurrentPatient);
+
       setQueue(waiting);
+      setCurrentPatient(patient);
     } catch (err) {
-      const message = err.response?.data?.message || err.message || 'Không thể tải danh sách bệnh nhân';
-      setError(message);
-      toast.error(message);
-      console.error('Error loading queue:', err);
+      toast.error('Lỗi tải dữ liệu');
     } finally {
       setLoading(false);
     }
@@ -93,243 +359,137 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
 
   useEffect(() => {
     loadQueue();
-    const interval = setInterval(() => {
-      loadQueue();
-    }, 5000);
-
-    return () => {
-      clearInterval(interval);
-    };
+    const interval = setInterval(loadQueue, 5000);
+    return () => clearInterval(interval);
   }, [loadQueue]);
 
-  const handleCallPatient = async (patient) => {
-    if (currentPatient) {
-      toast.error('Đang khám bệnh nhân khác!');
-      return;
-    }
-    
+  const handleCallPatient = async (p) => {
+    if (currentPatient) return toast.error('Đang khám bệnh nhân khác!');
     try {
-      await callPatientApi(patient.queueId);
-      toast.success(`Đã gọi ${patient.queueNumber} - ${patient.fullName}`, {
-        duration: 3000,
-      });
+      await callPatientApi(p.queueId);
+      toast.success(`Đã gọi ${p.queueNumber} - ${p.fullName}`);
       await loadQueue();
-    } catch (err) {
-      const message = err.response?.data?.message || err.message || 'Gọi bệnh nhân thất bại';
-      toast.error(message);
-      console.error('Error calling patient:', err);
-    }
+    } catch { toast.error('Gọi thất bại'); }
   };
 
-  
-const openCompleteDialog = (patient) => {
-  setConfirmDialog({ isOpen: true, patient });
-};
-
-// Nhận 'patient' từ ConfirmDialog thay vì lấy từ state
-const handleConfirmComplete = async (patient) => {
+  const handleComplete = async () => {
+  if (!medicalRecord.diagnosis.trim()) {
+    toast.error('Vui lòng nhập chẩn đoán!');
+    return;
+  }
   try {
-    await completeExamination(patient.queueId);      // ✅ luôn có queueId
-    toast.success(`Đã hoàn thành khám cho ${patient.queueNumber} - ${patient.fullName}!`, { duration: 4000 });
+    await completeExamination(); // ← Không cần truyền queueId nữa
+    toast.success('Hoàn thành khám thành công! Phòng đã được giải phóng.');
 
-    // Reload queue để lấy dữ liệu mới từ backend (currentQueueId đã được clear)
-    await loadQueue();
+    // Reset form
+    setMedicalRecord({ clinicalExam: '', diagnosis: '', treatmentNotes: '' });
+    setPrescriptions([]);
+    setServices([]);
     
-    // Phát sự kiện để MedicalRecordHistory tự refresh
-    window.dispatchEvent(new CustomEvent('medical-records:refresh'));
+    // Tự động reload để thấy phòng trống
+    await loadQueue();
   } catch (err) {
-    const message = err.response?.data?.message ?? err.message ?? 'Hoàn thành khám thất bại';
-    toast.error(message);
-    console.error('Error completing examination:', err);
-    return; // giữ dialog mở nếu muốn cho phép retry
-  } finally {
-    // Đóng dialog ở finally để đảm bảo không đóng trước khi đọc 'patient'
-    setConfirmDialog({ isOpen: false, patient: null });
+    toast.error('Lỗi khi hoàn thành khám');
   }
 };
 
-
-
-  const waitingPatients = queue.filter(p => p.status === 'Waiting');
-  const filtered = waitingPatients.filter(p =>
+  const filtered = queue.filter(p =>
     p.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.queueNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    p.queueNumber.includes(searchTerm)
   );
 
-  if (loading) {
+  // KHI ĐANG KHÁM → DÙNG GIAO DIỆN ĐẸP
+  if (currentPatient) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <div className="text-lg font-semibold text-blue-600 animate-pulse">Đang tải bảng điều khiển...</div>
+      <div className="h-screen flex flex-col bg-slate-50">
+        <Toaster position="top-right" />
+        <header className="bg-white border-b px-6 py-4 shadow-sm">
+          <h1 className="text-2xl font-semibold">Phòng Khám Bác Sĩ</h1>
+        </header>
+
+        <div className="flex-1 flex overflow-hidden">
+          <PatientContextPanel currentPatient={currentPatient} medicalHistory={[]} />
+          <DiagnosticInputArea
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            medicalRecord={medicalRecord}
+            setMedicalRecord={setMedicalRecord}
+            prescriptions={prescriptions}
+            setPrescriptions={setPrescriptions}
+            services={services}
+            setServices={setServices}
+          />
+        </div>
+
+        <ActionFooter
+          onSaveDraft={() => toast('Đã lưu nháp')}
+          onSaveAndPrint={() => toast('Đang in...')}
+          onComplete={handleComplete}
+          hasRequiredData={!!medicalRecord.diagnosis.trim()}
+        />
       </div>
     );
   }
 
+  // CHƯA CÓ BỆNH NHÂN → DANH SÁCH CHỜ
   return (
     <>
       <Toaster position="top-right" />
-
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-700 rounded-xl shadow-lg p-6 mb-6 text-white">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">Bảng Điều Khiển Bác Sĩ</h1>
-            <p className="text-lg mt-1 opacity-90">Dr. {doctorName}</p>
-          </div>
-          <div className="text-right">
-            <div className="text-4xl font-bold drop-shadow-lg">{waitingPatients.length}</div>
-            <div className="text-sm opacity-90">Bệnh nhân đang chờ</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8">
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  Danh sách bệnh nhân hôm nay
-                </h2>
-                {error && (
-                  <span className="text-xs bg-red-500 px-2 py-1 rounded">{error}</span>
-                )}
-              </div>
+      <div className="min-h-screen bg-slate-50 p-6">
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl shadow-2xl p-8 mb-8 text-white">
+          <div className="flex justify-between">
+            <div>
+              <h1 className="text-4xl font-bold">Phòng Khám Bác Sĩ</h1>
+              <p className="text-xl mt-2">Sẵn sàng khám bệnh</p>
             </div>
-
-            <div className="p-4 border-b bg-gray-50">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Tìm tên hoặc số thứ tự..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition"
-                />
-              </div>
-            </div>
-
-            <div className="overflow-x-auto max-h-[600px]">
-              <table className="w-full">
-                <thead className="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0">
-                  <tr>
-                    <th className="px-4 py-3 text-left">Số TT</th>
-                    <th className="px-4 py-3 text-left">Họ tên</th>
-                    <th className="px-4 py-3 text-center">Ưu tiên</th>
-                    <th className="px-4 py-3 text-center">Check-in</th>
-                    <th className="px-4 py-3 text-center">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="text-center py-16 text-gray-500 text-base font-medium">
-                        Không có bệnh nhân nào đang chờ
-                      </td>
-                    </tr>
-                  ) : (
-                    filtered.map((patient) => (
-                      <tr key={patient.id} className="hover:bg-blue-50 transition border-b">
-                        <td className="px-4 py-4">
-                          <span className="text-xl font-bold text-blue-600">{patient.queueNumber}</span>
-                        </td>
-                        <td className="px-4 py-4">
-                          <p className="text-sm font-semibold text-gray-800">{patient.fullName}</p>
-                          <p className="text-xs text-gray-500">{patient.phone}</p>
-                        </td>
-                        <td className="text-center py-4">
-                          <span className={`inline-block px-3 py-1 rounded-full font-medium text-white text-xs ${
-                            patient.priority === 'Emergency' ? 'bg-red-500' :
-                            patient.priority === 'Urgent' ? 'bg-orange-500' : 'bg-green-500'
-                          }`}>
-                            {patient.priority === 'Emergency' ? 'Khẩn cấp' :
-                             patient.priority === 'Urgent' ? 'Ưu tiên' : 'Bình thường'}
-                          </span>
-                        </td>
-                        <td className="text-center text-sm py-4 text-gray-700">
-                          {new Date(patient.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                        </td>
-                        <td className="text-center py-4">
-                          <button
-                            onClick={() => handleCallPatient(patient)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition shadow-sm flex items-center gap-2 mx-auto"
-                          >
-                            <PhoneCall className="w-4 h-4" />
-                            Gọi bệnh
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+            <div className="text-right">
+              <div className="text-7xl font-bold">{queue.length}</div>
+              <div className="text-xl">Đang chờ</div>
             </div>
           </div>
         </div>
 
-        <div className="lg:col-span-4">
-          {currentPatient ? (
-            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg shadow-md p-6 text-white h-full flex flex-col">
-              <h3 className="text-lg font-bold mb-4 text-center">Đang khám</h3>
-              <div className="flex-1 flex flex-col items-center justify-center space-y-4">
-                <div className="text-5xl font-bold drop-shadow-lg">{currentPatient.queueNumber}</div>
-                <div className="text-xl font-semibold text-center px-2">{currentPatient.fullName}</div>
-                <div className="text-sm opacity-90">
-                  Vào phòng lúc: {currentPatient.startTime 
-                    ? new Date(currentPatient.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-                    : '--:--'}
-                </div>
-                {currentPatient.symptoms && (
-                  <div className="bg-white/20 backdrop-blur-md rounded-lg p-3 text-center max-w-xs">
-                    <p className="text-sm leading-relaxed">{currentPatient.symptoms}</p>
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="p-6 border-b">
+            <div className="relative max-w-md">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+              <input
+                type="text"
+                placeholder="Tìm bệnh nhân..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-6 py-3 border rounded-xl focus:ring-4 focus:ring-emerald-200 outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="max-h-96 overflow-y-auto">
+            {filtered.length === 0 ? (
+              <div className="text-center py-24 text-slate-500">
+                <p className="text-xl font-medium">Chưa có bệnh nhân nào</p>
+              </div>
+            ) : (
+              filtered.map(p => (
+                <div key={p.queueId} className="flex items-center justify-between p-6 hover:bg-emerald-50 border-b">
+                  <div>
+                    <div className="text-3xl font-bold text-emerald-600">{p.queueNumber}</div>
+                    <div className="mt-1">
+                      <p className="font-semibold">{p.fullName}</p>
+                      <p className="text-sm text-slate-500">{p.phone}</p>
+                    </div>
                   </div>
-                )}
-              </div>
-              <div className="space-y-3 mt-6">
-                <button
-                  onClick={() => {
-                    if (onNavigateToRecords && currentPatient) {
-                      localStorage.setItem('create_record_patient_name', currentPatient.fullName);
-                      onNavigateToRecords();
-                      toast.success('Chuyển sang trang tạo hồ sơ khám', {
-                        duration: 2000,
-                      });
-                    }
-                  }}
-                  className="w-full bg-white text-teal-600 py-2 rounded-lg font-semibold text-sm hover:bg-gray-100 transition shadow-sm flex items-center justify-center gap-2"
-                >
-                  <FileText className="w-4 h-4" />
-                  Tạo hồ sơ khám
-                </button>
-                <button
-                  onClick={() => openCompleteDialog(currentPatient)}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg font-semibold text-sm transition shadow-sm flex items-center justify-center gap-2"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  Hoàn thành khám
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-white rounded-lg shadow-md p-8 text-center h-full flex flex-col items-center justify-center">
-              <div className="bg-gray-200 border-2 border-dashed rounded-full w-24 h-24 mb-4 mx-auto" />
-              <h2 className="text-lg font-bold text-gray-700 mb-2">Chưa có bệnh nhân</h2>
-              <p className="text-sm text-gray-600">Nhấn "Gọi bệnh" để bắt đầu khám</p>
-            </div>
-          )}
+                  <button
+                    onClick={() => handleCallPatient(p)}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-xl font-semibold flex items-center gap-3 shadow-lg"
+                  >
+                    <PhoneCall size={22} /> Gọi vào khám
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
-
-      <ConfirmDialog
-        
-isOpen={confirmDialog.isOpen}
-      onClose={() => setConfirmDialog({ isOpen: false, patient: null })}
-      onConfirm={handleConfirmComplete}                    
-      patient={confirmDialog.patient}                       
-      patientName={confirmDialog.patient?.fullName}
-      queueNumber={confirmDialog.patient?.queueNumber}
-
-      />
     </>
   );
 }

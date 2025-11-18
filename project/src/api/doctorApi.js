@@ -41,11 +41,9 @@ export const callPatient = async (queueId) => {
   }
 };
 
-export const completeExamination = async (queueId) => {
+export const completeExamination = async () => {
   try {
-    const { data } = await axiosInstance.patch(`/api/doctor/queue/${queueId}/status`, null, {
-      params: { status: 'Completed' }
-    });
+    const { data } = await axiosInstance.post('/api/doctor/complete-examination');
     return data;
   } catch (error) {
     console.error('Error completing examination:', error);
