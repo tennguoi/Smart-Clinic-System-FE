@@ -1,11 +1,12 @@
 // src/components/doctor/Sidebar.jsx
-import { CalendarDays, Users, FileText, ClipboardList, UserCircle, Shield, Cloud } from 'lucide-react';
+import { CalendarDays, Users, FileText, ClipboardList, UserCircle, Shield, Cloud, History } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const menuItems = [
   { id: 'schedule', label: 'Lịch Khám', icon: CalendarDays },
   { id: 'current-patient', label: 'Bệnh nhân', icon: Users },
-  { id: 'records', label: 'Hồ Sơ Khám', icon: ClipboardList },
+  { id: 'records', label: 'Quản lý Hồ Sơ', icon: ClipboardList }, // Đổi tên nhẹ để phân biệt
+  { id: 'history', label: 'Lịch sử khám', icon: History }, // Thêm mục mới
   { id: 'invoices', label: 'Hóa Đơn', icon: FileText },
   { id: 'profile', label: 'Hồ Sơ Cá Nhân', icon: UserCircle },
   { id: 'security', label: 'Bảo Mật', icon: Shield },
@@ -28,13 +29,13 @@ export default function Sidebar({ activeMenu, onMenuChange }) {
   };
 
   return (
-    <aside className="w-64 bg-[#1e3a5f] text-white flex flex-col shadow-xl">
+    <aside className="w-64 bg-[#1e3a5f] text-white flex flex-col shadow-xl h-screen sticky top-0">
       <div className="p-6 flex items-center gap-3 border-b border-blue-800">
         <Cloud className="w-8 h-8" />
         <h1 className="text-xl font-semibold">HealthCare Doctor</h1>
       </div>
 
-      <nav className="flex-1 py-6">
+      <nav className="flex-1 py-6 overflow-y-auto">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentActive === item.id;

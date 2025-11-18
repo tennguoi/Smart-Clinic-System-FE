@@ -43,13 +43,43 @@ export const callPatient = async (queueId) => {
 
 export const completeExamination = async (queueId) => {
   try {
-    const { data } = await axiosInstance.patch(`/api/doctor/queue/${queueId}/complete`);
+    const { data } = await axiosInstance.patch(`/api/doctor/queue/${queueId}/status`, null, {
+      params: { status: 'Completed' }
+    });
     return data;
   } catch (error) {
     console.error('Error completing examination:', error);
     throw error;
   }
 };
+export const getCompletedQueues = async () => {
+  try {
+    const { data } = await axiosInstance.get('/api/doctor/queue/completed');
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('Error fetching completed queues:', error);
+    throw error;
+  }
+};
+export const getPatientMedicalHistory = async (patientId) => {
+  try {
+    const { data } = await axiosInstance.get(`/api/doctor/medical-records/patient/${patientId}`);
+    return data; // data sẽ là List<MedicalRecordResponse>
+  } catch (error) {
+    console.error('Error fetching patient medical history:', error);
+    throw error;
+  }
+};
+export const getMedicalRecordDetail = async (recordId) => {
+  try {
+    const { data } = await axiosInstance.get(`/api/doctor/medical-records/${recordId}`);
+    return data; // data sẽ là MedicalRecordDetailResponse
+  } catch (error) {
+    console.error('Error fetching medical record detail:', error);
+    throw error;
+  }
+};
+
 
 export default {
   getDoctors,
@@ -57,4 +87,7 @@ export default {
   getCurrentPatient,
   callPatient,
   completeExamination,
+  getPatientMedicalHistory,
+  getMedicalRecordDetail,
+  getCompletedQueues,
 };
