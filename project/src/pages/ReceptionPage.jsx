@@ -112,7 +112,7 @@ export default function ReceptionPage() {
   const [loadingQueue, setLoadingQueue] = useState(false);
   const [queueError, setQueueError] = useState('');
   const [searchPhone, setSearchPhone] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const [filterStatus, setFilterStatus] = useState('Waiting');
   const [showForm, setShowForm] = useState(false);
   const [editPatientId, setEditPatientId] = useState(null);
   const [patientForm, setPatientForm] = useState(emptyPatientForm);
@@ -306,7 +306,13 @@ export default function ReceptionPage() {
 
   // ================= QUEUE FORM HANDLERS =================
   const handleFormChange = (field, value) => {
-    setPatientForm((prev) => ({ ...prev, [field]: value }));
+    if (field === 'phone') {
+      // Chỉ cho phép số, và giới hạn 10 ký tự
+      const numericValue = value.replace(/\D/g, '').slice(0, 10);
+      setPatientForm((prev) => ({ ...prev, [field]: numericValue }));
+    } else {
+      setPatientForm((prev) => ({ ...prev, [field]: value }));
+    }
   };
 
   const handleAddPatient = () => {
@@ -372,6 +378,12 @@ export default function ReceptionPage() {
         patientForm.checkInTime = now.toISOString();
       }
 
+      // Kiểm tra độ dài phone trước khi submit
+      if (patientForm.phone.length !== 10) {
+        toast.error('Số điện thoại phải đúng 10 chữ số!');
+        return;
+      }
+
       if (editPatientId) {
         // Chỉ gửi các field cần update, không gửi queueNumber (backend sẽ giữ nguyên)
         const updateData = {
@@ -418,9 +430,9 @@ export default function ReceptionPage() {
 
   const handleQuickUpdateStatus = async (queueId, status) => {
     try {
-      const updated = await queueApi.updateStatus(queueId, status);
+      await queueApi.updateStatus(queueId, status);
       setQueueList((prev) =>
-        sortQueueByPriority(prev.map((p) => (p.queueId === queueId ? { ...p, ...updated } : p)))
+        sortQueueByPriority(prev.map((p) => (p.queueId === queueId ? { ...p, status } : p)))
       );
       toast.success('Cập nhật trạng thái thành công!');
     } catch (error) {
