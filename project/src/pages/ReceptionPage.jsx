@@ -11,7 +11,7 @@ import RoomAssignModal from '../components/receptionist/RoomAssignModal';
 import ProfileSection from '../components/admin/ProfileSection';
 import SecuritySection from '../components/admin/SecuritySection';
 import ClinicRoomManagement from '../components/receptionist/ClinicRoomManagement';
-import { queueApi, userApi, roomApi } from '../api/receptionApi';
+import { queueApi, userApi } from '../api/receptionApi';
 import { authService } from '../services/authService';
 import axiosInstance from '../utils/axiosConfig';
 
@@ -27,18 +27,39 @@ const initialUserData = {
   twoFactorEnabled: false,
 };
 
+// === ĐÃ SỬA Ở ĐÂY: Thêm giá trị mặc định cho gender ===
 const emptyPatientForm = {
   patientName: '',
   phone: '',
   email: '',
   dob: '',
-  gender: '',
+  gender: 'Nam', // Đặt mặc định là 'Nam' (hoặc 'Male' tùy theo value trong <option> của bạn)
   address: '',
   priority: 'Normal',
   checkInTime: '',
 };
 
 // ------------------ HELPER FUNCTIONS ------------------
+
+const normalizeStatus = (status) => {
+  if (!status) return 'Waiting';
+  let s = String(status).toLowerCase().trim();
+  s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  if (s.includes('progress') || s.includes('kham') || s.includes('examining') || s === 'dang kham') {
+    if (!s.includes('cho') && !s.includes('xong') && !s.includes('hoan thanh')) {
+      return 'InProgress';
+    }
+  }
+  if (s.includes('completed') || s.includes('finish') || s.includes('done') || s.includes('hoan thanh') || s.includes('xong') || s.includes('processed')) {
+    return 'Completed';
+  }
+  if (s.includes('cancel') || s.includes('huy') || s.includes('abort')) {
+    return 'Cancelled';
+  }
+  return 'Waiting';
+};
+
 const persistUserData = (data) => {
   localStorage.setItem('user_info', JSON.stringify(data));
   localStorage.setItem('user', JSON.stringify(data));
@@ -46,25 +67,14 @@ const persistUserData = (data) => {
 
 const sortQueueByPriority = (list) => {
   const priorityOrder = {
-    // Tiếng Anh
-    'Emergency': 3,
-    'Urgent': 2,
-    'Normal': 1,
-    // Tiếng Việt
-    'Khẩn cấp': 3,
-    'Ưu tiên': 2,
-    'Thường': 1
+    'Emergency': 3, 'Urgent': 2, 'Normal': 1,
+    'Khẩn cấp': 3, 'Ưu tiên': 2, 'Thường': 1
   };
 
   return list.slice().sort((a, b) => {
-    // Lấy priority value, mặc định là 0 nếu không tìm thấy
     const priorityA = priorityOrder[a.priority] || 0;
     const priorityB = priorityOrder[b.priority] || 0;
-
-    // Sắp xếp theo priority giảm dần (Khẩn cấp = 3 → đầu tiên)
     const diff = priorityB - priorityA;
-
-    // Nếu cùng priority, sắp xếp theo thời gian check-in (người đến trước → trước)
     if (diff !== 0) return diff;
     return new Date(a.checkInTime) - new Date(b.checkInTime);
   });
@@ -74,14 +84,26 @@ const formatDateTime = (value) => {
   if (!value) return '—';
   try {
     return new Date(value).toLocaleString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
     });
   } catch (error) {
     return value;
+  }
+};
+
+const formatDateOfBirth = (dateString) => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    return new Intl.DateTimeFormat('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(date);
+  } catch (error) {
+    return dateString;
   }
 };
 
@@ -112,7 +134,9 @@ export default function ReceptionPage() {
   const [loadingQueue, setLoadingQueue] = useState(false);
   const [queueError, setQueueError] = useState('');
   const [searchPhone, setSearchPhone] = useState('');
-  const [filterStatus, setFilterStatus] = useState('Waiting');
+   
+  const [filterStatus, setFilterStatus] = useState('Waiting'); 
+
   const [showForm, setShowForm] = useState(false);
   const [editPatientId, setEditPatientId] = useState(null);
   const [patientForm, setPatientForm] = useState(emptyPatientForm);
@@ -121,7 +145,6 @@ export default function ReceptionPage() {
   const [showRoomModal, setShowRoomModal] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
 
-  // ================= PERSIST ACTIVE MENU =================
   useEffect(() => {
     localStorage.setItem('activeMenu', activeMenu);
   }, [activeMenu]);
@@ -160,7 +183,6 @@ export default function ReceptionPage() {
     loadProfile();
   }, [loadProfile]);
 
-  // ================= LOGOUT =================
   const handleLogout = async () => {
     try {
       await userApi.logout();
@@ -189,9 +211,8 @@ export default function ReceptionPage() {
         }
       } catch (error) {
         if (!ignore) {
-          console.error('Failed to fetch appointments:', error);
-          const message = error.response?.data?.message || error.message || 'Không thể tải danh sách lịch hẹn. Vui lòng thử lại.';
-          setAppointmentsError(`Lỗi ${error.response?.status || 'không xác định'}: ${message}`);
+          const message = error.response?.data?.message || error.message || 'Không thể tải danh sách lịch hẹn.';
+          setAppointmentsError(`Lỗi: ${message}`);
         }
       } finally {
         if (!ignore) {
@@ -221,7 +242,6 @@ export default function ReceptionPage() {
       );
       setSuccessMessage('Lịch hẹn đã được xác nhận và email đã gửi cho bệnh nhân.');
     } catch (error) {
-      console.error('Failed to confirm appointment:', error);
       setAppointmentsError(
         error.response?.data?.message || 'Xác nhận lịch hẹn thất bại. Vui lòng thử lại.'
       );
@@ -230,84 +250,89 @@ export default function ReceptionPage() {
     }
   };
 
-  // ================= LOAD QUEUE LIST =================
-  const loadQueueList = useCallback(async () => {
+  // ================= QUEUE MANAGEMENT =================
+
+  const fetchQueueData = useCallback(async () => {
     setLoadingQueue(true);
     setQueueError('');
-    try {
-      const data = await queueApi.getWaitingQueue();
-      // Backend trả về đúng format QueuePatientResponse, map thêm thông tin phòng nếu có
-      const mappedData = (data || []).map((item) => ({
-        queueId: item.queueId,
-        queueNumber: item.queueNumber,
-        patientName: item.patientName,
-        phone: item.phone,
-        email: item.email,
-        dob: item.dob,
-        gender: item.gender,
-        address: item.address,
-        priority: item.priority || 'Normal',
-        status: item.status || 'Waiting',
-        checkInTime: item.checkInTime,
-        assignedRoomId: item.assignedRoomId || item.assignedRoom?.roomId || null,
-        assignedRoomName: item.assignedRoomName || item.assignedRoom?.roomName || null,
-      }));
-      const sorted = sortQueueByPriority(mappedData);
-      setQueueList(sorted);
-    } catch (error) {
-      const message = error.response?.data?.message || error.message || 'Không thể tải danh sách bệnh nhân đang chờ.';
-      setQueueError(message);
-      console.error('Load queue error:', error);
-    } finally {
-      setLoadingQueue(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (activeMenu === 'records') loadQueueList();
-  }, [activeMenu, loadQueueList]);
-
-  // ================= QUEUE SEARCH =================
-  const handleSearchQueue = async () => {
     try {
       const params = {};
       if (searchPhone) params.phone = searchPhone;
       if (filterStatus) params.status = filterStatus;
+
       const data = await queueApi.searchQueue(params);
-      // Backend trả về đúng format QueuePatientResponse, map thêm thông tin phòng nếu có
+       
       const mappedData = (data || []).map((item) => ({
         queueId: item.queueId,
         queueNumber: item.queueNumber,
         patientName: item.patientName,
         phone: item.phone,
         email: item.email,
-        dob: item.dob,
+        dob: formatDateOfBirth(item.dob), 
         gender: item.gender,
         address: item.address,
         priority: item.priority || 'Normal',
-        status: item.status || 'Waiting',
+        status: normalizeStatus(item.status || item.queueStatus),
         checkInTime: item.checkInTime,
-        assignedRoomId: item.assignedRoomId || null,
-        assignedRoomName: item.assignedRoomName || null,
+        assignedRoomId: item.assignedRoomId || item.assignedRoom?.roomId || null,
+        assignedRoomName: item.assignedRoomName || item.assignedRoom?.roomName || null,
       }));
-      const sorted = sortQueueByPriority(mappedData);
-      setQueueList(sorted);
+       
+      setQueueList(sortQueueByPriority(mappedData));
     } catch (error) {
-      console.error('Search error:', error);
-      toast.error('Tìm kiếm thất bại!');
+      const message = error.response?.data?.message || error.message || 'Không thể tải danh sách bệnh nhân.';
+      setQueueError(message);
+    } finally {
+      setLoadingQueue(false);
     }
+  }, [searchPhone, filterStatus]);
+
+  useEffect(() => {
+    if (activeMenu === 'records') {
+      fetchQueueData();
+    }
+  }, [activeMenu, filterStatus, fetchQueueData]);
+
+  const handleSearchClick = () => {
+    fetchQueueData();
   };
 
   const handleClearFilters = () => {
     setSearchPhone('');
-    setFilterStatus('');
-    loadQueueList();
+    setFilterStatus('Waiting');
+  };
+
+  const updateLocalQueueStatus = (queueId, newStatus) => {
+    const standardizedStatus = normalizeStatus(newStatus);
+    setQueueList((prevList) => {
+      if (filterStatus && normalizeStatus(filterStatus) !== standardizedStatus && filterStatus !== '') {
+        return prevList.filter((p) => p.queueId !== queueId);
+      }
+      const updatedList = prevList.map((p) =>
+        p.queueId === queueId ? { ...p, status: standardizedStatus } : p
+      );
+      return sortQueueByPriority(updatedList);
+    });
+  };
+   
+  // *** HELPER MỚI: Hàm riêng để giải phóng phòng ***
+  const releaseRoomIfCompleted = async (status, assignedRoomId) => {
+    const normalized = normalizeStatus(status);
+    if (normalized === 'Completed' && assignedRoomId) {
+      try {
+        await axiosInstance.put(`/api/clinic-rooms/${assignedRoomId}/status`, null, {
+              params: { status: 'Available' } 
+        });
+        toast.info('Đã cập nhật phòng khám về trạng thái Sẵn sàng.');
+      } catch (error) {
+        console.error('Lỗi giải phóng phòng:', error);
+      }
+    }
   };
 
   // ================= QUEUE FORM HANDLERS =================
   const handleFormChange = (field, value) => {
     if (field === 'phone') {
-      // Chỉ cho phép số, và giới hạn 10 ký tự
       const numericValue = value.replace(/\D/g, '').slice(0, 10);
       setPatientForm((prev) => ({ ...prev, [field]: numericValue }));
     } else {
@@ -318,7 +343,7 @@ export default function ReceptionPage() {
   const handleAddPatient = () => {
     setPatientForm({
       ...emptyPatientForm,
-      status: 'Waiting', // Không set checkInTime ở đây — sẽ set khi submit để dùng thời gian server-local chính xác
+      status: 'Waiting',
     });
     setEditPatientId(null);
     setShowForm(true);
@@ -331,12 +356,12 @@ export default function ReceptionPage() {
         patientName: full.patientName || '',
         phone: full.phone || '',
         email: full.email || '',
-        dob: full.dob || '',
-        gender: full.gender || '',
+        dob: full.dob || '', 
+        gender: full.gender || 'Nam', // Fallback nếu dữ liệu trả về không có gender
         address: full.address || '',
         priority: full.priority || 'Normal',
         checkInTime: full.checkInTime || '',
-        status: full.status || 'Waiting',
+        status: normalizeStatus(full.status),
       });
       setEditPatientId(full.queueId);
       setShowForm(true);
@@ -355,86 +380,94 @@ export default function ReceptionPage() {
     }
   };
 
+  // *** MODIFIED: THÊM LOGIC GIẢI PHÓNG PHÒNG VÀO SUBMIT FORM ***
   const handleSubmitForm = async () => {
     try {
       if (!editPatientId) {
-        // Tự động lấy thời gian hiện tại khi thêm bệnh nhân mới
         const now = new Date();
-        const hours = now.getHours();
-
-        // Kiểm tra khung giờ làm việc: 8h-12h sáng HOẶC 14h-18h chiều
-        const isMorningShift = hours >= 8 && hours < 12;
-        const isAfternoonShift = hours >= 14 && hours < 18;
+        const currentHour = now.getHours();
+        const isMorningShift = currentHour >= 8 && currentHour < 12;
+        const isAfternoonShift = currentHour >= 14 && currentHour < 18;
 
         if (!isMorningShift && !isAfternoonShift) {
-          toast.error(
-            'Chỉ được thêm bệnh nhân trong khung giờ làm việc:\n• Sáng: 8:00 - 12:00\n• Chiều: 14:00 - 18:00',
-            { autoClose: 4000 }
-          );
-          return;
+            toast.error('Chỉ được phép thêm bệnh nhân trong giờ làm việc: 8:00-12:00 và 14:00-18:00!');
+            return;
         }
 
-        // Gán thời gian hiện tại vào checkInTime (ISO string)
         patientForm.checkInTime = now.toISOString();
       }
 
-      // Kiểm tra độ dài phone trước khi submit
       if (patientForm.phone.length !== 10) {
         toast.error('Số điện thoại phải đúng 10 chữ số!');
         return;
       }
 
       if (editPatientId) {
-        // Chỉ gửi các field cần update, không gửi queueNumber (backend sẽ giữ nguyên)
-        const updateData = {
-          patientName: patientForm.patientName,
-          phone: patientForm.phone,
-          email: patientForm.email || null,
-          dob: patientForm.dob,
-          gender: patientForm.gender,
-          address: patientForm.address || null,
-          priority: patientForm.priority,
-          status: patientForm.status || 'Waiting',
-          checkInTime: patientForm.checkInTime,
-        };
-        const res = await queueApi.updatePatient(editPatientId, updateData);
-        setQueueList((prev) =>
-          sortQueueByPriority(
-            prev.map((p) => (p.queueId === editPatientId ? { ...p, ...res, queueId: editPatientId } : p))
-          )
-        );
+        const res = await queueApi.updatePatient(editPatientId, patientForm);
+        const newStatus = normalizeStatus(res.status || patientForm.status);
+        
+        // --- LOGIC MỚI: Kiểm tra xem có cần giải phóng phòng không ---
+        if (newStatus === 'Completed') {
+              // Tìm thông tin phòng cũ trong queueList hiện tại
+              const currentPatientData = queueList.find(p => p.queueId === editPatientId);
+              if (currentPatientData?.assignedRoomId) {
+                  await releaseRoomIfCompleted(newStatus, currentPatientData.assignedRoomId);
+              }
+        }
+        // ------------------------------------------------------------
+
+        setQueueList((prev) => {
+          if (filterStatus && normalizeStatus(filterStatus) !== newStatus && filterStatus !== '') {
+              return prev.filter(p => p.queueId !== editPatientId);
+          }
+          return sortQueueByPriority(
+            prev.map((p) => (p.queueId === editPatientId ? { 
+                ...p, 
+                ...res, 
+                queueId: editPatientId, 
+                status: newStatus,
+                dob: formatDateOfBirth(res.dob) 
+            } : p))
+          );
+        });
         toast.success('Cập nhật bệnh nhân thành công!');
       } else {
-        const res = await queueApi.addPatient({
-          patientName: patientForm.patientName,
-          phone: patientForm.phone,
-          email: patientForm.email || null,
-          dob: patientForm.dob,
-          gender: patientForm.gender,
-          address: patientForm.address || null,
-          priority: patientForm.priority,
-          checkInTime: patientForm.checkInTime, // Backend tự động set status = Waiting, không cần gửi
-        });
-        setQueueList((prev) => sortQueueByPriority([...prev, res]));
+        const res = await queueApi.addPatient(patientForm);
+        const newStatus = normalizeStatus(res.status || 'Waiting');
+        
+        if (!filterStatus || normalizeStatus(filterStatus) === newStatus) {
+            const newItemFormatted = {
+                ...res,
+                status: newStatus,
+                dob: formatDateOfBirth(res.dob)
+            };
+            setQueueList((prev) => sortQueueByPriority([...prev, newItemFormatted]));
+        }
         toast.success('Thêm bệnh nhân thành công!');
       }
 
       setShowForm(false);
     } catch (error) {
       console.error('Submit error:', error);
-      // Lấy error message từ backend response
       const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Có lỗi xảy ra!';
       toast.error(errorMessage);
     }
   };
 
+  // *** MODIFIED: THÊM LOGIC GIẢI PHÓNG PHÒNG VÀO CẬP NHẬT NHANH ***
   const handleQuickUpdateStatus = async (queueId, status) => {
     try {
       await queueApi.updateStatus(queueId, status);
-      setQueueList((prev) =>
-        sortQueueByPriority(prev.map((p) => (p.queueId === queueId ? { ...p, status } : p)))
-      );
-      toast.success('Cập nhật trạng thái thành công!');
+      updateLocalQueueStatus(queueId, status);
+       
+      // --- LOGIC MỚI: Kiểm tra xem có cần giải phóng phòng không ---
+      const currentPatientData = queueList.find(p => p.queueId === queueId);
+      if (currentPatientData?.assignedRoomId) {
+          await releaseRoomIfCompleted(status, currentPatientData.assignedRoomId);
+      }
+      // ------------------------------------------------------------
+
+      toast.success(`Cập nhật trạng thái thành công!`);
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || 'Không thể cập nhật trạng thái!';
       toast.error(errorMessage);
@@ -449,15 +482,11 @@ export default function ReceptionPage() {
 
   const handleRoomAssigned = async (queueId, roomId) => {
     try {
-      // Phân phòng (gọi API roomApi nếu cần) và cập nhật trạng thái sang "InProgress"
-      // Giả sử RoomAssignModal sẽ gọi roomApi.assignRoom và trả về thành công trước khi gọi onAssign
-      await queueApi.updateStatus(queueId, 'InProgress');
-      setQueueList((prev) =>
-        sortQueueByPriority(prev.map((p) => (p.queueId === queueId ? { ...p, status: 'InProgress' } : p)))
-      );
-      toast.success('Phân phòng thành công! Bệnh nhân đã chuyển sang trạng thái đang khám.');
+      const newStatus = 'InProgress';
+      await queueApi.updateStatus(queueId, newStatus);
+      updateLocalQueueStatus(queueId, newStatus);
+      toast.success('Phân phòng thành công! Đang khám.');
     } catch (error) {
-      console.error('Failed to update status after room assignment:', error);
       toast.error('Phân phòng thành công nhưng không thể cập nhật trạng thái!');
     }
   };
@@ -474,7 +503,7 @@ export default function ReceptionPage() {
       const payload = {
         fullName: userData.fullName,
         phone: userData.phone,
-        dob: userData.dateOfBirth,
+        dob: userData.dateOfBirth, 
         gender: userData.gender,
         address: userData.address,
       };
@@ -588,7 +617,7 @@ export default function ReceptionPage() {
 
   const receptionistName = useMemo(() => userData.fullName, [userData.fullName]);
 
-  // ================= RENDER SECTIONS =================
+  // ... (Render Appointments Section - Giữ nguyên)
   const renderAppointmentsSection = () => (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -707,12 +736,6 @@ export default function ReceptionPage() {
                     ) : appointment.confirmedAt ? (
                       <div className="text-xs text-gray-500">
                         Xác nhận lúc {formatDateTime(appointment.confirmedAt)}
-                        {appointment.confirmedByName && (
-                          <>
-                            <br />
-                            Bởi {appointment.confirmedByName}
-                          </>
-                        )}
                       </div>
                     ) : (
                       <span className="text-xs text-gray-400">Không có hành động</span>
@@ -734,10 +757,22 @@ export default function ReceptionPage() {
         filterStatus={filterStatus}
         onSearchPhoneChange={setSearchPhone}
         onFilterStatusChange={setFilterStatus}
-        onSearch={handleSearchQueue}
+        onSearch={handleSearchClick}
         onClear={handleClearFilters}
         onAddPatient={handleAddPatient}
       />
+
+      {loadingQueue ? (
+        <div className="text-center py-10 text-gray-500">Đang tải dữ liệu bệnh nhân...</div>
+      ) : (
+        <QueueTable
+          queueList={queueList}
+          onEdit={handleEditPatient}
+          onDelete={handleDeletePatient}
+          onStatusChange={handleQuickUpdateStatus}
+          onAssignRoom={handleAssignRoom}
+        />
+      )}
 
       {showForm && (
         <PatientForm
@@ -748,14 +783,6 @@ export default function ReceptionPage() {
           onCancel={() => setShowForm(false)}
         />
       )}
-
-      <QueueTable
-        queueList={queueList}
-        onEdit={handleEditPatient}
-        onDelete={handleDeletePatient}
-        onStatusChange={handleQuickUpdateStatus}
-        onAssignRoom={handleAssignRoom}
-      />
 
       {showRoomModal && selectedPatient && (
         <RoomAssignModal
