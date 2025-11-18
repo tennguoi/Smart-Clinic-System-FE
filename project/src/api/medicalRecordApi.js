@@ -71,6 +71,19 @@ export const medicalRecordApi = {
 			// Nếu endpoint chưa có, trả về empty array
 			return [];
 		}
+	},
+
+	// Export hồ sơ bệnh án thành PDF
+	exportAsPdf: async (recordId) => {
+		try {
+			const { data } = await axiosInstance.get(
+				`/api/doctor/medical-records/${recordId}/export-pdf`,
+				{ responseType: 'blob' }
+			);
+			return data;
+		} catch (error) {
+			throw new Error('Xuất PDF thất bại: ' + (error.response?.data?.message || error.message));
+		}
 	}
 	
 };
