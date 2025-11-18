@@ -2,6 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
+// Import icon mới cho phần Lịch hẹn
+import { Search, Plus, X, Calendar, Phone, Mail, Check, FileText } from 'lucide-react';
+
+// --- CÁC IMPORT CŨ (GIỮ NGUYÊN) ---
 import ReceptionHeader from '../components/receptionist/Header';
 import ReceptionSidebar from '../components/receptionist/Sidebar';
 import SearchFilter from '../components/receptionist/SearchFilter';
@@ -73,21 +78,38 @@ export default function ReceptionPage() {
   const [activeMenu, setActiveMenu] = useState('appointments');
   const navigate = useNavigate();
 
-  // ========== USER PROFILE STATE ==========
+  // ========== USER PROFILE STATE (GIỮ NGUYÊN) ==========
   const [userData, setUserData] = useState(initialUserData);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileSuccess, setProfileSuccess] = useState('');
 
-  // ========== APPOINTMENTS STATE ==========
+  // ========== APPOINTMENTS STATE (ĐÃ CẬP NHẬT) ==========
   const [appointments, setAppointments] = useState([]);
-  const [selectedStatus, setSelectedStatus] = useState('Pending');
   const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [appointmentsError, setAppointmentsError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [confirmingId, setConfirmingId] = useState(null);
 
-  // ========== QUEUE STATE ==========
+  // [MỚI] State cho bộ lọc tìm kiếm Lịch hẹn (Tên + SĐT + Status)
+  const [apptFilters, setApptFilters] = useState({
+    status: 'Pending',
+    phone: '',
+    patientName: ''
+  });
+
+  // [MỚI] State cho Modal Thêm lịch hẹn
+  const [showApptModal, setShowApptModal] = useState(false);
+  const [isSubmittingAppt, setIsSubmittingAppt] = useState(false);
+  const [newAppt, setNewAppt] = useState({
+    patientName: '',
+    phone: '',
+    email: '',
+    appointmentTime: '',
+    notes: ''
+  });
+
+  // ========== QUEUE STATE (GIỮ NGUYÊN) ==========
   const [queueList, setQueueList] = useState([]);
   const [loadingQueue, setLoadingQueue] = useState(false);
   const [queueError, setQueueError] = useState('');
@@ -97,11 +119,11 @@ export default function ReceptionPage() {
   const [editPatientId, setEditPatientId] = useState(null);
   const [patientForm, setPatientForm] = useState(emptyPatientForm);
 
-  // ========== ROOM ASSIGN STATE ==========
+  // ========== ROOM ASSIGN STATE (GIỮ NGUYÊN) ==========
   const [showRoomModal, setShowRoomModal] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
 
-  // ================= LOAD PROFILE =================
+  // ================= LOAD PROFILE (GIỮ NGUYÊN) =================
   const loadProfile = useCallback(async () => {
     setProfileLoading(true);
     setProfileError('');
@@ -135,7 +157,7 @@ export default function ReceptionPage() {
     loadProfile();
   }, [loadProfile]);
 
-  // ================= LOGOUT =================
+  // ================= LOGOUT (GIỮ NGUYÊN) =================
   const handleLogout = async () => {
     try {
       await userApi.logout();
@@ -147,48 +169,46 @@ export default function ReceptionPage() {
     }
   };
 
-  // ================= LOAD APPOINTMENTS =================
-  useEffect(() => {
+  // ================= APPOINTMENTS LOGIC (ĐÃ CẬP NHẬT) =================
+
+  // [CẬP NHẬT] Hàm lấy danh sách có hỗ trợ tìm kiếm (Tên + SĐT)
+  const fetchAppointments = useCallback(async () => {
     if (activeMenu !== 'appointments') return;
 
-    let ignore = false;
+    setLoadingAppointments(true);
+    setAppointmentsError('');
+    
+    try {
+      // Gửi tham số tìm kiếm lên Backend (API listBy mới)
+      const params = {
+        status: apptFilters.status,
+        ...(apptFilters.phone && { phone: apptFilters.phone }),
+        ...(apptFilters.patientName && { patientName: apptFilters.patientName }),
+      };
 
-    const fetchAppointments = async () => {
-      setLoadingAppointments(true);
-      setAppointmentsError('');
+      const response = await axiosInstance.get('/api/appointments', { params });
+      setAppointments(response.data || []);
+    } catch (error) {
+      toast.error('Không thể tải danh sách lịch hẹn.');
+    } finally {
+      setLoadingAppointments(false);
+    }
+  }, [activeMenu, apptFilters]);
 
-      try {
-        const response = await axiosInstance.get('/api/appointments', {
-          params: { status: selectedStatus },
-        });
+  // [MỚI] Debounce search thay thế cho useEffect load Appointments cũ
+  useEffect(() => {
+    if (activeMenu !== 'appointments') return; // Giữ lại điều kiện menu
+    const timer = setTimeout(() => {
+      fetchAppointments();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [activeMenu, apptFilters, fetchAppointments]); // Thay vì selectedStatus, dùng apptFilters
 
-        if (!ignore) {
-          setAppointments(response.data || []);
-        }
-      } catch (error) {
-        if (!ignore) {
-          console.error('Failed to fetch appointments:', error);
-          const message =
-            error.response?.data?.message ||
-            error.message ||
-            'Không thể tải danh sách lịch hẹn. Vui lòng thử lại.';
-          setAppointmentsError(`Lỗi ${error.response?.status || 'không xác định'}: ${message}`);
-        }
-      } finally {
-        if (!ignore) {
-          setLoadingAppointments(false);
-        }
-      }
-    };
 
-    fetchAppointments();
-
-    return () => {
-      ignore = true;
-    };
-  }, [activeMenu, selectedStatus]);
-
+  // [CẬP NHẬT] Hàm xác nhận lịch hẹn
   const handleConfirmAppointment = async (appointmentId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xác nhận lịch hẹn này?')) return;
+    
     setConfirmingId(appointmentId);
     setAppointmentsError('');
     setSuccessMessage('');
@@ -198,6 +218,7 @@ export default function ReceptionPage() {
         params: { status: 'Confirmed' },
       });
 
+      // Cập nhật UI và hiển thị thông báo
       setAppointments((prev) =>
         prev.map((appt) =>
           appt.appointmentId === appointmentId
@@ -205,26 +226,74 @@ export default function ReceptionPage() {
             : appt
         )
       );
+      
+      toast.success('Lịch hẹn đã được xác nhận!');
+      
+      // Reload nếu đang ở tab Pending
+      if (apptFilters.status === 'Pending') {
+         fetchAppointments();
+      }
 
-      setSuccessMessage('Lịch hẹn đã được xác nhận và email đã gửi cho bệnh nhân.');
     } catch (error) {
-      console.error('Failed to confirm appointment:', error);
-      setAppointmentsError(
-        error.response?.data?.message || 'Xác nhận lịch hẹn thất bại. Vui lòng thử lại.'
-      );
+      toast.error(error.response?.data?.message || 'Xác nhận thất bại.');
     } finally {
       setConfirmingId(null);
     }
   };
 
-  // ================= LOAD QUEUE LIST =================
+  // [MỚI] Hàm hủy lịch hẹn
+  const handleCancelAppointment = async (appointmentId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn HỦY lịch hẹn này?')) return;
+    
+    try {
+        await axiosInstance.patch(`/api/appointments/${appointmentId}/status`, null, {
+            params: { status: 'Cancelled' },
+        });
+        toast.success('Đã hủy lịch hẹn.');
+        fetchAppointments(); // Tải lại danh sách
+    } catch (error) {
+        toast.error('Không thể hủy lịch hẹn.');
+    }
+  };
+
+  // [MỚI] Hàm tạo lịch hẹn mới (Submit Modal)
+  const handleCreateApptSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmittingAppt(true);
+    try {
+      const payload = {
+        ...newAppt,
+        appointmentTime: newAppt.appointmentTime.length === 16 
+          ? newAppt.appointmentTime + ":00" 
+          : newAppt.appointmentTime
+      };
+
+      await axiosInstance.post('/api/appointments', payload); // Gọi API POST /api/appointments
+      
+      toast.success('Tạo lịch hẹn mới thành công!');
+      setShowApptModal(false);
+      setNewAppt({ patientName: '', phone: '', email: '', appointmentTime: '', notes: '' });
+      
+      // Chuyển tab về Pending để thấy lịch mới
+      if (apptFilters.status !== 'Pending') {
+        setApptFilters(prev => ({ ...prev, status: 'Pending' }));
+      } else {
+        fetchAppointments();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Tạo lịch hẹn thất bại.');
+    } finally {
+      setIsSubmittingAppt(false);
+    }
+  };
+
+
+  // ================= QUEUE LOGIC (GIỮ NGUYÊN) =================
   const loadQueueList = useCallback(async () => {
     setLoadingQueue(true);
     setQueueError('');
     try {
       const data = await queueApi.getWaitingQueue();
-      
-      // Backend trả về đúng format QueuePatientResponse, không cần map phức tạp
       const mappedData = (data || []).map(item => ({
         queueId: item.queueId,
         queueNumber: item.queueNumber,
@@ -240,9 +309,7 @@ export default function ReceptionPage() {
         assignedRoomId: item.assignedRoomId || item.assignedRoom?.roomId || null,
         assignedRoomName: item.assignedRoomName || item.assignedRoom?.roomName || null,
       }));
-      
-      const sorted = sortQueueByPriority(mappedData);
-      setQueueList(sorted);
+      setQueueList(sortQueueByPriority(mappedData));
     } catch (error) {
       const message = error.response?.data?.message || error.message || 'Không thể tải danh sách bệnh nhân đang chờ.';
       setQueueError(message);
@@ -256,15 +323,12 @@ export default function ReceptionPage() {
     if (activeMenu === 'records') loadQueueList();
   }, [activeMenu, loadQueueList]);
 
-  // ================= QUEUE SEARCH =================
   const handleSearchQueue = async () => {
     try {
       const params = {};
       if (searchPhone) params.phone = searchPhone;
       if (filterStatus) params.status = filterStatus;
       const data = await queueApi.searchQueue(params);
-      
-      // Backend trả về đúng format QueuePatientResponse, không cần map phức tạp
       const mappedData = (data || []).map(item => ({
         queueId: item.queueId,
         queueNumber: item.queueNumber,
@@ -280,7 +344,6 @@ export default function ReceptionPage() {
         assignedRoomId: item.assignedRoomId || null,
         assignedRoomName: item.assignedRoomName || null,
       }));
-      
       const sorted = sortQueueByPriority(mappedData);
       setQueueList(sorted);
     } catch (error) {
@@ -295,7 +358,6 @@ export default function ReceptionPage() {
     loadQueueList();
   };
 
-  // ================= QUEUE FORM HANDLERS =================
   const handleFormChange = (field, value) => {
     setPatientForm(prev => ({ ...prev, [field]: value }));
   };
@@ -353,7 +415,6 @@ export default function ReceptionPage() {
       }
 
       if (editPatientId) {
-        // Chỉ gửi các field cần update, không gửi queueNumber (backend sẽ giữ nguyên)
         const updateData = {
           patientName: patientForm.patientName,
           phone: patientForm.phone,
@@ -384,20 +445,14 @@ export default function ReceptionPage() {
           address: patientForm.address || null,
           priority: patientForm.priority,
           checkInTime: patientForm.checkInTime,
-          // Backend tự động set status = Waiting, không cần gửi
         });
         setQueueList(prev => sortQueueByPriority([...prev, res]));
         toast.success("Thêm bệnh nhân thành công!");
       }
-
       setShowForm(false);
     } catch (error) {
       console.error('Submit error:', error);
-      // Lấy error message từ backend response
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.error || 
-                          error.message || 
-                          "Có lỗi xảy ra!";
+      const errorMessage = error.response?.data?.message || error.message || "Có lỗi xảy ra!";
       toast.error(errorMessage);
     }
   };
@@ -415,7 +470,6 @@ export default function ReceptionPage() {
     }
   };
 
-  // ================= ROOM ASSIGN HANDLERS =================
   const handleAssignRoom = (patient) => {
     setSelectedPatient(patient);
     setShowRoomModal(true);
@@ -423,21 +477,20 @@ export default function ReceptionPage() {
 
   const handleRoomAssigned = async (queueId, roomId) => {
     try {
-      // Cập nhật trạng thái sang "InProgress" sau khi phân phòng thành công
       await queueApi.updateStatus(queueId, 'InProgress');
       
       setQueueList(prev => sortQueueByPriority(
         prev.map(p => p.queueId === queueId ? { ...p, status: 'InProgress' } : p)
       ));
       
-      toast.success("Phân phòng thành công! Bệnh nhân đã chuyển sang trạng thái đang khám.");
+      toast.success("Phân phòng thành công!");
     } catch (error) {
       console.error('Failed to update status after room assignment:', error);
       toast.error("Phân phòng thành công nhưng không thể cập nhật trạng thái!");
     }
   };
 
-  // ================= PROFILE HANDLERS =================
+  // ================= PROFILE HANDLERS (GIỮ NGUYÊN) =================
   const handleFieldChange = (field, value) => {
     setUserData((prev) => ({ ...prev, [field]: value }));
   };
@@ -568,129 +621,127 @@ export default function ReceptionPage() {
   const receptionistName = useMemo(() => userData.fullName, [userData.fullName]);
 
   // ================= RENDER SECTIONS =================
+  
+  // [CẬP NHẬT] Phần hiển thị Lịch hẹn (Thêm Search & Nút Add)
   const renderAppointmentsSection = () => (
     <div className="space-y-6">
+      {/* Header & Nút Thêm */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <h2 className="text-2xl font-semibold text-gray-800">📅 Quản lý lịch hẹn</h2>
-        <div className="flex items-center gap-3">
-          <label htmlFor="statusFilter" className="text-sm text-gray-600">
-            Trạng thái
-          </label>
+        <button 
+          onClick={() => setShowApptModal(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow transition"
+        >
+          <Plus className="w-5 h-5" /> Thêm lịch hẹn
+        </button>
+      </div>
+
+      {/* Bộ lọc tìm kiếm */}
+      <div className="bg-white p-4 rounded-lg shadow border border-gray-200 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+          <input 
+            type="text" placeholder="Tìm tên bệnh nhân..." 
+            className="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            value={apptFilters.patientName}
+            onChange={e => setApptFilters({...apptFilters, patientName: e.target.value})}
+          />
+        </div>
+        <div className="relative">
+          <Phone className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+          <input 
+            type="text" placeholder="Tìm số điện thoại..." 
+            className="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            value={apptFilters.phone}
+            onChange={e => setApptFilters({...apptFilters, phone: e.target.value})}
+          />
+        </div>
+        <div>
           <select
-            id="statusFilter"
-            value={selectedStatus}
-            onChange={(event) => setSelectedStatus(event.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={apptFilters.status}
+            onChange={(e) => setApptFilters({...apptFilters, status: e.target.value})}
+            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
           >
             <option value="Pending">Chờ xác nhận</option>
             <option value="Confirmed">Đã xác nhận</option>
             <option value="Cancelled">Đã hủy</option>
           </select>
         </div>
+        <button 
+          onClick={() => setApptFilters({ status: 'Pending', phone: '', patientName: '' })}
+          className="text-gray-500 hover:text-gray-700 underline text-sm"
+        >
+          Xóa bộ lọc
+        </button>
       </div>
 
-      {successMessage && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
-          {successMessage}
-        </div>
-      )}
+      {appointmentsError && <div className="text-red-600">{appointmentsError}</div>}
 
-      {appointmentsError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-          {appointmentsError}
-        </div>
-      )}
-
+      {/* Bảng Danh sách */}
       <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Bệnh nhân
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Liên hệ
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Thời gian
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Mã lịch
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Ghi chú
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Trạng thái
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
-                Hành động
-              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Bệnh nhân</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Liên hệ</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Thời gian</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Ghi chú</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Trạng thái</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Hành động</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {loadingAppointments ? (
-              <tr>
-                <td colSpan="7" className="px-4 py-10 text-center text-gray-500">
-                  Đang tải dữ liệu lịch hẹn...
-                </td>
-              </tr>
+              <tr><td colSpan="6" className="px-4 py-10 text-center text-gray-500">Đang tải dữ liệu...</td></tr>
             ) : appointments.length === 0 ? (
-              <tr>
-                <td colSpan="7" className="px-4 py-10 text-center text-gray-500">
-                  Không có lịch hẹn nào cho trạng thái hiện tại.
-                </td>
-              </tr>
+              <tr><td colSpan="6" className="px-4 py-10 text-center text-gray-500">Không tìm thấy lịch hẹn nào.</td></tr>
             ) : (
-              appointments.map((appointment) => (
-                <tr key={appointment.appointmentId} className="hover:bg-gray-50">
+              appointments.map((appt) => (
+                <tr key={appt.appointmentId} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-gray-800">{appointment.patientName}</div>
-                    <div className="text-xs text-gray-500">Tạo lúc {formatDateTime(appointment.createdAt)}</div>
+                    <div className="font-medium text-gray-800">{appt.patientName}</div>
+                    <div className="text-xs text-gray-500">{appt.appointmentCode}</div>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-700">
-                    <div>{appointment.phone}</div>
-                    <div className="text-xs text-blue-600">{appointment.email || '—'}</div>
+                    <div>{appt.phone}</div>
+                    <div className="text-xs text-blue-600">{appt.email}</div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{formatDateTime(appointment.appointmentTime)}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{appointment.appointmentCode}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700 max-w-xs">
-                    {appointment.notes || <span className="text-gray-400">Không có</span>}
+                  <td className="px-4 py-3 text-sm text-gray-700 font-medium">
+                    {formatDateTime(appt.appointmentTime)}
                   </td>
-                  <td className="px-4 py-3 text-sm">
-                    <span
-                      className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        appointment.status === 'Confirmed'
-                          ? 'bg-green-100 text-green-700'
-                          : appointment.status === 'Cancelled'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-yellow-100 text-yellow-700'
-                      }`}
-                    >
-                      {appointment.status === 'Pending'
-                        ? 'Chờ xác nhận'
-                        : appointment.status === 'Confirmed'
-                        ? 'Đã xác nhận'
-                        : 'Đã hủy'}
+                  <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">
+                    {appt.notes || '-'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold
+                      ${appt.status === 'Confirmed' ? 'bg-green-100 text-green-700' : 
+                        appt.status === 'Cancelled' ? 'bg-red-100 text-red-700' : 
+                        'bg-yellow-100 text-yellow-700'}`}>
+                      {appt.status === 'Pending' ? 'Chờ xác nhận' : appt.status === 'Confirmed' ? 'Đã xác nhận' : 'Đã hủy'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-center">
-                    {appointment.status === 'Pending' ? (
-                      <button
-                        onClick={() => handleConfirmAppointment(appointment.appointmentId)}
-                        disabled={confirmingId === appointment.appointmentId}
-                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition"
-                      >
-                        {confirmingId === appointment.appointmentId ? 'Đang xác nhận...' : 'Xác nhận'}
-                      </button>
-                    ) : appointment.confirmedAt ? (
+                  <td className="px-4 py-3 text-center space-x-2">
+                    {appt.status === 'Pending' ? (
+                      <div className="flex justify-center space-x-2">
+                        <button 
+                          onClick={() => handleConfirmAppointment(appt.appointmentId)}
+                          className="p-1.5 bg-green-50 text-green-600 rounded border border-green-200 hover:bg-green-100" 
+                          title="Xác nhận"
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleCancelAppointment(appt.appointmentId)}
+                          className="p-1.5 bg-red-50 text-red-600 rounded border border-red-200 hover:bg-red-100" 
+                          title="Hủy"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : appt.confirmedAt ? (
                       <div className="text-xs text-gray-500">
-                        Xác nhận lúc {formatDateTime(appointment.confirmedAt)}
-                        {appointment.confirmedByName && (
-                          <>
-                            <br />Bởi {appointment.confirmedByName}
-                          </>
-                        )}
+                        Xác nhận lúc {formatDateTime(appt.confirmedAt)}
+                        {appt.confirmedByName && <><br />Bởi {appt.confirmedByName}</>}
                       </div>
                     ) : (
                       <span className="text-xs text-gray-400">Không có hành động</span>
@@ -702,6 +753,53 @@ export default function ReceptionPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Modal Thêm Mới */}
+      {showApptModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
+            <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+              <h3 className="font-semibold text-lg text-gray-800">Tạo Lịch Hẹn Mới</h3>
+              <button onClick={() => setShowApptModal(false)}><X className="w-5 h-5 text-gray-500" /></button>
+            </div>
+            <form onSubmit={handleCreateApptSubmit} className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tên bệnh nhân *</label>
+                  <input required type="text" className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                    value={newAppt.patientName} onChange={e => setNewAppt({...newAppt, patientName: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại *</label>
+                  <input required type="tel" className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                    value={newAppt.phone} onChange={e => setNewAppt({...newAppt, phone: e.target.value})} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newAppt.email} onChange={e => setNewAppt({...newAppt, email: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Thời gian hẹn *</label>
+                <input required type="datetime-local" className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newAppt.appointmentTime} onChange={e => setNewAppt({...newAppt, appointmentTime: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ghi chú</label>
+                <textarea rows="3" className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newAppt.notes} onChange={e => setNewAppt({...newAppt, notes: e.target.value})}></textarea>
+              </div>
+              <div className="pt-4 flex justify-end gap-3 border-t">
+                <button type="button" onClick={() => setShowApptModal(false)} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Hủy</button>
+                <button type="submit" disabled={isSubmittingAppt} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                  {isSubmittingAppt ? 'Đang lưu...' : 'Lưu Lịch Hẹn'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 
