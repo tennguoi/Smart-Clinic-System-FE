@@ -3,10 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Import icon mới cho phần Lịch hẹn
-import { Search, Plus, X, Calendar, Phone, Mail, Check, FileText } from 'lucide-react';
+// Import đầy đủ icon
+import { Search, Plus, X, Phone, Check, SquarePen, Trash2, Save } from 'lucide-react';
 
-// --- CÁC IMPORT CŨ (GIỮ NGUYÊN) ---
 import ReceptionHeader from '../components/receptionist/Header';
 import ReceptionSidebar from '../components/receptionist/Sidebar';
 import SearchFilter from '../components/receptionist/SearchFilter';
@@ -16,7 +15,7 @@ import RoomAssignModal from '../components/receptionist/RoomAssignModal';
 import ProfileSection from '../components/admin/ProfileSection';
 import SecuritySection from '../components/admin/SecuritySection';
 import ClinicRoomManagement from '../components/receptionist/ClinicRoomManagement';
-import { queueApi, userApi, roomApi } from '../api/receptionApi';
+import { queueApi, userApi } from '../api/receptionApi';
 import { authService } from '../services/authService';
 import axiosInstance from '../utils/axiosConfig';
 
@@ -78,27 +77,25 @@ export default function ReceptionPage() {
   const [activeMenu, setActiveMenu] = useState('appointments');
   const navigate = useNavigate();
 
-  // ========== USER PROFILE STATE (GIỮ NGUYÊN) ==========
+  // ========== USER PROFILE STATE ==========
   const [userData, setUserData] = useState(initialUserData);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileSuccess, setProfileSuccess] = useState('');
 
-  // ========== APPOINTMENTS STATE (ĐÃ CẬP NHẬT) ==========
+  // ========== APPOINTMENTS STATE ==========
   const [appointments, setAppointments] = useState([]);
   const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [appointmentsError, setAppointmentsError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const [confirmingId, setConfirmingId] = useState(null);
-
-  // [MỚI] State cho bộ lọc tìm kiếm Lịch hẹn (Tên + SĐT + Status)
+  
+  // Bộ lọc tìm kiếm Appointments
   const [apptFilters, setApptFilters] = useState({
     status: 'Pending',
     phone: '',
     patientName: ''
   });
 
-  // [MỚI] State cho Modal Thêm lịch hẹn
+  // Modal Thêm mới Appointments
   const [showApptModal, setShowApptModal] = useState(false);
   const [isSubmittingAppt, setIsSubmittingAppt] = useState(false);
   const [newAppt, setNewAppt] = useState({
@@ -109,7 +106,18 @@ export default function ReceptionPage() {
     notes: ''
   });
 
-  // ========== QUEUE STATE (GIỮ NGUYÊN) ==========
+  // Modal Sửa Appointments
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editData, setEditData] = useState({
+    appointmentId: '',
+    patientName: '',
+    phone: '',
+    email: '',
+    appointmentTime: '',
+    notes: ''
+  });
+
+  // ========== QUEUE STATE ==========
   const [queueList, setQueueList] = useState([]);
   const [loadingQueue, setLoadingQueue] = useState(false);
   const [queueError, setQueueError] = useState('');
@@ -119,11 +127,11 @@ export default function ReceptionPage() {
   const [editPatientId, setEditPatientId] = useState(null);
   const [patientForm, setPatientForm] = useState(emptyPatientForm);
 
-  // ========== ROOM ASSIGN STATE (GIỮ NGUYÊN) ==========
+  // ========== ROOM ASSIGN STATE ==========
   const [showRoomModal, setShowRoomModal] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
 
-  // ================= LOAD PROFILE (GIỮ NGUYÊN) =================
+  // ================= LOAD PROFILE =================
   const loadProfile = useCallback(async () => {
     setProfileLoading(true);
     setProfileError('');
@@ -157,7 +165,6 @@ export default function ReceptionPage() {
     loadProfile();
   }, [loadProfile]);
 
-  // ================= LOGOUT (GIỮ NGUYÊN) =================
   const handleLogout = async () => {
     try {
       await userApi.logout();
@@ -169,9 +176,9 @@ export default function ReceptionPage() {
     }
   };
 
-  // ================= APPOINTMENTS LOGIC (ĐÃ CẬP NHẬT) =================
+  // ================= APPOINTMENTS LOGIC =================
 
-  // [CẬP NHẬT] Hàm lấy danh sách có hỗ trợ tìm kiếm (Tên + SĐT)
+  // 1. Lấy danh sách lịch hẹn
   const fetchAppointments = useCallback(async () => {
     if (activeMenu !== 'appointments') return;
 
@@ -179,7 +186,6 @@ export default function ReceptionPage() {
     setAppointmentsError('');
     
     try {
-      // Gửi tham số tìm kiếm lên Backend (API listBy mới)
       const params = {
         status: apptFilters.status,
         ...(apptFilters.phone && { phone: apptFilters.phone }),
@@ -195,70 +201,29 @@ export default function ReceptionPage() {
     }
   }, [activeMenu, apptFilters]);
 
-  // [MỚI] Debounce search thay thế cho useEffect load Appointments cũ
   useEffect(() => {
-    if (activeMenu !== 'appointments') return; // Giữ lại điều kiện menu
+    if (activeMenu !== 'appointments') return;
     const timer = setTimeout(() => {
       fetchAppointments();
     }, 500);
     return () => clearTimeout(timer);
-  }, [activeMenu, apptFilters, fetchAppointments]); // Thay vì selectedStatus, dùng apptFilters
+  }, [activeMenu, apptFilters, fetchAppointments]);
 
-
-  // [CẬP NHẬT] Hàm xác nhận lịch hẹn
-  const handleConfirmAppointment = async (appointmentId) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xác nhận lịch hẹn này?')) return;
-    
-    setConfirmingId(appointmentId);
-    setAppointmentsError('');
-    setSuccessMessage('');
-
-    try {
-      await axiosInstance.patch(`/api/appointments/${appointmentId}/status`, null, {
-        params: { status: 'Confirmed' },
-      });
-
-      // Cập nhật UI và hiển thị thông báo
-      setAppointments((prev) =>
-        prev.map((appt) =>
-          appt.appointmentId === appointmentId
-            ? { ...appt, status: 'Confirmed', confirmedAt: new Date().toISOString() }
-            : appt
-        )
-      );
-      
-      toast.success('Lịch hẹn đã được xác nhận!');
-      
-      // Reload nếu đang ở tab Pending
-      if (apptFilters.status === 'Pending') {
-         fetchAppointments();
-      }
-
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Xác nhận thất bại.');
-    } finally {
-      setConfirmingId(null);
-    }
-  };
-
-  // [MỚI] Hàm hủy lịch hẹn
-  const handleCancelAppointment = async (appointmentId) => {
-    if (!window.confirm('Bạn có chắc chắn muốn HỦY lịch hẹn này?')) return;
-    
-    try {
-        await axiosInstance.patch(`/api/appointments/${appointmentId}/status`, null, {
-            params: { status: 'Cancelled' },
-        });
-        toast.success('Đã hủy lịch hẹn.');
-        fetchAppointments(); // Tải lại danh sách
-    } catch (error) {
-        toast.error('Không thể hủy lịch hẹn.');
-    }
-  };
-
-  // [MỚI] Hàm tạo lịch hẹn mới (Submit Modal)
+  // 2. Tạo lịch hẹn mới (CÓ VALIDATE)
   const handleCreateApptSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!newAppt.appointmentTime) {
+      toast.error("Vui lòng chọn thời gian hẹn!");
+      return;
+    }
+    const selectedTime = new Date(newAppt.appointmentTime);
+    const now = new Date();
+    if (selectedTime < now) {
+      toast.error("Thời gian hẹn không được ở quá khứ!");
+      return; 
+    }
+
     setIsSubmittingAppt(true);
     try {
       const payload = {
@@ -268,27 +233,109 @@ export default function ReceptionPage() {
           : newAppt.appointmentTime
       };
 
-      await axiosInstance.post('/api/appointments', payload); // Gọi API POST /api/appointments
+      await axiosInstance.post('/api/appointments', payload);
       
       toast.success('Tạo lịch hẹn mới thành công!');
       setShowApptModal(false);
       setNewAppt({ patientName: '', phone: '', email: '', appointmentTime: '', notes: '' });
       
-      // Chuyển tab về Pending để thấy lịch mới
       if (apptFilters.status !== 'Pending') {
         setApptFilters(prev => ({ ...prev, status: 'Pending' }));
       } else {
         fetchAppointments();
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Tạo lịch hẹn thất bại.');
+      const msg = error.response?.data?.message || 'Tạo lịch hẹn thất bại.';
+      toast.error(msg);
     } finally {
       setIsSubmittingAppt(false);
     }
   };
 
+  // 3. Mở Modal Sửa
+  const handleEditClick = (appt) => {
+    let formattedTime = '';
+    if (appt.appointmentTime) {
+      const date = new Date(appt.appointmentTime);
+      date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+      formattedTime = date.toISOString().slice(0, 16);
+    }
 
-  // ================= QUEUE LOGIC (GIỮ NGUYÊN) =================
+    setEditData({
+      appointmentId: appt.appointmentId,
+      patientName: appt.patientName,
+      phone: appt.phone,
+      email: appt.email || '',
+      appointmentTime: formattedTime,
+      notes: appt.notes || ''
+    });
+    setShowEditModal(true);
+  };
+
+  // 4. Lưu Sửa Lịch Hẹn (CÓ VALIDATE)
+  const handleUpdateApptSubmit = async (e) => {
+    e.preventDefault();
+
+    const selectedTime = new Date(editData.appointmentTime);
+    const now = new Date();
+    if (selectedTime < now) {
+      toast.error("Thời gian hẹn không được ở quá khứ!");
+      return;
+    }
+
+    try {
+      await axiosInstance.put(`/api/appointments/${editData.appointmentId}`, {
+        patientName: editData.patientName,
+        phone: editData.phone,
+        email: editData.email,
+        appointmentTime: editData.appointmentTime + ":00",
+        notes: editData.notes
+      });
+
+      toast.success('Cập nhật lịch hẹn thành công!');
+      setShowEditModal(false);
+      fetchAppointments();
+    } catch (error) {
+      const msg = error.response?.data?.message || 'Cập nhật thất bại.';
+      toast.error(msg);
+    }
+  };
+
+  // 5. Xác nhận & Hủy
+  const handleConfirmAppointment = async (appointmentId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xác nhận lịch hẹn này?')) return;
+    try {
+      await axiosInstance.patch(`/api/appointments/${appointmentId}/status`, null, {
+        params: { status: 'Confirmed' },
+      });
+      setAppointments((prev) =>
+        prev.map((appt) =>
+          appt.appointmentId === appointmentId
+            ? { ...appt, status: 'Confirmed', confirmedAt: new Date().toISOString() }
+            : appt
+        )
+      );
+      toast.success('Lịch hẹn đã được xác nhận!');
+      if (apptFilters.status === 'Pending') fetchAppointments();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Xác nhận thất bại.');
+    }
+  };
+
+  const handleCancelAppointment = async (appointmentId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn HỦY lịch hẹn này?')) return;
+    try {
+        await axiosInstance.patch(`/api/appointments/${appointmentId}/status`, null, {
+            params: { status: 'Cancelled' },
+        });
+        toast.success('Đã hủy lịch hẹn.');
+        fetchAppointments();
+    } catch (error) {
+        toast.error('Không thể hủy lịch hẹn.');
+    }
+  };
+
+  // ================= QUEUE LOGIC =================
   const loadQueueList = useCallback(async () => {
     setLoadingQueue(true);
     setQueueError('');
@@ -311,9 +358,7 @@ export default function ReceptionPage() {
       }));
       setQueueList(sortQueueByPriority(mappedData));
     } catch (error) {
-      const message = error.response?.data?.message || error.message || 'Không thể tải danh sách bệnh nhân đang chờ.';
-      setQueueError(message);
-      console.error('Load queue error:', error);
+      setQueueError(error.response?.data?.message || 'Không thể tải danh sách chờ.');
     } finally {
       setLoadingQueue(false);
     }
@@ -344,10 +389,8 @@ export default function ReceptionPage() {
         assignedRoomId: item.assignedRoomId || null,
         assignedRoomName: item.assignedRoomName || null,
       }));
-      const sorted = sortQueueByPriority(mappedData);
-      setQueueList(sorted);
+      setQueueList(sortQueueByPriority(mappedData));
     } catch (error) {
-      console.error('Search error:', error);
       toast.error("Tìm kiếm thất bại!");
     }
   };
@@ -356,10 +399,6 @@ export default function ReceptionPage() {
     setSearchPhone('');
     setFilterStatus('');
     loadQueueList();
-  };
-
-  const handleFormChange = (field, value) => {
-    setPatientForm(prev => ({ ...prev, [field]: value }));
   };
 
   const handleAddPatient = () => {
@@ -397,6 +436,10 @@ export default function ReceptionPage() {
     } catch {
       toast.error("Không thể xoá bệnh nhân!");
     }
+  };
+
+  const handleFormChange = (field, value) => {
+    setPatientForm(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSubmitForm = async () => {
@@ -451,7 +494,6 @@ export default function ReceptionPage() {
       }
       setShowForm(false);
     } catch (error) {
-      console.error('Submit error:', error);
       const errorMessage = error.response?.data?.message || error.message || "Có lỗi xảy ra!";
       toast.error(errorMessage);
     }
@@ -465,8 +507,7 @@ export default function ReceptionPage() {
       ));
       toast.success("Cập nhật trạng thái thành công!");
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || "Không thể cập nhật trạng thái!";
-      toast.error(errorMessage);
+      toast.error("Không thể cập nhật trạng thái!");
     }
   };
 
@@ -478,19 +519,16 @@ export default function ReceptionPage() {
   const handleRoomAssigned = async (queueId, roomId) => {
     try {
       await queueApi.updateStatus(queueId, 'InProgress');
-      
       setQueueList(prev => sortQueueByPriority(
         prev.map(p => p.queueId === queueId ? { ...p, status: 'InProgress' } : p)
       ));
-      
       toast.success("Phân phòng thành công!");
     } catch (error) {
-      console.error('Failed to update status after room assignment:', error);
       toast.error("Phân phòng thành công nhưng không thể cập nhật trạng thái!");
     }
   };
 
-  // ================= PROFILE HANDLERS (GIỮ NGUYÊN) =================
+  // ================= PROFILE HANDLERS =================
   const handleFieldChange = (field, value) => {
     setUserData((prev) => ({ ...prev, [field]: value }));
   };
@@ -515,8 +553,7 @@ export default function ReceptionPage() {
         throw new Error(data?.message || 'Cập nhật thất bại');
       }
     } catch (error) {
-      const message = error.response?.data?.message || error.message || 'Không thể cập nhật hồ sơ';
-      setProfileError(message);
+      setProfileError(error.response?.data?.message || 'Không thể cập nhật hồ sơ');
     }
   };
 
@@ -549,8 +586,7 @@ export default function ReceptionPage() {
           throw new Error(data?.message || 'Tải ảnh thất bại');
         }
       } catch (error) {
-        const message = error.response?.data?.message || error.message || 'Tải ảnh thất bại';
-        setProfileError(message);
+        setProfileError('Tải ảnh thất bại');
       }
     };
     input.click();
@@ -572,7 +608,7 @@ export default function ReceptionPage() {
           setTimeout(() => setProfileSuccess(''), 2500);
           return true;
         }
-        throw new Error(data?.message || 'Tắt 2FA thất bại');
+        throw new Error('Tắt 2FA thất bại');
       } else {
         const { data } = await axiosInstance.post('/api/auth/enable-2fa', {
           email: userData.email,
@@ -582,11 +618,10 @@ export default function ReceptionPage() {
           setTimeout(() => setProfileSuccess(''), 2500);
           return true;
         }
-        throw new Error(data?.message || 'Bật 2FA thất bại');
+        throw new Error('Bật 2FA thất bại');
       }
     } catch (error) {
-      const message = error.response?.data?.message || error.message || 'Không thể cập nhật 2FA';
-      setProfileError(message);
+      setProfileError(error.response?.data?.message || 'Không thể cập nhật 2FA');
       return false;
     }
   };
@@ -609,11 +644,10 @@ export default function ReceptionPage() {
         setTimeout(() => setProfileSuccess(''), 2500);
         return true;
       }
-      setProfileError(data?.message || 'Xác thực OTP thất bại');
+      setProfileError('Xác thực OTP thất bại');
       return false;
     } catch (error) {
-      const message = error.response?.data?.message || error.message || 'Xác thực OTP thất bại';
-      setProfileError(message);
+      setProfileError('Xác thực OTP thất bại');
       return false;
     }
   };
@@ -622,7 +656,6 @@ export default function ReceptionPage() {
 
   // ================= RENDER SECTIONS =================
   
-  // [CẬP NHẬT] Phần hiển thị Lịch hẹn (Thêm Search & Nút Add)
   const renderAppointmentsSection = () => (
     <div className="space-y-6">
       {/* Header & Nút Thêm */}
@@ -639,19 +672,19 @@ export default function ReceptionPage() {
       {/* Bộ lọc tìm kiếm */}
       <div className="bg-white p-4 rounded-lg shadow border border-gray-200 grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="relative">
-          <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input 
             type="text" placeholder="Tìm tên bệnh nhân..." 
-            className="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full pl-10 pr-3 h-10 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
             value={apptFilters.patientName}
             onChange={e => setApptFilters({...apptFilters, patientName: e.target.value})}
           />
         </div>
         <div className="relative">
-          <Phone className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input 
             type="text" placeholder="Tìm số điện thoại..." 
-            className="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full pl-10 pr-3 h-10 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
             value={apptFilters.phone}
             onChange={e => setApptFilters({...apptFilters, phone: e.target.value})}
           />
@@ -660,7 +693,7 @@ export default function ReceptionPage() {
           <select
             value={apptFilters.status}
             onChange={(e) => setApptFilters({...apptFilters, status: e.target.value})}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+            className="w-full px-3 h-10 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm text-gray-700"
           >
             <option value="Pending">Chờ xác nhận</option>
             <option value="Confirmed">Đã xác nhận</option>
@@ -669,7 +702,7 @@ export default function ReceptionPage() {
         </div>
         <button 
           onClick={() => setApptFilters({ status: 'Pending', phone: '', patientName: '' })}
-          className="text-gray-500 hover:text-gray-700 underline text-sm"
+          className="w-full h-10 border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors"
         >
           Xóa bộ lọc
         </button>
@@ -682,22 +715,28 @@ export default function ReceptionPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase w-12">STT</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Bệnh nhân</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Liên hệ</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Thời gian</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Ghi chú</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Trạng thái</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Hành động</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Trạng thái</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase w-32">Hành động</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {loadingAppointments ? (
-              <tr><td colSpan="6" className="px-4 py-10 text-center text-gray-500">Đang tải dữ liệu...</td></tr>
+              <tr><td colSpan="7" className="px-4 py-10 text-center text-gray-500">Đang tải dữ liệu...</td></tr>
             ) : appointments.length === 0 ? (
-              <tr><td colSpan="6" className="px-4 py-10 text-center text-gray-500">Không tìm thấy lịch hẹn nào.</td></tr>
+              <tr><td colSpan="7" className="px-4 py-10 text-center text-gray-500">Không tìm thấy lịch hẹn nào.</td></tr>
             ) : (
-              appointments.map((appt) => (
+              appointments.map((appt, index) => (
                 <tr key={appt.appointmentId} className="hover:bg-gray-50">
+                  {/* STT */}
+                  <td className="px-4 py-3 text-center text-sm text-gray-500 font-medium">
+                    {index + 1}
+                  </td>
+
                   <td className="px-4 py-3">
                     <div className="font-medium text-gray-800">{appt.patientName}</div>
                     <div className="text-xs text-gray-500">{appt.appointmentCode}</div>
@@ -712,39 +751,55 @@ export default function ReceptionPage() {
                   <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">
                     {appt.notes || '-'}
                   </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold
+
+                  {/* [CẬP NHẬT] Trạng thái: Ngăn nắp trên 1 dòng */}
+                  <td className="px-4 py-3 text-center">
+                    <span className={`inline-block whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold min-w-[120px] text-center
                       ${appt.status === 'Confirmed' ? 'bg-green-100 text-green-700' : 
                         appt.status === 'Cancelled' ? 'bg-red-100 text-red-700' : 
                         'bg-yellow-100 text-yellow-700'}`}>
                       {appt.status === 'Pending' ? 'Chờ xác nhận' : appt.status === 'Confirmed' ? 'Đã xác nhận' : 'Đã hủy'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-center space-x-2">
+
+                  {/* [CẬP NHẬT] Hành động: Ô hẹp hơn, khoảng cách icon gần */}
+                  <td className="px-4 py-3 text-center w-32">
                     {appt.status === 'Pending' ? (
-                      <div className="flex justify-center space-x-2">
+                      <div className="flex justify-center gap-2">
+                        {/* Nút Xác nhận */}
                         <button 
                           onClick={() => handleConfirmAppointment(appt.appointmentId)}
-                          className="p-1.5 bg-green-50 text-green-600 rounded border border-green-200 hover:bg-green-100" 
+                          className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors" 
                           title="Xác nhận"
                         >
-                          <Check className="w-4 h-4" />
+                          <Check className="w-5 h-5" />
                         </button>
+
+                        {/* Nút Sửa */}
+                        <button 
+                          onClick={() => handleEditClick(appt)}
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" 
+                          title="Sửa thông tin"
+                        >
+                          <SquarePen className="w-5 h-5" />
+                        </button>
+
+                        {/* Nút Hủy */}
                         <button 
                           onClick={() => handleCancelAppointment(appt.appointmentId)}
-                          className="p-1.5 bg-red-50 text-red-600 rounded border border-red-200 hover:bg-red-100" 
+                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" 
                           title="Hủy"
                         >
-                          <X className="w-4 h-4" />
+                          <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
                     ) : appt.confirmedAt ? (
-                      <div className="text-xs text-gray-500">
-                        Xác nhận lúc {formatDateTime(appt.confirmedAt)}
-                        {appt.confirmedByName && <><br />Bởi {appt.confirmedByName}</>}
+                      <div className="text-xs text-gray-500 italic flex flex-col items-center">
+                         <span>{formatDateTime(appt.confirmedAt)}</span>
+                         {appt.confirmedByName && <span className="text-gray-400">Bởi: {appt.confirmedByName}</span>}
                       </div>
                     ) : (
-                      <span className="text-xs text-gray-400">Không có hành động</span>
+                      <span className="text-xs text-gray-400 italic">Đã xử lý</span>
                     )}
                   </td>
                 </tr>
@@ -800,6 +855,75 @@ export default function ReceptionPage() {
           </div>
         </div>
       )}
+
+      {/* Modal Sửa Lịch Hẹn */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-4 border-b flex justify-between items-center bg-blue-50">
+              <h3 className="font-semibold text-lg text-blue-800 flex items-center gap-2">
+                <SquarePen className="w-5 h-5" /> Sửa Lịch Hẹn
+              </h3>
+              <button onClick={() => setShowEditModal(false)}><X className="w-5 h-5 text-gray-500 hover:text-red-500" /></button>
+            </div>
+            
+            <form onSubmit={handleUpdateApptSubmit} className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tên bệnh nhân *</label>
+                  <input required type="text" 
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                    value={editData.patientName} 
+                    onChange={e => setEditData({...editData, patientName: e.target.value})} 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại *</label>
+                  <input required type="tel" 
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                    value={editData.phone} 
+                    onChange={e => setEditData({...editData, phone: e.target.value})} 
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" 
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={editData.email} 
+                  onChange={e => setEditData({...editData, email: e.target.value})} 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Thời gian hẹn *</label>
+                <input required type="datetime-local" 
+                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={editData.appointmentTime} 
+                  onChange={e => setEditData({...editData, appointmentTime: e.target.value})} 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ghi chú</label>
+                <textarea rows="3" 
+                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={editData.notes} 
+                  onChange={e => setEditData({...editData, notes: e.target.value})}
+                ></textarea>
+              </div>
+              <div className="pt-4 flex justify-end gap-3 border-t">
+                <button type="button" onClick={() => setShowEditModal(false)} 
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition">
+                  Hủy bỏ
+                </button>
+                <button type="submit" 
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2 shadow transition">
+                  <Save className="w-4 h-4" /> Lưu Thay Đổi
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -814,7 +938,6 @@ export default function ReceptionPage() {
         onClear={handleClearFilters}
         onAddPatient={handleAddPatient}
       />
-
       {showForm && (
         <PatientForm
           patientForm={patientForm}
@@ -824,7 +947,6 @@ export default function ReceptionPage() {
           onCancel={() => setShowForm(false)}
         />
       )}
-
       <QueueTable
         queueList={queueList}
         onEdit={handleEditPatient}
@@ -832,19 +954,13 @@ export default function ReceptionPage() {
         onStatusChange={handleQuickUpdateStatus}
         onAssignRoom={handleAssignRoom}
       />
-
       {showRoomModal && selectedPatient && (
         <RoomAssignModal
           patient={selectedPatient}
-          onClose={() => {
-            setShowRoomModal(false);
-            setSelectedPatient(null);
-          }}
+          onClose={() => { setShowRoomModal(false); setSelectedPatient(null); }}
           onAssign={handleRoomAssigned}
         />
       )}
-
-      <ToastContainer position="top-right" autoClose={2000} hideProgressBar />
     </div>
   );
 
@@ -860,7 +976,7 @@ export default function ReceptionPage() {
           {profileSuccess}
         </div>
       )}
-
+      
       {profileLoading ? (
         <div className="bg-white rounded-lg shadow border border-gray-200 p-6 text-center text-gray-500">
           Đang tải hồ sơ...
@@ -933,6 +1049,21 @@ export default function ReceptionPage() {
           {activeMenu === 'security' && renderSecuritySection()}
         </main>
       </div>
+
+      {/* --- [QUAN TRỌNG] ĐẶT Z-INDEX CAO ĐỂ NỔI LÊN TRÊN MODAL --- */}
+      <ToastContainer 
+        position="top-right" 
+        autoClose={3000} 
+        hideProgressBar={false} 
+        newestOnTop={true} 
+        closeOnClick 
+        rtl={false} 
+        pauseOnFocusLoss 
+        draggable 
+        pauseOnHover 
+        theme="colored"
+        style={{ zIndex: 999999 }} 
+      />
     </div>
   );
 }
