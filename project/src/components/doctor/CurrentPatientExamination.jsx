@@ -1,5 +1,6 @@
+// src/components/doctor/CurrentPatientExamination.jsx
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Users, PhoneCall, CheckCircle, Search, FileText } from 'lucide-react';
+import { Users, PhoneCall, CheckCircle, Clock, Search, FileText } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { getMyQueue, getCurrentPatient, callPatient as callPatientApi, completeExamination } from '../../api/doctorApi';
 import ConfirmDialog from '../common/ConfirmDialog';
@@ -25,9 +26,9 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
     setLoading(true);
     setError('');
     try {
-      const [queueData, currentPatientData] = await Promise.all([ 
-        getMyQueue().catch(() => []), 
-        getCurrentPatient().catch(() => null) 
+      const [queueData, currentPatientData] = await Promise.all([
+        getMyQueue().catch(() => []),
+        getCurrentPatient().catch(() => null)
       ]);
 
       const mappedQueue = (queueData || []).map(item => ({
@@ -41,9 +42,9 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
         checkInTime: item.checkInTime,
         symptoms: item.symptoms || item.reason,
       }));
-
+      
       const waiting = mappedQueue.filter(p => p.status === 'Waiting');
-
+      
       const newCurrentPatient = currentPatientData ? {
         id: currentPatientData.queueId,
         queueId: currentPatientData.queueId,
@@ -57,18 +58,6 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
         startTime: currentPatientData.startTime,
         symptoms: null,
       } : null;
-<<<<<<< HEAD
-
-      // if (newCurrentPatient && (!previousCurrentPatientRef.current || 
-      //   previousCurrentPatientRef.current.queueId !== newCurrentPatient.queueId)) {
-
-      //   toast.success(`Bệnh nhân ${newCurrentPatient.queueNumber} - ${newCurrentPatient.fullName} đã được phân vào phòng!`, {
-      //     duration: 3000,
-      //     icon: '👨‍⚕️',
-      //   });
-      // }
-
-=======
       
       // if (newCurrentPatient && (!previousCurrentPatientRef.current || 
       //     previousCurrentPatientRef.current.queueId !== newCurrentPatient.queueId)) {
@@ -87,10 +76,9 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
         }
       }
       
->>>>>>> feature/cancelAppointment
       previousQueueLengthRef.current = waiting.length;
       previousCurrentPatientRef.current = newCurrentPatient;
-
+      
       setCurrentPatient(newCurrentPatient);
       setQueue(waiting);
     } catch (err) {
@@ -104,9 +92,13 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
   }, []);
 
   useEffect(() => {
-    loadQueue();  // Chỉ gọi 1 lần khi component mount
+    loadQueue();
+    const interval = setInterval(() => {
+      loadQueue();
+    }, 5000);
+
     return () => {
-      toast.dismiss();  // Dismiss all toasts when leaving this page/component
+      clearInterval(interval);
     };
   }, [loadQueue]);
 
@@ -115,7 +107,7 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
       toast.error('Đang khám bệnh nhân khác!');
       return;
     }
-
+    
     try {
       await callPatientApi(patient.queueId);
       toast.success(`Đã gọi ${patient.queueNumber} - ${patient.fullName}`, {
@@ -157,25 +149,6 @@ const handleConfirmComplete = async (patient) => {
 };
 
 
-<<<<<<< HEAD
-  const handleConfirmComplete = async () => {
-    const patient = confirmDialog.patient;
-    try {
-      await completeExamination(patient.queueId);
-      toast.success(`Đã hoàn thành khám cho ${patient.queueNumber} - ${patient.fullName}!`, {
-        duration: 4000,
-      });
-      setCurrentPatient(null);
-      setConfirmDialog({ isOpen: false, patient: null });
-      await loadQueue();
-    } catch (err) {
-      const message = err.response?.data?.message || err.message || 'Hoàn thành khám thất bạq';
-      toast.error(message);
-      console.error('Error completing examination:', err);
-    }
-  };
-=======
->>>>>>> feature/cancelAppointment
 
   const waitingPatients = queue.filter(p => p.status === 'Waiting');
   const filtered = waitingPatients.filter(p =>
@@ -195,10 +168,15 @@ const handleConfirmComplete = async (patient) => {
     <>
       <Toaster position="top-right" />
 
-      <div className="bg-gradient-to-r from-white-600 to-blue-700 rounded-xl shadow-lg p-6 mb-6 text-">
+      <div className="bg-gradient-to-r from-purple-600 to-indigo-700 rounded-xl shadow-lg p-6 mb-6 text-white">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold">Bảng Danh Sách Bệnh Nhân</h1>
+            <h1 className="text-2xl font-bold">Bảng Điều Khiển Bác Sĩ</h1>
+            <p className="text-lg mt-1 opacity-90">Dr. {doctorName}</p>
+          </div>
+          <div className="text-right">
+            <div className="text-4xl font-bold drop-shadow-lg">{waitingPatients.length}</div>
+            <div className="text-sm opacity-90">Bệnh nhân đang chờ</div>
           </div>
         </div>
       </div>
@@ -239,7 +217,7 @@ const handleConfirmComplete = async (patient) => {
                     <th className="px-4 py-3 text-left">Họ tên</th>
                     <th className="px-4 py-3 text-center">Ưu tiên</th>
                     <th className="px-4 py-3 text-center">Check-in</th>
-                    {/* <th className="px-4 py-3 text-center">Thao tác</th> */}
+                    <th className="px-4 py-3 text-center">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -263,7 +241,7 @@ const handleConfirmComplete = async (patient) => {
                           <span className={`inline-block px-3 py-1 rounded-full font-medium text-white text-xs ${
                             patient.priority === 'Emergency' ? 'bg-red-500' :
                             patient.priority === 'Urgent' ? 'bg-orange-500' : 'bg-green-500'
-                          }`}> 
+                          }`}>
                             {patient.priority === 'Emergency' ? 'Khẩn cấp' :
                              patient.priority === 'Urgent' ? 'Ưu tiên' : 'Bình thường'}
                           </span>

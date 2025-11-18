@@ -35,7 +35,7 @@ const emptyPatientForm = {
   gender: '',
   address: '',
   priority: 'Normal',
-  checkInTime: '',
+  checkInTime: ''
 };
 
 // ------------------ HELPER FUNCTIONS ------------------
@@ -45,26 +45,9 @@ const persistUserData = (data) => {
 };
 
 const sortQueueByPriority = (list) => {
-  const priorityOrder = {
-    // Tiếng Anh
-    'Emergency': 3,
-    'Urgent': 2,
-    'Normal': 1,
-    // Tiếng Việt
-    'Khẩn cấp': 3,
-    'Ưu tiên': 2,
-    'Thường': 1
-  };
-
+  const priorityOrder = { Emergency: 3, Urgent: 2, Normal: 1 };
   return list.slice().sort((a, b) => {
-    // Lấy priority value, mặc định là 0 nếu không tìm thấy
-    const priorityA = priorityOrder[a.priority] || 0;
-    const priorityB = priorityOrder[b.priority] || 0;
-
-    // Sắp xếp theo priority giảm dần (Khẩn cấp = 3 → đầu tiên)
-    const diff = priorityB - priorityA;
-
-    // Nếu cùng priority, sắp xếp theo thời gian check-in (người đến trước → trước)
+    const diff = (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
     if (diff !== 0) return diff;
     return new Date(a.checkInTime) - new Date(b.checkInTime);
   });
@@ -87,10 +70,7 @@ const formatDateTime = (value) => {
 
 // ------------------ MAIN COMPONENT ------------------
 export default function ReceptionPage() {
-  const [activeMenu, setActiveMenu] = useState(() => {
-    const saved = localStorage.getItem('activeMenu');
-    return saved || 'appointments';
-  });
+  const [activeMenu, setActiveMenu] = useState('appointments');
   const navigate = useNavigate();
 
   // ========== USER PROFILE STATE ==========
@@ -113,7 +93,7 @@ export default function ReceptionPage() {
   const [loadingQueue, setLoadingQueue] = useState(false);
   const [queueError, setQueueError] = useState('');
   const [searchPhone, setSearchPhone] = useState('');
-  const [filterStatus, setFilterStatus] = useState('Waiting');
+  const [filterStatus, setFilterStatus] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editPatientId, setEditPatientId] = useState(null);
   const [patientForm, setPatientForm] = useState(emptyPatientForm);
@@ -121,11 +101,6 @@ export default function ReceptionPage() {
   // ========== ROOM ASSIGN STATE ==========
   const [showRoomModal, setShowRoomModal] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
-
-  // ================= PERSIST ACTIVE MENU =================
-  useEffect(() => {
-    localStorage.setItem('activeMenu', activeMenu);
-  }, [activeMenu]);
 
   // ================= LOAD PROFILE =================
   const loadProfile = useCallback(async () => {
@@ -176,22 +151,28 @@ export default function ReceptionPage() {
   // ================= LOAD APPOINTMENTS =================
   useEffect(() => {
     if (activeMenu !== 'appointments') return;
+
     let ignore = false;
 
     const fetchAppointments = async () => {
       setLoadingAppointments(true);
       setAppointmentsError('');
+
       try {
         const response = await axiosInstance.get('/api/appointments', {
           params: { status: selectedStatus },
         });
+
         if (!ignore) {
           setAppointments(response.data || []);
         }
       } catch (error) {
         if (!ignore) {
           console.error('Failed to fetch appointments:', error);
-          const message = error.response?.data?.message || error.message || 'Không thể tải danh sách lịch hẹn. Vui lòng thử lại.';
+          const message =
+            error.response?.data?.message ||
+            error.message ||
+            'Không thể tải danh sách lịch hẹn. Vui lòng thử lại.';
           setAppointmentsError(`Lỗi ${error.response?.status || 'không xác định'}: ${message}`);
         }
       } finally {
@@ -202,17 +183,22 @@ export default function ReceptionPage() {
     };
 
     fetchAppointments();
-    return () => { ignore = true; };
+
+    return () => {
+      ignore = true;
+    };
   }, [activeMenu, selectedStatus]);
 
   const handleConfirmAppointment = async (appointmentId) => {
     setConfirmingId(appointmentId);
     setAppointmentsError('');
     setSuccessMessage('');
+
     try {
       await axiosInstance.patch(`/api/appointments/${appointmentId}/status`, null, {
         params: { status: 'Confirmed' },
       });
+
       setAppointments((prev) =>
         prev.map((appt) =>
           appt.appointmentId === appointmentId
@@ -220,6 +206,7 @@ export default function ReceptionPage() {
             : appt
         )
       );
+
       setSuccessMessage('Lịch hẹn đã được xác nhận và email đã gửi cho bệnh nhân.');
     } catch (error) {
       console.error('Failed to confirm appointment:', error);
@@ -267,8 +254,9 @@ export default function ReceptionPage() {
     setQueueError('');
     try {
       const data = await queueApi.getWaitingQueue();
-      // Backend trả về đúng format QueuePatientResponse, map thêm thông tin phòng nếu có
-      const mappedData = (data || []).map((item) => ({
+      
+      // Backend trả về đúng format QueuePatientResponse, không cần map phức tạp
+      const mappedData = (data || []).map(item => ({
         queueId: item.queueId,
         queueNumber: item.queueNumber,
         patientName: item.patientName,
@@ -283,6 +271,7 @@ export default function ReceptionPage() {
         assignedRoomId: item.assignedRoomId || item.assignedRoom?.roomId || null,
         assignedRoomName: item.assignedRoomName || item.assignedRoom?.roomName || null,
       }));
+      
       const sorted = sortQueueByPriority(mappedData);
       setQueueList(sorted);
     } catch (error) {
@@ -305,8 +294,9 @@ export default function ReceptionPage() {
       if (searchPhone) params.phone = searchPhone;
       if (filterStatus) params.status = filterStatus;
       const data = await queueApi.searchQueue(params);
-      // Backend trả về đúng format QueuePatientResponse, map thêm thông tin phòng nếu có
-      const mappedData = (data || []).map((item) => ({
+      
+      // Backend trả về đúng format QueuePatientResponse, không cần map phức tạp
+      const mappedData = (data || []).map(item => ({
         queueId: item.queueId,
         queueNumber: item.queueNumber,
         patientName: item.patientName,
@@ -321,11 +311,12 @@ export default function ReceptionPage() {
         assignedRoomId: item.assignedRoomId || null,
         assignedRoomName: item.assignedRoomName || null,
       }));
+      
       const sorted = sortQueueByPriority(mappedData);
       setQueueList(sorted);
     } catch (error) {
       console.error('Search error:', error);
-      toast.error('Tìm kiếm thất bại!');
+      toast.error("Tìm kiếm thất bại!");
     }
   };
 
@@ -337,20 +328,11 @@ export default function ReceptionPage() {
 
   // ================= QUEUE FORM HANDLERS =================
   const handleFormChange = (field, value) => {
-    if (field === 'phone') {
-      // Chỉ cho phép số, và giới hạn 10 ký tự
-      const numericValue = value.replace(/\D/g, '').slice(0, 10);
-      setPatientForm((prev) => ({ ...prev, [field]: numericValue }));
-    } else {
-      setPatientForm((prev) => ({ ...prev, [field]: value }));
-    }
+    setPatientForm(prev => ({ ...prev, [field]: value }));
   };
 
   const handleAddPatient = () => {
-    setPatientForm({
-      ...emptyPatientForm,
-      status: 'Waiting', // Không set checkInTime ở đây — sẽ set khi submit để dùng thời gian server-local chính xác
-    });
+    setPatientForm({ ...emptyPatientForm, status: "Waiting" });
     setEditPatientId(null);
     setShowForm(true);
   };
@@ -367,52 +349,38 @@ export default function ReceptionPage() {
         address: full.address || '',
         priority: full.priority || 'Normal',
         checkInTime: full.checkInTime || '',
-        status: full.status || 'Waiting',
+        status: full.status || 'Waiting'
       });
       setEditPatientId(full.queueId);
       setShowForm(true);
     } catch (err) {
-      toast.error('Không tải được thông tin chi tiết!');
+      toast.error("Không tải được thông tin chi tiết!");
     }
   };
 
   const handleDeletePatient = async (patientId) => {
     try {
       await queueApi.deletePatient(patientId);
-      setQueueList((prev) => prev.filter((p) => p.queueId !== patientId));
-      toast.success('Đã xoá bệnh nhân!');
+      setQueueList(prev => prev.filter(p => p.queueId !== patientId));
+      toast.success("Đã xoá bệnh nhân!");
     } catch {
-      toast.error('Không thể xoá bệnh nhân!');
+      toast.error("Không thể xoá bệnh nhân!");
     }
   };
 
   const handleSubmitForm = async () => {
     try {
       if (!editPatientId) {
-        // Tự động lấy thời gian hiện tại khi thêm bệnh nhân mới
-        const now = new Date();
-        const hours = now.getHours();
-
-        // Kiểm tra khung giờ làm việc: 8h-12h sáng HOẶC 14h-18h chiều
-        const isMorningShift = hours >= 8 && hours < 12;
-        const isAfternoonShift = hours >= 14 && hours < 18;
-
-        if (!isMorningShift && !isAfternoonShift) {
-          toast.error(
-            'Chỉ được thêm bệnh nhân trong khung giờ làm việc:\n• Sáng: 8:00 - 12:00\n• Chiều: 14:00 - 18:00',
-            { autoClose: 4000 }
-          );
+        if (!patientForm.checkInTime) {
+          toast.error("Vui lòng nhập thời gian check-in!");
           return;
         }
-
-        // Gán thời gian hiện tại vào checkInTime (ISO string)
-        patientForm.checkInTime = now.toISOString();
-      }
-
-      // Kiểm tra độ dài phone trước khi submit
-      if (patientForm.phone.length !== 10) {
-        toast.error('Số điện thoại phải đúng 10 chữ số!');
-        return;
+        const now = new Date();
+        const checkIn = new Date(patientForm.checkInTime);
+        if (checkIn < now) {
+          toast.error("Thời gian check-in không được ở quá khứ!");
+          return;
+        }
       }
 
       if (editPatientId) {
@@ -425,16 +393,18 @@ export default function ReceptionPage() {
           gender: patientForm.gender,
           address: patientForm.address || null,
           priority: patientForm.priority,
-          status: patientForm.status || 'Waiting',
+          status: patientForm.status || "Waiting",
           checkInTime: patientForm.checkInTime,
         };
         const res = await queueApi.updatePatient(editPatientId, updateData);
-        setQueueList((prev) =>
-          sortQueueByPriority(
-            prev.map((p) => (p.queueId === editPatientId ? { ...p, ...res, queueId: editPatientId } : p))
-          )
-        );
-        toast.success('Cập nhật bệnh nhân thành công!');
+        setQueueList(prev => sortQueueByPriority(
+          prev.map(p => (p.queueId === editPatientId ? { 
+            ...p, 
+            ...res, 
+            queueId: editPatientId
+          } : p))
+        ));
+        toast.success("Cập nhật bệnh nhân thành công!");
       } else {
         const res = await queueApi.addPatient({
           patientName: patientForm.patientName,
@@ -444,30 +414,34 @@ export default function ReceptionPage() {
           gender: patientForm.gender,
           address: patientForm.address || null,
           priority: patientForm.priority,
-          checkInTime: patientForm.checkInTime, // Backend tự động set status = Waiting, không cần gửi
+          checkInTime: patientForm.checkInTime,
+          // Backend tự động set status = Waiting, không cần gửi
         });
-        setQueueList((prev) => sortQueueByPriority([...prev, res]));
-        toast.success('Thêm bệnh nhân thành công!');
+        setQueueList(prev => sortQueueByPriority([...prev, res]));
+        toast.success("Thêm bệnh nhân thành công!");
       }
 
       setShowForm(false);
     } catch (error) {
       console.error('Submit error:', error);
       // Lấy error message từ backend response
-      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Có lỗi xảy ra!';
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          "Có lỗi xảy ra!";
       toast.error(errorMessage);
     }
   };
 
   const handleQuickUpdateStatus = async (queueId, status) => {
     try {
-      await queueApi.updateStatus(queueId, status);
-      setQueueList((prev) =>
-        sortQueueByPriority(prev.map((p) => (p.queueId === queueId ? { ...p, status } : p)))
-      );
-      toast.success('Cập nhật trạng thái thành công!');
+      const updated = await queueApi.updateStatus(queueId, status);
+      setQueueList(prev => sortQueueByPriority(
+        prev.map(p => p.queueId === queueId ? { ...p, ...updated } : p)
+      ));
+      toast.success("Cập nhật trạng thái thành công!");
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'Không thể cập nhật trạng thái!';
+      const errorMessage = error.response?.data?.message || error.message || "Không thể cập nhật trạng thái!";
       toast.error(errorMessage);
     }
   };
@@ -480,16 +454,17 @@ export default function ReceptionPage() {
 
   const handleRoomAssigned = async (queueId, roomId) => {
     try {
-      // Phân phòng (gọi API roomApi nếu cần) và cập nhật trạng thái sang "InProgress"
-      // Giả sử RoomAssignModal sẽ gọi roomApi.assignRoom và trả về thành công trước khi gọi onAssign
+      // Cập nhật trạng thái sang "InProgress" sau khi phân phòng thành công
       await queueApi.updateStatus(queueId, 'InProgress');
-      setQueueList((prev) =>
-        sortQueueByPriority(prev.map((p) => (p.queueId === queueId ? { ...p, status: 'InProgress' } : p)))
-      );
-      toast.success('Phân phòng thành công! Bệnh nhân đã chuyển sang trạng thái đang khám.');
+      
+      setQueueList(prev => sortQueueByPriority(
+        prev.map(p => p.queueId === queueId ? { ...p, status: 'InProgress' } : p)
+      ));
+      
+      toast.success("Phân phòng thành công! Bệnh nhân đã chuyển sang trạng thái đang khám.");
     } catch (error) {
       console.error('Failed to update status after room assignment:', error);
-      toast.error('Phân phòng thành công nhưng không thể cập nhật trạng thái!');
+      toast.error("Phân phòng thành công nhưng không thể cập nhật trạng thái!");
     }
   };
 
@@ -530,8 +505,10 @@ export default function ReceptionPage() {
     input.onchange = async (event) => {
       const file = event.target.files?.[0];
       if (!file) return;
+
       const formData = new FormData();
       formData.append('photo', file);
+
       setProfileError('');
       setProfileSuccess('');
       try {
@@ -575,7 +552,9 @@ export default function ReceptionPage() {
         }
         throw new Error(data?.message || 'Tắt 2FA thất bại');
       } else {
-        const { data } = await axiosInstance.post('/api/auth/enable-2fa', { email: userData.email });
+        const { data } = await axiosInstance.post('/api/auth/enable-2fa', {
+          email: userData.email,
+        });
         if (data?.success) {
           setProfileSuccess('Đã gửi mã OTP đến email của bạn.');
           setTimeout(() => setProfileSuccess(''), 2500);
@@ -836,6 +815,7 @@ export default function ReceptionPage() {
           {profileSuccess}
         </div>
       )}
+
       {profileLoading ? (
         <div className="bg-white rounded-lg shadow border border-gray-200 p-6 text-center text-gray-500">
           Đang tải hồ sơ...
@@ -891,8 +871,10 @@ export default function ReceptionPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <ReceptionSidebar activeMenu={activeMenu} onMenuChange={setActiveMenu} />
+
       <div className="flex-1 flex flex-col">
         <ReceptionHeader onLogout={handleLogout} fullName={receptionistName} />
+
         <main className="flex-1 p-8 space-y-8">
           {activeMenu === 'appointments' && renderAppointmentsSection()}
           {activeMenu === 'rooms' && <ClinicRoomManagement />}
