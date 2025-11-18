@@ -1,17 +1,23 @@
 import React from 'react';
 import { Edit, Trash2, User, DoorOpen } from 'lucide-react';
 
+// Mapping 2 chiều: tiếng Anh -> tiếng Việt và ngược lại
 const priorityLabels = { 
-  Normal: 'Thường', 
-  Urgent: 'Ưu tiên', 
-  Emergency: 'Khẩn cấp' 
+  Normal: 'Thường',
+  Urgent: 'Ưu tiên',
+  Emergency: 'Khẩn cấp',
+  // Thêm mapping ngược lại
+  'Thường': 'Thường',
+  'Ưu tiên': 'Ưu tiên',
+  'Khẩn cấp': 'Khẩn cấp'
 };
 
 const statusLabels = { 
   Waiting: 'Chờ khám', 
   InProgress: 'Đang khám', 
   Completed: 'Đã hoàn thành', 
-  Cancelled: 'Hủy' 
+  Cancelled: 'Hủy',
+ 
 };
 
 const formatDateTime = (value) => {
@@ -30,29 +36,34 @@ const formatDateTime = (value) => {
 };
 
 const getPriorityColor = (priority) => {
-  switch (priority) {
-    case 'Emergency':
-      return 'bg-red-100 text-red-700';
-    case 'Urgent':
-      return 'bg-orange-100 text-orange-700';
-    default:
-      return 'bg-blue-100 text-blue-700';
+  // Chuẩn hóa để so sánh
+  const normalizedPriority = priority?.toLowerCase().trim();
+  
+  if (normalizedPriority?.includes('khẩn') || normalizedPriority === 'emergency') {
+    return 'bg-red-100 text-red-700';
   }
+  if (normalizedPriority?.includes('ưu') || normalizedPriority === 'urgent') {
+    return 'bg-orange-100 text-orange-700';
+  }
+  return 'bg-blue-100 text-blue-700';
 };
 
 const getStatusColor = (status) => {
-  switch (status) {
-    case 'Waiting':
-      return 'bg-yellow-100 text-yellow-700';
-    case 'InProgress':
-      return 'bg-blue-100 text-blue-700';
-    case 'Completed':
-      return 'bg-green-100 text-green-700';
-    case 'Cancelled':
-      return 'bg-gray-100 text-gray-700';
-    default:
-      return 'bg-gray-100 text-gray-700';
+  const normalizedStatus = status?.toLowerCase().trim();
+  
+  if (normalizedStatus?.includes('chờ') || normalizedStatus === 'waiting') {
+    return 'bg-yellow-100 text-yellow-700';
   }
+  if (normalizedStatus?.includes('đang') || normalizedStatus === 'inprogress') {
+    return 'bg-blue-100 text-blue-700';
+  }
+  if (normalizedStatus?.includes('hoàn') || normalizedStatus === 'completed') {
+    return 'bg-green-100 text-green-700';
+  }
+  if (normalizedStatus?.includes('hủy') || normalizedStatus === 'cancelled') {
+    return 'bg-gray-100 text-gray-700';
+  }
+  return 'bg-gray-100 text-gray-700';
 };
 
 export default function QueueTable({ queueList, onEdit, onDelete, onStatusChange, onAssignRoom }) {
@@ -132,7 +143,7 @@ export default function QueueTable({ queueList, onEdit, onDelete, onStatusChange
                       q.priority
                     )}`}
                   >
-                    {priorityLabels[q.priority]}
+                    {priorityLabels[q.priority] || q.priority || 'Chưa xác định'}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-sm">

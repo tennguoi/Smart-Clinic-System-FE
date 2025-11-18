@@ -57,16 +57,21 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Số điện thoại <span className="text-red-500">*</span>
               </label>
-              <input
-                type="tel"
-                value={patientForm.phone}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, '');
-                  onChange('phone', value);
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="VD: 0912345678"
-              />
+         <input
+  type="tel"
+  value={patientForm.phone}
+  onChange={(e) => {
+    // Chỉ lấy số
+    let value = e.target.value.replace(/\D/g, '');
+
+    // Giới hạn 10 số
+    if (value.length >= 10) value = value.slice(0, 10);
+
+    onChange('phone', value);
+  }}
+  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+  placeholder="VD: 0912345678"
+/>
             </div>
 
             {/* Email */}
@@ -133,24 +138,6 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
               </select>
             </div>
 
-            {/* Check-in Time - Only show for new patients */}
-            {!isEdit && (
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Thời gian check-in <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="datetime-local"
-                  value={patientForm.checkInTime}
-                  onChange={(e) => onChange('checkInTime', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Chọn thời gian bệnh nhân check-in vào hệ thống
-                </p>
-              </div>
-            )}
-
             {/* Address */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -165,6 +152,18 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
               />
             </div>
           </div>
+
+          {/* Thông báo khung giờ làm việc - Chỉ hiển thị khi thêm mới */}
+          {!isEdit && (
+            <div className="mt-4 bg-blue-50 border border-blue-200 rounded-md p-3">
+              <p className="text-sm text-blue-800 font-medium mb-1">ℹ️ Lưu ý:</p>
+              <p className="text-xs text-blue-700">
+                Hệ thống chỉ cho phép thêm bệnh nhân trong khung giờ làm việc: 
+                <span className="font-semibold"> 8:00-12:00</span> (sáng) và 
+                <span className="font-semibold"> 14:00-18:00</span> (chiều)
+              </p>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex gap-3 mt-6">
