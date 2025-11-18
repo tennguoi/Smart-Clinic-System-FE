@@ -132,9 +132,9 @@ const handleConfirmComplete = async (patient) => {
     await completeExamination(patient.queueId);      // ✅ luôn có queueId
     toast.success(`Đã hoàn thành khám cho ${patient.queueNumber} - ${patient.fullName}!`, { duration: 4000 });
 
-    setCurrentPatient(null);
+    // Reload queue để lấy dữ liệu mới từ backend (currentQueueId đã được clear)
     await loadQueue();
-
+    
     // Phát sự kiện để MedicalRecordHistory tự refresh
     window.dispatchEvent(new CustomEvent('medical-records:refresh'));
   } catch (err) {

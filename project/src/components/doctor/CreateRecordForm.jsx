@@ -1,5 +1,6 @@
 // src/components/doctor/CreateRecordForm.jsx
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 const CreateRecordForm = ({ 
   onClose, 
@@ -21,6 +22,18 @@ const CreateRecordForm = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validation: Kiểm tra các trường bắt buộc
+    if (!formDiagnosis.trim()) {
+      toast.error('⚠️ Vui lòng nhập chẩn đoán');
+      return;
+    }
+    
+    if (!formTreatmentNotes.trim()) {
+      toast.error('⚠️ Vui lòng nhập ghi chú điều trị');
+      return;
+    }
+    
     onSubmit({
       patientName: formPatientName,
       diagnosis: formDiagnosis,
@@ -82,19 +95,35 @@ const CreateRecordForm = ({
                 value={formDiagnosis}
                 onChange={(e) => setFormDiagnosis(e.target.value)}
                 required
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 ${
+                  formDiagnosis.trim() 
+                    ? 'border-green-300 focus:ring-green-500' 
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
                 placeholder="Nhập chẩn đoán"
               />
+              {!formDiagnosis.trim() && (
+                <p className="text-xs text-red-500 mt-1">Trường này không được để trống</p>
+              )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Ghi chú điều trị</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Ghi chú điều trị <span className="text-red-500">*</span>
+              </label>
               <textarea
                 value={formTreatmentNotes}
                 onChange={(e) => setFormTreatmentNotes(e.target.value)}
                 rows={4}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 ${
+                  formTreatmentNotes.trim() 
+                    ? 'border-green-300 focus:ring-green-500' 
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
                 placeholder="Phác đồ, thuốc, dặn dò..."
               />
+              {!formTreatmentNotes.trim() && (
+                <p className="text-xs text-red-500 mt-1">Trường này không được để trống</p>
+              )}
             </div>
           </div>
 
@@ -108,8 +137,9 @@ const CreateRecordForm = ({
             </button>
             <button
               type="submit"
-              disabled={submitting}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-60"
+              disabled={submitting || !formDiagnosis.trim() || !formTreatmentNotes.trim()}
+              title={!formDiagnosis.trim() || !formTreatmentNotes.trim() ? 'Vui lòng điền đầy đủ chẩn đoán và ghi chú điều trị' : ''}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? 'Đang lưu...' : 'Lưu hồ sơ'}
             </button>

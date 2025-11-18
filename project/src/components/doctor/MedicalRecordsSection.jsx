@@ -54,19 +54,27 @@ const MedicalRecordsSection = () => {
   const handleCreateRecord = async (formData) => {
     setFormError('');
     setFormSuccess('');
+    
+    // Validation: Kiểm tra các trường bắt buộc
     if (!formData.diagnosis || !formData.diagnosis.trim()) {
-      setFormError('Chẩn đoán (diagnosis) là bắt buộc');
+      setFormError('Chẩn đoán là bắt buộc');
       return;
     }
+    
+    if (!formData.treatmentNotes || !formData.treatmentNotes.trim()) {
+      setFormError('Ghi chú điều trị là bắt buộc');
+      return;
+    }
+    
     setFormSubmitting(true);
     try {
       const created = await medicalRecordApi.create({
         patientId: null,
         patientName: formData.patientName?.trim() || null,
         diagnosis: formData.diagnosis.trim(),
-        treatmentNotes: formData.treatmentNotes?.trim() || '',
+        treatmentNotes: formData.treatmentNotes.trim(),
       });
-      setFormSuccess('Đã hoàn thành và lưu hồ sơ khám bệnh!');
+      setFormSuccess('✅ Đã hoàn thành và lưu hồ sơ khám bệnh!');
       
       const patientNameValue = created.patientName || (formData.patientName && formData.patientName.trim()) || null;
       if (patientNameValue && created.recordId && !created.patientName) {
