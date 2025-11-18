@@ -51,7 +51,7 @@ const normalizeStatus = (status) => {
       return 'InProgress';
     }
   }
-  if (s.includes('completed') || s.includes('finish') || s.includes('done') || s.includes('hoan thanh') || s.includes('xong') || s.includes('processed')) {
+  if (s.includes('completed') || s.includes('finish') || s.includes('done') || s.includes('hoan tat') || s.includes('xong') || s.includes('processed')) {
     return 'Completed';
   }
   if (s.includes('cancel') || s.includes('huy') || s.includes('abort')) {
