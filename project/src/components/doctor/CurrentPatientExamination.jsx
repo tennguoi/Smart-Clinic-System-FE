@@ -1,6 +1,5 @@
-// src/components/doctor/CurrentPatientExamination.jsx
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Users, PhoneCall, CheckCircle, Clock, Search, FileText } from 'lucide-react';
+import { Users, PhoneCall, CheckCircle, Search, FileText } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { getMyQueue, getCurrentPatient, callPatient as callPatientApi, completeExamination } from '../../api/doctorApi';
 import ConfirmDialog from '../common/ConfirmDialog';
@@ -26,9 +25,9 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
     setLoading(true);
     setError('');
     try {
-      const [queueData, currentPatientData] = await Promise.all([
-        getMyQueue().catch(() => []),
-        getCurrentPatient().catch(() => null)
+      const [queueData, currentPatientData] = await Promise.all([ 
+        getMyQueue().catch(() => []), 
+        getCurrentPatient().catch(() => null) 
       ]);
 
       const mappedQueue = (queueData || []).map(item => ({
@@ -42,9 +41,9 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
         checkInTime: item.checkInTime,
         symptoms: item.symptoms || item.reason,
       }));
-      
+
       const waiting = mappedQueue.filter(p => p.status === 'Waiting');
-      
+
       const newCurrentPatient = currentPatientData ? {
         id: currentPatientData.queueId,
         queueId: currentPatientData.queueId,
@@ -58,27 +57,19 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
         startTime: currentPatientData.startTime,
         symptoms: null,
       } : null;
-      
-      if (newCurrentPatient && (!previousCurrentPatientRef.current || 
-          previousCurrentPatientRef.current.queueId !== newCurrentPatient.queueId)) {
-        toast.success(`Bệnh nhân ${newCurrentPatient.queueNumber} - ${newCurrentPatient.fullName} đã được phân vào phòng!`, {
-          duration: 5000,
-          icon: '👨‍⚕️',
-        });
-      }
-      
-      if (waiting.length > previousQueueLengthRef.current && previousQueueLengthRef.current > 0) {
-        const newPatients = waiting.slice(previousQueueLengthRef.current);
-        if (newPatients.length > 0) {
-          toast.info(`Có ${newPatients.length} bệnh nhân mới được phân vào phòng`, {
-            duration: 4000,
-          });
-        }
-      }
-      
+
+      // if (newCurrentPatient && (!previousCurrentPatientRef.current || 
+      //   previousCurrentPatientRef.current.queueId !== newCurrentPatient.queueId)) {
+
+      //   toast.success(`Bệnh nhân ${newCurrentPatient.queueNumber} - ${newCurrentPatient.fullName} đã được phân vào phòng!`, {
+      //     duration: 3000,
+      //     icon: '👨‍⚕️',
+      //   });
+      // }
+
       previousQueueLengthRef.current = waiting.length;
       previousCurrentPatientRef.current = newCurrentPatient;
-      
+
       setCurrentPatient(newCurrentPatient);
       setQueue(waiting);
     } catch (err) {
@@ -92,13 +83,9 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
   }, []);
 
   useEffect(() => {
-    loadQueue();
-    const interval = setInterval(() => {
-      loadQueue();
-    }, 5000);
-
+    loadQueue();  // Chỉ gọi 1 lần khi component mount
     return () => {
-      clearInterval(interval);
+      toast.dismiss();  // Dismiss all toasts when leaving this page/component
     };
   }, [loadQueue]);
 
@@ -107,7 +94,7 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
       toast.error('Đang khám bệnh nhân khác!');
       return;
     }
-    
+
     try {
       await callPatientApi(patient.queueId);
       toast.success(`Đã gọi ${patient.queueNumber} - ${patient.fullName}`, {
@@ -163,15 +150,10 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
     <>
       <Toaster position="top-right" />
 
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-700 rounded-xl shadow-lg p-6 mb-6 text-white">
+      <div className="bg-gradient-to-r from-white-600 to-blue-700 rounded-xl shadow-lg p-6 mb-6 text-">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold">Bảng Điều Khiển Bác Sĩ</h1>
-            <p className="text-lg mt-1 opacity-90">Dr. {doctorName}</p>
-          </div>
-          <div className="text-right">
-            <div className="text-4xl font-bold drop-shadow-lg">{waitingPatients.length}</div>
-            <div className="text-sm opacity-90">Bệnh nhân đang chờ</div>
+            <h1 className="text-2xl font-bold">Bảng Danh Sách Bệnh Nhân</h1>
           </div>
         </div>
       </div>
@@ -212,7 +194,7 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
                     <th className="px-4 py-3 text-left">Họ tên</th>
                     <th className="px-4 py-3 text-center">Ưu tiên</th>
                     <th className="px-4 py-3 text-center">Check-in</th>
-                    <th className="px-4 py-3 text-center">Thao tác</th>
+                    {/* <th className="px-4 py-3 text-center">Thao tác</th> */}
                   </tr>
                 </thead>
                 <tbody>
@@ -236,7 +218,7 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
                           <span className={`inline-block px-3 py-1 rounded-full font-medium text-white text-xs ${
                             patient.priority === 'Emergency' ? 'bg-red-500' :
                             patient.priority === 'Urgent' ? 'bg-orange-500' : 'bg-green-500'
-                          }`}>
+                          }`}> 
                             {patient.priority === 'Emergency' ? 'Khẩn cấp' :
                              patient.priority === 'Urgent' ? 'Ưu tiên' : 'Bình thường'}
                           </span>
