@@ -57,6 +57,7 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
         startTime: currentPatientData.startTime,
         symptoms: null,
       } : null;
+<<<<<<< HEAD
 
       // if (newCurrentPatient && (!previousCurrentPatientRef.current || 
       //   previousCurrentPatientRef.current.queueId !== newCurrentPatient.queueId)) {
@@ -67,6 +68,26 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
       //   });
       // }
 
+=======
+      
+      // if (newCurrentPatient && (!previousCurrentPatientRef.current || 
+      //     previousCurrentPatientRef.current.queueId !== newCurrentPatient.queueId)) {
+      //   toast.success(`Bệnh nhân ${newCurrentPatient.queueNumber} - ${newCurrentPatient.fullName} đã được phân vào phòng!`, {
+      //     duration: 5000,
+      //     icon: '👨‍⚕️',
+      //   });
+      // }
+      
+      if (waiting.length > previousQueueLengthRef.current && previousQueueLengthRef.current > 0) {
+        const newPatients = waiting.slice(previousQueueLengthRef.current);
+        if (newPatients.length > 0) {
+          toast.info(`Có ${newPatients.length} bệnh nhân mới được phân vào phòng`, {
+            duration: 4000,
+          });
+        }
+      }
+      
+>>>>>>> feature/cancelAppointment
       previousQueueLengthRef.current = waiting.length;
       previousCurrentPatientRef.current = newCurrentPatient;
 
@@ -108,13 +129,35 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
     }
   };
 
-  const openCompleteDialog = (patient) => {
-    setConfirmDialog({
-      isOpen: true,
-      patient,
-    });
-  };
+  
+const openCompleteDialog = (patient) => {
+  setConfirmDialog({ isOpen: true, patient });
+};
 
+// Nhận 'patient' từ ConfirmDialog thay vì lấy từ state
+const handleConfirmComplete = async (patient) => {
+  try {
+    await completeExamination(patient.queueId);      // ✅ luôn có queueId
+    toast.success(`Đã hoàn thành khám cho ${patient.queueNumber} - ${patient.fullName}!`, { duration: 4000 });
+
+    // Reload queue để lấy dữ liệu mới từ backend (currentQueueId đã được clear)
+    await loadQueue();
+    
+    // Phát sự kiện để MedicalRecordHistory tự refresh
+    window.dispatchEvent(new CustomEvent('medical-records:refresh'));
+  } catch (err) {
+    const message = err.response?.data?.message ?? err.message ?? 'Hoàn thành khám thất bại';
+    toast.error(message);
+    console.error('Error completing examination:', err);
+    return; // giữ dialog mở nếu muốn cho phép retry
+  } finally {
+    // Đóng dialog ở finally để đảm bảo không đóng trước khi đọc 'patient'
+    setConfirmDialog({ isOpen: false, patient: null });
+  }
+};
+
+
+<<<<<<< HEAD
   const handleConfirmComplete = async () => {
     const patient = confirmDialog.patient;
     try {
@@ -131,6 +174,8 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
       console.error('Error completing examination:', err);
     }
   };
+=======
+>>>>>>> feature/cancelAppointment
 
   const waitingPatients = queue.filter(p => p.status === 'Waiting');
   const filtered = waitingPatients.filter(p =>
@@ -298,11 +343,14 @@ export default function CurrentPatientExamination({ onNavigateToRecords }) {
       </div>
 
       <ConfirmDialog
-        isOpen={confirmDialog.isOpen}
-        onClose={() => setConfirmDialog({ isOpen: false, patient: null })}
-        onConfirm={handleConfirmComplete}
-        patientName={confirmDialog.patient?.fullName}
-        queueNumber={confirmDialog.patient?.queueNumber}
+        
+isOpen={confirmDialog.isOpen}
+      onClose={() => setConfirmDialog({ isOpen: false, patient: null })}
+      onConfirm={handleConfirmComplete}                    
+      patient={confirmDialog.patient}                       
+      patientName={confirmDialog.patient?.fullName}
+      queueNumber={confirmDialog.patient?.queueNumber}
+
       />
     </>
   );

@@ -15,12 +15,39 @@ export default function AppointmentForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [timeError, setTimeError] = useState('');
+
+  // Hàm kiểm tra thời gian hợp lệ
+  const isValidTime = (time) => {
+    if (!time) return true; // Cho phép trống khi chưa chọn
+    
+    const [hours, minutes] = time.split(':').map(Number);
+    const totalMinutes = hours * 60 + minutes;
+    
+    // Kiểm tra khoảng thời gian: 8:00-12:00 và 14:00-17:00
+    const isMorning = totalMinutes >= 8 * 60 && totalMinutes <= 12 * 60;
+    const isAfternoon = totalMinutes >= 14 * 60 && totalMinutes <= 17 * 60;
+    
+    return isMorning || isAfternoon;
+  };
+
+  const getTimeErrorMessage = () => {
+    return 'Vui lòng chọn thời gian trong khung giờ: 8:00-12:00 hoặc 14:00-17:00';
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitStatus('idle');
     setErrorMessage('');
+    setTimeError('');
+
+    // Kiểm tra thời gian trước khi gửi
+    if (!isValidTime(formData.time)) {
+      setTimeError(getTimeErrorMessage());
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const appointmentDateTime = `${formData.date}T${formData.time}:00`;
@@ -75,10 +102,33 @@ export default function AppointmentForm() {
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+    
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
+
+    // Clear error khi người dùng thay đổi thời gian
+    if (name === 'time') {
+      setTimeError('');
+    }
+  };
+
+  const handleTimeChange = (e) => {
+    const timeValue = e.target.value;
+    
+    setFormData({
+      ...formData,
+      time: timeValue
+    });
+
+    // Validate thời gian ngay khi chọn
+    if (timeValue && !isValidTime(timeValue)) {
+      setTimeError(getTimeErrorMessage());
+    } else {
+      setTimeError('');
+    }
   };
 
   return (
@@ -194,10 +244,18 @@ export default function AppointmentForm() {
                 name="time"
                 required
                 value={formData.time}
-                onChange={handleChange}
-                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                onChange={handleTimeChange}
+                className={`w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm ${
+                  timeError ? 'border-red-500' : 'border-gray-300'
+                }`}
               />
             </div>
+            {timeError && (
+              <p className="mt-1 text-sm text-red-600">{timeError}</p>
+            )}
+            <p className="mt-1 text-xs text-gray-500">
+              Khung giờ làm việc: 8:00-12:00 và 14:00-17:00
+            </p>
           </div>
         </div>
 
@@ -219,7 +277,7 @@ export default function AppointmentForm() {
 
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || timeError}
           className="w-full bg-teal-500 hover:bg-teal-600 text-white py-2.5 rounded-lg transition-colors font-semibold text-sm flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (

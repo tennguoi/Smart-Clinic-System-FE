@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import CreateRecordForm from './CreateRecordForm';
 import RecordRow from './RecordRow';
+import { Plus, ClipboardList } from 'lucide-react';
 
 const MedicalRecordsSection = () => {
   const [records, setRecords] = useState([]);
@@ -44,31 +45,44 @@ const MedicalRecordsSection = () => {
     }
     return false;
   });
+  
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formSuccess, setFormSuccess] = useState('');
   const [formError, setFormError] = useState('');
 
+  // Hàm này đóng vai trò là "Hoàn thành khám và Lưu"
   const handleCreateRecord = async (formData) => {
     setFormError('');
     setFormSuccess('');
+    
+    // Validation: Kiểm tra các trường bắt buộc
     if (!formData.diagnosis || !formData.diagnosis.trim()) {
-      setFormError('Chẩn đoán (diagnosis) là bắt buộc');
+      setFormError('Chẩn đoán là bắt buộc');
       return;
     }
+    
+    if (!formData.treatmentNotes || !formData.treatmentNotes.trim()) {
+      setFormError('Ghi chú điều trị là bắt buộc');
+      return;
+    }
+    
     setFormSubmitting(true);
     try {
       const created = await medicalRecordApi.create({
         patientId: null,
         patientName: formData.patientName?.trim() || null,
         diagnosis: formData.diagnosis.trim(),
-        treatmentNotes: formData.treatmentNotes?.trim() || '',
+        treatmentNotes: formData.treatmentNotes.trim(),
       });
-      setFormSuccess('Tạo hồ sơ khám thành công!');
+      setFormSuccess('✅ Đã hoàn thành và lưu hồ sơ khám bệnh!');
+      
       const patientNameValue = created.patientName || (formData.patientName && formData.patientName.trim()) || null;
       if (patientNameValue && created.recordId && !created.patientName) {
         patientNameMapRef.current.set(created.recordId, patientNameValue);
       }
       setShowCreateForm(false);
+      
+      // Tải lại danh sách sau khi lưu thành công
       setTimeout(() => {
         setFormSuccess('');
         fetchMyRecords();
@@ -86,35 +100,45 @@ const MedicalRecordsSection = () => {
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <div className="px-6 py-4 border-b border-gray-100 relative">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-800">Hồ sơ khám</h2>
+            <div className="flex items-center gap-2">
+              <ClipboardList className="w-6 h-6 text-blue-600"/>
+              <h2 className="text-lg font-semibold text-gray-800">Quản lý Hồ sơ & Hoàn thành khám</h2>
+            </div>
             <button
               onClick={() => {
                 setFormError('');
                 setFormSuccess('');
                 setShowCreateForm((v) => !v);
               }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 shadow-md transition-all"
             >
-              {showCreateForm ? 'Đóng' : 'Tạo hồ sơ mới'}
+              {showCreateForm ? 'Đóng form' : (
+                <>
+                  <Plus className="w-4 h-4" />
+                  Tạo hồ sơ mới
+                </>
+              )}
             </button>
           </div>
 
           {showCreateForm && (
-            <CreateRecordForm
-              onClose={() => setShowCreateForm(false)}
-              onSubmit={handleCreateRecord}
-              error={formError}
-              success={formSuccess}
-              submitting={formSubmitting}
-            />
+            <div className="mt-4 animate-fadeIn">
+              <CreateRecordForm
+                onClose={() => setShowCreateForm(false)}
+                onSubmit={handleCreateRecord}
+                error={formError}
+                success={formSuccess}
+                submitting={formSubmitting}
+              />
+            </div>
           )}
         </div>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-800">Hồ sơ đã tạo</h2>
-          {recordsLoading && <span className="text-sm text-gray-500">Đang tải...</span>}
+          <h2 className="text-lg font-semibold text-gray-800">Danh sách hồ sơ đã tạo</h2>
+          {recordsLoading && <span className="text-sm text-blue-500 font-medium">Đang tải dữ liệu...</span>}
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -130,7 +154,9 @@ const MedicalRecordsSection = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {records.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-8 text-center text-gray-500">Chưa có hồ sơ.</td>
+                  <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                    Chưa có hồ sơ nào. Hãy nhấn "Tạo hồ sơ mới" để hoàn thành ca khám.
+                  </td>
                 </tr>
               ) : (
                 records.map((r, idx) => (
@@ -155,4 +181,3 @@ const MedicalRecordsSection = () => {
 };
 
 export default MedicalRecordsSection;
-

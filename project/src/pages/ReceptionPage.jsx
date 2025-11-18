@@ -106,6 +106,7 @@ export default function ReceptionPage() {
   const [appointmentsError, setAppointmentsError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [confirmingId, setConfirmingId] = useState(null);
+  const [cancellingId, setCancellingId] = useState(null); // Thêm state cho hủy lịch
 
   // ========== QUEUE STATE ==========
   const [queueList, setQueueList] = useState([]);
@@ -227,6 +228,36 @@ export default function ReceptionPage() {
       );
     } finally {
       setConfirmingId(null);
+    }
+  };
+
+  // ================= HÀM HỦY LỊCH HẸN =================
+  const handleCancelAppointment = async (appointmentId) => {
+    setCancellingId(appointmentId);
+    setAppointmentsError('');
+    setSuccessMessage('');
+
+    try {
+      await axiosInstance.patch(`/api/appointments/${appointmentId}/status`, null, {
+        params: { status: 'Cancelled' },
+      });
+
+      setAppointments((prev) =>
+        prev.map((appt) =>
+          appt.appointmentId === appointmentId
+            ? { ...appt, status: 'Cancelled', cancelledAt: new Date().toISOString() }
+            : appt
+        )
+      );
+
+      setSuccessMessage('Lịch hẹn đã được hủy thành công.');
+    } catch (error) {
+      console.error('Failed to cancel appointment:', error);
+      setAppointmentsError(
+        error.response?.data?.message || 'Hủy lịch hẹn thất bại. Vui lòng thử lại.'
+      );
+    } finally {
+      setCancellingId(null);
     }
   };
 
@@ -696,27 +727,48 @@ export default function ReceptionPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-center">
-                    {appointment.status === 'Pending' ? (
-                      <button
-                        onClick={() => handleConfirmAppointment(appointment.appointmentId)}
-                        disabled={confirmingId === appointment.appointmentId}
-                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition"
-                      >
-                        {confirmingId === appointment.appointmentId ? 'Đang xác nhận...' : 'Xác nhận'}
-                      </button>
-                    ) : appointment.confirmedAt ? (
-                      <div className="text-xs text-gray-500">
-                        Xác nhận lúc {formatDateTime(appointment.confirmedAt)}
-                        {appointment.confirmedByName && (
-                          <>
-                            <br />
-                            Bởi {appointment.confirmedByName}
-                          </>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-xs text-gray-400">Không có hành động</span>
-                    )}
+                    <div className="flex flex-col gap-2 items-center">
+                      {appointment.status === 'Pending' && (
+                        <>
+                          <button
+                            onClick={() => handleConfirmAppointment(appointment.appointmentId)}
+                            disabled={confirmingId === appointment.appointmentId}
+                            className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition w-full max-w-[120px]"
+                          >
+                            {confirmingId === appointment.appointmentId ? 'Đang xác nhận...' : 'Xác nhận'}
+                          </button>
+                          <button
+                            onClick={() => handleCancelAppointment(appointment.appointmentId)}
+                            disabled={cancellingId === appointment.appointmentId}
+                            className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed transition w-full max-w-[120px]"
+                          >
+                            {cancellingId === appointment.appointmentId ? 'Đang hủy...' : 'Hủy lịch'}
+                          </button>
+                        </>
+                      )}
+                      {appointment.status === 'Confirmed' && (
+                        <button
+                          onClick={() => handleCancelAppointment(appointment.appointmentId)}
+                          disabled={cancellingId === appointment.appointmentId}
+                          className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed transition w-full max-w-[120px]"
+                        >
+                          {cancellingId === appointment.appointmentId ? 'Đang hủy...' : 'Hủy lịch'}
+                        </button>
+                      )}
+                      {appointment.status === 'Cancelled' && (
+                        <span className="text-xs text-gray-400">Đã hủy</span>
+                      )}
+                      {appointment.confirmedAt && appointment.status !== 'Cancelled' && (
+                        <div className="text-xs text-gray-500">
+                          Xác nhận lúc {formatDateTime(appointment.confirmedAt)}
+                          {appointment.confirmedByName && (
+                            <>
+                              <br />Bởi {appointment.confirmedByName}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))

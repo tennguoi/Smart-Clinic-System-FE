@@ -145,6 +145,12 @@ export const queueApi = {
     const { data } = await axiosInstance.get('/api/reception/queue/waiting');
     return data;
   },
+  getCompletedQueue: async () =>{
+    const { data } = await axiosInstance.get('/api/reception/queue/completed');
+    return data;
+
+  },
+
 
   // Tìm kiếm bệnh nhân
   searchQueue: async (params) => {

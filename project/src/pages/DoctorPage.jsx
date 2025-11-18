@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import DoctorSidebar from '../components/doctor/Sidebar';
 import DoctorHeader from '../components/doctor/Header';
 import MedicalRecordsSection from '../components/doctor/MedicalRecordsSection';
+import MedicalRecordHistory from '../components/doctor/MedicalRecordHistory';
 import DoctorProfileSection from '../components/doctor/DoctorProfileSection';
 import DoctorSecuritySection from '../components/doctor/DoctorSecuritySection';
 import DoctorScheduleSection from '../components/doctor/DoctorScheduleSection';
@@ -55,21 +56,25 @@ export default function DoctorPage() {
     } catch {}
   }, [activeMenu]);
 
-  return (
+ return (
     <div className="min-h-screen bg-gray-50 flex">
       <DoctorSidebar activeMenu={activeMenu} onMenuChange={setActiveMenu} />
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <DoctorHeader onLogout={handleLogout} fullName={doctorName} />
 
-        <main className="flex-1 p-8 space-y-8">
+        <main className="flex-1 p-8 space-y-8 overflow-y-auto">
           {activeMenu === 'schedule' && <DoctorScheduleSection />}
+          
           {activeMenu === 'current-patient' && (
             <CurrentPatientExamination 
               onNavigateToRecords={() => setActiveMenu('records')}
             />
           )}
+          
           {activeMenu === 'records' && <MedicalRecordsSection />}
+          {activeMenu === 'history' && <MedicalRecordHistory />}
+          
           {activeMenu === 'invoices' && <PlaceholderSection title="Quản lý hóa đơn" />}
           {activeMenu === 'profile' && <DoctorProfileSection storedInfo={storedInfo} />}
           {activeMenu === 'security' && (
