@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { X, UserCheck, DoorOpen, Loader } from "lucide-react";
+import { X, DoorOpen, Loader, UserCheck } from "lucide-react";
 import { roomApi } from "../../api/roomApi";
+import { toast } from 'react-toastify';
 
 export default function RoomAssignModal({ patient, onClose, onAssign }) {
   const [availableRooms, setAvailableRooms] = useState([]);
@@ -10,32 +11,30 @@ export default function RoomAssignModal({ patient, onClose, onAssign }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const loadAvailableRooms = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const rooms = await roomApi.getAvailableRooms();
+        setAvailableRooms(Array.isArray(rooms) ? rooms : []);
+
+        if (!rooms || rooms.length === 0) {
+          setError("Hiện không có phòng khám nào trống.");
+        }
+      } catch (err) {
+        console.error("Failed to load available rooms:", err);
+        setError("Không thể tải danh sách phòng khám.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadAvailableRooms();
   }, []);
 
-  const loadAvailableRooms = async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const rooms = await roomApi.getAvailableRooms();
-
-      setAvailableRooms(Array.isArray(rooms) ? rooms : []);
-
-      if (!rooms || rooms.length === 0) {
-        setError("Hiện không có phòng khám nào sẵn sàng. Vui lòng thử lại sau.");
-      }
-    } catch (err) {
-      console.error("Failed to load available rooms:", err);
-      setError("Không thể tải danh sách phòng khám.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleAssign = async () => {
     if (!selectedRoomId) {
-      setError("Vui lòng chọn phòng khám");
+      setError("Vui lòng chọn một phòng khám");
       return;
     }
 
@@ -44,14 +43,15 @@ export default function RoomAssignModal({ patient, onClose, onAssign }) {
 
     try {
       await roomApi.assignRoom(patient.queueId, selectedRoomId);
-
-      // callback cập nhật queue list
-      onAssign(patient.queueId, selectedRoomId);
-
+      toast.success("Phân phòng thành công! Bệnh nhân đang được khám");
+      onAssign?.(); // Reload queue list
       onClose();
     } catch (err) {
-      console.error("Failed to assign room:", err);
-      setError("Không thể phân phòng. Vui lòng thử lại.");
+      const msg = err.response?.data?.message 
+               || err.response?.data?.error 
+               || "Phân phòng thất bại. Vui lòng thử lại.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setAssigning(false);
     }
@@ -100,24 +100,21 @@ export default function RoomAssignModal({ patient, onClose, onAssign }) {
                       : "bg-blue-100 text-blue-700"
                   }`}
                 >
-                  {patient.priority === "Emergency"
-                    ? "Khẩn cấp"
-                    : patient.priority === "Urgent"
-                    ? "Ưu tiên"
-                    : "Thường"}
+                  {patient.priority === "Emergency" ? "Khẩn cấp" : 
+                   patient.priority === "Urgent" ? "Ưu tiên" : "Thường"}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Error */}
+          {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
               {error}
             </div>
           )}
 
-          {/* Loading */}
+          {/* Loading or Room List */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader className="w-8 h-8 text-blue-600 animate-spin" />
@@ -129,71 +126,54 @@ export default function RoomAssignModal({ patient, onClose, onAssign }) {
               <p className="text-gray-500">Không có phòng khám nào sẵn sàng</p>
             </div>
           ) : (
-            <>
-              {/* Room List */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Chọn phòng khám (với bác sĩ sẵn sàng) <span className="text-red-500">*</span>
-                </label>
-
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {availableRooms.map((room) => (
-                    <div
-                      key={room.roomId}
-                      onClick={() => setSelectedRoomId(room.roomId)}
-                      className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                        selectedRoomId === room.roomId
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <DoorOpen
-                              className={`w-5 h-5 ${
-                                selectedRoomId === room.roomId
-                                  ? "text-blue-600"
-                                  : "text-gray-400"
-                              }`}
-                            />
-                            <h3 className="font-semibold text-gray-900">{room.roomName}</h3>
-                            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
-                              Sẵn sàng
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Chọn phòng khám (với bác sĩ sẵn sàng) <span className="text-red-500">*</span>
+              </label>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {availableRooms.map((room) => (
+                  <div
+                    key={room.roomId}
+                    onClick={() => setSelectedRoomId(room.roomId)}
+                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                      selectedRoomId === room.roomId
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <DoorOpen className={`w-5 h-5 ${selectedRoomId === room.roomId ? "text-blue-600" : "text-gray-400"}`} />
+                          <h3 className="font-semibold text-gray-900">{room.roomName}</h3>
+                          <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                            Sẵn sàng
+                          </span>
+                        </div>
+                        {room.doctorName && (
+                          <div className="flex items-center gap-2 text-sm text-gray-600 ml-7">
+                            <UserCheck className="w-4 h-4" />
+                            <span>
+                              Bác sĩ: <span className="font-medium">{room.doctorName}</span>
                             </span>
                           </div>
-
-                          {room.doctorName && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600 ml-7">
-                              <UserCheck className="w-4 h-4" />
-                              <span>
-                                Bác sĩ: <span className="font-medium">{room.doctorName}</span>
-                              </span>
-                            </div>
-                          )}
-
-                          {room.description && (
-                            <p className="text-sm text-gray-500 mt-1 ml-7">{room.description}</p>
-                          )}
-                        </div>
-
-                        {selectedRoomId === room.roomId && (
-                          <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
-                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path
-                                fillRule="evenodd"
-                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </div>
+                        )}
+                        {room.description && (
+                          <p className="text-sm text-gray-500 mt-1 ml-7">{room.description}</p>
                         )}
                       </div>
+                      {selectedRoomId === room.roomId && (
+                        <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-            </>
+            </div>
           )}
         </div>
 
@@ -201,24 +181,23 @@ export default function RoomAssignModal({ patient, onClose, onAssign }) {
         <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             disabled={assigning}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
           >
             Hủy
           </button>
-
           <button
             onClick={handleAssign}
             disabled={!selectedRoomId || assigning}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-300"
+            className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {assigning ? (
               <>
-                <Loader className="w-4 h-4 inline mr-2 animate-spin" />
+                <Loader className="w-4 h-4 animate-spin" />
                 Đang phân phòng...
               </>
             ) : (
-              "Xác nhận phân phòng (chuyển sang đang khám)"
+              "Xác nhận phân phòng"
             )}
           </button>
         </div>

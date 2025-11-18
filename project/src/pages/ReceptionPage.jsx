@@ -42,21 +42,24 @@ const emptyPatientForm = {
 
 const normalizeStatus = (status) => {
   if (!status) return 'Waiting';
-  let s = String(status).toLowerCase().trim();
-  s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-  if (s.includes('progress') || s.includes('kham') || s.includes('examining') || s === 'dang kham') {
-    if (!s.includes('cho') && !s.includes('xong') && !s.includes('hoan thanh')) {
-      return 'InProgress';
-    }
+  const s = String(status).toLowerCase().trim();
+
+  // Không xóa dấu nữa! Giữ nguyên tiếng Việt có dấu để so sánh chính xác
+  if (s.includes('đang khám') || s.includes('inprogress') || s === 'inprogress') {
+    return 'InProgress';
   }
-  if (s.includes('complete') || s.includes('finish') || s.includes('done') || s.includes('hoan thanh') || s.includes('xong') || s.includes('processed')) {
+  if (s.includes('hoàn tất') || s.includes('completed') || s === 'completed') {
     return 'Completed';
   }
-  if (s.includes('cancel') || s.includes('huy') || s.includes('abort')) {
+  if (s.includes('hủy') || s.includes('cancelled') || s === 'cancelled') {
     return 'Cancelled';
   }
-  return 'Waiting';
+  if (s.includes('đang chờ') || s.includes('waiting') || s === 'waiting') {
+    return 'Waiting';
+  }
+
+  return 'Waiting'; // fallback
 };
 
 const persistUserData = (data) => {
@@ -140,7 +143,7 @@ export default function ReceptionPage() {
   const [queueError, setQueueError] = useState('');
   const [searchPhone, setSearchPhone] = useState('');
   
-  const [filterStatus, setFilterStatus] = useState('Waiting'); 
+const [filterStatus, setFilterStatus] = useState(''); // ← ĐỂ RỖNG = XEM TẤT CẢ
 
   const [showForm, setShowForm] = useState(false);
   const [editPatientId, setEditPatientId] = useState(null);
@@ -263,7 +266,9 @@ export default function ReceptionPage() {
     try {
       const params = {};
       if (searchPhone) params.phone = searchPhone;
-      if (filterStatus) params.status = filterStatus;
+if (filterStatus && filterStatus !== '' && filterStatus !== 'All') {
+    params.status = filterStatus;
+}
 
       const data = await queueApi.searchQueue(params);
       
@@ -453,16 +458,10 @@ export default function ReceptionPage() {
     setShowRoomModal(true);
   };
 
-  const handleRoomAssigned = async (queueId, roomId) => {
-    try {
-      const newStatus = 'InProgress';
-      await queueApi.updateStatus(queueId, newStatus);
-      updateLocalQueueStatus(queueId, newStatus);
-      toast.success('Phân phòng thành công! Đang khám.');
-    } catch (error) {
-      toast.error('Phân phòng thành công nhưng không thể cập nhật trạng thái!');
-    }
-  };
+  const handleRoomAssigned = async () => {
+  await fetchQueueData(); // Đảm bảo trạng thái mới nhất: InProgress + phòng đã gán
+  toast.success('Phân phòng thành công!');
+};
 
   // ================= PROFILE HANDLERS =================
   const handleFieldChange = (field, value) => {

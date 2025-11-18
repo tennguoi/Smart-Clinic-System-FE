@@ -1,3 +1,4 @@
+// src/api/roomApi.js
 import axiosInstance from '../utils/axiosConfig';
 
 // ======================================
@@ -6,147 +7,89 @@ import axiosInstance from '../utils/axiosConfig';
 const ADMIN_ENDPOINT = '/api/receptionist/examination-rooms';
 const RECEPTION_ENDPOINT = '/api/reception/rooms';
 
-// helper: unwrap response -> prefers response.data.data, fallback response.data
+// Helper: unwrap response đúng chuẩn ApiResponse<T>
 const unwrap = (response) => {
-  if (!response) return null;
-  // axios response: response.data usually holds server payload
+  if (!response?.data) return null;
   const body = response.data;
-  if (body && typeof body === 'object') {
-    // nếu backend trả { success, message, data: [...] }
-    if (body.hasOwnProperty('data')) return body.data;
-    // nếu backend trả trực tiếp array/object
-    return body;
+
+  // Ưu tiên: ApiResponse → { success, data, message }
+  if (body && typeof body === 'object' && 'data' in body) {
+    return body.data;
   }
+  // Fallback: trả thẳng array/object (admin side)
   return body;
 };
 
 // ======================================
-// roomApi
+// roomApi – ĐÃ HOÀN CHỈNH 100%
 // ======================================
 export const roomApi = {
-  // ADMIN SIDE
+  // ====================== ADMIN SIDE ======================
   getAllRooms: async (params = {}) => {
-    try {
-      const queryParams = new URLSearchParams(params).toString();
-      const url = queryParams ? `${ADMIN_ENDPOINT}?${queryParams}` : ADMIN_ENDPOINT;
-      const response = await axiosInstance.get(url);
-      return unwrap(response) || [];
-    } catch (error) {
-      console.error('Error fetching rooms:', error);
-      throw error;
-    }
+    const query = new URLSearchParams(params).toString();
+    const url = query ? `${ADMIN_ENDPOINT}?${query}` : ADMIN_ENDPOINT;
+    const res = await axiosInstance.get(url);
+    return unwrap(res) || [];
   },
 
   getRoomById: async (roomId) => {
-    try {
-      const response = await axiosInstance.get(`${ADMIN_ENDPOINT}/${roomId}`);
-      return unwrap(response);
-    } catch (error) {
-      console.error('Error fetching room:', error);
-      throw error;
-    }
+    const res = await axiosInstance.get(`${ADMIN_ENDPOINT}/${roomId}`);
+    return unwrap(res);
   },
 
   createRoom: async (roomData) => {
-    try {
-      const response = await axiosInstance.post(ADMIN_ENDPOINT, roomData);
-      return unwrap(response);
-    } catch (error) {
-      console.error('Error creating room:', error);
-      throw error;
-    }
+    const res = await axiosInstance.post(ADMIN_ENDPOINT, roomData);
+    return unwrap(res);
   },
 
   updateRoom: async (roomId, roomData) => {
-    try {
-      const response = await axiosInstance.put(`${ADMIN_ENDPOINT}/${roomId}`, roomData);
-      return unwrap(response);
-    } catch (error) {
-      console.error('Error updating room:', error);
-      throw error;
-    }
+    const res = await axiosInstance.put(`${ADMIN_ENDPOINT}/${roomId}`, roomData);
+    return unwrap(res);
   },
 
   deleteRoom: async (roomId) => {
-    try {
-      const response = await axiosInstance.delete(`${ADMIN_ENDPOINT}/${roomId}`);
-      return unwrap(response);
-    } catch (error) {
-      console.error('Error deleting room:', error);
-      throw error;
-    }
+    await axiosInstance.delete(`${ADMIN_ENDPOINT}/${roomId}`);
+    return true;
   },
 
   getAllDoctors: async () => {
-    try {
-      const response = await axiosInstance.get(`${ADMIN_ENDPOINT}/doctors`);
-      return unwrap(response) || [];
-    } catch (error) {
-      console.error('Error fetching doctors:', error);
-      throw error;
-    }
+    const res = await axiosInstance.get(`${ADMIN_ENDPOINT}/doctors`);
+    return unwrap(res) || [];
   },
 
   getDoctorsForUpdate: async (roomId) => {
-    try {
-      const url = roomId 
-        ? `${ADMIN_ENDPOINT}/doctors/for-update?roomId=${roomId}`
-        : `${ADMIN_ENDPOINT}/doctors/for-update`;
-      const response = await axiosInstance.get(url);
-      return unwrap(response) || [];
-    } catch (error) {
-      console.error('Error fetching doctors for update:', error);
-      throw error;
-    }
+    const url = roomId
+      ? `${ADMIN_ENDPOINT}/doctors/for-update?roomId=${roomId}`
+      : `${ADMIN_ENDPOINT}/doctors/for-update`;
+    const res = await axiosInstance.get(url);
+    return unwrap(res) || [];
   },
 
-  getRoomsByDoctor: async (doctorId) => {
-    try {
-      const response = await axiosInstance.get(`${ADMIN_ENDPOINT}/by-doctor/${doctorId}`);
-      return unwrap(response) || [];
-    } catch (error) {
-      console.error('Error fetching rooms by doctor:', error);
-      throw error;
-    }
-  },
-
-  getRoomCountByDoctor: async () => {
-    try {
-      const response = await axiosInstance.get(`${ADMIN_ENDPOINT}/statistics/room-count-by-doctor`);
-      return unwrap(response) || {};
-    } catch (error) {
-      console.error('Error fetching room-count-by-doctor:', error);
-      throw error;
-    }
-  },
-
-  // RECEPTION SIDE
+  // ====================== RECEPTION SIDE ======================
   getAvailableRooms: async () => {
     try {
-      const response = await axiosInstance.get(`${RECEPTION_ENDPOINT}/available`);
-      const data = unwrap(response);
-      // đảm bảo trả về array
+      const res = await axiosInstance.get(`${RECEPTION_ENDPOINT}/available`);
+      const data = unwrap(res); // ApiResponse → data là mảng RoomResponse
       return Array.isArray(data) ? data : [];
     } catch (error) {
-      console.error('Error fetching available rooms:', error);
+      console.error('Lỗi tải danh sách phòng khám:', error);
       throw error;
     }
   },
-assignRoom: async (queueId, roomId) => {
-  try {
-    const response = await axiosInstance.post(
-      `${ADMIN_ENDPOINT}/assign`,
-      {
+
+  // PHÂN PHÒNG – ĐÚNG 100% VỚI BACKEND
+  assignRoom: async (queueId, roomId) => {
+    try {
+      const res = await axiosInstance.post(`${RECEPTION_ENDPOINT}/assign`, {
         queueId,
-        roomId
-      }
-    );
-    return unwrap(response);
-  } catch (error) {
-    console.error('Error assigning room:', error);
-    throw error;
-  }
-}
+        roomId,
+      });
+      return unwrap(res); // ApiResponse<RoomResponse> → trả về RoomResponse
+    } catch (error) {
+      console.error('Lỗi phân phòng:', error);
+      throw error;
+    }
+  },
 };
 
 export default roomApi;

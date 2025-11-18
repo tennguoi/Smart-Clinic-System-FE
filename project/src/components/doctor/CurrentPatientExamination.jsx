@@ -373,19 +373,25 @@ export default function CurrentPatientExamination() {
   };
 
   const handleComplete = async () => {
-    if (!medicalRecord.diagnosis.trim()) {
-      toast.error('Vui lòng nhập chẩn đoán!');
-      return;
-    }
-    try {
-      await completeExamination(currentPatient.queueId);
-      toast.success('Hoàn thành khám thành công!');
-      setMedicalRecord({ clinicalExam: '', diagnosis: '', treatmentNotes: '' });
-      setPrescriptions([]);
-      setServices([]);
-      await loadQueue();
-    } catch { toast.error('Lỗi hoàn thành'); }
-  };
+  if (!medicalRecord.diagnosis.trim()) {
+    toast.error('Vui lòng nhập chẩn đoán!');
+    return;
+  }
+  try {
+    await completeExamination(); // ← Không cần truyền queueId nữa
+    toast.success('Hoàn thành khám thành công! Phòng đã được giải phóng.');
+
+    // Reset form
+    setMedicalRecord({ clinicalExam: '', diagnosis: '', treatmentNotes: '' });
+    setPrescriptions([]);
+    setServices([]);
+    
+    // Tự động reload để thấy phòng trống
+    await loadQueue();
+  } catch (err) {
+    toast.error('Lỗi khi hoàn thành khám');
+  }
+};
 
   const filtered = queue.filter(p =>
     p.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||

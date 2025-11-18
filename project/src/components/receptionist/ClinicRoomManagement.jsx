@@ -229,9 +229,15 @@ export default function ClinicRoomManagement() {
   };
 
   const getStatusLabel = (status) => {
-    const statusOption = statusOptions.find((s) => s.value === status);
-    return statusOption ? statusOption.label : status;
-  };
+  if (!status) return 'Không xác định';
+  
+  const s = String(status).toUpperCase(); // chuẩn hóa
+  
+  if (s === 'AVAILABLE') return 'Sẵn sàng';
+  if (s === 'OCCUPIED') return 'Đang sử dụng';
+  
+  return 'Không xác định';
+};
 
   return (
     <div className="space-y-6">
