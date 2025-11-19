@@ -28,9 +28,14 @@ const [records, setRecords] = useState([]);
 
   useEffect(() => {
     fetchHistory();
+  }, []);
 
+  useEffect(() => {
     // Lắng nghe sự kiện từ màn hình khám hiện tại
-    const handleRefresh = () => fetchHistory();
+    const handleRefresh = () => {
+      console.log('Received medical-records:refresh event');
+      fetchHistory();
+    };
     window.addEventListener('medical-records:refresh', handleRefresh);
 
     return () => window.removeEventListener('medical-records:refresh', handleRefresh);

@@ -454,6 +454,12 @@ export default function ReceptionPage() {
 
   // ================= ROOM ASSIGN HANDLERS =================
   const handleAssignRoom = (patient) => {
+    // Validate patient object
+    if (!patient || !patient.queueId) {
+      toast.error('Lỗi: Không tìm thấy ID hàng đợi. Vui lòng làm mới trang.');
+      console.error('Invalid patient object:', patient);
+      return;
+    }
     setSelectedPatient(patient);
     setShowRoomModal(true);
   };

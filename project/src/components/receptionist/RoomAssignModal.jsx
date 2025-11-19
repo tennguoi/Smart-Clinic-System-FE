@@ -38,6 +38,13 @@ export default function RoomAssignModal({ patient, onClose, onAssign }) {
       return;
     }
 
+    // Validate patient and queueId
+    if (!patient || !patient.queueId) {
+      setError("Lỗi: Không tìm thấy ID hàng đợi. Vui lòng làm mới trang.");
+      console.error("Invalid patient or queueId:", patient);
+      return;
+    }
+
     setAssigning(true);
     setError("");
 

@@ -13,6 +13,7 @@ import {
   callPatient as callPatientApi,
   completeExamination,
 } from '../../api/doctorApi';
+import { medicalRecordApi } from '../../api/medicalRecordApi';
 
 // ================== TẤT CẢ COMPONENT ĐÃ CHUYỂN THÀNH JSX ==================
 
@@ -284,7 +285,7 @@ function DiagnosticInputArea({ activeTab, setActiveTab, medicalRecord, setMedica
 }
 
 // ActionFooter
-function ActionFooter({ onSaveDraft, onSaveAndPrint, onComplete, hasRequiredData }) {
+function ActionFooter({ onSaveDraft, onSave, onPrint, onComplete, hasRequiredData, isSaving, isPrinting }) {
   return (
     <footer className="bg-white border-t border-slate-200 px-6 py-4 shadow-lg">
       <div className="flex items-center justify-between max-w-7xl mx-auto">
@@ -292,8 +293,11 @@ function ActionFooter({ onSaveDraft, onSaveAndPrint, onComplete, hasRequiredData
           <button onClick={onSaveDraft} className="flex items-center gap-2 px-5 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50">
             <Save size={18} /> Lưu Nháp
           </button>
-          <button onClick={onSaveAndPrint} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            <Printer size={18} /> Lưu & In
+          <button onClick={onSave} disabled={isSaving} className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-slate-400">
+            <Save size={18} /> {isSaving ? 'Đang lưu...' : 'Lưu'}
+          </button>
+          <button onClick={onPrint} disabled={isPrinting} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400">
+            <Printer size={18} /> {isPrinting ? 'Đang in...' : 'In'}
           </button>
         </div>
 
@@ -321,6 +325,9 @@ export default function CurrentPatientExamination() {
   const [medicalRecord, setMedicalRecord] = useState({ clinicalExam: '', diagnosis: '', treatmentNotes: '' });
   const [prescriptions, setPrescriptions] = useState([]);
   const [services, setServices] = useState([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [recordId, setRecordId] = useState(null);
 
   const loadQueue = useCallback(async () => {
     try {
@@ -340,6 +347,7 @@ export default function CurrentPatientExamination() {
 
       const patient = currentRes ? {
         queueId: currentRes.queueId,
+        patientId: currentRes.patientId,
         queueNumber: currentRes.queueNumber,
         name: currentRes.fullName,
         age: currentRes.age || '--',
@@ -372,26 +380,91 @@ export default function CurrentPatientExamination() {
     } catch { toast.error('Gọi thất bại'); }
   };
 
-  const handleComplete = async () => {
-  if (!medicalRecord.diagnosis.trim()) {
-    toast.error('Vui lòng nhập chẩn đoán!');
-    return;
-  }
-  try {
-    await completeExamination(); // ← Không cần truyền queueId nữa
-    toast.success('Hoàn thành khám thành công! Phòng đã được giải phóng.');
+  const handleSave = async () => {
+    if (!medicalRecord.diagnosis.trim()) {
+      toast.error('Vui lòng nhập chẩn đoán!');
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const payload = {
+        patientId: currentPatient?.patientId,
+        patientName: currentPatient?.name,
+        diagnosis: medicalRecord.diagnosis,
+        treatmentNotes: medicalRecord.treatmentNotes,
+      };
+      const result = await medicalRecordApi.create(payload);
+      setRecordId(result.id);
+      toast.success('Lưu hồ sơ thành công!');
+      window.dispatchEvent(new Event('medical-records:refresh'));
+    } catch (err) {
+      toast.error('Lỗi khi lưu hồ sơ: ' + (err.message || 'Vui lòng thử lại'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
-    // Reset form
-    setMedicalRecord({ clinicalExam: '', diagnosis: '', treatmentNotes: '' });
-    setPrescriptions([]);
-    setServices([]);
-    
-    // Tự động reload để thấy phòng trống
-    await loadQueue();
-  } catch (err) {
-    toast.error('Lỗi khi hoàn thành khám');
-  }
-};
+  const handlePrint = async () => {
+    if (!recordId) {
+      toast.error('Vui lòng lưu hồ sơ trước khi in!');
+      return;
+    }
+    setIsPrinting(true);
+    try {
+      const pdfBlob = await medicalRecordApi.exportAsPdf(recordId);
+      const url = window.URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `medical-record-${recordId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('In PDF thành công!');
+    } catch (err) {
+      toast.error('Lỗi khi in PDF: ' + (err.message || 'Vui lòng thử lại'));
+      setIsPrinting(false);
+    }
+  };
+
+  const handleComplete = async () => {
+    if (!medicalRecord.diagnosis.trim()) {
+      toast.error('Vui lòng nhập chẩn đoán!');
+      return;
+    }
+    try {
+      // Bước 1: Lưu hồ sơ y tế nếu chưa lưu
+      if (!recordId) {
+        const payload = {
+          patientId: currentPatient?.patientId,
+          patientName: currentPatient?.name,
+          diagnosis: medicalRecord.diagnosis,
+          treatmentNotes: medicalRecord.treatmentNotes,
+        };
+        const result = await medicalRecordApi.create(payload);
+        setRecordId(result.id);
+        toast.success('Lưu hồ sơ thành công!');
+      }
+
+      // Bước 2: Hoàn thành khám
+      await completeExamination();
+      toast.success('Hoàn thành khám thành công! Phòng đã được giải phóng.');
+
+      // Reset form
+      setMedicalRecord({ clinicalExam: '', diagnosis: '', treatmentNotes: '' });
+      setPrescriptions([]);
+      setServices([]);
+      setRecordId(null);
+
+      // Refresh lịch sử
+      window.dispatchEvent(new Event('medical-records:refresh'));
+
+      // Tự động reload để thấy phòng trống
+      await loadQueue();
+    } catch (err) {
+      toast.error('Lỗi khi hoàn thành khám: ' + (err.message || ''));
+    }
+  };
 
   const filtered = queue.filter(p =>
     p.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -423,9 +496,12 @@ export default function CurrentPatientExamination() {
 
         <ActionFooter
           onSaveDraft={() => toast('Đã lưu nháp')}
-          onSaveAndPrint={() => toast('Đang in...')}
+          onSave={handleSave}
+          onPrint={handlePrint}
           onComplete={handleComplete}
           hasRequiredData={!!medicalRecord.diagnosis.trim()}
+          isSaving={isSaving}
+          isPrinting={isPrinting}
         />
       </div>
     );
