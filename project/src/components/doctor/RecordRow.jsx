@@ -1,6 +1,6 @@
 // src/components/doctor/RecordRow.jsx
 import { useState } from 'react';
-import { Pencil, Trash2, Pill } from 'lucide-react';
+import { Pencil, Trash2, Pill, Download } from 'lucide-react';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import toast from 'react-hot-toast';
 import RecordDetailModal from './RecordDetailModal';
@@ -19,6 +19,7 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
   const [localPrescriptionDrugs, setLocalPrescriptionDrugs] = useState('');
   const [localPrescriptionInstructions, setLocalPrescriptionInstructions] = useState('');
   const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const handleSave = async () => {
     if (!localDiagnosis || !localDiagnosis.trim()) {
@@ -63,6 +64,37 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
       onError && onError(msg);
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setExporting(true);
+    try {
+      const pdfBlob = await medicalRecordApi.exportAsPdf(record.recordId);
+      
+      // Tạo URL từ blob và download
+      const url = window.URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `HoSoBenhAn_${record.recordId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Xuất PDF thành công!', {
+        duration: 3000,
+        position: 'top-right',
+      });
+    } catch (e) {
+      const msg = e.message || 'Xuất PDF thất bại';
+      toast.error(msg, {
+        duration: 4000,
+        position: 'top-right',
+      });
+      onError && onError(msg);
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -128,6 +160,16 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
                 title="Tạo đơn thuốc"
               >
                 <Pill className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={handleExportPdf}
+                disabled={exporting}
+                className="p-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 disabled:opacity-60"
+                aria-label="Xuất PDF"
+                title={exporting ? 'Đang xuất...' : 'Xuất PDF'}
+              >
+                <Download className="w-4 h-4" />
               </button>
 
               <button

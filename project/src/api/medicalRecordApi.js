@@ -71,6 +71,29 @@ export const medicalRecordApi = {
 			// Nếu endpoint chưa có, trả về empty array
 			return [];
 		}
+	},
+	exportAsPdf: async (recordId) => {
+		try {
+			const { data } = await axiosInstance.get(
+				`/api/doctor/medical-records/${recordId}/export-pdf`,
+				{ responseType: 'blob' }
+			);
+			return data;
+		} catch (error) {
+			throw new Error('Xuất PDF thất bại: ' + (error.response?.data?.message || error.message));
+		}
+	}
+
+	,exportPrescriptionAsPdf: async (recordId) => {
+		try {
+			const { data } = await axiosInstance.get(
+				`/api/doctor/medical-records/${recordId}/export-prescription`,
+				{ responseType: 'blob' }
+			);
+			return data;
+		} catch (error) {
+			throw new Error('Xuất đơn thuốc thất bại: ' + (error.response?.data?.message || error.message));
+		}
 	}
 	
 };
