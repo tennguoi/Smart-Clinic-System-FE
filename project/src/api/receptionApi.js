@@ -9,6 +9,7 @@ const RECEPTION_ENDPOINT = '/api/reception/rooms';             // Lễ tân gọ
 // ======================================
 // roomApi
 // ======================================
+
 export const roomApi = {
 
   // ---------------------------
@@ -183,6 +184,12 @@ export const queueApi = {
 
   // Cập nhật trạng thái nhanh
   updateStatus: async (queueId, status) => {
+    if (!queueId) {
+      throw new Error('Queue ID is required');
+    }
+    if (queueId === 'undefined' || queueId === 'null') {
+      throw new Error('Invalid Queue ID');
+    }
     const { data } = await axiosInstance.patch(`/api/reception/queue/${queueId}/status`, null, { 
       params: { status } 
     });

@@ -268,7 +268,7 @@ export default function ReceptionPage() {
       const data = await queueApi.searchQueue(params);
       
       const mappedData = (data || []).map((item) => ({
-        queueId: item.queueId,
+        queueId: item.queueId || item.id || item.queue_id,
         queueNumber: item.queueNumber,
         patientName: item.patientName,
         phone: item.phone,
@@ -285,7 +285,7 @@ export default function ReceptionPage() {
         checkInTime: item.checkInTime,
         assignedRoomId: item.assignedRoomId || item.assignedRoom?.roomId || null,
         assignedRoomName: item.assignedRoomName || item.assignedRoom?.roomName || null,
-      }));
+      })).filter(item => item.queueId); // Lọc bỏ các item không có queueId
       
       setQueueList(sortQueueByPriority(mappedData));
     } catch (error) {
@@ -437,6 +437,11 @@ export default function ReceptionPage() {
   };
 
   const handleQuickUpdateStatus = async (queueId, status) => {
+    if (!queueId || queueId === 'undefined' || queueId === 'null') {
+      toast.error('Lỗi: Không tìm thấy ID hàng đợi. Vui lòng làm mới trang.');
+      console.error('Invalid queueId:', queueId);
+      return;
+    }
     try {
       await queueApi.updateStatus(queueId, status);
       updateLocalQueueStatus(queueId, status);
@@ -454,6 +459,11 @@ export default function ReceptionPage() {
   };
 
   const handleRoomAssigned = async (queueId, roomId) => {
+    if (!queueId || queueId === 'undefined' || queueId === 'null') {
+      toast.error('Lỗi: Không tìm thấy ID hàng đợi. Vui lòng làm mới trang.');
+      console.error('Invalid queueId:', queueId);
+      return;
+    }
     try {
       const newStatus = 'InProgress';
       await queueApi.updateStatus(queueId, newStatus);

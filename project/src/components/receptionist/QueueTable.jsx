@@ -98,7 +98,14 @@ export default function QueueTable({ queueList, onEdit, onDelete, onStatusChange
                 <td className="px-4 py-3 text-sm">
                   <select
                     value={q.status}
-                    onChange={(e) => onStatusChange(q.queueId, e.target.value)}
+                    onChange={(e) => {
+                      if (!q.queueId) {
+                        console.error('Queue ID is missing:', q);
+                        alert('Lỗi: Không tìm thấy ID hàng đợi. Vui lòng làm mới trang.');
+                        return;
+                      }
+                      onStatusChange(q.queueId, e.target.value);
+                    }}
                     className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold border-0 focus:outline-none focus:ring-2 focus:ring-blue-500 ${getStatusColor(q.status)}`}
                   >
                     {Object.entries(statusLabels).map(([key, label]) => (
