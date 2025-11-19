@@ -1,7 +1,11 @@
 // src/components/ServiceCard.jsx
+import { useState } from 'react';
 import { getCategoryLabel, formatPrice } from '../api/serviceApi';
 
 export default function ServiceCard({ service, index }) {
+  const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+
   const getCategoryColor = (category) => {
     const colors = {
       Consultation: 'bg-blue-100 text-blue-700',
@@ -12,33 +16,77 @@ export default function ServiceCard({ service, index }) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 flex flex-col h-full">
-      <div className="p-6 flex-1 flex flex-col">
-        {/* Number and Title on same line */}
-        <div className="flex items-start gap-3 mb-4">
-          <div className={`w-12 h-12 rounded-lg ${getCategoryColor(service.category)} flex items-center justify-center font-bold text-lg flex-shrink-0`}>
+    <div className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 flex flex-col h-full hover:-translate-y-1">
+      {/* Image Section */}
+      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-cyan-50 to-emerald-50">
+        {service.photoUrl && !imageError ? (
+          <>
+            {imageLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                <div className="w-8 h-8 border-3 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
+            <img
+              src={service.photoUrl}
+              alt={service.name}
+              onError={() => setImageError(true)}
+              onLoad={() => setImageLoading(false)}
+              className={`w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${
+                imageLoading ? 'opacity-0' : 'opacity-100'
+              }`}
+            />
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-100 via-emerald-50 to-blue-100">
+            <svg className="w-20 h-20 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+        )}
+        
+        {/* Subtle gradient overlay on hover */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        
+        {/* Index Number Badge */}
+        <div className="absolute top-3 left-3">
+          <div className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center font-bold text-lg text-cyan-600">
             {index + 1}
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 text-left flex-1">
-            {service.name}
-          </h3>
-        </div>
-
-        {/* Service description */}
-        <p className="text-gray-600 text-lg line-clamp-3 mb-4 text-left flex-1">
-          {service.description || 'Dịch vụ chuyên nghiệp với đội ngũ bác sĩ giàu kinh nghiệm.'}
-        </p>
-
-        {/* Footer with category and price */}
-        <div className="flex items-end justify-between mt-auto pt-4 border-t border-gray-100">
-          <div className={`px-4 py-2 rounded-full text-sm font-semibold ${getCategoryColor(service.category)}`}>
-            {getCategoryLabel(service.category)}
-          </div>
-          <div className="text-2xl font-bold text-blue-600">
-            {formatPrice(service.price)}
           </div>
         </div>
       </div>
+
+      {/* Content Section */}
+      <div className="p-5 flex-1 flex flex-col">
+        {/* Category Badge */}
+        <div className="mb-3">
+          <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getCategoryColor(service.category)}`}>
+            {getCategoryLabel(service.category)}
+          </span>
+        </div>
+
+        {/* Title */}
+        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 leading-tight">
+          {service.name}
+        </h3>
+
+        {/* Description */}
+        <p className="text-gray-600 text-sm line-clamp-2 mb-4 flex-1">
+          {service.description || 'Dịch vụ chuyên nghiệp với đội ngũ bác sĩ giàu kinh nghiệm.'}
+        </p>
+
+        {/* Price */}
+        <div className="pt-3 border-t border-gray-100">
+          <div className="flex items-baseline justify-between">
+            <span className="text-xs text-gray-500">Giá khám</span>
+            <span className="text-xl font-bold text-cyan-600">
+              {formatPrice(service.price)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom accent line */}
+      <div className="h-1 bg-gradient-to-r from-cyan-400 to-emerald-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
     </div>
   );
 }
