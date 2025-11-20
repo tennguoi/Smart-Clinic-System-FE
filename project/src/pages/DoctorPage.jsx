@@ -1,12 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import DoctorSidebar from '../components/doctor/DoctorSidebar';
 import DoctorHeader from '../components/doctor/Header';
 import MedicalRecordsSection from '../components/doctor/MedicalRecordsSection';
 import MedicalRecordHistory from '../components/doctor/MedicalRecordHistory';
 import DoctorProfileSection from '../components/doctor/DoctorProfileSection';
 import DoctorSecuritySection from '../components/doctor/DoctorSecuritySection';
-import DoctorScheduleSection from '../components/doctor/DoctorScheduleSection';
-import PlaceholderSection from '../components/common/PlaceholderSection';
+import DoctorStatsDashboard from '../components/doctor/DoctorStatsDashboard';
 import axiosInstance from '../utils/axiosConfig';
 import { authService } from '../services/authService';
 import CurrentPatientExamination from '../components/doctor/CurrentPatientExamination';
@@ -14,13 +13,7 @@ import { Toaster } from 'react-hot-toast';
 
 export default function DoctorPage() {
   const storedInfo = authService.getUserInfo();
-  const [activeMenu, setActiveMenu] = useState(() => {
-    try {
-      return localStorage.getItem('doctor_active_menu') || 'schedule';
-    } catch {
-      return 'schedule';
-    }
-  });
+  const [activeMenu, setActiveMenu] = useState('stats');
   
   const [userData, setUserData] = useState(() => ({
     fullName: storedInfo?.fullName || '',
@@ -50,13 +43,7 @@ export default function DoctorPage() {
 
   const doctorName = useMemo(() => userData.fullName, [userData.fullName]);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('doctor_active_menu', activeMenu);
-    } catch {}
-  }, [activeMenu]);
-
- return (
+  return (
     <div className="min-h-screen bg-gray-50 flex">
       <DoctorSidebar activeMenu={activeMenu} onMenuChange={setActiveMenu} />
 
@@ -64,8 +51,6 @@ export default function DoctorPage() {
         <DoctorHeader onLogout={handleLogout} fullName={doctorName} />
 
         <main className="flex-1 p-8 space-y-8 overflow-y-auto">
-          {activeMenu === 'schedule' && <DoctorScheduleSection />}
-          
           {activeMenu === 'current-patient' && (
             <CurrentPatientExamination 
               onNavigateToRecords={() => setActiveMenu('records')}
@@ -74,8 +59,8 @@ export default function DoctorPage() {
           
           {activeMenu === 'records' && <MedicalRecordsSection />}
           {activeMenu === 'history' && <MedicalRecordHistory />}
+          {activeMenu === 'stats' && <DoctorStatsDashboard />}
           
-          {activeMenu === 'invoices' && <PlaceholderSection title="Quản lý hóa đơn" />}
           {activeMenu === 'profile' && <DoctorProfileSection storedInfo={storedInfo} />}
           {activeMenu === 'security' && (
             <DoctorSecuritySection 
