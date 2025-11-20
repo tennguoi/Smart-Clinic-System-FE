@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Send, Calendar, Clock } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Send, Calendar, Clock, ChevronDown, Search } from 'lucide-react';
 import axios from 'axios';
 
 export default function AppointmentForm() {
@@ -9,22 +9,39 @@ export default function AppointmentForm() {
     email: '',
     date: '',
     time: '',
-    symptoms: ''
+    symptoms: '',
+    serviceIds: []
   });
 
+  const [services, setServices] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [timeError, setTimeError] = useState('');
 
+  const [isServicesOpen, setIsServicesOpen] = useState(false);
+  const [serviceSearch, setServiceSearch] = useState('');
+  const { minDate, maxDate } = useMemo(() => {
+    const today = new Date();
+    const min = new Date(today);
+    min.setDate(today.getDate() + 1); 
+    
+    const max = new Date(today);
+    max.setDate(today.getDate() + 4);
+    
+    return {
+      minDate: min.toISOString().split('T')[0],
+      maxDate: max.toISOString().split('T')[0]
+    };
+  }, []);
+
   // Hàm kiểm tra thời gian hợp lệ
   const isValidTime = (time) => {
-    if (!time) return true; // Cho phép trống khi chưa chọn
+    if (!time) return true;
     
     const [hours, minutes] = time.split(':').map(Number);
     const totalMinutes = hours * 60 + minutes;
     
-    // Kiểm tra khoảng thời gian: 8:00-12:00 và 14:00-17:00
     const isMorning = totalMinutes >= 8 * 60 && totalMinutes <= 12 * 60;
     const isAfternoon = totalMinutes >= 14 * 60 && totalMinutes <= 17 * 60;
     
@@ -35,6 +52,27 @@ export default function AppointmentForm() {
     return 'Vui lòng chọn thời gian trong khung giờ: 8:00-12:00 hoặc 14:00-17:00';
   };
 
+  // Lọc dịch vụ theo từ khóa tìm kiếm
+  const filteredServices = useMemo(() => {
+    if (!serviceSearch) return services;
+    return services.filter(service => 
+      service.name.toLowerCase().includes(serviceSearch.toLowerCase())
+    );
+  }, [services, serviceSearch]);
+
+  // Load services list
+  useEffect(() => {
+    (async () => {
+      try {
+        const { serviceApi } = await import('../api/serviceApi');
+        const data = await serviceApi.getAllServices(0, 50);
+        setServices(data.services || []);
+      } catch (err) {
+        console.error('Failed to load services', err);
+      }
+    })();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -42,7 +80,6 @@ export default function AppointmentForm() {
     setErrorMessage('');
     setTimeError('');
 
-    // Kiểm tra thời gian trước khi gửi
     if (!isValidTime(formData.time)) {
       setTimeError(getTimeErrorMessage());
       setIsSubmitting(false);
@@ -57,7 +94,8 @@ export default function AppointmentForm() {
         phone: formData.phone,
         email: formData.email,
         appointmentTime: appointmentDateTime,
-        notes: formData.symptoms
+        notes: formData.symptoms,
+        serviceIds: formData.serviceIds
       };
 
       console.log('Sending appointment request:', payload);
@@ -83,7 +121,8 @@ export default function AppointmentForm() {
         email: '',
         date: '',
         time: '',
-        symptoms: ''
+        symptoms: '',
+        serviceIds: []
       });
 
       setTimeout(() => {
@@ -109,7 +148,6 @@ export default function AppointmentForm() {
       [name]: value
     });
 
-    // Clear error khi người dùng thay đổi thời gian
     if (name === 'time') {
       setTimeError('');
     }
@@ -123,13 +161,38 @@ export default function AppointmentForm() {
       time: timeValue
     });
 
-    // Validate thời gian ngay khi chọn
     if (timeValue && !isValidTime(timeValue)) {
       setTimeError(getTimeErrorMessage());
     } else {
       setTimeError('');
     }
   };
+
+  // Xử lý chọn/bỏ chọn dịch vụ
+  const toggleService = (serviceId) => {
+    setFormData(prev => {
+      const newServiceIds = prev.serviceIds.includes(serviceId)
+        ? prev.serviceIds.filter(id => id !== serviceId)
+        : [...prev.serviceIds, serviceId];
+      
+      return {
+        ...prev,
+        serviceIds: newServiceIds
+      };
+    });
+  };
+
+  // Đóng dropdown khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.services-dropdown')) {
+        setIsServicesOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 max-w-3xl mx-auto">
@@ -226,10 +289,14 @@ export default function AppointmentForm() {
                 required
                 value={formData.date}
                 onChange={handleChange}
-                min={new Date().toISOString().split('T')[0]}
+                min={minDate}
+                max={maxDate}
                 className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
               />
             </div>
+            <p className="mt-1 text-xs text-gray-500">
+              Chỉ có thể đặt lịch từ {minDate} đến {maxDate}
+            </p>
           </div>
 
           <div>
@@ -273,6 +340,101 @@ export default function AppointmentForm() {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none text-sm"
             placeholder="Mô tả ngắn gọn về tình trạng sức khỏe của bạn..."
           />
+        </div>
+
+        {/* Dropdown chọn dịch vụ với tìm kiếm */}
+        <div className="services-dropdown">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Chọn dịch vụ (tùy chọn)
+          </label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsServicesOpen(!isServicesOpen)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm flex items-center justify-between bg-white"
+            >
+              <span>
+                {formData.serviceIds.length === 0
+                  ? 'Chọn dịch vụ...'
+                  : `Đã chọn ${formData.serviceIds.length} dịch vụ`}
+              </span>
+              <ChevronDown className="w-4 h-4 text-gray-400" />
+            </button>
+
+            {isServicesOpen && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                {/* Thanh tìm kiếm */}
+                <div className="p-2 border-b border-gray-200">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Tìm kiếm dịch vụ..."
+                      value={serviceSearch}
+                      onChange={(e) => setServiceSearch(e.target.value)}
+                      className="w-full pl-8 pr-3 py-1 border border-gray-300 rounded-md focus:ring-1 focus:ring-teal-500 focus:border-transparent text-sm"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                </div>
+
+                {/* Danh sách dịch vụ */}
+                <div className="max-h-48 overflow-y-auto">
+                  {filteredServices.length === 0 ? (
+                    <div className="px-3 py-2 text-sm text-gray-500 text-center">
+                      {serviceSearch ? 'Không tìm thấy dịch vụ phù hợp' : 'Không có dịch vụ'}
+                    </div>
+                  ) : (
+                    filteredServices.map(svc => (
+                      <label
+                        key={svc.serviceId}
+                        className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.serviceIds.includes(svc.serviceId)}
+                          onChange={() => toggleService(svc.serviceId)}
+                          className="rounded border-gray-300 text-teal-500 focus:ring-teal-500"
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium">{svc.name}</div>
+                          <div className="text-xs text-gray-500">
+                            {svc.category} • {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(svc.price)}
+                          </div>
+                        </div>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Hiển thị các dịch vụ đã chọn */}
+          {formData.serviceIds.length > 0 && (
+            <div className="mt-2">
+              <p className="text-xs text-gray-600 mb-1">Dịch vụ đã chọn:</p>
+              <div className="flex flex-wrap gap-1">
+                {services
+                  .filter(svc => formData.serviceIds.includes(svc.serviceId))
+                  .map(svc => (
+                    <span
+                      key={svc.serviceId}
+                      className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-teal-100 text-teal-800"
+                    >
+                      {svc.name}
+                      <button
+                        type="button"
+                        onClick={() => toggleService(svc.serviceId)}
+                        className="ml-1 hover:text-teal-900"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <button

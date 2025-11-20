@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 export default function Hero() {
   return (
-    <section id="home" className="relative bg-gradient-to-br from-cyan-50 via-blue-50 to-emerald-50 pt-16 pb-12 md:pt-20 md:pb-16 overflow-hidden">
+    <section id="home" className="relative bg-gradient-to-br from-cyan-50 via-blue-50 to-white pt-16 pb-12 md:pt-20 md:pb-16 overflow-hidden">
       {/* Decorative elements */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-cyan-200/30 to-transparent rounded-full blur-3xl"></div>
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-emerald-200/30 to-transparent rounded-full blur-3xl"></div>
@@ -17,17 +17,17 @@ export default function Hero() {
               </span>
             </div>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-gray-900 leading-snug">
               Chăm Sóc
               <br />
-              <span className="bg-gradient-to-r from-cyan-600 to-emerald-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-cyan-700 to-emerald-600 bg-clip-text text-transparent tracking-wide">
                 Tai-Mũi-Họng
               </span>
               <br />
               Toàn Diện
             </h1>
 
-            <p className="text-lg md:text-xl text-gray-700 leading-relaxed">
+            <p className="text-lg md:text-xl text-gray-700 leading-relaxed mt-3">
               Đội ngũ bác sĩ chuyên môn cao, thiết bị hiện đại,
               mang đến dịch vụ chăm sóc sức khỏe ENT tốt nhất cho bạn và gia đình
             </p>
@@ -35,7 +35,7 @@ export default function Hero() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
                 to="/appointment"
-                className="group bg-gradient-to-r from-cyan-500 to-emerald-500 text-white px-8 py-4 rounded-xl hover:from-cyan-600 hover:to-emerald-600 transition-all font-semibold text-lg flex items-center justify-center space-x-2 shadow-xl shadow-cyan-500/30 hover:shadow-2xl hover:shadow-cyan-500/40 hover:scale-105 transform duration-300"
+                className="group bg-gradient-to-r from-cyan-600 to-emerald-500 text-white px-7 py-3.5 rounded-2xl hover:from-cyan-700 hover:to-emerald-600 transition-all font-semibold text-lg flex items-center justify-center space-x-2 shadow-xl shadow-cyan-500/40 hover:shadow-2xl hover:shadow-cyan-500/50 hover:scale-105 transform duration-300"
               >
                 <span>Đặt Lịch Khám Ngay</span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -43,7 +43,7 @@ export default function Hero() {
 
               <Link
                 to="/services"
-                className="bg-white text-cyan-600 px-8 py-4 rounded-xl hover:bg-cyan-50 transition-all font-semibold text-lg border-2 border-cyan-500 hover:border-cyan-600 shadow-md hover:shadow-lg"
+                className="bg-white/90 text-cyan-700 px-7 py-3.5 rounded-2xl hover:bg-white transition-all font-semibold text-lg border-2 border-cyan-200 hover:border-cyan-400 shadow-md hover:shadow-lg"
               >
                 Xem Dịch Vụ
               </Link>
