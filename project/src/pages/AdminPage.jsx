@@ -1,7 +1,7 @@
 // src/components/AdminPage.jsx
 import { useState } from 'react';
 import Header from '../components/admin/Header';
-import Sidebar from '../components/admin/Sidebar';
+import Sidebar from '../components/admin/AdminSidebar';
 import AccountManagement from '../components/admin/AccountManagement';
 import ServiceManagement from '../components/admin/ServiceManagement';
 import ArticleManagement from '../components/admin/ArticleManagement';

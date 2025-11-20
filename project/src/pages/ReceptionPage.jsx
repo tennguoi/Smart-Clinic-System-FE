@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ReceptionHeader from '../components/receptionist/Header';
-import ReceptionSidebar from '../components/receptionist/Sidebar';
+import ReceptionSidebar from '../components/receptionist/ReceptionSidebar';
 import SearchFilter from '../components/receptionist/SearchFilter';
 import PatientForm from '../components/receptionist/PatientForm';
 import QueueTable from '../components/receptionist/QueueTable';

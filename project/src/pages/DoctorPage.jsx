@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import DoctorSidebar from '../components/doctor/Sidebar';
+import DoctorSidebar from '../components/doctor/DoctorSidebar';
 import DoctorHeader from '../components/doctor/Header';
 import MedicalRecordsSection from '../components/doctor/MedicalRecordsSection';
 import MedicalRecordHistory from '../components/doctor/MedicalRecordHistory';
