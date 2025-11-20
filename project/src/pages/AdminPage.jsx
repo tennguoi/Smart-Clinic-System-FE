@@ -1,53 +1,35 @@
-// src/components/AdminPage.jsx
-import { useState } from 'react';
-import Header from '../components/admin/Header';
-import Sidebar from '../components/admin/AdminSidebar';
-import AccountManagement from '../components/admin/AccountManagement';
-import ServiceManagement from '../components/admin/ServiceManagement';
-import ArticleManagement from '../components/admin/ArticleManagement';
-import DoctorManagement from '../components/admin/DoctorManagement';
+// src/pages/AdminPage.jsx
+import { Outlet, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import Header from '../components/common/Header';
+import AdminSidebar from '../components/admin/AdminSidebar';
 
 export default function AdminPage() {
-  const [activeMenu, setActiveMenu] = useState('accounts');
+  const location = useLocation();
+  const [activeMenu, setActiveMenu] = useState('revenue');
 
-  const renderContent = () => {
-    switch (activeMenu) {
-      case 'accounts':
-        return <AccountManagement />;
-      case 'services':
-        return <ServiceManagement />;
-      case 'articles':
-        return <ArticleManagement />;
-      case 'doctors':
-        return <DoctorManagement />;
-      case 'revenue':
-        return <div className="p-8"><h2 className="text-2xl font-bold">Doanh Thu</h2></div>;
-      case 'staff':
-        return <div className="p-8"><h2 className="text-2xl font-bold">Nhân Viên</h2></div>;
-      case 'patients':
-        return <div className="p-8"><h2 className="text-2xl font-bold">Bệnh Nhân</h2></div>;
-      case 'invoices':
-        return <div className="p-8"><h2 className="text-2xl font-bold">Hóa Đơn</h2></div>;
-      case 'medicine':
-        return <div className="p-8"><h2 className="text-2xl font-bold">Thuốc</h2></div>;
-      default:
-        return <AccountManagement />;
-    }
-  };
+  useEffect(() => {
+    const path = location.pathname;
+
+    if (path === '/admin' || path.includes('/revenue')) setActiveMenu('revenue');
+    else if (path.includes('/doctors')) setActiveMenu('doctors');
+    else if (path.includes('/services')) setActiveMenu('services');
+    else if (path.includes('/articles')) setActiveMenu('articles');
+    else if (path.includes('/accounts')) setActiveMenu('accounts');
+    else if (path.includes('/staff')) setActiveMenu('staff');
+    else if (path.includes('/patients')) setActiveMenu('patients');
+    else if (path.includes('/invoices')) setActiveMenu('invoices');
+    else if (path.includes('/medicine')) setActiveMenu('medicine');
+  }, [location]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <Sidebar activeMenu={activeMenu} onMenuChange={setActiveMenu} />
+      <AdminSidebar activeMenu={activeMenu} onMenuChange={setActiveMenu} />
 
-      {/* Main area */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <Header />
-
-        {/* Page content */}
-        <main className="flex-1">
-          {renderContent()}
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-8">
+          <Outlet />  {/* ← Ở ĐÂY SẼ HIỆN ĐÚNG COMPONENT THEO ROUTE */}
         </main>
       </div>
     </div>

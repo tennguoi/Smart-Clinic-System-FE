@@ -1,16 +1,45 @@
-// src/components/sidebar/ReceptionSidebar.jsx
+// src/components/receptionist/ReceptionSidebar.jsx
 import Sidebar from '../common/Sidebar';
-import { CalendarDays, Users, Building2, FileText, UserCircle, Shield, Cloud } from 'lucide-react';
+import { 
+  CalendarCheck, 
+  Users, 
+  BedDouble, 
+  FileText,
+} from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const receptionMenuItems = [
-  { id: 'appointments', label: 'Quản lý lịch hẹn', icon: CalendarDays },
-  { id: 'records', label: 'Danh sách bệnh nhân', icon: Users },
-  { id: 'rooms', label: 'Quản lý phòng khám', icon: Building2 },
-  { id: 'invoices', label: 'Hóa đơn', icon: FileText },
-  { id: 'profile', label: 'Hồ sơ cá nhân', icon: UserCircle },
-  { id: 'security', label: 'Bảo mật', icon: Shield },
+  { id: 'appointments', label: 'Lịch Hẹn',        icon: CalendarCheck },
+  { id: 'records',      label: 'Hồ Sơ Bệnh Án',  icon: Users },
+  { id: 'rooms',        label: 'Quản Lý Phòng',  icon: BedDouble },
+  { id: 'invoices',     label: 'Hóa Đơn',         icon: FileText },
 ];
 
-export default function ReceptionSidebar({ activeMenu, onMenuChange }) {
-  return <Sidebar title="Reception Panel" menuItems={receptionMenuItems} activeMenu={activeMenu} onMenuChange={onMenuChange} />;
+export default function ReceptionSidebar({ activeMenu: propActiveMenu }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Xác định menu đang active theo URL
+  const currentPath = location.pathname;
+
+  const activeMenu =
+    propActiveMenu ||
+    (currentPath.includes('/reception/records')   ? 'records' :
+     currentPath.includes('/reception/rooms')     ? 'rooms' :
+     currentPath.includes('/reception/invoices')  ? 'invoices' :
+     'appointments');
+
+  // Xử lý khi bấm menu
+  const handleMenuChange = (id) => {
+    navigate(`/reception/${id}`);
+  };
+
+  return (
+    <Sidebar
+      title="HealthCare Reception"
+      menuItems={receptionMenuItems}
+      activeMenu={activeMenu}
+      onMenuChange={handleMenuChange}
+    />
+  );
 }
