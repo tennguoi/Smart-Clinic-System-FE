@@ -12,6 +12,7 @@ import ProfileSection from '../components/admin/ProfileSection';
 import SecuritySection from '../components/admin/SecuritySection';
 import ClinicRoomManagement from '../components/receptionist/ClinicRoomManagement';
 import { queueApi, userApi } from '../api/receptionApi';
+import { serviceApi } from '../api/serviceApi';
 import { authService } from '../services/authService';
 import axiosInstance from '../utils/axiosConfig';
 
@@ -130,6 +131,7 @@ export default function ReceptionPage() {
 
   // ========== APPOINTMENTS STATE ==========
   const [appointments, setAppointments] = useState([]);
+  const [serviceLookup, setServiceLookup] = useState({});
   const [selectedStatus, setSelectedStatus] = useState('Pending');
   const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [appointmentsError, setAppointmentsError] = useState('');
@@ -232,6 +234,26 @@ const [filterStatus, setFilterStatus] = useState(''); // ← ĐỂ RỖNG = XEM 
     fetchAppointments();
     return () => { ignore = true; };
   }, [activeMenu, selectedStatus]);
+
+  // Load services once so we can map serviceIds -> service name for display
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      try {
+        const data = await serviceApi.getAllServices(0, 200);
+        if (ignore) return;
+        const map = {};
+        (data.services || []).forEach((s) => {
+          if (s?.serviceId) map[s.serviceId] = s.name || s.serviceId;
+        });
+        setServiceLookup(map);
+      } catch (err) {
+        // ignore service load errors; we'll show ids instead
+        console.error('Failed to load services lookup', err);
+      }
+    })();
+    return () => { ignore = true; };
+  }, []);
 
   const handleConfirmAppointment = async (appointmentId) => {
     setConfirmingId(appointmentId);
@@ -667,6 +689,9 @@ if (filterStatus && filterStatus !== '' && filterStatus !== 'All') {
                 Mã lịch
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Dịch vụ
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Ghi chú
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -680,13 +705,13 @@ if (filterStatus && filterStatus !== '' && filterStatus !== 'All') {
           <tbody className="bg-white divide-y divide-gray-200">
             {loadingAppointments ? (
               <tr>
-                <td colSpan="7" className="px-4 py-10 text-center text-gray-500">
+                <td colSpan="8" className="px-4 py-10 text-center text-gray-500">
                   Đang tải dữ liệu lịch hẹn...
                 </td>
               </tr>
             ) : appointments.length === 0 ? (
               <tr>
-                <td colSpan="7" className="px-4 py-10 text-center text-gray-500">
+                <td colSpan="8" className="px-4 py-10 text-center text-gray-500">
                   Không có lịch hẹn nào cho trạng thái hiện tại.
                 </td>
               </tr>
@@ -702,7 +727,25 @@ if (filterStatus && filterStatus !== '' && filterStatus !== 'All') {
                     <div className="text-xs text-blue-600">{appointment.email || '—'}</div>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-700">{formatDateTime(appointment.appointmentTime)}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{appointment.appointmentCode}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700">
+                    <div className="text-sm text-gray-800">{appointment.appointmentCode || '—'}</div>
+                    <div className="text-xs text-gray-400">ID: {appointment.appointmentId ? String(appointment.appointmentId).slice(0, 8) : '—'}</div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-700">
+                    {(() => {
+                      const raw = appointment.serviceIds;
+                      const ids = Array.isArray(raw)
+                        ? raw
+                        : raw
+                        ? String(raw).split(',').map((s) => s.trim()).filter(Boolean)
+                        : [];
+                      return ids.length > 0 ? (
+                        <div className="text-sm text-gray-700">{ids.map((id) => serviceLookup[id] || id).join(', ')}</div>
+                      ) : (
+                        <div className="text-gray-400">Không có</div>
+                      );
+                    })()}
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-700 max-w-xs">
                     {appointment.notes || <span className="text-gray-400">Không có</span>}
                   </td>
