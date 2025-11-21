@@ -1,4 +1,4 @@
-// src/App.jsx – HOÀN HẢO 100%, ĐÃ FIX TẤT CẢ, CHẠY MƯỢT NHƯ SENIOR DEV
+// src/App.jsx
 import { Routes, Route } from "react-router-dom";
 import StickyNavbar from "./components/StickyNavbar";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -18,8 +18,6 @@ import ChatbotAvatar from "./components/chatbot/ChatbotAvatar";
 // Auth
 import Login from "./components/Login";
 import ForgotPassword from "./components/ForgotPassword";
-import VerifyOtp from "./components/VerifyOtp";
-import ResetPassword from "./components/ResetPassword";
 import Verify2FA from "./components/Verify2FA";
 import ProfilePage from "./pages/ProfilePage";
 import SecurityPage from "./pages/SecurityPage";
@@ -44,22 +42,21 @@ import CurrentPatientExamination from "./components/doctor/CurrentPatientExamina
 import AppointmentsSection from "./components/receptionist/AppointmentsSection";
 import PatientRecordsSection from "./components/receptionist/PatientRecordsSection";
 import ClinicRoomManagement from "./components/receptionist/ClinicRoomManagement";
+import InvoicesSection from "./components/receptionist/InvoicesSection";
 
 function App() {
   return (
     <div className="min-h-screen bg-white">
       <Routes>
 
-        {/* ====================== AUTH & PROFILE ====================== */}
+        {/* AUTH & PROFILE */}
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/verify-otp" element={<VerifyOtp />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-2fa" element={<Verify2FA />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/security" element={<SecurityPage />} />
 
-        {/* ====================== PUBLIC ROUTES ====================== */}
+        {/* PUBLIC ROUTES */}
         <Route
           path="/*"
           element={
@@ -82,7 +79,7 @@ function App() {
           }
         />
 
-        {/* ====================== ADMIN – ĐẸP NHẤT, HOÀN CHỈNH NHẤT ====================== */}
+        {/* ADMIN */}
         <Route
           path="/admin"
           element={
@@ -97,13 +94,10 @@ function App() {
           <Route path="services" element={<ServiceManagement />} />
           <Route path="articles" element={<ArticleManagement />} />
           <Route path="accounts" element={<AccountManagement />} />
-          <Route path="staff" element={<PlaceholderSection title="Quản lý nhân viên" message="Sắp ra mắt..." />} />
-          <Route path="patients" element={<PlaceholderSection title="Quản lý bệnh nhân" message="Sắp ra mắt..." />} />
-          <Route path="invoices" element={<PlaceholderSection title="Quản lý hóa đơn" message="Sắp ra mắt..." />} />
-          <Route path="medicine" element={<PlaceholderSection title="Quản lý thuốc" message="Sắp ra mắt..." />} />
+          <Route path="*" element={<PlaceholderSection title="Chức năng" message="Sắp ra mắt..." />} />
         </Route>
 
-        {/* ====================== DOCTOR – HOÀN HẢO ====================== */}
+        {/* DOCTOR */}
         <Route
           path="/doctor"
           element={
@@ -112,14 +106,12 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<DoctorPage />} />
+          <Route index element={<CurrentPatientExamination />} />
           <Route path="current-patient" element={<CurrentPatientExamination />} />
-          <Route path="records" element={<DoctorPage />} />
-          <Route path="history" element={<DoctorPage />} />
-          <Route path="invoices" element={<DoctorPage />} />
+          <Route path="*" element={<div className="p-10 text-center text-2xl text-gray-500">Chức năng đang phát triển</div>} />
         </Route>
 
-        {/* ====================== RECEPTION (LỄ TÂN) ====================== */}
+        {/* RECEPTION (LỄ TÂN) – ĐÃ SỬA HOÀN CHỈNH */}
         <Route
           path="/reception"
           element={
@@ -132,7 +124,7 @@ function App() {
           <Route path="appointments" element={<AppointmentsSection />} />
           <Route path="records" element={<PatientRecordsSection />} />
           <Route path="rooms" element={<ClinicRoomManagement />} />
-          <Route path="invoices" element={<div className="p-10 text-center text-gray-500 text-xl">Đang phát triển...</div>} />
+          <Route path="invoices" element={<InvoicesSection />} />
         </Route>
 
       </Routes>

@@ -15,21 +15,24 @@ const receptionMenuItems = [
   { id: 'invoices',     label: 'Hóa Đơn',         icon: FileText },
 ];
 
-export default function ReceptionSidebar({ activeMenu: propActiveMenu }) {
+export default function ReceptionSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Xác định menu đang active theo URL
-  const currentPath = location.pathname;
+  // Xác định menu đang active theo URL – CỰC CHUẨN!
+  const getActiveMenu = () => {
+    const path = location.pathname;
 
-  const activeMenu =
-    propActiveMenu ||
-    (currentPath.includes('/reception/records')   ? 'records' :
-     currentPath.includes('/reception/rooms')     ? 'rooms' :
-     currentPath.includes('/reception/invoices')  ? 'invoices' :
-     'appointments');
+    if (path.includes('/reception/invoices')) return 'invoices';
+    if (path.includes('/reception/rooms'))    return 'rooms';
+    if (path.includes('/reception/records'))  return 'records';
+    if (path.includes('/reception/appointments') || path === '/reception') return 'appointments';
+    
+    return 'appointments'; // fallback
+  };
 
-  // Xử lý khi bấm menu
+  const activeMenu = getActiveMenu();
+
   const handleMenuChange = (id) => {
     navigate(`/reception/${id}`);
   };
