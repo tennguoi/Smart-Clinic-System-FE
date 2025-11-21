@@ -1,5 +1,8 @@
 import React from 'react';
+import DatePicker from 'react-datepicker';
+import { vi } from 'date-fns/locale';
 import { X } from 'lucide-react';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const priorityOptions = [
   { value: 'Normal', label: 'Thường' },
@@ -88,12 +91,20 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Ngày sinh <span className="text-red-500">*</span>
               </label>
-              <input
-                type="date"
-                value={patientForm.dob}
-                onChange={(e) => onChange('dob', e.target.value)}
-                required
+              <DatePicker
+                selected={patientForm.dobDate}
+                onChange={(date) => onChange('dob', date)}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="dd/mm/yyyy"
+                locale={vi}
+                showMonthDropdown
+                showYearDropdown
+                dropdownMode="select"
+                maxDate={new Date()}
+                isClearable
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                wrapperClassName="w-full"
+                required
               />
             </div>
 

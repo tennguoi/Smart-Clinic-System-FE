@@ -45,6 +45,12 @@ const formatDateOfBirth = (dateString) => {
   }
 };
 
+const parseIsoToDate = (isoValue) => {
+  if (!isoValue) return null;
+  const date = new Date(isoValue);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
 // ========== EMPTY FORM WITH 3 NEW FIELDS ==========
 const emptyPatientForm = {
   patientName: '',
@@ -58,6 +64,7 @@ const emptyPatientForm = {
   idNumber: '',           // 🆕 Số căn cước
   insuranceNumber: '',    // 🆕 Số thẻ BHYT
   notes: '',              // 🆕 Triệu chứng
+  dobDate: null,
 };
 
 // ========== MAIN COMPONENT ==========
@@ -138,6 +145,13 @@ export default function PatientRecordsSection() {
     if (field === 'phone') {
       const numeric = value.replace(/\D/g, '').slice(0, 10);
       setPatientForm(prev => ({ ...prev, [field]: numeric }));
+    } else if (field === 'dob') {
+      if (value && value instanceof Date && !Number.isNaN(value.getTime())) {
+        const isoValue = value.toISOString().split('T')[0];
+        setPatientForm(prev => ({ ...prev, dobDate: value, dob: isoValue }));
+      } else {
+        setPatientForm(prev => ({ ...prev, dobDate: null, dob: '' }));
+      }
     } else {
       setPatientForm(prev => ({ ...prev, [field]: value }));
     }
@@ -156,20 +170,20 @@ export default function PatientRecordsSection() {
       
       // 🔧 Helper: Chuẩn hóa giới tính từ backend về format của form
       const normalizeGender = (genderValue) => {
-        if (!genderValue) return 'Nam'; // Default
-        const g = String(genderValue).trim();
+        if (!genderValue) return 'male'; // Default
+        const g = String(genderValue).trim().toLowerCase();
         
         // Backend giờ trả về enum name: "male", "female", "other"
-        if (g === 'male') return 'Nam';
-        if (g === 'female') return 'Nữ';
-        if (g === 'other') return 'Khác';
+        if (g === 'male') return 'male';
+        if (g === 'female') return 'female';
+        if (g === 'other') return 'other';
         
-        // Fallback cho trường hợp cũ (nếu có label)
-        if (g === 'Nam') return 'Nam';
-        if (g === 'Nữ') return 'Nữ';
-        if (g === 'Khác') return 'Khác';
+        // Fallback cho trường hợp cũ (nếu có label tiếng Việt)
+        if (g === 'nam') return 'male';
+        if (g === 'nữ') return 'female';
+        if (g === 'khác') return 'other';
         
-        return 'Nam'; // Default fallback
+        return 'male'; // Default fallback
       };
       
       // 🔧 Helper: Chuẩn hóa priority từ backend về format của form
@@ -188,6 +202,7 @@ export default function PatientRecordsSection() {
         phone: full.phone || '',
         email: full.email || '',
         dob: full.dob || '', // GIỮ NGUYÊN yyyy-mm-dd cho DatePicker
+        dobDate: parseIsoToDate(full.dob || ''),
         gender: normalizeGender(full.gender), // ✅ Chuẩn hóa giới tính
         address: full.address || '',
         priority: normalizePriority(full.priority), // ✅ Chuẩn hóa priority
