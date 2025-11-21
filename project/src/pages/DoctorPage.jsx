@@ -40,7 +40,6 @@ export default function DoctorPage() {
           {activeMenu === 'stats' && <DoctorStatsDashboard />}
           {activeMenu === 'records' && <MedicalRecordsSection />}
           {activeMenu === 'history' && <MedicalRecordHistory />}
-          {activeMenu === 'stats' && <DoctorStatsDashboard />}
           {activeMenu === 'invoices' && (
             <PlaceholderSection title="Quản lý hóa đơn" message="Tính năng đang được phát triển..." />
           )}
