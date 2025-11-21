@@ -13,6 +13,24 @@ const formatDateTime = (value) => {
   }
 };
 
+// Helper: format giá tiền
+const formatPrice = (price) => {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+  }).format(price);
+};
+
+// Helper: hiển thị tên danh mục tiếng Việt
+const getCategoryLabel = (category) => {
+  const categories = {
+    Consultation: 'Khám Bệnh',
+    Test: 'Thăm Dò',
+    Procedure: 'Thủ Thuật',
+  };
+  return categories[category] || category;
+};
+
 export default function AppointmentsSection() {
   const [appointments, setAppointments] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState('Pending');
@@ -136,6 +154,7 @@ export default function AppointmentsSection() {
             <tr>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Bệnh nhân</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Liên hệ</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Dịch vụ đăng ký</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Thời gian</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Mã lịch</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Ghi chú</th>
@@ -146,13 +165,13 @@ export default function AppointmentsSection() {
           <tbody className="bg-white divide-y divide-gray-200">
             {loadingAppointments ? (
               <tr>
-                <td colSpan="7" className="px-4 py-10 text-center text-gray-500">
+                <td colSpan="8" className="px-4 py-10 text-center text-gray-500">
                   Đang tải dữ liệu lịch hẹn...
                 </td>
               </tr>
             ) : appointments.length === 0 ? (
               <tr>
-                <td colSpan="7" className="px-4 py-10 text-center text-gray-500">
+                <td colSpan="8" className="px-4 py-10 text-center text-gray-500">
                   Không có lịch hẹn nào cho trạng thái hiện tại.
                 </td>
               </tr>
@@ -166,6 +185,25 @@ export default function AppointmentsSection() {
                   <td className="px-4 py-3 text-sm text-gray-700">
                     <div>{appointment.phone}</div>
                     <div className="text-xs text-blue-600">{appointment.email || '—'}</div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-700">
+                    {appointment.services && appointment.services.length > 0 ? (
+                      <div className="space-y-1">
+                        {appointment.services.map((service, index) => (
+                          <div key={index} className="border-l-2 border-blue-500 pl-2">
+                            <div className="font-medium text-gray-800">{service.name}</div>
+                            <div className="text-xs text-gray-600">
+                              {getCategoryLabel(service.category)} • {formatPrice(service.price)}
+                            </div>
+                            {service.description && (
+                              <div className="text-xs text-gray-500 mt-1">{service.description}</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">Không có dịch vụ</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-700">{formatDateTime(appointment.appointmentTime)}</td>
                   <td className="px-4 py-3 text-sm text-gray-700">{appointment.appointmentCode}</td>
