@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Send, Calendar, Clock, ChevronDown, Search } from 'lucide-react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+
 
 export default function AppointmentForm() {
   const [formData, setFormData] = useState({
@@ -18,6 +20,8 @@ export default function AppointmentForm() {
   const [submitStatus, setSubmitStatus] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [timeError, setTimeError] = useState('');
+  const navigate = useNavigate();
+
 
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [serviceSearch, setServiceSearch] = useState('');
@@ -124,10 +128,12 @@ export default function AppointmentForm() {
         symptoms: '',
         serviceIds: []
       });
+      navigate('/');
 
       setTimeout(() => {
         setSubmitStatus('idle');
       }, 5000);
+      
     } catch (error) {
       console.error('Error creating appointment:', error);
       setErrorMessage(
