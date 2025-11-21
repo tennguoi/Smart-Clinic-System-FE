@@ -39,7 +39,7 @@ import PlaceholderSection from "./components/common/PlaceholderSection";
 
 // Doctor Components
 import CurrentPatientExamination from "./components/doctor/CurrentPatientExamination";
-
+import DoctorStatsDashboard from "./components/doctor/DoctorStatsDashboard";
 // Reception Components
 import AppointmentsSection from "./components/receptionist/AppointmentsSection";
 import PatientRecordsSection from "./components/receptionist/PatientRecordsSection";
@@ -117,6 +117,7 @@ function App() {
           <Route path="records" element={<DoctorPage />} />
           <Route path="history" element={<DoctorPage />} />
           <Route path="invoices" element={<DoctorPage />} />
+          <Route path="stats" element={<DoctorPage />} />
         </Route>
 
         {/* ====================== RECEPTION (LỄ TÂN) ====================== */}

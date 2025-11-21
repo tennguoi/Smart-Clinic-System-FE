@@ -78,6 +78,41 @@ export const getMedicalRecordDetail = async (recordId) => {
   }
 };
 
+export const getDoctorStats = async (doctorId, range = 'day', date = null, forceRefresh = false) => {
+  try {
+    // BE expect lowercase range (day/week/month), parseRange() sẽ convert sang uppercase
+    const params = { range: range.toLowerCase() };
+    if (date) {
+      // BE expect ISO date format (YYYY-MM-DD)
+      const isoDate = date instanceof Date ? date.toISOString().split('T')[0] : date;
+      params.date = isoDate;
+    }
+    // Thêm timestamp để bypass cache nếu cần (BE có thể không dùng, nhưng giúp force request mới)
+    if (forceRefresh) {
+      params._t = Date.now();
+    }
+    const { data } = await axiosInstance.get(`/api/doctors/${doctorId}/stats`, { params });
+    return data;
+  } catch (error) {
+    console.error('Error fetching doctor stats:', error);
+    throw error;
+  }
+};
+
+export const getDoctorStatsDetail = async (doctorId, range = 'month', date = null, page = 1, pageSize = 10) => {
+  try {
+    const params = { range, page, pageSize };
+    if (date) {
+      const isoDate = date instanceof Date ? date.toISOString().split('T')[0] : date;
+      params.date = isoDate;
+    }
+    const { data } = await axiosInstance.get(`/api/doctors/${doctorId}/stats/detail`, { params });
+    return data;
+  } catch (error) {
+    console.error('Error fetching doctor stats detail:', error);
+    throw error;
+  }
+};
 
 export default {
   getDoctors,
@@ -88,4 +123,6 @@ export default {
   getPatientMedicalHistory,
   getMedicalRecordDetail,
   getCompletedQueues,
+  getDoctorStats,
+  getDoctorStatsDetail,
 };

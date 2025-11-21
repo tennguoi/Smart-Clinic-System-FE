@@ -8,6 +8,7 @@ import DoctorScheduleSection from '../components/doctor/DoctorScheduleSection';
 import PlaceholderSection from '../components/common/PlaceholderSection';
 import CurrentPatientExamination from '../components/doctor/CurrentPatientExamination';
 import { Toaster } from 'react-hot-toast';
+import DoctorStatsDashboard from '../components/doctor/DoctorStatsDashboard';
 
 export default function DoctorPage() {
   const [activeMenu, setActiveMenu] = useState(() => {
@@ -32,12 +33,14 @@ export default function DoctorPage() {
         <Header />
 
         <main className="flex-1 p-8 space-y-8 overflow-y-auto">
-          {activeMenu === 'schedule' && <DoctorScheduleSection />}
+          
           {activeMenu === 'current-patient' && (
             <CurrentPatientExamination onNavigateToRecords={() => setActiveMenu('records')} />
           )}
+          {activeMenu === 'stats' && <DoctorStatsDashboard />}
           {activeMenu === 'records' && <MedicalRecordsSection />}
           {activeMenu === 'history' && <MedicalRecordHistory />}
+          {activeMenu === 'stats' && <DoctorStatsDashboard />}
           {activeMenu === 'invoices' && (
             <PlaceholderSection title="Quản lý hóa đơn" message="Tính năng đang được phát triển..." />
           )}
