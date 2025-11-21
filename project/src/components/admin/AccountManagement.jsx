@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { UserPlus, Edit, Trash2, X, Eye, EyeOff, User } from 'lucide-react';
+import { UserPlus, Edit, Trash2, X, Eye, EyeOff, User, Upload } from 'lucide-react';
 import axiosInstance from '../../utils/axiosConfig';
 
 export default function AccountManagement() {
@@ -11,6 +11,8 @@ export default function AccountManagement() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -60,6 +62,8 @@ export default function AccountManagement() {
     setSelectedUser(user);
     setError('');
     setSuccess('');
+    setSelectedFile(null);
+    setPreviewUrl(null);
 
     if (mode === 'create') {
       setFormData({
@@ -89,6 +93,9 @@ export default function AccountManagement() {
         bio: user.bio || '',
         roles: user.roles || ['tiep_tan'],
       });
+      if (user.photoUrl) {
+          setPreviewUrl(getAvatarUrl(user.photoUrl));
+      }
     }
 
     setShowModal(true);
@@ -99,6 +106,8 @@ export default function AccountManagement() {
     setSelectedUser(null);
     setError('');
     setSuccess('');
+    setSelectedFile(null);
+    setPreviewUrl(null);
   };
 
   const handleInputChange = (e) => {
@@ -107,6 +116,14 @@ export default function AccountManagement() {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleFileChange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+          setSelectedFile(file);
+          setPreviewUrl(URL.createObjectURL(file));
+      }
   };
 
   const handleRoleChange = (e) => {
@@ -125,19 +142,41 @@ export default function AccountManagement() {
 
     try {
       let url = '/api/admin/users/create';
-      let body = { ...formData };
+      const data = new FormData();
+      
+      // Prepare JSON data
+      const userJson = { ...formData };
 
       if (modalMode === 'edit' && selectedUser) {
         url = `/api/admin/users/${selectedUser.userId}`;
         // Không gửi password nếu để trống khi edit
         if (!formData.password) {
-          delete body.password;
+          delete userJson.password;
         }
         // Không gửi email khi edit (email không thay đổi)
-        delete body.email;
-        await axiosInstance.put(url, body);
+        delete userJson.email;
+      }
+
+      data.append('data', new Blob([JSON.stringify(userJson)], {
+          type: 'application/json'
+      }));
+
+      if (selectedFile) {
+          data.append('image', selectedFile);
+      }
+
+      if (modalMode === 'edit') {
+          await axiosInstance.put(url, data, {
+              headers: {
+                  'Content-Type': 'multipart/form-data'
+              }
+          });
       } else {
-        await axiosInstance.post(url, body);
+          await axiosInstance.post(url, data, {
+              headers: {
+                  'Content-Type': 'multipart/form-data'
+              }
+          });
       }
 
       setSuccess(modalMode === 'create' ? 'Tạo tài khoản thành công!' : 'Cập nhật thành công!');
@@ -478,18 +517,36 @@ export default function AccountManagement() {
                   />
                 </div>
 
-                {/* Photo URL */}
+                {/* Photo Upload */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    URL ảnh đại diện
+                    Ảnh đại diện
                   </label>
-                  <input
-                    type="url"
-                    name="photoUrl"
-                    value={formData.photoUrl}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <div className="flex items-center gap-4">
+                      <div className="w-20 h-20 rounded-full bg-gray-100 overflow-hidden border border-gray-200 flex items-center justify-center">
+                          {previewUrl ? (
+                              <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                          ) : (
+                              <User className="w-8 h-8 text-gray-400" />
+                          )}
+                      </div>
+                      <div className="flex-1">
+                          <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleFileChange}
+                              className="block w-full text-sm text-gray-500
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-full file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-blue-50 file:text-blue-700
+                                hover:file:bg-blue-100"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                              Chấp nhận ảnh JPG, PNG, GIF. Tối đa 5MB.
+                          </p>
+                      </div>
+                  </div>
                 </div>
 
                 {/* Bio */}
