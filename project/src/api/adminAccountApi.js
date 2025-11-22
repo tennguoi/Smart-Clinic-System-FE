@@ -89,6 +89,18 @@ const adminAccountApi = {
   },
 
   /**
+   * Đổi trạng thái xác thực của user (kích hoạt/vô hiệu hóa tài khoản)
+   * @param {string} userId - UUID của user
+   * @param {boolean} isVerified - Trạng thái xác thực (true = kích hoạt, false = vô hiệu hóa)
+   */
+  toggleVerifyStatus: async (userId, isVerified) => {
+    const response = await axiosInstance.patch(`/api/admin/users/${userId}/verify-status`, {
+      isVerified,
+    });
+    return response.data;
+  },
+
+  /**
    * Xóa user
    * @param {string} userId - UUID của user
    */
