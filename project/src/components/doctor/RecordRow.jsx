@@ -5,7 +5,7 @@ import { medicalRecordApi } from '../../api/medicalRecordApi';
 import toast from 'react-hot-toast';
 import RecordDetailModal from './RecordDetailModal';
 import PrescriptionFormModal from './PrescriptionFormModal';
-import { downloadPdf, getMedicalRecordFilename, getPrescriptionFilename } from '../../utils/pdfDownload';
+import { downloadPdf, getMedicalRecordFilename } from '../../utils/pdfDownload';
 
 const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
   const [editing, setEditing] = useState(false);
@@ -21,7 +21,6 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
   const [localPrescriptionInstructions, setLocalPrescriptionInstructions] = useState('');
   const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [exportingPrescription, setExportingPrescription] = useState(false);
 
   const handleSave = async () => {
     if (!localDiagnosis || !localDiagnosis.trim()) {
@@ -91,27 +90,6 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
     }
   };
 
-  const handleExportPrescriptionPdf = async () => {
-    setExportingPrescription(true);
-    try {
-      const pdfBlob = await medicalRecordApi.exportPrescriptionAsPdf(record.recordId);
-      await downloadPdf(pdfBlob, getPrescriptionFilename(record.recordId));
-      
-      toast.success('Xuất PDF đơn thuốc thành công!', {
-        duration: 3000,
-        position: 'top-right',
-      });
-    } catch (e) {
-      const msg = e.message || 'Xuất đơn thuốc thất bại';
-      toast.error(msg, {
-        duration: 4000,
-        position: 'top-right',
-      });
-      onError && onError(msg);
-    } finally {
-      setExportingPrescription(false);
-    }
-  };
 
   return (
     <>
@@ -185,16 +163,6 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
                 title={exporting ? 'Đang xuất...' : 'Xuất PDF hồ sơ bệnh án'}
               >
                 <FileText className="w-4 h-4" />
-              </button>
-
-              <button
-                onClick={handleExportPrescriptionPdf}
-                disabled={exportingPrescription}
-                className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-60 transition-colors"
-                aria-label="Xuất PDF đơn thuốc"
-                title={exportingPrescription ? 'Đang xuất...' : 'Xuất PDF đơn thuốc'}
-              >
-                <Pill className="w-4 h-4" />
               </button>
 
               <button

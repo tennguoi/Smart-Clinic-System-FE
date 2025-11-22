@@ -34,16 +34,23 @@ export default function ClinicManagement() {
       const data = await clinicApi.getClinicInfo();
       if (data) {
         setClinicInfo(data);
+        
+        // Xử lý logoUrl - nếu là relative path, thêm base URL
+        let logoUrl = data.logoUrl || '';
+        if (logoUrl && logoUrl.startsWith('/') && !logoUrl.startsWith('http')) {
+          logoUrl = `http://localhost:8082${logoUrl}`;
+        }
+        
         setFormData({
           name: data.name || '',
           address: data.address || '',
           phone: data.phone || '',
           email: data.email || '',
           website: data.website || '',
-          logoUrl: data.logoUrl || '',
+          logoUrl: logoUrl,
         });
-        if (data.logoUrl) {
-          setLogoPreview(data.logoUrl);
+        if (logoUrl) {
+          setLogoPreview(logoUrl);
         }
         setIsEditing(false); // Reset to view mode when loading data
       } else {
@@ -72,7 +79,75 @@ export default function ClinicManagement() {
     }));
   };
 
-  const handleLogoFileChange = (e) => {
+  // Helper function to resize image - đảm bảo file < 2MB
+  const resizeImage = (file, targetSizeMB = 1.8) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Bắt đầu với kích thước hợp lý cho logo (tối đa 500x500)
+          const maxDimension = 500;
+          let quality = 0.9;
+          
+          // Tính toán kích thước mới
+          if (width > height) {
+            if (width > maxDimension) {
+              height = (height * maxDimension) / width;
+              width = maxDimension;
+            }
+          } else {
+            if (height > maxDimension) {
+              width = (width * maxDimension) / height;
+              height = maxDimension;
+            }
+          }
+
+          const tryResize = (q) => {
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            canvas.toBlob(
+              (blob) => {
+                const sizeMB = blob.size / (1024 * 1024);
+                // Nếu vẫn lớn hơn target, giảm quality và thử lại
+                if (sizeMB > targetSizeMB && q > 0.3) {
+                  tryResize(q - 0.1);
+                } else {
+                  const resizedFile = new File([blob], file.name, {
+                    type: 'image/jpeg', // Chuyển sang JPEG để giảm kích thước
+                    lastModified: Date.now(),
+                  });
+                  resolve(resizedFile);
+                }
+              },
+              'image/jpeg', // Luôn dùng JPEG để giảm kích thước
+              q
+            );
+          };
+
+          tryResize(quality);
+        };
+        img.onerror = () => {
+          // Nếu resize thất bại, trả về file gốc
+          resolve(file);
+        };
+        img.src = e.target.result;
+      };
+      reader.onerror = () => {
+        resolve(file);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleLogoFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -82,23 +157,47 @@ export default function ClinicManagement() {
       return;
     }
 
-    // Validate file size (max 2MB - giảm để tránh lỗi 413)
-    const maxSize = 2 * 1024 * 1024; // 2MB
+    // Validate file size (max 10MB - cho phép file lớn, sẽ tự động resize)
+    const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-      setError(`Kích thước file quá lớn (${fileSizeMB} MB). Vui lòng chọn file nhỏ hơn 2MB.`);
+      setError(`Kích thước file quá lớn (${fileSizeMB} MB). Vui lòng chọn file nhỏ hơn 10MB.`);
       return;
     }
 
-    setLogoFile(file);
     setError('');
+    
+    // Chỉ resize nếu file thực sự lớn hơn 1.8MB
+    // File nhỏ hơn 1.8MB (như 100KB) sẽ được upload trực tiếp
+    let processedFile = file;
+    if (file.size > 1.8 * 1024 * 1024) {
+      try {
+        processedFile = await resizeImage(file, 1.8); // Resize xuống < 1.8MB
+        const originalSize = (file.size / (1024 * 1024)).toFixed(2);
+        const newSize = (processedFile.size / (1024 * 1024)).toFixed(2);
+        console.log(`Đã tự động resize logo từ ${originalSize}MB xuống ${newSize}MB`);
+      } catch (err) {
+        console.error('Lỗi khi resize ảnh:', err);
+        // Nếu resize thất bại, vẫn dùng file gốc
+        processedFile = file;
+      }
+    } else {
+      // File nhỏ hơn 1.8MB, không cần resize
+      console.log(`File logo ${(file.size / 1024).toFixed(2)}KB - không cần resize`);
+    }
+
+    setLogoFile(processedFile);
+    
+    // Log file info để debug
+    const fileSizeKB = (processedFile.size / 1024).toFixed(2);
+    console.log(`File logo đã chọn: ${file.name}, kích thước: ${fileSizeKB}KB`);
 
     // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setLogoPreview(reader.result);
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(processedFile);
   };
 
   const handleRemoveLogo = () => {
@@ -115,6 +214,10 @@ export default function ClinicManagement() {
   const uploadLogo = async (file) => {
     const formData = new FormData();
     formData.append('logo', file); // Backend expects parameter name "logo"
+    
+    // Log file size trước khi upload để debug
+    const fileSizeKB = (file.size / 1024).toFixed(2);
+    console.log(`Đang upload logo: ${file.name}, kích thước: ${fileSizeKB}KB`);
 
     try {
       const response = await axiosInstance.post('/api/admin/clinic/upload-logo', formData, {
@@ -130,10 +233,12 @@ export default function ClinicManagement() {
       };
     } catch (error) {
       console.error('Upload error:', error);
+      console.error('File size:', (file.size / 1024).toFixed(2), 'KB');
       
       // Handle specific error codes
       if (error.response?.status === 413) {
-        throw new Error('File quá lớn. Vui lòng chọn file nhỏ hơn 2MB hoặc nén ảnh trước khi upload.');
+        const fileSizeKB = (file.size / 1024).toFixed(2);
+        throw new Error(`File quá lớn (${fileSizeKB}KB). Backend không chấp nhận file này. Vui lòng thử file nhỏ hơn hoặc liên hệ admin để tăng giới hạn.`);
       }
       
       if (error.response?.status === 400) {
@@ -212,12 +317,22 @@ export default function ClinicManagement() {
       }
       
       setClinicInfo(updatedClinicData);
+      
+      // Ưu tiên dùng logoUrl từ updatedClinicData (backend trả về)
+      // Nếu URL là relative path, cần thêm base URL
+      let newLogoUrl = updatedClinicData?.logoUrl || finalLogoUrl;
+      
+      // Nếu URL là relative path (bắt đầu bằng /), thêm base URL
+      if (newLogoUrl && newLogoUrl.startsWith('/') && !newLogoUrl.startsWith('http')) {
+        newLogoUrl = `http://localhost:8082${newLogoUrl}`;
+      }
+      
       setFormData((prev) => ({
         ...prev,
-        logoUrl: finalLogoUrl,
+        logoUrl: newLogoUrl,
       }));
       setLogoFile(null); // Clear file after successful upload
-      setLogoPreview(finalLogoUrl); // Update preview with new URL
+      setLogoPreview(newLogoUrl || null); // Update preview with new URL from backend
       setIsEditing(false); // Exit edit mode after successful save
       setSuccess('Cập nhật thông tin phòng khám thành công!');
       
