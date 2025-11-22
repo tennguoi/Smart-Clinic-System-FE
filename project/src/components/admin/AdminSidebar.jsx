@@ -6,6 +6,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const adminMenuItems = [
+  { id: 'statistics',    label: 'Thống kê',          icon: TrendingUp },
   { id: 'revenue',       label: 'Doanh Thu',         icon: TrendingUp },
   { id: 'doctors',       label: 'Đội Ngũ Bác Sĩ',    icon: Stethoscope },
   { id: 'services',      label: 'Quản Lý Dịch Vụ',   icon: Briefcase },
@@ -25,7 +26,8 @@ export default function AdminSidebar({ activeMenu: propActiveMenu, onMenuChange 
 
   // GIỐNG HỆT DOCTOR – CHỈ ĐỔI TÊN ĐƯỜNG DẪN
   const activeMenu = propActiveMenu || 
-    (currentPath.includes('/admin/doctors')       ? 'doctors' :
+    (currentPath.includes('/admin/statistics')    ? 'statistics' :
+     currentPath.includes('/admin/doctors')       ? 'doctors' :
      currentPath.includes('/admin/services')      ? 'services' :
      currentPath.includes('/admin/articles')      ? 'articles' :
      currentPath.includes('/admin/staff')         ? 'staff' :
@@ -41,6 +43,8 @@ export default function AdminSidebar({ activeMenu: propActiveMenu, onMenuChange 
     // GIỐNG HỆT DOCTOR – CHỈ ĐỔI ĐƯỜNG DẪN
     if (id === 'revenue') {
       navigate('/admin');
+    } else if (id === 'statistics') {
+      navigate('/admin/statistics');
     } else if (id === 'doctors') {
       navigate('/admin/doctors');
     } else if (id === 'services') {
