@@ -1,6 +1,14 @@
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
+import { useClinic } from '../contexts/ClinicContext';
 
 export default function Contact() {
+  const { clinicInfo } = useClinic();
+
+  // Fallback values nếu chưa có dữ liệu
+  const clinicAddress = clinicInfo?.address || '123 Đường Nguyễn Văn Linh, Quận 7, Thành phố Hồ Chí Minh';
+  const clinicPhone = clinicInfo?.phone || '0123 456 789';
+  const clinicEmail = clinicInfo?.email || 'contact@entclinic.vn';
+
   return (
     <section id="contact" className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,45 +23,49 @@ export default function Contact() {
 
         <div className="grid lg:grid-cols-2 gap-12">
           <div className="space-y-8">
-            <div className="flex items-start space-x-4 p-4 rounded-xl hover:bg-cyan-50/50 transition-all group">
-              <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                <MapPin className="w-7 h-7 text-white" />
+            {clinicAddress && (
+              <div className="flex items-start space-x-4 p-4 rounded-xl hover:bg-cyan-50/50 transition-all group">
+                <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                  <MapPin className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-1">Địa Chỉ</h3>
+                  <p className="text-gray-600 whitespace-pre-line">
+                    {clinicAddress}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-gray-900 mb-1">Địa Chỉ</h3>
-                <p className="text-gray-600">
-                  123 Đường Nguyễn Văn Linh, Quận 7<br />
-                  Thành phố Hồ Chí Minh
-                </p>
-              </div>
-            </div>
+            )}
 
-            <div className="flex items-start space-x-4 p-4 rounded-xl hover:bg-cyan-50/50 transition-all group">
-              <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                <Phone className="w-7 h-7 text-white" />
+            {clinicPhone && (
+              <div className="flex items-start space-x-4 p-4 rounded-xl hover:bg-cyan-50/50 transition-all group">
+                <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                  <Phone className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-1">Điện Thoại</h3>
+                  <p className="text-gray-700">
+                    Hotline: <a href={`tel:${clinicPhone.replace(/\s/g, '')}`} className="text-cyan-600 hover:text-emerald-600 hover:underline font-semibold">{clinicPhone}</a>
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-gray-900 mb-1">Điện Thoại</h3>
-                <p className="text-gray-700">
-                  Hotline: <a href="tel:0123456789" className="text-cyan-600 hover:text-emerald-600 hover:underline font-semibold">0123 456 789</a><br />
-                  Zalo: <a href="tel:0987654321" className="text-cyan-600 hover:text-emerald-600 hover:underline font-semibold">0987 654 321</a>
-                </p>
-              </div>
-            </div>
+            )}
 
-            <div className="flex items-start space-x-4 p-4 rounded-xl hover:bg-cyan-50/50 transition-all group">
-              <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                <Mail className="w-7 h-7 text-white" />
+            {clinicEmail && (
+              <div className="flex items-start space-x-4 p-4 rounded-xl hover:bg-cyan-50/50 transition-all group">
+                <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                  <Mail className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-1">Email</h3>
+                  <p className="text-gray-700">
+                    <a href={`mailto:${clinicEmail}`} className="text-cyan-600 hover:text-emerald-600 hover:underline font-semibold">
+                      {clinicEmail}
+                    </a>
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-gray-900 mb-1">Email</h3>
-                <p className="text-gray-700">
-                  <a href="mailto:contact@entclinic.vn" className="text-cyan-600 hover:text-emerald-600 hover:underline font-semibold">
-                    contact@entclinic.vn
-                  </a>
-                </p>
-              </div>
-            </div>
+            )}
 
             <div className="flex items-start space-x-4 p-4 rounded-xl hover:bg-cyan-50/50 transition-all group">
               <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
@@ -68,19 +80,21 @@ export default function Contact() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-cyan-50 to-emerald-50 border-2 border-cyan-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow">
-              <h3 className="font-bold text-gray-900 mb-3">Hỗ Trợ Khẩn Cấp</h3>
-              <p className="text-gray-700 mb-4">
-                Nếu bạn gặp tình trạng khẩn cấp, vui lòng gọi ngay:
-              </p>
-              <a
-                href="tel:0123456789"
-                className="inline-flex items-center space-x-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-semibold shadow-lg hover:shadow-xl hover:scale-105 transform duration-300"
-              >
-                <Phone className="w-5 h-5" />
-                <span>0123 456 789</span>
-              </a>
-            </div>
+            {clinicPhone && (
+              <div className="bg-gradient-to-br from-cyan-50 to-emerald-50 border-2 border-cyan-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+                <h3 className="font-bold text-gray-900 mb-3">Hỗ Trợ Khẩn Cấp</h3>
+                <p className="text-gray-700 mb-4">
+                  Nếu bạn gặp tình trạng khẩn cấp, vui lòng gọi ngay:
+                </p>
+                <a
+                  href={`tel:${clinicPhone.replace(/\s/g, '')}`}
+                  className="inline-flex items-center space-x-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-semibold shadow-lg hover:shadow-xl hover:scale-105 transform duration-300"
+                >
+                  <Phone className="w-5 h-5" />
+                  <span>{clinicPhone}</span>
+                </a>
+              </div>
+            )}
           </div>
 
           <div className="bg-gradient-to-br from-cyan-100/30 to-emerald-100/30 rounded-2xl overflow-hidden h-[500px] shadow-xl border-2 border-cyan-200">

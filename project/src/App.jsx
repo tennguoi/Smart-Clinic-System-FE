@@ -33,6 +33,7 @@ import DoctorManagement from "./components/admin/DoctorManagement";
 import ServiceManagement from "./components/admin/ServiceManagement";
 import ArticleManagement from "./components/admin/ArticleManagement";
 import AccountManagement from "./components/admin/AccountManagement";
+import ClinicManagement from "./components/admin/ClinicManagement";
 import PlaceholderSection from "./components/common/PlaceholderSection";
 
 // Doctor Components
@@ -94,6 +95,7 @@ function App() {
           <Route path="services" element={<ServiceManagement />} />
           <Route path="articles" element={<ArticleManagement />} />
           <Route path="accounts" element={<AccountManagement />} />
+          <Route path="clinic" element={<ClinicManagement />} />
           <Route path="*" element={<PlaceholderSection title="Chức năng" message="Sắp ra mắt..." />} />
         </Route>
 

@@ -1,11 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, Phone } from 'lucide-react';
-
-const HOTLINE = '1900 636 949';
+import { useClinic } from '../contexts/ClinicContext';
+import defaultLogo from '../images/logo.png';
 
 export default function StickyNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { clinicInfo } = useClinic();
+
+  const clinicName = clinicInfo?.name;
+  const clinicPhone = clinicInfo?.phone;
+  const clinicLogoUrl = clinicInfo?.logoUrl;
 
   const navLinks = [
     { label: 'Trang Chủ', path: '/' },
@@ -27,12 +32,17 @@ export default function StickyNavbar() {
               to="/"
               className="flex items-center space-x-3 hover:opacity-90 transition-all group"
             >
-              <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300">
-                <span className="text-white font-bold text-xl">2CTW</span>
-              </div>
+              <img 
+                src={clinicLogoUrl || defaultLogo} 
+                alt={clinicName || 'Logo phòng khám'}
+                className="w-16 h-16 object-contain rounded-xl shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300"
+                onError={(e) => {
+                  e.target.src = defaultLogo;
+                }}
+              />
               <div className="flex flex-col justify-center">
                 <h1 className="text-xl font-bold text-gray-900 leading-tight whitespace-nowrap">
-                TMH Ánh dương
+                  {clinicName}
                 </h1>
                 
               </div>
@@ -54,22 +64,24 @@ export default function StickyNavbar() {
           </div>
 
           {/* RIGHT: HOTLINE + CTA (1/3 chiều rộng) */}
-          <div className="hidden lg:flex flex-1 lg:basis-1/3 items-center justify-end gap-3">
-            <a
-              href={`tel:${HOTLINE.replace(/\s/g, '')}`}
-              className="flex items-center justify-center gap-2 rounded-full border border-red-200 bg-gradient-to-r from-rose-500 to-red-600 px-5 py-2.5 text-white font-semibold text-sm tracking-wide shadow-lg shadow-red-400/30 hover:shadow-red-500/40 transition-all hover:scale-105 whitespace-nowrap min-w-[170px]"
-            >
-              <Phone className="w-5 h-5" />
-              <span className="whitespace-nowrap">{HOTLINE}</span>
-            </a>
+          {clinicPhone && (
+            <div className="hidden lg:flex flex-1 lg:basis-1/3 items-center justify-end gap-3">
+              <a
+                href={`tel:${clinicPhone.replace(/\s/g, '')}`}
+                className="flex items-center justify-center gap-2 rounded-full border border-red-200 bg-gradient-to-r from-rose-500 to-red-600 px-5 py-2.5 text-white font-semibold text-sm tracking-wide shadow-lg shadow-red-400/30 hover:shadow-red-500/40 transition-all hover:scale-105 whitespace-nowrap min-w-[170px]"
+              >
+                <Phone className="w-5 h-5" />
+                <span className="whitespace-nowrap">{clinicPhone}</span>
+              </a>
 
-            <Link
-              to="/appointment"
-              className="flex items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500 text-white px-5 py-2.5 min-w-[170px] hover:from-cyan-600 hover:to-emerald-600 transition-all font-semibold text-sm shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/40 hover:scale-105 duration-300 whitespace-nowrap"
-            >
-              ĐẶT LỊCH NHANH
-            </Link>
-          </div>
+              <Link
+                to="/appointment"
+                className="flex items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500 text-white px-5 py-2.5 min-w-[170px] hover:from-cyan-600 hover:to-emerald-600 transition-all font-semibold text-sm shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/40 hover:scale-105 duration-300 whitespace-nowrap"
+              >
+                ĐẶT LỊCH NHANH
+              </Link>
+            </div>
+          )}
 
           {/* MOBILE MENU BUTTON */}
           <button
@@ -99,13 +111,15 @@ export default function StickyNavbar() {
 
             <hr className="my-3 border-gray-200" />
 
-            <a
-              href={`tel:${HOTLINE.replace(/\s/g, '')}`}
-              className="flex items-center justify-center gap-2 rounded-xl border border-cyan-200 px-4 py-3 text-cyan-600 font-semibold uppercase"
-            >
-              <Phone className="w-4 h-4" />
-              Cấp cứu: {HOTLINE}
-            </a>
+            {clinicPhone && (
+              <a
+                href={`tel:${clinicPhone.replace(/\s/g, '')}`}
+                className="flex items-center justify-center gap-2 rounded-xl border border-cyan-200 px-4 py-3 text-cyan-600 font-semibold uppercase"
+              >
+                <Phone className="w-4 h-4" />
+                Cấp cứu: {clinicPhone}
+              </a>
+            )}
 
             <Link
               to="/appointment"

@@ -1,7 +1,7 @@
 import Sidebar from '../common/Sidebar';
 import { 
   TrendingUp, Stethoscope, Briefcase, Newspaper, 
-  Users, UserCheck, FileText, Pill, UserCircle 
+  Users, UserCheck, FileText, Pill, UserCircle, Building2
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -10,6 +10,7 @@ const adminMenuItems = [
   { id: 'doctors',       label: 'Đội Ngũ Bác Sĩ',    icon: Stethoscope },
   { id: 'services',      label: 'Quản Lý Dịch Vụ',   icon: Briefcase },
   { id: 'articles',      label: 'Quản Lý Bài Viết',  icon: Newspaper },
+  { id: 'clinic',        label: 'Thông Tin Phòng Khám', icon: Building2 },
   { id: 'staff',         label: 'Nhân Viên',         icon: Users },
   { id: 'patients',      label: 'Bệnh Nhân',         icon: UserCheck },
   { id: 'invoices',      label: 'Hóa Đơn',           icon: FileText },
@@ -28,6 +29,7 @@ export default function AdminSidebar({ activeMenu: propActiveMenu, onMenuChange 
     (currentPath.includes('/admin/doctors')       ? 'doctors' :
      currentPath.includes('/admin/services')      ? 'services' :
      currentPath.includes('/admin/articles')      ? 'articles' :
+     currentPath.includes('/admin/clinic')        ? 'clinic' :
      currentPath.includes('/admin/staff')         ? 'staff' :
      currentPath.includes('/admin/patients')      ? 'patients' :
      currentPath.includes('/admin/invoices')      ? 'invoices' :
@@ -47,6 +49,8 @@ export default function AdminSidebar({ activeMenu: propActiveMenu, onMenuChange 
       navigate('/admin/services');
     } else if (id === 'articles') {
       navigate('/admin/articles');
+    } else if (id === 'clinic') {
+      navigate('/admin/clinic');
     } else if (id === 'staff') {
       navigate('/admin/staff');
     } else if (id === 'patients') {
