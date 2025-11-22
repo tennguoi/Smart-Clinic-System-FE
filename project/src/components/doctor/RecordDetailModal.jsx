@@ -1,5 +1,9 @@
 // src/components/doctor/RecordDetailModal.jsx
-import { X, Pencil } from 'lucide-react';
+import { useState } from 'react';
+import { X, Pencil, FileText, Pill, Download } from 'lucide-react';
+import { medicalRecordApi } from '../../api/medicalRecordApi';
+import toast from 'react-hot-toast';
+import { downloadPdf, getMedicalRecordFilename, getPrescriptionFilename } from '../../utils/pdfDownload';
 
 const RecordDetailModal = ({ 
   record, 
@@ -17,7 +21,36 @@ const RecordDetailModal = ({
   saving,
   onClose 
 }) => {
+  const [exporting, setExporting] = useState(false);
+  const [exportingPrescription, setExportingPrescription] = useState(false);
+
   if (!record) return null;
+
+  const handleExportPdf = async () => {
+    setExporting(true);
+    try {
+      const pdfBlob = await medicalRecordApi.exportAsPdf(record.recordId);
+      await downloadPdf(pdfBlob, getMedicalRecordFilename(record.recordId));
+      toast.success('Xuất PDF hồ sơ thành công!');
+    } catch (e) {
+      toast.error('Xuất PDF thất bại: ' + (e.message || 'Vui lòng thử lại'));
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportPrescriptionPdf = async () => {
+    setExportingPrescription(true);
+    try {
+      const pdfBlob = await medicalRecordApi.exportPrescriptionAsPdf(record.recordId);
+      await downloadPdf(pdfBlob, getPrescriptionFilename(record.recordId));
+      toast.success('Xuất PDF đơn thuốc thành công!');
+    } catch (e) {
+      toast.error('Xuất đơn thuốc thất bại: ' + (e.message || 'Vui lòng thử lại'));
+    } finally {
+      setExportingPrescription(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -37,14 +70,36 @@ const RecordDetailModal = ({
             <h3 className="text-xl font-semibold text-gray-800">
               Chỉnh sửa hồ sơ bệnh án
             </h3>
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              aria-label="Đóng"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleExportPdf}
+                disabled={exporting}
+                className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-60 transition-colors flex items-center gap-2"
+                title="Xuất PDF hồ sơ bệnh án"
+              >
+                <FileText className="w-4 h-4" />
+                {exporting ? 'Đang xuất...' : 'PDF Hồ sơ'}
+              </button>
+              <button
+                type="button"
+                onClick={handleExportPrescriptionPdf}
+                disabled={exportingPrescription}
+                className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors flex items-center gap-2"
+                title="Xuất PDF đơn thuốc"
+              >
+                <Pill className="w-4 h-4" />
+                {exportingPrescription ? 'Đang xuất...' : 'PDF Đơn thuốc'}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Đóng"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-6">

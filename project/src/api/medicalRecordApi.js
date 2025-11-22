@@ -82,9 +82,9 @@ export const medicalRecordApi = {
 		} catch (error) {
 			throw new Error('Xuất PDF thất bại: ' + (error.response?.data?.message || error.message));
 		}
-	}
+	},
 
-	,exportPrescriptionAsPdf: async (recordId) => {
+	exportPrescriptionAsPdf: async (recordId) => {
 		try {
 			const { data } = await axiosInstance.get(
 				`/api/doctor/medical-records/${recordId}/export-prescription`,

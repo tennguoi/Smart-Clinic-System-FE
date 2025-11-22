@@ -14,6 +14,7 @@ import {
   completeExamination,
 } from '../../api/doctorApi';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
+import { downloadPdf, getMedicalRecordFilename, getPrescriptionFilename } from '../../utils/pdfDownload';
 
 // ================== TẤT CẢ COMPONENT ĐÃ CHUYỂN THÀNH JSX ==================
 
@@ -285,7 +286,7 @@ function DiagnosticInputArea({ activeTab, setActiveTab, medicalRecord, setMedica
 }
 
 // ActionFooter
-function ActionFooter({ onSaveDraft, onSave, onPrint, onComplete, hasRequiredData, isSaving, isPrinting }) {
+function ActionFooter({ onSaveDraft, onSave, onPrint, onPrintPrescription, onComplete, hasRequiredData, isSaving, isPrinting, isPrintingPrescription }) {
   return (
     <footer className="bg-white border-t border-slate-200 px-6 py-4 shadow-lg">
       <div className="flex items-center justify-between max-w-7xl mx-auto">
@@ -296,8 +297,11 @@ function ActionFooter({ onSaveDraft, onSave, onPrint, onComplete, hasRequiredDat
           <button onClick={onSave} disabled={isSaving} className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-slate-400">
             <Save size={18} /> {isSaving ? 'Đang lưu...' : 'Lưu'}
           </button>
-          <button onClick={onPrint} disabled={isPrinting} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400">
-            <Printer size={18} /> {isPrinting ? 'Đang in...' : 'In'}
+          <button onClick={onPrint} disabled={isPrinting} className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-slate-400">
+            <Printer size={18} /> {isPrinting ? 'Đang in...' : 'In Hồ sơ'}
+          </button>
+          <button onClick={onPrintPrescription} disabled={isPrintingPrescription} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400">
+            <Pill size={18} /> {isPrintingPrescription ? 'Đang in...' : 'In Đơn thuốc'}
           </button>
         </div>
 
@@ -327,6 +331,7 @@ export default function CurrentPatientExamination() {
   const [services, setServices] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [isPrintingPrescription, setIsPrintingPrescription] = useState(false);
   const [recordId, setRecordId] = useState(null);
 
   const loadQueue = useCallback(async () => {
@@ -412,18 +417,29 @@ export default function CurrentPatientExamination() {
     setIsPrinting(true);
     try {
       const pdfBlob = await medicalRecordApi.exportAsPdf(recordId);
-      const url = window.URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `medical-record-${recordId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      toast.success('In PDF thành công!');
+      await downloadPdf(pdfBlob, getMedicalRecordFilename(recordId));
+      toast.success('In PDF hồ sơ thành công!');
     } catch (err) {
       toast.error('Lỗi khi in PDF: ' + (err.message || 'Vui lòng thử lại'));
+    } finally {
       setIsPrinting(false);
+    }
+  };
+
+  const handlePrintPrescription = async () => {
+    if (!recordId) {
+      toast.error('Vui lòng lưu hồ sơ trước khi in đơn thuốc!');
+      return;
+    }
+    setIsPrintingPrescription(true);
+    try {
+      const pdfBlob = await medicalRecordApi.exportPrescriptionAsPdf(recordId);
+      await downloadPdf(pdfBlob, getPrescriptionFilename(recordId));
+      toast.success('In PDF đơn thuốc thành công!');
+    } catch (err) {
+      toast.error('Lỗi khi in PDF đơn thuốc: ' + (err.message || 'Vui lòng thử lại'));
+    } finally {
+      setIsPrintingPrescription(false);
     }
   };
 
@@ -498,10 +514,12 @@ export default function CurrentPatientExamination() {
           onSaveDraft={() => toast('Đã lưu nháp')}
           onSave={handleSave}
           onPrint={handlePrint}
+          onPrintPrescription={handlePrintPrescription}
           onComplete={handleComplete}
           hasRequiredData={!!medicalRecord.diagnosis.trim()}
           isSaving={isSaving}
           isPrinting={isPrinting}
+          isPrintingPrescription={isPrintingPrescription}
         />
       </div>
     );
