@@ -1,11 +1,26 @@
+
 import React, { useEffect, useState } from 'react';
 import { 
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell 
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
+    LineChart, Line, AreaChart, Area
 } from 'recharts';
 import axios from 'axios';
+import { FaCalendarCheck, FaUserInjured, FaMoneyBillWave, FaUserMd, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 
 const StatisticsPage = () => {
     const [topServices, setTopServices] = useState([]);
+    const [kpi, setKpi] = useState({
+        totalAppointmentsToday: 0,
+        appointmentsGrowth: 0,
+        totalPatientsToday: 0,
+        patientsGrowth: 0,
+        totalRevenueMonth: 0,
+        revenueGrowth: 0,
+        cancelRate: 0,
+        cancelRateGrowth: 0
+    });
+    const [appointmentTrend, setAppointmentTrend] = useState([]);
+    const [revenueTrend, setRevenueTrend] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -13,81 +28,57 @@ const StatisticsPage = () => {
     const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
     useEffect(() => {
-        const fetchTopServices = async () => {
-            // --- DỮ LIỆU MẪU (Dùng để hiển thị khi chưa có API/Token) ---
-            const mockData = [
-                {
-                    name: "Khám Tai Mũi Họng cơ bản",
-                    usage: 35,
-                    price: 200000,
-                    image: "https://taimuihongtphcm.vn/wp-content/uploads/2024/08/cceea81a369393cdca82.jpg"
-                },
-                {
-                    name: "Khám viêm xoang",
-                    usage: 25,
-                    price: 250000,
-                    image: "https://medlatec.vn/media/8504/content/20211112_kham-viem-xoang-nhu-the-nao-3.jpg"
-                },
-                {
-                    name: "Khám viêm họng và amidan",
-                    usage: 15,
-                    price: 200000,
-                    image: "https://tamanhhospital.vn/wp-content/uploads/2021/06/kham-tai-mui-hong.jpg"
-                },
-                {
-                    name: "Khám dị ứng hô hấp",
-                    usage: 10,
-                    price: 300000,
-                    image: "https://benhvienphuongdong.vn/public/uploads/chuyen-khoa/chuyen-khoa-ho-hap-di-ung/he-thong-thiet-bi-hien-dai.jpg"
-                },
-                {
-                    name: "Khám ù tai - chóng mặt",
-                    usage: 5,
-                    price: 300000,
-                    image: "https://images2.thanhnien.vn/528068263637045248/2025/7/28/z684760880223471d27241cbe46437be270419d3eb0abf-17536783160961572433305.jpg"
-                }
-            ];
-
+        const fetchData = async () => {
             try {
                 // Kiểm tra token
                 const token = localStorage.getItem('token') || localStorage.getItem('accessToken'); 
 
                 if (!token) {
                     console.warn("Không tìm thấy Token. Đang hiển thị dữ liệu mẫu (Demo Mode).");
-                    // Thay vì báo lỗi, ta hiển thị dữ liệu mẫu luôn để xem giao diện
-                    setTopServices(mockData);
+                    // Mock data logic here if needed, or just return
                     setLoading(false);
                     return;
                 }
 
-                // Gọi API
-                const response = await axios.get('http://localhost:8082/api/admin/dashboard/top-services', {
-                    headers: { 
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
+                const headers = { 
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                };
 
-                // Map dữ liệu từ API thật
-                const formattedData = response.data.map((item) => ({
+                // Gọi API song song
+                const [topServicesRes, kpiRes, apptTrendRes, revTrendRes] = await Promise.all([
+                    axios.get('http://localhost:8082/api/admin/dashboard/top-services', { headers }),
+                    axios.get('http://localhost:8082/api/admin/dashboard/kpi', { headers }),
+                    axios.get('http://localhost:8082/api/admin/dashboard/trend/appointments', { headers }),
+                    axios.get('http://localhost:8082/api/admin/dashboard/trend/revenue', { headers })
+                ]);
+
+                // Map dữ liệu Top Services
+                const formattedTopServices = topServicesRes.data.map((item) => ({
                     name: item.service.name,       
                     usage: item.totalUsage,        
                     price: item.service.price,     
                     image: item.service.photoUrl   
                 }));
 
-                setTopServices(formattedData);
+                setTopServices(formattedTopServices);
+                setKpi(kpiRes.data);
+                setAppointmentTrend(apptTrendRes.data);
+                setRevenueTrend(revTrendRes.data);
+
             } catch (err) {
-                console.error("Lỗi tải thống kê (Chuyển sang chế độ Demo):", err);
-                // Nếu gọi API lỗi (do chưa chạy backend hoặc lỗi mạng), cũng dùng dữ liệu mẫu
-                setTopServices(mockData);
-                // setError(null); // Không báo lỗi đỏ nữa để giao diện đẹp
+                console.error("Lỗi tải thống kê:", err);
+                if (err.response && err.response.status === 401) {
+                     setError("Phiên đăng nhập hết hạn hoặc không có quyền truy cập.");
+                } else {
+                    setError("Không thể tải dữ liệu thống kê.");
+                }
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchTopServices();
+        fetchData();
     }, []);
 
     if (loading) return (
@@ -103,24 +94,123 @@ const StatisticsPage = () => {
         </div>
     );
 
-    return (
-        <div className="space-y-6 animate-fade-in">
-            {/* Header */}
-            <div className="flex justify-between items-end mb-6">
+    const StatCard = ({ title, value, subValue, growth, icon: Icon, color, bgColor, isReverse = false }) => {
+        // isReverse: true means lower is better (e.g. cancel rate)
+        const isPositive = growth >= 0;
+        const isGood = isReverse ? !isPositive : isPositive;
+        
+        return (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Thống Kê Dịch Vụ</h1>
-                    <p className="text-gray-500 text-sm mt-1">Top 5 dịch vụ được sử dụng nhiều nhất</p>
+                    <p className="text-gray-500 text-sm font-medium mb-1">{title}</p>
+                    <h3 className="text-2xl font-bold text-gray-800">{value}</h3>
+                    <div className="flex items-center mt-2">
+                        <span className={`flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${isGood ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {isPositive ? <FaArrowUp size={10} className="mr-1"/> : <FaArrowDown size={10} className="mr-1"/>}
+                            {Math.abs(growth).toFixed(1)}%
+                        </span>
+                        <span className="text-gray-400 text-xs ml-2">vs kỳ trước</span>
+                    </div>
                 </div>
-                <div className="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium">
-                    Tổng lượt: {topServices.reduce((acc, curr) => acc + curr.usage, 0)}
+                <div className={`p-4 rounded-full ${bgColor} ${color}`}>
+                    <Icon size={24} />
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div className="space-y-6 animate-fade-in pb-10">
+            {/* Header */}
+            <div className="flex justify-between items-end mb-2">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-800">Thống Kê Tổng Quan</h1>
+                    <p className="text-gray-500 text-sm mt-1">Báo cáo hoạt động của phòng khám</p>
+                </div>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard 
+                    title="Lịch Hẹn Hôm Nay" 
+                    value={kpi.totalAppointmentsToday} 
+                    growth={kpi.appointmentsGrowth}
+                    icon={FaCalendarCheck} 
+                    color="text-blue-600" 
+                    bgColor="bg-blue-50" 
+                />
+                <StatCard 
+                    title="Bệnh Nhân Mới" 
+                    value={kpi.totalPatientsToday} 
+                    growth={kpi.patientsGrowth}
+                    icon={FaUserInjured} 
+                    color="text-green-600" 
+                    bgColor="bg-green-50" 
+                />
+                <StatCard 
+                    title="Doanh Thu Tháng" 
+                    value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(kpi.totalRevenueMonth)} 
+                    growth={kpi.revenueGrowth}
+                    icon={FaMoneyBillWave} 
+                    color="text-yellow-600" 
+                    bgColor="bg-yellow-50" 
+                />
+                <StatCard 
+                    title="Tỷ Lệ Hủy Lịch" 
+                    value={`${kpi.cancelRate.toFixed(1)}%`} 
+                    growth={kpi.cancelRateGrowth}
+                    icon={FaUserMd} 
+                    color="text-red-600" 
+                    bgColor="bg-red-50"
+                    isReverse={true}
+                />
+            </div>
+
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Appointment Trend */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h2 className="text-lg font-semibold text-gray-700 mb-6">Xu Hướng Lịch Hẹn (7 Ngày)</h2>
+                    <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={appointmentTrend}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="date" tick={{fontSize: 12}} />
+                                <YAxis tick={{fontSize: 12}} />
+                                <Tooltip 
+                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                />
+                                <Line type="monotone" dataKey="value" name="Lịch hẹn" stroke="#3B82F6" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Revenue Trend */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h2 className="text-lg font-semibold text-gray-700 mb-6">Xu Hướng Doanh Thu (7 Ngày)</h2>
+                    <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={revenueTrend}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="date" tick={{fontSize: 12}} />
+                                <YAxis tick={{fontSize: 12}} tickFormatter={(value) => new Intl.NumberFormat('vi-VN', { notation: "compact" }).format(value)} />
+                                <Tooltip 
+                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    formatter={(value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)}
+                                />
+                                <Bar dataKey="value" name="Doanh thu" fill="#F59E0B" radius={[4, 4, 0, 0]} barSize={40} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                {/* Biểu đồ (2 phần) */}
+                {/* Top Services Chart */}
                 <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h2 className="text-lg font-semibold text-gray-700 mb-6">Biểu Đồ Tăng Trưởng</h2>
+                    <h2 className="text-lg font-semibold text-gray-700 mb-6">Top 5 Dịch Vụ Phổ Biến</h2>
                     <div className="h-[400px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart
@@ -151,7 +241,7 @@ const StatisticsPage = () => {
                     </div>
                 </div>
 
-                {/* Bảng chi tiết (1 phần) */}
+                {/* Ranking Table */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[480px]">
                     <div className="p-4 border-b border-gray-100 bg-gray-50">
                         <h2 className="text-lg font-semibold text-gray-700">Bảng Xếp Hạng</h2>

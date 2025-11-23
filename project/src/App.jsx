@@ -3,7 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import StickyNavbar from "./components/StickyNavbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// Public Pages (Giữ nguyên...)
+// Public Pages
 import HomePage from "./pages/HomePage";
 import AboutPage from "./pages/AboutPage";
 import ServicesPage from "./pages/ServicesPage";
@@ -15,15 +15,16 @@ import ReviewsPage from "./pages/ReviewsPage";
 import NewsDetailPage from "./pages/NewsDetailPage";
 import ChatbotAvatar from "./components/chatbot/ChatbotAvatar";
 
-// Auth (Giữ nguyên...)
+// Auth
 import Login from "./components/Login";
 import ForgotPassword from "./components/ForgotPassword";
 import Verify2FA from "./components/Verify2FA";
 import ProfilePage from "./pages/ProfilePage";
 import SecurityPage from "./pages/SecurityPage";
 
-// Dashboard Layout (Giữ nguyên...)
+// Dashboard Layout
 import AdminPage from "./pages/AdminPage";
+import StatisticsPage from "./pages/StatisticsPage";
 import DoctorPage from "./pages/DoctorPage";
 import ReceptionPage from "./pages/ReceptionPage";
 
@@ -33,23 +34,53 @@ import DoctorManagement from "./components/admin/DoctorManagement";
 import ServiceManagement from "./components/admin/ServiceManagement";
 import ArticleManagement from "./components/admin/ArticleManagement";
 import AccountManagement from "./components/admin/AccountManagement";
+
 import PlaceholderSection from "./components/common/PlaceholderSection";
 
-// --- 1. IMPORT COMPONENT THỐNG KÊ VÀO ĐÂY ---
-import Statistics from "./pages/StatisticsPage";
-
-// Doctor & Reception Components (Giữ nguyên...)
+// Doctor Components
 import CurrentPatientExamination from "./components/doctor/CurrentPatientExamination";
-import StatisticsPage from "./pages/StatisticsPage";
-// ... (các import khác giữ nguyên)
+// Reception Components
+import AppointmentsSection from "./components/receptionist/AppointmentsSection";
+import PatientRecordsSection from "./components/receptionist/PatientRecordsSection";
+import ClinicRoomManagement from "./components/receptionist/ClinicRoomManagement";
+import InvoicesSection from "./components/receptionist/InvoicesSection";
 
 function App() {
   return (
     <div className="min-h-screen bg-white">
       <Routes>
-        {/* ... Các Route Login, Public giữ nguyên ... */}
 
-        {/* ADMIN ROUTES */}
+        {/* AUTH & PROFILE */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-2fa" element={<Verify2FA />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/security" element={<SecurityPage />} />
+
+        {/* PUBLIC ROUTES */}
+        <Route
+          path="/*"
+          element={
+            <>
+              <StickyNavbar />
+              <div className="w-full h-16 sm:h-20 lg:h-24" aria-hidden="true" />
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/services" element={<ServicesPage />} />
+                <Route path="/doctors" element={<DoctorsPage />} />
+                <Route path="/pricing" element={<PricingPage />} />
+                <Route path="/news" element={<NewsPage />} />
+                <Route path="/appointment" element={<AppointmentPage />} />
+                <Route path="/danh-gia" element={<ReviewsPage />} />
+                <Route path="/news/:id" element={<NewsDetailPage />} />
+              </Routes>
+              <ChatbotAvatar />
+            </>
+          }
+        />
+
+        {/* ADMIN */}
         <Route
           path="/admin"
           element={
@@ -58,13 +89,8 @@ function App() {
             </ProtectedRoute>
           }
         >
-          {/* Trang chủ mặc định khi vào /admin -> Hiện Doanh thu (RevenueTable) */}
           <Route index element={<RevenueTable />} />
-          
-          {/* --- 2. THÊM ROUTE CHO THỐNG KÊ Ở ĐÂY --- */}
-          <Route path="statistics" element={<StatisticsPage />} />  {/* <--- THÊM DÒNG NÀY */}
-
-          {/* Các route khác giữ nguyên */}
+          <Route path="statistics" element={<StatisticsPage />} />  
           <Route path="revenue" element={<RevenueTable />} />
           <Route path="doctors" element={<DoctorManagement />} />
           <Route path="services" element={<ServiceManagement />} />
@@ -73,7 +99,39 @@ function App() {
           <Route path="*" element={<PlaceholderSection title="Chức năng" message="Sắp ra mắt..." />} />
         </Route>
 
-        {/* ... Các Route Doctor, Reception giữ nguyên ... */}
+        {/* DOCTOR */}
+        <Route
+          path="/doctor"
+          element={
+            <ProtectedRoute allowedRoles={["ROLE_BAC_SI", "ROLE_ADMIN"]}>
+              <DoctorPage />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<CurrentPatientExamination />} />
+          <Route path="current-patient" element={<CurrentPatientExamination />} />
+          <Route path="*" element={<div className="p-10 text-center text-2xl text-gray-500">Chức năng đang phát triển</div>} />
+          <Route path="records" element={<DoctorPage />} />
+          <Route path="history" element={<DoctorPage />} />
+          <Route path="invoices" element={<DoctorPage />} />
+          <Route path="stats" element={<DoctorPage />} />
+        </Route>
+
+        {/* RECEPTION (LỄ TÂN) – ĐÃ SỬA HOÀN CHỈNH */}
+        <Route
+          path="/reception"
+          element={
+            <ProtectedRoute allowedRoles={["ROLE_TIEP_TAN", "ROLE_ADMIN"]}>
+              <ReceptionPage />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<AppointmentsSection />} />
+          <Route path="appointments" element={<AppointmentsSection />} />
+          <Route path="records" element={<PatientRecordsSection />} />
+          <Route path="rooms" element={<ClinicRoomManagement />} />
+          <Route path="invoices" element={<InvoicesSection />} />
+        </Route>
 
       </Routes>
     </div>
@@ -81,3 +139,4 @@ function App() {
 }
 
 export default App;
+//  <Route path="statistics" element={<StatisticsPage />}
