@@ -1,5 +1,8 @@
 import React from 'react';
+import DatePicker from 'react-datepicker';
+import { vi } from 'date-fns/locale';
 import { X } from 'lucide-react';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const priorityOptions = [
   { value: 'Normal', label: 'Thường' },
@@ -8,7 +11,6 @@ const priorityOptions = [
 ];
 
 const genderOptions = [
-  { value: '', label: '-- Chọn giới tính --' },
   { value: 'male', label: 'Nam' },
   { value: 'female', label: 'Nữ' },
   { value: 'other', label: 'Khác' },
@@ -21,7 +23,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b">
           <h2 className="text-2xl font-bold text-gray-800">
@@ -57,21 +59,17 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Số điện thoại <span className="text-red-500">*</span>
               </label>
-         <input
-  type="tel"
-  value={patientForm.phone}
-  onChange={(e) => {
-    // Chỉ lấy số
-    let value = e.target.value.replace(/\D/g, '');
-
-    // Giới hạn 10 số
-    if (value.length >= 10) value = value.slice(0, 10);
-
-    onChange('phone', value);
-  }}
-  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-  placeholder="VD: 0912345678"
-/>
+              <input
+                type="tel"
+                value={patientForm.phone}
+                onChange={(e) => {
+                  let value = e.target.value.replace(/\D/g, '');
+                  if (value.length >= 10) value = value.slice(0, 10);
+                  onChange('phone', value);
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="VD: 0912345678"
+              />
             </div>
 
             {/* Email */}
@@ -93,12 +91,20 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Ngày sinh <span className="text-red-500">*</span>
               </label>
-              <input
-                type="date"
-                value={patientForm.dob}
-                onChange={(e) => onChange('dob', e.target.value)}
-                required
+              <DatePicker
+                selected={patientForm.dobDate}
+                onChange={(date) => onChange('dob', date)}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="dd/mm/yyyy"
+                locale={vi}
+                showMonthDropdown
+                showYearDropdown
+                dropdownMode="select"
+                maxDate={new Date()}
+                isClearable
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                wrapperClassName="w-full"
+                required
               />
             </div>
 
@@ -138,6 +144,46 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
               </select>
             </div>
 
+            {/* 🆕 ID Number - Số căn cước */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Số căn cước / CMND
+              </label>
+              <input
+                type="text"
+                value={patientForm.idNumber || ''}
+                onChange={(e) => {
+                  // Chỉ cho phép số, giới hạn 12 số
+                  let value = e.target.value.replace(/\D/g, '');
+                  if (value.length > 12) value = value.slice(0, 12);
+                  onChange('idNumber', value);
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="VD: 001234567890"
+                maxLength="12"
+              />
+            </div>
+
+            {/* 🆕 Insurance Number - Số thẻ BHYT */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Số thẻ BHYT
+              </label>
+              <input
+                type="text"
+                value={patientForm.insuranceNumber || ''}
+                onChange={(e) => {
+                  // Cho phép chữ và số, viết hoa tự động
+                  let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                  if (value.length > 15) value = value.slice(0, 15);
+                  onChange('insuranceNumber', value);
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="VD: HS4010012345678"
+                maxLength="15"
+              />
+            </div>
+
             {/* Address */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -149,6 +195,20 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Nhập địa chỉ đầy đủ"
                 rows="2"
+              />
+            </div>
+
+            {/* 🆕 Notes - Triệu chứng */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Triệu chứng / Ghi chú
+              </label>
+              <textarea
+                value={patientForm.notes || ''}
+                onChange={(e) => onChange('notes', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Mô tả triệu chứng hoặc lý do khám bệnh..."
+                rows="3"
               />
             </div>
           </div>
