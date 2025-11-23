@@ -449,30 +449,58 @@ export default function AccountManagement() {
                     <input type="email" name="email" value={formData.email} onChange={handleInputChange} disabled={!isCreateMode} required placeholder="example@clinic.com" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100" />
                   </div>
 
-                  {/* Mật khẩu */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Mật khẩu {isCreateMode && <span className="text-red-500">*</span>}
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        name="password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        required={isCreateMode}
-                        disabled={isViewMode}
-                        placeholder={isViewMode ? '(đã mã hóa)' : 'Nhập mật khẩu mới để đổi'}
-                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-                      />
-                      {(isCreateMode || isEditMode || (isViewMode && formData.password)) && (
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-2.5 text-gray-500">
-                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                      )}
-                    </div>
-                    {isEditMode && <p className="text-xs text-gray-500 mt-1">Để trống nếu không muốn đổi mật khẩu</p>}
-                  </div>
+            {/* Mật khẩu */}
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Mật khẩu {isCreateMode && <span className="text-red-500">*</span>}
+  </label>
+  <div className="relative">
+    <input
+      type={(isCreateMode || isEditMode) && showPassword ? 'text' : 'password'}
+      name="password"
+      value={formData.password}
+      onChange={handleInputChange}
+      required={isCreateMode}
+      disabled={isViewMode}
+      placeholder={
+        isViewMode
+          ? '••••••••••••'
+          : isEditMode
+            ? 'Nhập mật khẩu mới để đổi'
+            : 'Nhập mật khẩu'
+      }
+      className="w-full px-3 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 
+                 [appearance:textfield] 
+                 [&::-webkit-password-reveal]:hidden 
+                 [&::-webkit-contacts-auto-fill-button]:hidden 
+                 [&::-ms-reveal]:hidden 
+                 [&::-ms-clear]:hidden"
+    />
+
+    {/* Chỉ hiện icon mắt của mình khi đang tạo hoặc sửa */}
+    {(isCreateMode || isEditMode) && (
+      <button
+        type="button"
+        onClick={() => setShowPassword(prev => !prev)}
+        className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700 transition"
+      >
+        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+      </button>
+    )}
+  </div>
+
+  {/* Ghi chú nhỏ */}
+  {isEditMode && (
+    <p className="text-xs text-gray-500 mt-1">
+      Để trống nếu không muốn đổi mật khẩu
+    </p>
+  )}
+  {isViewMode && (
+    <p className="text-xs text-gray-500 mt-1">
+      Mật khẩu đã được mã hóa, không hiển thị
+    </p>
+  )}
+</div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên <span className="text-red-500">*</span></label>
