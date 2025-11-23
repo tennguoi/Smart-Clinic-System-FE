@@ -2,8 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import {
-  PhoneCall, User, Calendar, FileText, Pill, Stethoscope,
-  CheckCircle, Plus, Search, Loader2, Check, Receipt
+  PhoneCall, User, Calendar, Plus, Search, Loader2, Check, Receipt, Shield, FileText, Pill, Stethoscope,
+  Save, Printer, CheckCircle, Trash2, X
 } from 'lucide-react';
 
 import {
@@ -191,6 +191,7 @@ export default function CurrentPatientExamination() {
     }
   };
 
+  // HÀM QUAN TRỌNG NHẤT: TỰ ĐỘNG TẠO HÓA ĐƠN + HOÀN THÀNH KHÁM
   const handleComplete = async () => {
     if (!diagnosis.trim()) {
       toast.error('Vui lòng nhập chẩn đoán');
@@ -229,7 +230,6 @@ export default function CurrentPatientExamination() {
         <header className="bg-white border-b px-6 py-4 shadow-sm">
           <h1 className="text-2xl font-semibold">Khám bệnh - {currentPatient.fullName}</h1>
         </header>
-
         <div className="flex-1 flex overflow-hidden">
           {/* Sidebar */}
           <div className="w-80 bg-white border-r border-slate-200 p-6 space-y-6 overflow-y-auto">
