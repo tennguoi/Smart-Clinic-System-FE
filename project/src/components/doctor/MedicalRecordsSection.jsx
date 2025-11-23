@@ -3,19 +3,35 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import CreateRecordForm from './CreateRecordForm';
 import RecordRow from './RecordRow';
-import { Plus, ClipboardList } from 'lucide-react';
+import { Plus, ClipboardList, Search, RotateCcw } from 'lucide-react';
 
 const MedicalRecordsSection = () => {
   const [records, setRecords] = useState([]);
   const [recordsLoading, setRecordsLoading] = useState(false);
   const [recordsError, setRecordsError] = useState('');
+  
+  const [searchParams, setSearchParams] = useState({
+    keyword: '',
+    startDate: '',
+    endDate: ''
+  });
+
   const patientNameMapRef = useRef(new Map());
 
   const fetchMyRecords = useCallback(async () => {
     setRecordsError('');
     setRecordsLoading(true);
     try {
-      const list = await medicalRecordApi.listMine();
+      let list;
+      
+      const hasFilter = searchParams.keyword || searchParams.startDate || searchParams.endDate;
+
+      if (hasFilter) {
+        list = await medicalRecordApi.search(searchParams);
+      } else {
+        list = await medicalRecordApi.listMine();
+      }
+
       const recordsWithNames = (Array.isArray(list) ? list : []).map((record) => {
         const storedPatientName = patientNameMapRef.current.get(record.recordId);
         return {
@@ -31,11 +47,12 @@ const MedicalRecordsSection = () => {
     } finally {
       setRecordsLoading(false);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     fetchMyRecords();
-  }, [fetchMyRecords]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [showCreateForm, setShowCreateForm] = useState(() => {
     const savedPatientName = localStorage.getItem('create_record_patient_name');
@@ -50,12 +67,26 @@ const MedicalRecordsSection = () => {
   const [formSuccess, setFormSuccess] = useState('');
   const [formError, setFormError] = useState('');
 
-  // Hàm này đóng vai trò là "Hoàn thành khám và Lưu"
+  const handleSearchChange = (e) => {
+    const { name, value } = e.target;
+    setSearchParams(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleResetSearch = () => {
+    setSearchParams({ keyword: '', startDate: '', endDate: '' });
+    medicalRecordApi.listMine().then(list => {
+        const recordsWithNames = (Array.isArray(list) ? list : []).map((record) => {
+            const storedPatientName = patientNameMapRef.current.get(record.recordId);
+            return { ...record, patientName: record.patientName || storedPatientName || null };
+        });
+        setRecords(recordsWithNames);
+    });
+  };
+
   const handleCreateRecord = async (formData) => {
     setFormError('');
     setFormSuccess('');
     
-    // Validation: Kiểm tra các trường bắt buộc
     if (!formData.diagnosis || !formData.diagnosis.trim()) {
       setFormError('Chẩn đoán là bắt buộc');
       return;
@@ -82,7 +113,6 @@ const MedicalRecordsSection = () => {
       }
       setShowCreateForm(false);
       
-      // Tải lại danh sách sau khi lưu thành công
       setTimeout(() => {
         setFormSuccess('');
         fetchMyRecords();
@@ -97,6 +127,7 @@ const MedicalRecordsSection = () => {
 
   return (
     <div className="space-y-8">
+      {/* KHỐI 1 */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <div className="px-6 py-4 border-b border-gray-100 relative">
           <div className="flex items-center justify-between">
@@ -135,10 +166,62 @@ const MedicalRecordsSection = () => {
         </div>
       </div>
 
+      {/* KHỐI 2 */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+        <div className="flex flex-col md:flex-row gap-4 items-center">
+          <div className="flex-1 w-full">
+            <input 
+              type="text" 
+              name="keyword"
+              placeholder="🔍 Tìm tên bệnh nhân, SĐT..." 
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+              value={searchParams.keyword}
+              onChange={handleSearchChange}
+              onKeyDown={(e) => e.key === 'Enter' && fetchMyRecords()}
+            />
+          </div>
+          
+          <div className="flex gap-2 items-center">
+            <input 
+              type="date" 
+              name="startDate"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-all"
+              value={searchParams.startDate}
+              onChange={handleSearchChange}
+            />
+            <span className="text-gray-400">-</span>
+            <input 
+              type="date" 
+              name="endDate"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-all"
+              value={searchParams.endDate}
+              onChange={handleSearchChange}
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <button 
+              onClick={fetchMyRecords}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium transition-colors shadow-sm"
+            >
+              <Search className="w-4 h-4" /> Tìm kiếm
+            </button>
+            <button 
+              onClick={handleResetSearch}
+              className="bg-gray-100 text-gray-600 px-3 py-2 rounded-lg hover:bg-gray-200 border border-gray-200 transition-colors"
+              title="Xóa bộ lọc"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* KHỐI 3 */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-800">Danh sách hồ sơ đã tạo</h2>
-          {recordsLoading && <span className="text-sm text-blue-500 font-medium">Đang tải dữ liệu...</span>}
+          {recordsLoading && <span className="text-sm text-blue-500 font-medium animate-pulse">Đang tải dữ liệu...</span>}
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -154,8 +237,12 @@ const MedicalRecordsSection = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {records.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
-                    Chưa có hồ sơ nào. Hãy nhấn "Tạo hồ sơ mới" để hoàn thành ca khám.
+                  <td colSpan="5" className="px-6 py-10 text-center text-gray-500">
+                    {recordsLoading 
+                      ? 'Đang tìm kiếm...' 
+                      : (searchParams.keyword || searchParams.startDate 
+                          ? '🔍 Không tìm thấy hồ sơ nào phù hợp với bộ lọc.' 
+                          : 'Chưa có hồ sơ nào. Hãy nhấn "Tạo hồ sơ mới" để hoàn thành ca khám.')}
                   </td>
                 </tr>
               ) : (
