@@ -19,6 +19,9 @@ const MedicalRecordsSection = () => {
   });
   const patientNameMapRef = useRef(new Map());
 
+  // Lấy ngày hiện tại định dạng YYYY-MM-DD để làm mốc giới hạn
+  const today = new Date().toISOString().split('T')[0];
+
   // PHẦN MỚI: Phân trang
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -43,12 +46,12 @@ const MedicalRecordsSection = () => {
       }
 
       const startIdx = (page - 1) * ITEMS_PER_PAGE;
-const endIdx = startIdx + ITEMS_PER_PAGE;
-const paginatedList = list.slice(startIdx, endIdx);
+      const endIdx = startIdx + ITEMS_PER_PAGE;
+      const paginatedList = list.slice(startIdx, endIdx);
 
-const recordsWithNames = paginatedList.map((record) => {
-  const storedPatientName = patientNameMapRef.current.get(record.recordId);
-  return {
+      const recordsWithNames = paginatedList.map((record) => {
+        const storedPatientName = patientNameMapRef.current.get(record.recordId);
+        return {
           ...record,
           patientName: record.patientName || storedPatientName || null,
         };
@@ -92,7 +95,17 @@ const recordsWithNames = paginatedList.map((record) => {
 
   const handleSearchChange = (e) => {
     const { name, value } = e.target;
-    setSearchParams(prev => ({ ...prev, [name]: value }));
+    setSearchParams(prev => {
+      const newParams = { ...prev, [name]: value };
+      
+      // Logic tự động sửa nếu người dùng cố tình nhập tay sai (validation logic)
+      // Tuy nhiên với input type="date" có min/max thì UI đã chặn phần lớn rồi
+      if (name === 'startDate' && newParams.endDate && value > newParams.endDate) {
+         // Nếu chọn ngày bắt đầu lớn hơn ngày kết thúc -> Reset ngày kết thúc hoặc set bằng ngày bắt đầu
+         // Ở đây mình giữ nguyên để input min/max lo liệu việc hiển thị đỏ/cảnh báo
+      }
+      return newParams;
+    });
   };
 
   const handleResetSearch = () => {
@@ -244,39 +257,75 @@ const recordsWithNames = paginatedList.map((record) => {
         </div>
       </div>
 
-      {/* KHỐI 2 */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
-        <div className="flex flex-col md:flex-row gap-4 items-center">
-          <div className="flex-1 w-full">
-            <input
-              type="text"
-              name="keyword"
-              placeholder="Tìm tên bệnh nhân, SĐT..."
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
-              value={searchParams.keyword}
-              onChange={handleSearchChange}
-              onKeyDown={(e) => e.key === 'Enter' && fetchMyRecords(1)}
-            />
+      {/* KHỐI 2: BỘ LỌC ĐÃ ĐƯỢC CÂN LẠI */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+          
+          {/* Cột 1: Tìm kiếm từ khóa (Chiếm 5 phần) */}
+          <div className="md:col-span-5">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Từ khóa tìm kiếm
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                name="keyword"
+                placeholder="Nhập tên bệnh nhân, SĐT..."
+                className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+                value={searchParams.keyword}
+                onChange={handleSearchChange}
+              />
+            </div>
           </div>
 
-          <div className="flex gap-2 items-center">
-            <input type="date" name="startDate" className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-all" value={searchParams.startDate} onChange={handleSearchChange} />
-            <span className="text-gray-400">-</span>
-            <input type="date" name="endDate" className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-all" value={searchParams.endDate} onChange={handleSearchChange} />
+          {/* Cột 2: Lọc theo ngày (Chiếm 5 phần) */}
+          <div className="md:col-span-5 flex gap-2 items-end">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Từ ngày
+              </label>
+              <input 
+                type="date" 
+                name="startDate" 
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-all" 
+                value={searchParams.startDate} 
+                onChange={handleSearchChange}
+                max={searchParams.endDate || today} // Không lớn hơn ngày tới (hoặc hôm nay)
+              />
+            </div>
+            <span className="text-gray-400 mb-2">-</span>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Đến ngày
+              </label>
+              <input 
+                type="date" 
+                name="endDate" 
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-all" 
+                value={searchParams.endDate} 
+                onChange={handleSearchChange}
+                min={searchParams.startDate} // Không nhỏ hơn ngày từ
+                max={today} // Không được chọn tương lai
+              />
+            </div>
           </div>
 
-          <div className="flex gap-2">
-            <button onClick={() => fetchMyRecords(1)} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium transition-colors shadow-sm">
-              <Search className="w-4 h-4" /> Tìm kiếm
-            </button>
+          {/* Cột 3: Nút xóa bộ lọc (Chiếm 2 phần) - Căn phải hoặc fill */}
+          {/* ĐÃ SỬA: Nút màu xám */}
+          <div className="md:col-span-2 flex justify-end">
             <button
               onClick={handleResetSearch}
-              className="bg-gray-100 text-gray-600 px-3 py-2 rounded-lg hover:bg-gray-200 border border-gray-200 transition-colors"
-              title="Xóa bộ lọc"
+              className="w-full bg-gray-100 text-gray-600 border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center justify-center gap-2 font-medium transition-colors"
+              title="Đặt lại điều kiện lọc"
             >
               <RotateCcw className="w-4 h-4" />
+              Xóa bộ lọc
             </button>
           </div>
+
         </div>
       </div>
 
@@ -289,52 +338,49 @@ const recordsWithNames = paginatedList.map((record) => {
           {recordsLoading && <span className="text-sm text-blue-500 font-medium animate-pulse">Đang tải dữ liệu...</span>}
         </div>
 
-                {/* BỌC TOÀN BỘ BẢNG + PHÂN TRANG ĐỂ ĐẨY XUỐNG DƯỚI */}
-        <div className="min-h-96 flex flex-col justify-between">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+        {/* Bảng dữ liệu - Để tự nhiên, không fix chiều cao */}
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">STT</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tên bệnh nhân</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Chẩn đoán</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ghi chú</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Hành động</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {records.length === 0 ? (
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">STT</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tên bệnh nhân</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Chẩn đoán</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ghi chú</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Hành động</th>
+                  <td colSpan="5" className="px-6 py-10 text-center text-gray-500">
+                    {recordsLoading
+                      ? 'Đang tìm kiếm...'
+                      : (searchParams.keyword || searchParams.startDate || searchParams.endDate
+                          ? 'Không tìm thấy hồ sơ nào phù hợp với bộ lọc.'
+                          : 'Chưa có hồ sơ nào. Hãy nhấn "Tạo hồ sơ mới" để hoàn thành ca khám.')}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {records.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="px-6 py-10 text-center text-gray-500">
-                      {recordsLoading
-                        ? 'Đang tìm kiếm...'
-                        : (searchParams.keyword || searchParams.startDate || searchParams.endDate
-                            ? 'Không tìm thấy hồ sơ nào phù hợp với bộ lọc.'
-                            : 'Chưa có hồ sơ nào. Hãy nhấn "Tạo hồ sơ mới" để hoàn thành ca khám.')}
-                    </td>
-                  </tr>
-                ) : (
-                  records.map((r, idx) => (
-                    <RecordRow
-                      key={r.recordId}
-                      index={(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}
-                      record={r}
-                      onUpdated={() => fetchMyRecords(currentPage)}
-                      onError={setFormError}
-                      onDelete={(recordId) => patientNameMapRef.current.delete(recordId)}
-                    />
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+              ) : (
+                records.map((r, idx) => (
+                  <RecordRow
+                    key={r.recordId}
+                    index={(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}
+                    record={r}
+                    onUpdated={() => fetchMyRecords(currentPage)}
+                    onError={setFormError}
+                    onDelete={(recordId) => patientNameMapRef.current.delete(recordId)}
+                  />
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-          {/* PHÂN TRANG - luôn ở dưới cùng */}
-          {/* PHÂN TRANG LUÔN Ở DƯỚI CÙNG, KHÔNG BAO GIỜ NHẢY */}
-          <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
-            <div className="flex justify-center">
-              {renderPagination()}
-            </div>
+        {/* PHÂN TRANG - luôn ở dưới cùng */}
+        <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
+          <div className="flex justify-center">
+            {renderPagination()}
           </div>
         </div>
       </div>
