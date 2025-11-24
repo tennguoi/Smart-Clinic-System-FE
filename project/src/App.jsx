@@ -24,6 +24,7 @@ import SecurityPage from "./pages/SecurityPage";
 
 // Dashboard Layout
 import AdminPage from "./pages/AdminPage";
+import StatisticsPage from "./components/admin/Statistics";
 import DoctorPage from "./pages/DoctorPage";
 import ReceptionPage from "./pages/ReceptionPage";
 
@@ -33,6 +34,7 @@ import DoctorManagement from "./components/admin/DoctorManagement";
 import ServiceManagement from "./components/admin/ServiceManagement";
 import ArticleManagement from "./components/admin/ArticleManagement";
 import AccountManagement from "./components/admin/AccountManagement";
+
 import ClinicManagement from "./components/admin/ClinicManagement";
 import PlaceholderSection from "./components/common/PlaceholderSection";
 
@@ -93,6 +95,7 @@ function App() {
           }
         >
           <Route index element={<RevenueTable />} />
+          <Route path="statistics" element={<StatisticsPage />} />  
           <Route path="revenue" element={<RevenueTable />} />
           <Route path="doctors" element={<DoctorManagement />} />
           <Route path="services" element={<ServiceManagement />} />
@@ -153,3 +156,4 @@ function App() {
 }
 
 export default App;
+//  <Route path="statistics" element={<StatisticsPage />}
