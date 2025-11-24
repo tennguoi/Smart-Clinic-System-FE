@@ -1,7 +1,7 @@
 import Sidebar from '../common/Sidebar';
 import { 
   TrendingUp, Stethoscope, Briefcase, Newspaper, 
-  Users, UserCheck, FileText, Pill, UserCircle ,Building2
+  Users, UserCheck, FileText, Pill, UserCircle ,Building2,BarChart3
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
