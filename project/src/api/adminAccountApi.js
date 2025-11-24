@@ -1,112 +1,53 @@
+// src/api/adminAccountApi.js (hoặc đường dẫn của bạn)
 import axiosInstance from '../utils/axiosConfig';
 
-/**
- * API cho quản lý tài khoản admin
- */
 const adminAccountApi = {
-  /**
-   * Tạo user mới với file ảnh
-   * @param {Object} userData - Thông tin user
-   * @param {File} photoFile - File ảnh (optional)
-   */
   createUser: async (userData, photoFile = null) => {
     const formData = new FormData();
-    
-    // Thêm data dưới dạng JSON blob
-    formData.append('data', new Blob([JSON.stringify(userData)], { 
-      type: 'application/json' 
-    }));
-    
-    // Thêm file ảnh nếu có
-    if (photoFile) {
-      formData.append('photo', photoFile);
-    }
-    
+    formData.append('data', new Blob([JSON.stringify(userData)], { type: 'application/json' }));
+    if (photoFile) formData.append('photo', photoFile);
+
     const response = await axiosInstance.post('/api/admin/users', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+      headers: { 'Content-Type': 'multipart/form-data' },
     });
-    
     return response.data;
   },
 
-  /**
-   * Lấy danh sách tất cả users
-   */
   getAllUsers: async () => {
     const response = await axiosInstance.get('/api/admin/users');
     return response.data;
   },
 
-  /**
-   * Lấy thông tin user theo ID
-   * @param {string} userId - UUID của user
-   */
   getUserById: async (userId) => {
     const response = await axiosInstance.get(`/api/admin/users/${userId}`);
     return response.data;
   },
 
-  /**
-   * Cập nhật thông tin user với file ảnh
-   * @param {string} userId - UUID của user
-   * @param {Object} userData - Thông tin cập nhật
-   * @param {File} photoFile - File ảnh mới (optional)
-   */
+  // CHỈ CẦN HÀM NÀY LÀ SỬA ĐƯỢC HẾT: THÔNG TIN + ROLE + ẢNH + KÍCH HOẠT
   updateUser: async (userId, userData, photoFile = null) => {
     const formData = new FormData();
     
-    // Thêm data dưới dạng JSON blob
-    formData.append('data', new Blob([JSON.stringify(userData)], { 
-      type: 'application/json' 
-    }));
+    // userData giờ có thể chứa: roles, isVerified, password, v.v.
+    formData.append('data', new Blob([JSON.stringify(userData)], { type: 'application/json' }));
     
-    // Thêm file ảnh nếu có
     if (photoFile) {
       formData.append('photo', photoFile);
     }
-    
+
     const response = await axiosInstance.put(`/api/admin/users/${userId}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+      headers: { 'Content-Type': 'multipart/form-data' },
     });
     
     return response.data;
   },
 
-  /**
-   * Cập nhật roles của user
-   * @param {string} userId - UUID của user
-   * @param {Array<string>} roles - Danh sách roles
-   */
-  updateUserRoles: async (userId, roles) => {
-    const response = await axiosInstance.put(`/api/admin/users/${userId}/roles`, {
-      roles,
-    });
-    return response.data;
-  },
-
-  /**
-   * Đổi trạng thái xác thực của user (kích hoạt/vô hiệu hóa tài khoản)
-   * @param {string} userId - UUID của user
-   * @param {boolean} isVerified - Trạng thái xác thực (true = kích hoạt, false = vô hiệu hóa)
-   */
+  // Bạn có thể giữ lại để dùng nhanh khi chỉ muốn bật/tắt tài khoản
   toggleVerifyStatus: async (userId, isVerified) => {
-    const response = await axiosInstance.patch(`/api/admin/users/${userId}/verify-status`, {
-      isVerified,
-    });
-    return response.data;
+    await axiosInstance.patch(`/api/admin/users/${userId}/verify-status`, { isVerified });
   },
 
-  /**
-   * Xóa user
-   * @param {string} userId - UUID của user
-   */
   deleteUser: async (userId) => {
-    const response = await axiosInstance.delete(`/api/admin/users/${userId}`);
-    return response.data;
+    await axiosInstance.delete(`/api/admin/users/${userId}`);
   },
 };
 
