@@ -15,11 +15,11 @@ import {
 
 import {
   addService,
-  addPrescription,
   getExaminationSummary,
   getPatientMedicalHistory
 } from '../../api/examinationApi';
 
+import medicalRecordApi from '../../api/medicalRecordApi';
 import axiosInstance from '../../utils/axiosConfig';
 
 const formatPrice = (price) => {
@@ -39,11 +39,12 @@ export default function CurrentPatientExamination() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedServices, setSelectedServices] = useState([]);
 
-  // Form khám
+  // Form khám - THÊM TREATMENT NOTES
   const [diagnosis, setDiagnosis] = useState('');
-  const [newDrug, setNewDrug] = useState({ medication: '', quantity: '', instructions: '' });
+  const [treatmentNotes, setTreatmentNotes] = useState(''); // ✅ Thêm state cho ghi chú điều trị
+  const [prescriptionData, setPrescriptionData] = useState({ drugs: '', instructions: '' }); // ✅ Thay đổi cấu trúc
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('examination'); // examination | services | invoice
+  const [activeTab, setActiveTab] = useState('examination');
 
   const loadData = useCallback(async () => {
     try {
@@ -76,6 +77,7 @@ export default function CurrentPatientExamination() {
         setMedicalHistory(historyRes || []);
 
         if (summaryRes?.diagnosis) setDiagnosis(summaryRes.diagnosis);
+        if (summaryRes?.treatmentNotes) setTreatmentNotes(summaryRes.treatmentNotes);
 
         if (summaryRes?.serviceItems) {
           setSelectedServices(summaryRes.serviceItems.map(item => ({
@@ -85,11 +87,21 @@ export default function CurrentPatientExamination() {
             quantity: item.quantity
           })));
         }
+
+        // Load prescription nếu có
+        if (summaryRes?.prescription) {
+          setPrescriptionData({
+            drugs: summaryRes.prescription.drugs || '',
+            instructions: summaryRes.prescription.instructions || ''
+          });
+        }
       } else {
         setCurrentPatient(null);
         setSummary(null);
         setSelectedServices([]);
         setDiagnosis('');
+        setTreatmentNotes('');
+        setPrescriptionData({ drugs: '', instructions: '' });
       }
     } catch (err) {
       toast.error('Lỗi tải dữ liệu');
@@ -134,41 +146,31 @@ export default function CurrentPatientExamination() {
       toast.info('Dịch vụ đã được chọn');
       return;
     }
+
+    if (!currentPatient?.queueId) {
+      toast.error('Không tìm thấy thông tin bệnh nhân');
+      return;
+    }
+
+    if (!service?.id) {
+      toast.error('Dịch vụ không hợp lệ');
+      return;
+    }
+
     setIsLoading(true);
     try {
       const res = await addService({
         currentQueueId: currentPatient.queueId,
-        serviceId: service.id,
+        serviceId: String(service.id), 
         quantity: 1,
         note: ''
       });
+
       setSummary(res);
       setSelectedServices(prev => [...prev, { ...service, quantity: 1 }]);
       toast.success(`Đã thêm: ${service.name}`);
-    } catch {
-      toast.error('Lỗi thêm dịch vụ');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const addDrug = async () => {
-    if (!newDrug.medication.trim() || !newDrug.instructions.trim()) {
-      toast.error('Vui lòng nhập tên thuốc và hướng dẫn dùng');
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const res = await addPrescription({
-        currentQueueId: currentPatient.queueId,
-        drugs: `${newDrug.medication} - ${newDrug.quantity || ''}`.trim(),
-        instructions: newDrug.instructions
-      });
-      setSummary(res);
-      setNewDrug({ medication: '', quantity: '', instructions: '' });
-      toast.success('Đã kê đơn thành công');
-    } catch {
-      toast.error('Lỗi kê đơn');
+    } catch (error) {
+      toast.error(error.response?.data || 'Lỗi thêm dịch vụ');
     } finally {
       setIsLoading(false);
     }
@@ -191,18 +193,58 @@ export default function CurrentPatientExamination() {
     }
   };
 
-  // HÀM QUAN TRỌNG NHẤT: TỰ ĐỘNG TẠO HÓA ĐƠN + HOÀN THÀNH KHÁM
+  // ✅ HÀM HOÀN THÀNH KHÁM - Tự động lưu prescription
   const handleComplete = async () => {
     if (!diagnosis.trim()) {
       toast.error('Vui lòng nhập chẩn đoán');
       return;
     }
+
+    // Kiểm tra prescription data
+    if (prescriptionData.drugs.trim() && !prescriptionData.instructions.trim()) {
+      toast.error('Vui lòng nhập hướng dẫn sử dụng thuốc');
+      return;
+    }
+
+    setIsLoading(true);
     try {
+      // 1. Cập nhật medical record (diagnosis + treatmentNotes)
+      // Lấy recordId từ summary hoặc current examination
+      const recordId = summary?.recordId;
+      
+      if (!recordId) {
+        toast.error('Không tìm thấy thông tin bệnh án');
+        setIsLoading(false);
+        return;
+      }
+
+      // Update medical record
+      await medicalRecordApi.update(recordId, {
+        patientId: currentPatient.patientId,
+        patientName: currentPatient.fullName,
+        diagnosis: diagnosis.trim(),
+        treatmentNotes: treatmentNotes.trim()
+      });
+
+      // 2. Lưu prescription nếu có
+      if (prescriptionData.drugs.trim() && prescriptionData.instructions.trim()) {
+        await medicalRecordApi.addPrescription({
+          recordId: recordId,
+          drugs: prescriptionData.drugs.trim(),
+          instructions: prescriptionData.instructions.trim()
+        });
+      }
+
+      // 3. Hoàn thành khám
       await completeExamination();
+      
       toast.success('Hoàn thành khám thành công!');
       await loadData();
-    } catch {
-      toast.error('Lỗi hoàn thành khám');
+    } catch (error) {
+      console.error('Error completing examination:', error);
+      toast.error(error.response?.data?.message || 'Lỗi hoàn thành khám');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -295,8 +337,19 @@ export default function CurrentPatientExamination() {
                     <textarea
                       value={diagnosis}
                       onChange={e => setDiagnosis(e.target.value)}
-                      className="w-full h-48 p-5 border border-slate-300 rounded-xl focus:ring-4 focus:ring-emerald-100 resize-none"
+                      className="w-full h-32 p-5 border border-slate-300 rounded-xl focus:ring-4 focus:ring-emerald-100 resize-none"
                       placeholder="Nhập chẩn đoán chi tiết..."
+                    />
+                  </div>
+
+                  {/* ✅ THÊM GHI CHÚ ĐIỀU TRỊ */}
+                  <div>
+                    <label className="block text-lg font-bold mb-3">Ghi chú điều trị</label>
+                    <textarea
+                      value={treatmentNotes}
+                      onChange={e => setTreatmentNotes(e.target.value)}
+                      className="w-full h-32 p-5 border border-slate-300 rounded-xl focus:ring-4 focus:ring-blue-100 resize-none"
+                      placeholder="Ghi chú về quá trình điều trị, theo dõi..."
                     />
                   </div>
 
@@ -304,28 +357,34 @@ export default function CurrentPatientExamination() {
                     <h3 className="text-xl font-bold mb-6 flex items-center gap-3">
                       <Pill size={28} /> Kê đơn thuốc
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                      <input placeholder="Tên thuốc + hàm lượng" value={newDrug.medication}
-                        onChange={e => setNewDrug({ ...newDrug, medication: e.target.value })}
-                        className="px-4 py-3 border rounded-xl" />
-                      <input placeholder="Số lượng" value={newDrug.quantity}
-                        onChange={e => setNewDrug({ ...newDrug, quantity: e.target.value })}
-                        className="px-4 py-3 border rounded-xl" />
-                      <input placeholder="Hướng dẫn dùng" value={newDrug.instructions}
-                        onChange={e => setNewDrug({ ...newDrug, instructions: e.target.value })}
-                        className="px-4 py-3 border rounded-xl md:col-span-2" />
-                      <button onClick={addDrug} disabled={isLoading}
-                        className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-emerald-700 flex items-center justify-center gap-2">
-                        {isLoading ? <Loader2 className="animate-spin" /> : <Plus size={20} />}
-                        Kê đơn
-                      </button>
+                    
+                    <div className="space-y-4 mb-6">
+                      <div>
+                        <label className="block text-sm font-semibold mb-2">Tên thuốc + hàm lượng</label>
+                        <textarea
+                          placeholder="Ví dụ: Paracetamol 500mg, Amoxicillin 250mg..."
+                          value={prescriptionData.drugs}
+                          onChange={e => setPrescriptionData({ ...prescriptionData, drugs: e.target.value })}
+                          className="w-full px-4 py-3 border rounded-xl resize-none h-24"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-semibold mb-2">Hướng dẫn sử dụng</label>
+                        <textarea
+                          placeholder="Ví dụ: Uống 2 lần/ngày, sáng và tối sau ăn..."
+                          value={prescriptionData.instructions}
+                          onChange={e => setPrescriptionData({ ...prescriptionData, instructions: e.target.value })}
+                          className="w-full px-4 py-3 border rounded-xl resize-none h-24"
+                        />
+                      </div>
                     </div>
 
-                    {summary?.prescription && (
+                    {prescriptionData.drugs && prescriptionData.instructions && (
                       <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-xl border border-blue-200">
-                        <h4 className="font-bold mb-3">Đơn thuốc đã kê:</h4>
-                        <pre className="font-medium whitespace-pre-wrap">{summary.prescription.drugs}</pre>
-                        <p className="text-sm italic text-slate-600 mt-3">{summary.prescription.instructions}</p>
+                        <h4 className="font-bold mb-3">Đơn thuốc hiện tại:</h4>
+                        <div className="font-medium whitespace-pre-wrap mb-3">{prescriptionData.drugs}</div>
+                        <p className="text-sm italic text-slate-600">{prescriptionData.instructions}</p>
                       </div>
                     )}
                   </div>
@@ -419,10 +478,10 @@ export default function CurrentPatientExamination() {
 
                         <button
                           onClick={handleComplete}
-                          disabled={!diagnosis.trim()}
+                          disabled={!diagnosis.trim() || isLoading}
                           className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-12 py-5 rounded-2xl text-xl font-bold shadow-2xl hover:shadow-3xl disabled:opacity-60 flex items-center gap-4"
                         >
-                          <CheckCircle size={32} />
+                          {isLoading ? <Loader2 className="animate-spin" /> : <CheckCircle size={32} />}
                           Hoàn thành khám
                         </button>
                       </div>
@@ -450,7 +509,7 @@ export default function CurrentPatientExamination() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {queue.length === 0 ? (
             <div className="col-span-full text-center py-32">
-              <div className="text-6xl mb-6">Không có bệnh nhân</div>
+              <div className="text-6xl mb-6">😊</div>
               <p className="text-2xl text-slate-500">Hiện tại chưa có bệnh nhân nào trong hàng chờ</p>
             </div>
           ) : (
