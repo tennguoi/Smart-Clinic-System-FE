@@ -1,21 +1,19 @@
 import Sidebar from '../common/Sidebar';
 import { 
   TrendingUp, Stethoscope, Briefcase, Newspaper, 
-  Users, UserCheck, FileText, Pill, UserCircle 
+  Users, UserCheck, FileText, Pill, UserCircle ,Building2
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const adminMenuItems = [
-  { id: 'statistics',    label: 'Thống kê',          icon: TrendingUp },
-  { id: 'revenue',       label: 'Doanh Thu',         icon: TrendingUp },
-  { id: 'doctors',       label: 'Đội Ngũ Bác Sĩ',    icon: Stethoscope },
-  { id: 'services',      label: 'Quản Lý Dịch Vụ',   icon: Briefcase },
-  { id: 'articles',      label: 'Quản Lý Bài Viết',  icon: Newspaper },
-  { id: 'staff',         label: 'Nhân Viên',         icon: Users },
-  { id: 'patients',      label: 'Bệnh Nhân',         icon: UserCheck },
-  { id: 'invoices',      label: 'Hóa Đơn',           icon: FileText },
-  { id: 'medicine',      label: 'Thuốc',             icon: Pill },
-  { id: 'accounts',      label: 'Tài Khoản',         icon: UserCircle },
+  { id: 'statistics',    label: 'Thống kê',          icon: BarChart3 },
+  { id: 'revenue',  label: 'Doanh Thu',         icon: TrendingUp },
+  { id: 'clinic',   label: 'Thông Tin Phòng Khám', icon: Building2 },
+  { id: 'accounts', label: 'Tài Khoản',         icon: UserCircle },
+  { id: 'articles', label: 'Quản Lý Tin Tức',   icon: Newspaper },
+  { id: 'patients', label: 'Bệnh Nhân',         icon: UserCheck },
+  { id: 'services', label: 'Quản Lý Dịch Vụ',   icon: Briefcase },
+  { id: 'invoices', label: 'Hóa Đơn',           icon: FileText },
 ];
 
 export default function AdminSidebar({ activeMenu: propActiveMenu, onMenuChange }) {
@@ -30,6 +28,7 @@ export default function AdminSidebar({ activeMenu: propActiveMenu, onMenuChange 
      currentPath.includes('/admin/doctors')       ? 'doctors' :
      currentPath.includes('/admin/services')      ? 'services' :
      currentPath.includes('/admin/articles')      ? 'articles' :
+     currentPath.includes('/admin/clinic')        ? 'clinic' :
      currentPath.includes('/admin/staff')         ? 'staff' :
      currentPath.includes('/admin/patients')      ? 'patients' :
      currentPath.includes('/admin/invoices')      ? 'invoices' :
@@ -51,6 +50,8 @@ export default function AdminSidebar({ activeMenu: propActiveMenu, onMenuChange 
       navigate('/admin/services');
     } else if (id === 'articles') {
       navigate('/admin/articles');
+    } else if (id === 'clinic') {
+      navigate('/admin/clinic');
     } else if (id === 'staff') {
       navigate('/admin/staff');
     } else if (id === 'patients') {

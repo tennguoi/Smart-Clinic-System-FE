@@ -1,10 +1,11 @@
 // src/components/doctor/RecordRow.jsx
 import { useState } from 'react';
-import { Pencil, Trash2, Pill, Download } from 'lucide-react';
+import { Pencil, Trash2, Pill, Download, FileText } from 'lucide-react';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import toast from 'react-hot-toast';
 import RecordDetailModal from './RecordDetailModal';
 import PrescriptionFormModal from './PrescriptionFormModal';
+import { downloadPdf, getMedicalRecordFilename } from '../../utils/pdfDownload';
 
 const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
   const [editing, setEditing] = useState(false);
@@ -71,18 +72,9 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
     setExporting(true);
     try {
       const pdfBlob = await medicalRecordApi.exportAsPdf(record.recordId);
+      await downloadPdf(pdfBlob, getMedicalRecordFilename(record.recordId));
       
-      // Tạo URL từ blob và download
-      const url = window.URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `HoSoBenhAn_${record.recordId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      toast.success('Xuất PDF thành công!', {
+      toast.success('Xuất PDF hồ sơ thành công!', {
         duration: 3000,
         position: 'top-right',
       });
@@ -97,6 +89,7 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
       setExporting(false);
     }
   };
+
 
   return (
     <>
@@ -149,13 +142,13 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => {
                   onError(null);
                   setShowPrescriptionModal(true);
                 }}
-                className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700"
+                className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors"
                 aria-label="Tạo đơn thuốc"
                 title="Tạo đơn thuốc"
               >
@@ -165,11 +158,11 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
               <button
                 onClick={handleExportPdf}
                 disabled={exporting}
-                className="p-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 disabled:opacity-60"
-                aria-label="Xuất PDF"
-                title={exporting ? 'Đang xuất...' : 'Xuất PDF'}
+                className="p-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 disabled:opacity-60 transition-colors"
+                aria-label="Xuất PDF hồ sơ"
+                title={exporting ? 'Đang xuất...' : 'Xuất PDF hồ sơ bệnh án'}
               >
-                <Download className="w-4 h-4" />
+                <FileText className="w-4 h-4" />
               </button>
 
               <button

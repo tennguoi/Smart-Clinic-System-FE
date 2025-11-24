@@ -1,9 +1,15 @@
 import { useState } from 'react';
 import { ChevronDown, MessageSquare } from 'lucide-react';
+import { useClinic } from '../contexts/ClinicContext';
 import Footer from '../components/Footer';
 
 export default function FAQPage() {
   const [expandedId, setExpandedId] = useState('faq-1');
+  const { clinicInfo } = useClinic();
+
+  // Fallback values nếu chưa có dữ liệu
+  const clinicPhone = clinicInfo?.phone || '0123 456 789';
+  const clinicEmail = clinicInfo?.email || 'contact@entclinic.vn';
 
   const faqs = [
     {
@@ -28,7 +34,7 @@ export default function FAQPage() {
       id: 'faq-4',
       category: 'Đặt Lịch',
       question: 'Làm thế nào để đặt lịch khám?',
-      answer: 'Bạn có thể đặt lịch qua: 1) Website (sử dụng form đặt lịch online), 2) Điện thoại: 0123 456 789, 3) Zalo: 0987 654 321, 4) Trực tiếp tại phòng khám. Đặt lịch trước giúp bạn không phải chờ đợi.'
+      answer: `Bạn có thể đặt lịch qua: 1) Website (sử dụng form đặt lịch online), 2) Điện thoại: ${clinicPhone}, 3) Email: ${clinicEmail}, 4) Trực tiếp tại phòng khám. Đặt lịch trước giúp bạn không phải chờ đợi.`
     },
     {
       id: 'faq-5',
@@ -100,26 +106,35 @@ export default function FAQPage() {
             <div className="text-4xl mb-3">📞</div>
             <h3 className="font-bold text-gray-900 mb-2">Gọi Điện</h3>
             <p className="text-gray-600 mb-4">Gọi ngay để được tư vấn</p>
-            <a href="tel:0123456789" className="text-blue-600 font-semibold hover:underline">
-              0123 456 789
+            <a href={`tel:${clinicPhone.replace(/\s/g, '')}`} className="text-blue-600 font-semibold hover:underline">
+              {clinicPhone}
             </a>
           </div>
-          <div className="bg-gradient-to-br from-blue-50 to-teal-50 rounded-xl p-8 text-center">
-            <div className="text-4xl mb-3">💬</div>
-            <h3 className="font-bold text-gray-900 mb-2">Zalo</h3>
-            <p className="text-gray-600 mb-4">Nhắn tin ngay trên Zalo</p>
-            <a href="tel:0987654321" className="text-blue-600 font-semibold hover:underline">
-              0987 654 321
-            </a>
-          </div>
-          <div className="bg-gradient-to-br from-blue-50 to-teal-50 rounded-xl p-8 text-center">
-            <div className="text-4xl mb-3">📧</div>
-            <h3 className="font-bold text-gray-900 mb-2">Email</h3>
-            <p className="text-gray-600 mb-4">Gửi email cho chúng tôi</p>
-            <a href="mailto:contact@entclinic.vn" className="text-blue-600 font-semibold hover:underline">
-              contact@entclinic.vn
-            </a>
-          </div>
+          {clinicInfo?.website && (
+            <div className="bg-gradient-to-br from-blue-50 to-teal-50 rounded-xl p-8 text-center">
+              <div className="text-4xl mb-3">🌐</div>
+              <h3 className="font-bold text-gray-900 mb-2">Website</h3>
+              <p className="text-gray-600 mb-4">Truy cập website của chúng tôi</p>
+              <a 
+                href={clinicInfo.website.startsWith('http') ? clinicInfo.website : `https://${clinicInfo.website}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 font-semibold hover:underline"
+              >
+                {clinicInfo.website}
+              </a>
+            </div>
+          )}
+          {clinicEmail && (
+            <div className="bg-gradient-to-br from-blue-50 to-teal-50 rounded-xl p-8 text-center">
+              <div className="text-4xl mb-3">📧</div>
+              <h3 className="font-bold text-gray-900 mb-2">Email</h3>
+              <p className="text-gray-600 mb-4">Gửi email cho chúng tôi</p>
+              <a href={`mailto:${clinicEmail}`} className="text-blue-600 font-semibold hover:underline">
+                {clinicEmail}
+              </a>
+            </div>
+          )}
         </div>
 
         <div className="bg-gradient-to-br from-blue-600 to-teal-600 text-white rounded-xl p-12 text-center">

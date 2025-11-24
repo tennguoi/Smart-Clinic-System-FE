@@ -5,17 +5,17 @@ import Header from '../components/common/Header';
 import MedicalRecordsSection from '../components/doctor/MedicalRecordsSection';
 import MedicalRecordHistory from '../components/doctor/MedicalRecordHistory';
 import DoctorScheduleSection from '../components/doctor/DoctorScheduleSection';
-import PlaceholderSection from '../components/common/PlaceholderSection';
 import CurrentPatientExamination from '../components/doctor/CurrentPatientExamination';
-import { Toaster } from 'react-hot-toast';
 import DoctorStatsDashboard from '../components/doctor/DoctorStatsDashboard';
+import InvoicesSection from '../components/receptionist/InvoicesSection'; // THÊM DÒNG NÀY
+import { Toaster } from 'react-hot-toast';
 
 export default function DoctorPage() {
   const [activeMenu, setActiveMenu] = useState(() => {
     try {
-      return localStorage.getItem('doctor_active_menu') || 'schedule';
+      return localStorage.getItem('doctor_active_menu') || 'current-patient'; // đổi default cho hợp lý
     } catch {
-      return 'schedule';
+      return 'current-patient';
     }
   });
 
@@ -33,16 +33,18 @@ export default function DoctorPage() {
         <Header />
 
         <main className="flex-1 p-8 space-y-8 overflow-y-auto">
-          
           {activeMenu === 'current-patient' && (
             <CurrentPatientExamination onNavigateToRecords={() => setActiveMenu('records')} />
           )}
           {activeMenu === 'stats' && <DoctorStatsDashboard />}
           {activeMenu === 'records' && <MedicalRecordsSection />}
           {activeMenu === 'history' && <MedicalRecordHistory />}
-          {activeMenu === 'invoices' && (
-            <PlaceholderSection title="Quản lý hóa đơn" message="Tính năng đang được phát triển..." />
-          )}
+          
+          {/* ĐÃ SỬA – BÁC SĨ XEM HÓA ĐƠN ĐẸP NHƯ LỄ TÂN */}
+          {activeMenu === 'invoices' && <InvoicesSection isDoctorView={true} />}
+
+          {/* Nếu có menu khác chưa làm thì để placeholder tạm */}
+          {/* {activeMenu === 'schedule' && <DoctorScheduleSection />} */}
         </main>
       </div>
 

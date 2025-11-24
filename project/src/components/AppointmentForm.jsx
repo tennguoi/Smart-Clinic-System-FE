@@ -1,8 +1,8 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import { Send, Calendar, Clock, ChevronDown, Search } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
 
 export default function AppointmentForm() {
   const [formData, setFormData] = useState({
@@ -20,35 +20,61 @@ export default function AppointmentForm() {
   const [submitStatus, setSubmitStatus] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [timeError, setTimeError] = useState('');
-  const navigate = useNavigate();
-
-
+  const [phoneError, setPhoneError] = useState('');
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [serviceSearch, setServiceSearch] = useState('');
+
+  const navigate = useNavigate();
+
   const { minDate, maxDate } = useMemo(() => {
     const today = new Date();
     const min = new Date(today);
-    min.setDate(today.getDate() + 1); 
-    
+    min.setDate(today.getDate());
     const max = new Date(today);
-    max.setDate(today.getDate() + 4);
-    
+    max.setDate(today.getDate() + 3);
     return {
       minDate: min.toISOString().split('T')[0],
       maxDate: max.toISOString().split('T')[0]
     };
   }, []);
 
-  // Hàm kiểm tra thời gian hợp lệ
+  // --- SMART SEARCH UTILS ---
+  const normalize = (str = '') =>
+    str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // bỏ dấu
+      .replace(/đ/g, 'd')              // đặc thù tiếng Việt
+      .replace(/[^a-z0-9\s-]/g, ' ')   // loại ký tự lạ (optional)
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  // Levenshtein tương đối (0..1)
+  const levenshteinRatio = (a, b) => {
+    a = normalize(a); b = normalize(b);
+    const la = a.length, lb = b.length;
+    if (!la && !lb) return 1;
+    const dp = Array.from({ length: la + 1 }, () => Array(lb + 1).fill(0));
+    for (let i = 0; i <= la; i++) dp[i][0] = i;
+    for (let j = 0; j <= lb; j++) dp[0][j] = j;
+    for (let i = 1; i <= la; i++) {
+      for (let j = 1; j <= lb; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+      }
+    }
+    const dist = dp[la][lb];
+    const maxLen = Math.max(la, lb);
+    return 1 - dist / maxLen;
+  };
+
+  // Hàm kiểm tra thời gian hợp lệ (08:00–12:00 và 14:00–17:00)
   const isValidTime = (time) => {
     if (!time) return true;
-    
     const [hours, minutes] = time.split(':').map(Number);
     const totalMinutes = hours * 60 + minutes;
-    
     const isMorning = totalMinutes >= 8 * 60 && totalMinutes <= 12 * 60;
     const isAfternoon = totalMinutes >= 14 * 60 && totalMinutes <= 17 * 60;
-    
     return isMorning || isAfternoon;
   };
 
@@ -56,12 +82,44 @@ export default function AppointmentForm() {
     return 'Vui lòng chọn thời gian trong khung giờ: 8:00-12:00 hoặc 14:00-17:00';
   };
 
-  // Lọc dịch vụ theo từ khóa tìm kiếm
+  // Lọc dịch vụ theo từ khóa tìm kiếm (smart: bỏ dấu, multi-keyword, fuzzy nhẹ, ranking)
   const filteredServices = useMemo(() => {
     if (!serviceSearch) return services;
-    return services.filter(service => 
-      service.name.toLowerCase().includes(serviceSearch.toLowerCase())
-    );
+
+    const q = normalize(serviceSearch);
+    const keywords = q.split(' ').filter(Boolean);
+
+    const scored = services
+      .map((svc) => {
+        const nameNorm = normalize(svc.name);
+        const catNorm  = normalize(svc.category ?? '');
+        const descNorm = normalize(svc.description ?? '');
+        const haystack = `${nameNorm} ${catNorm} ${descNorm}`;
+
+        // AND: mọi keyword đều phải xuất hiện
+        const matchesAll = keywords.every((kw) => haystack.includes(kw));
+        if (!matchesAll) return null;
+
+        // Điểm xếp hạng: ưu tiên name, rồi desc, rồi category + fuzzy
+        const bestTokenSim = Math.max(
+          ...nameNorm.split(' ').map((t) => levenshteinRatio(t, q)),
+          0
+        );
+        const score =
+          (nameNorm === q ? 100 : 0) +
+          (nameNorm.startsWith(q) ? 60 : 0) +
+          keywords.reduce((acc, kw) => acc + (nameNorm.includes(kw) ? 12 : 0), 0) +
+          keywords.reduce((acc, kw) => acc + (descNorm.includes(kw) ? 6 : 0), 0) +
+          (catNorm === q ? 20 : 0) +
+          Math.round(bestTokenSim * 30);
+
+        return { svc, score };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.score - a.score)
+      .map((x) => x.svc);
+
+    return scored;
   }, [services, serviceSearch]);
 
   // Load services list
@@ -70,12 +128,19 @@ export default function AppointmentForm() {
       try {
         const { serviceApi } = await import('../api/serviceApi');
         const data = await serviceApi.getAllServices(0, 50);
-        setServices(data.services || []);
+        setServices(data?.services ?? []);
       } catch (err) {
         console.error('Failed to load services', err);
       }
     })();
   }, []);
+
+  // Mặc định gán ngày = minDate (ngày mai) để người dùng không cần mở lịch
+  useEffect(() => {
+    if (!formData.date && minDate) {
+      setFormData((prev) => ({ ...prev, date: minDate }));
+    }
+  }, [minDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -84,15 +149,23 @@ export default function AppointmentForm() {
     setErrorMessage('');
     setTimeError('');
 
+    // Kiểm tra time hợp lệ
     if (!isValidTime(formData.time)) {
       setTimeError(getTimeErrorMessage());
       setIsSubmitting(false);
       return;
     }
 
+    // Kiểm tra phone hợp lệ: 9–11 chữ số
+    if (phoneError || !formData.phone || formData.phone.length < 9) {
+      setErrorMessage('Vui lòng nhập số điện thoại hợp lệ (9–11 chữ số).');
+      setSubmitStatus('error');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const appointmentDateTime = `${formData.date}T${formData.time}:00`;
-
       const payload = {
         patientName: formData.fullName,
         phone: formData.phone,
@@ -107,18 +180,12 @@ export default function AppointmentForm() {
       const response = await axios.post(
         'http://localhost:8082/api/public/appointments/quick-book',
         payload,
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
+        { headers: { 'Content-Type': 'application/json' } }
       );
 
       console.log('Appointment created successfully:', response.data);
-
       setSubmitStatus('success');
       setIsSubmitting(false);
-
       setFormData({
         fullName: '',
         phone: '',
@@ -128,17 +195,14 @@ export default function AppointmentForm() {
         symptoms: '',
         serviceIds: []
       });
-      navigate('/');
 
-      setTimeout(() => {
-        setSubmitStatus('idle');
-      }, 5000);
-      
+      navigate('/');
+      setTimeout(() => setSubmitStatus('idle'), 5000);
     } catch (error) {
       console.error('Error creating appointment:', error);
       setErrorMessage(
-        error.response?.data?.message ||
-        error.message ||
+        error.response?.data?.message ??
+        error.message ??
         'Có lỗi xảy ra. Vui lòng thử lại.'
       );
       setSubmitStatus('error');
@@ -148,7 +212,23 @@ export default function AppointmentForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
+    if (name === 'phone') {
+      // chỉ giữ chữ số
+      const digitsOnly = value.replace(/\D/g, '');
+      // giới hạn <= 11 ký tự
+      const capped = digitsOnly.slice(0, 11);
+
+      let pErr = '';
+      if (digitsOnly.length > 11) pErr = 'Số điện thoại tối đa 11 chữ số.';
+      // optional: kiểm tra tối thiểu
+      if (capped.length < 9) pErr = 'Số điện thoại cần tối thiểu 9 chữ số.';
+
+      setFormData({ ...formData, phone: capped });
+      setPhoneError(pErr);
+      return;
+    }
+
     setFormData({
       ...formData,
       [name]: value
@@ -161,12 +241,7 @@ export default function AppointmentForm() {
 
   const handleTimeChange = (e) => {
     const timeValue = e.target.value;
-    
-    setFormData({
-      ...formData,
-      time: timeValue
-    });
-
+    setFormData({ ...formData, time: timeValue });
     if (timeValue && !isValidTime(timeValue)) {
       setTimeError(getTimeErrorMessage());
     } else {
@@ -176,15 +251,11 @@ export default function AppointmentForm() {
 
   // Xử lý chọn/bỏ chọn dịch vụ
   const toggleService = (serviceId) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const newServiceIds = prev.serviceIds.includes(serviceId)
-        ? prev.serviceIds.filter(id => id !== serviceId)
+        ? prev.serviceIds.filter((id) => id !== serviceId)
         : [...prev.serviceIds, serviceId];
-      
-      return {
-        ...prev,
-        serviceIds: newServiceIds
-      };
+      return { ...prev, serviceIds: newServiceIds };
     });
   };
 
@@ -195,7 +266,6 @@ export default function AppointmentForm() {
         setIsServicesOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -257,11 +327,17 @@ export default function AppointmentForm() {
               id="phone"
               name="phone"
               required
+              inputMode="numeric"
+              pattern="\d{9,11}"
+              maxLength={11}
               value={formData.phone}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-              placeholder="0123 456 789"
+              placeholder="0123456789"
             />
+            {phoneError && (
+              <p className="mt-1 text-xs text-red-600">{phoneError}</p>
+            )}
           </div>
         </div>
 
@@ -300,9 +376,6 @@ export default function AppointmentForm() {
                 className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
               />
             </div>
-            <p className="mt-1 text-xs text-gray-500">
-              Chỉ có thể đặt lịch từ {minDate} đến {maxDate}
-            </p>
           </div>
 
           <div>
@@ -348,7 +421,7 @@ export default function AppointmentForm() {
           />
         </div>
 
-        {/* Dropdown chọn dịch vụ với tìm kiếm */}
+        {/* Dropdown chọn dịch vụ với tìm kiếm (smart) */}
         <div className="services-dropdown">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Chọn dịch vụ (tùy chọn)
@@ -391,7 +464,7 @@ export default function AppointmentForm() {
                       {serviceSearch ? 'Không tìm thấy dịch vụ phù hợp' : 'Không có dịch vụ'}
                     </div>
                   ) : (
-                    filteredServices.map(svc => (
+                    filteredServices.map((svc) => (
                       <label
                         key={svc.serviceId}
                         className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
@@ -422,8 +495,8 @@ export default function AppointmentForm() {
               <p className="text-xs text-gray-600 mb-1">Dịch vụ đã chọn:</p>
               <div className="flex flex-wrap gap-1">
                 {services
-                  .filter(svc => formData.serviceIds.includes(svc.serviceId))
-                  .map(svc => (
+                  .filter((svc) => formData.serviceIds.includes(svc.serviceId))
+                  .map((svc) => (
                     <span
                       key={svc.serviceId}
                       className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-teal-100 text-teal-800"
@@ -445,7 +518,7 @@ export default function AppointmentForm() {
 
         <button
           type="submit"
-          disabled={isSubmitting || timeError}
+          disabled={isSubmitting || !!timeError || !!phoneError}
           className="w-full bg-teal-500 hover:bg-teal-600 text-white py-2.5 rounded-lg transition-colors font-semibold text-sm flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (

@@ -1,190 +1,252 @@
 // src/components/receptionist/InvoicesSection.jsx
 import React, { useState, useEffect } from 'react';
-import { invoiceApi } from '../../api/invoiceApi';
+import { billingApi } from '../../api/billingApi';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import PayInvoiceModal from './PayInvoiceModal';
-import { formatPrice } from '../../utils/formatPrice'; // ← THÊM DÒNG NÀY
+import CreateInvoiceModal from './CreateInvoiceModal';
+import { formatPrice } from '../../utils/formatPrice';
+import { FileText, Search, Plus, X } from 'lucide-react';
+import { toast } from 'react-toastify';
 
-export default function InvoicesSection() {
+export default function InvoicesSection({ isDoctorView = false }) {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [page, setPage] = useState(0);
   const [search, setSearch] = useState('');
-  const [totalPages, setTotalPages] = useState(1);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [showUnpaidOnly, setShowUnpaidOnly] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const fetchInvoices = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      setError('');
-      const response = await invoiceApi.getAll(page, 20, search);
-      setInvoices(response.data.content || []);
-      setTotalPages(response.data.totalPages || 1);
+      const res = await billingApi.getAll(0, 100, search);
+      // Backend trả về: { content: [...] } hoặc { data: [...] } tùy config
+      let data = res.content || res.data || [];
+
+      // Lọc theo trạng thái
+      if (statusFilter === 'paid') data = data.filter(i => i.paymentStatus === 'Paid');
+      if (statusFilter === 'pending') data = data.filter(i => i.paymentStatus === 'Pending' || i.paymentStatus === 'PartiallyPaid');
+      if (showUnpaidOnly) data = data.filter(i => i.paymentStatus !== 'Paid');
+
+      setInvoices(data);
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Lỗi tải dữ liệu';
-      setError(msg);
-      console.error('Lỗi hóa đơn:', err);
+      toast.error('Không tải được danh sách hóa đơn');
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
+  // Gọi lại khi search hoặc filter thay đổi
   useEffect(() => {
-    fetchInvoices();
-  }, [page, search]);
+    const timer = setTimeout(fetchInvoices, 300);
+    return () => clearTimeout(timer);
+  }, [search, statusFilter, showUnpaidOnly]);
+
+  const hasFilter = search || statusFilter !== 'all' || showUnpaidOnly;
 
   const getStatusBadge = (status) => {
-    const styles = {
-      PAID: 'bg-green-100 text-green-800',
-      PARTIALLY_PAID: 'bg-yellow-100 text-yellow-800',
-      ISSUED: 'bg-red-100 text-red-800',
-      CANCELLED: 'bg-gray-100 text-gray-800',
-    };
-    const texts = {
-      PAID: 'Đã thanh toán',
-      PARTIALLY_PAID: 'Thanh toán 1 phần',
-      ISSUED: 'Chưa thanh toán',
-      CANCELLED: 'Đã hủy',
-    };
-    return (
-      <span className={`px-4 py-2 rounded-full text-sm font-bold ${styles[status] || styles.ISSUED}`}>
-        {texts[status] || 'Chưa thanh toán'}
-      </span>
-    );
+    switch (status) {
+      case 'Paid':
+        return <span className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-full">Đã thanh toán</span>;
+      case 'Pending':
+        return <span className="px-3 py-1.5 text-xs font-semibold bg-yellow-100 text-yellow-700 rounded-full">Chưa thanh toán</span>;
+      case 'PartiallyPaid':
+        return <span className="px-3 py-1.5 text-xs font-semibold bg-orange-100 text-orange-700 rounded-full">Thanh toán 1 phần</span>;
+      default:
+        return <span className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-full">—</span>;
+    }
   };
 
-  if (error) {
-    return (
-      <div className="p-10 text-center">
-        <div className="bg-red-50 border border-red-300 rounded-2xl p-10 max-w-lg mx-auto">
-          <p className="text-2xl font-bold text-red-700 mb-4">Lỗi kết nối!</p>
-          <p className="text-gray-700 mb-6">{error}</p>
-          <button onClick={fetchInvoices} className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl font-bold text-lg">
-            Thử lại
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-        <h1 className="text-4xl font-bold text-gray-800">Quản lý Hóa đơn</h1>
-        <button
-          onClick={() => alert('Chức năng tạo hóa đơn đang được phát triển!')}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-4 px-10 rounded-xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition"
-        >
-          + Tạo hóa đơn mới
-        </button>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+              <FileText className="w-6 h-6 text-purple-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Quản lý Hóa đơn</h1>
+              <p className="text-sm text-gray-500">
+                {isDoctorView
+                  ? 'Xem chi tiết thanh toán của bệnh nhân'
+                  : 'Theo dõi và xử lý thanh toán bệnh nhân'}
+              </p>
+            </div>
+          </div>
+
+          {/* Nút tạo hóa đơn – chỉ lễ tân */}
+          {!isDoctorView && (
+            <button
+              onClick={() => setCreateModalOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2.5 rounded-xl flex items-center gap-2 transition"
+            >
+              <Plus className="w-5 h-5" />
+              Tạo hóa đơn mới
+            </button>
+          )}
+        </div>
       </div>
 
-      <input
-        type="text"
-        placeholder="Tìm kiếm bệnh nhân, số điện thoại..."
-        value={search}
-        onChange={(e) => {
-          setSearch(e.target.value);
-          setPage(0);
-        }}
-        className="w-full max-w-2xl px-6 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 text-lg"
-      />
+      <div className="p-6 space-y-6">
+        {/* Bộ lọc */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+            <div className="flex-1 flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Tìm tên bệnh nhân, số điện thoại..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
 
-      {loading && (
-        <div className="bg-white rounded-3xl shadow-2xl p-24 text-center">
-          <div className="text-2xl text-gray-600 animate-pulse">Đang tải danh sách hóa đơn...</div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">Tất cả trạng thái</option>
+                <option value="paid">Đã thanh toán</option>
+                <option value="pending">Chưa thanh toán / Chưa đủ</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showUnpaidOnly}
+                  onChange={(e) => setShowUnpaidOnly(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded"
+                />
+                <span className="text-sm text-gray-700">Chỉ hiển thị chưa thanh toán</span>
+              </label>
+
+              {hasFilter && (
+                <button
+                  onClick={() => {
+                    setSearch('');
+                    setStatusFilter('all');
+                    setShowUnpaidOnly(false);
+                  }}
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-lg transition"
+                >
+                  Xóa bộ lọc
+                </button>
+              )}
+            </div>
+          </div>
         </div>
-      )}
 
-      {!loading && (
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-          <div className="overflow-x-auto">
+        {/* Bảng hóa đơn */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          {loading ? (
+            <div className="p-16 text-center text-gray-500">
+              <div className="inline-flex items-center gap-3">
+                <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                <span>Đang tải danh sách hóa đơn...</span>
+              </div>
+            </div>
+          ) : invoices.length === 0 ? (
+            <div className="p-16 text-center">
+              <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-red-600 font-semibold">
+                {hasFilter ? 'Không tìm thấy hóa đơn nào phù hợp' : 'Chưa có hóa đơn nào trong hệ thống'}
+              </p>
+              <p className="text-gray-500 text-sm mt-2">
+                {hasFilter ? 'Thử thay đổi bộ lọc' : 'Vui lòng tạo hóa đơn mới'}
+              </p>
+            </div>
+          ) : (
             <table className="w-full">
-              <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+              <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-8 py-6 text-left font-bold text-gray-700">Mã HD</th>
-                  <th className="px-8 py-6 text-left font-bold text-gray-700">Bệnh nhân</th>
-                  <th className="px-8 py-6 text-left font-bold text-gray-700">Ngày lập</th>
-                  <th className="px-8 py-6 text-right font-bold text-gray-700">Tổng tiền</th>
-                  <th className="px-8 py-6 text-right font-bold text-gray-700">Đã thu</th>
-                  <th className="px-8 py-6 text-center font-bold text-gray-700">Trạng thái</th>
-                  <th className="px-8 py-6 text-center font-bold text-gray-700">Thao tác</th>
+                  <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">MÃ HÓA ĐƠN</th>
+                  <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">BỆNH NHÂN</th>
+                  <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">NGÀY LẬP</th>
+                  <th className="text-right px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">TỔNG TIỀN</th>
+                  <th className="text-right px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">ĐÃ THU</th>
+                  <th className="text-center px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">TRẠNG THÁI</th>
+                  <th className="text-center px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">THAO TÁC</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {invoices.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="text-center py-24 text-gray-500 text-xl">
-                      Không tìm thấy hóa đơn nào
+                {invoices.map((inv) => (
+                  <tr key={inv.billId} className="hover:bg-gray-50 transition">
+                    {/* Mã hóa đơn */}
+                    <td className="px-6 py-4 font-mono text-blue-600 font-medium">
+                      {inv.billCode || inv.billId?.slice(0, 10).toUpperCase()}
+                    </td>
+
+                    {/* Bệnh nhân */}
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-gray-900">{inv.patientName}</div>
+                      <div className="text-sm text-gray-500">{inv.patientPhone}</div>
+                    </td>
+
+                    {/* Ngày lập */}
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {format(new Date(inv.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                    </td>
+
+                    {/* Tổng tiền */}
+                    <td className="px-6 py-4 text-right font-medium text-gray-900">
+                      {formatPrice(inv.totalAmount)}
+                    </td>
+
+                    {/* Đã thu */}
+                    <td className="px-6 py-4 text-right font-medium text-green-600">
+                      {formatPrice(inv.amountPaid || 0)}
+                    </td>
+
+                    {/* Trạng thái */}
+                    <td className="px-6 py-4 text-center">
+                      {getStatusBadge(inv.paymentStatus)}
+                    </td>
+
+                    {/* Thao tác */}
+                    <td className="px-6 py-4 text-center">
+                      {!isDoctorView && inv.paymentStatus !== 'Paid' && (
+                        <button
+                          onClick={() => setSelectedInvoice(inv)}
+                          className="text-blue-600 hover:text-blue-800 font-medium underline decoration-2"
+                        >
+                          Thu tiền
+                        </button>
+                      )}
                     </td>
                   </tr>
-                ) : (
-                  invoices.map((inv) => (
-                    <tr key={inv.invoiceId} className="hover:bg-blue-50 transition">
-                      <td className="px-8 py-6 font-bold text-indigo-600 text-xl">{inv.invoiceCode}</td>
-                      <td className="px-8 py-6">
-                        <div className="font-bold text-gray-800">{inv.patientName}</div>
-                        <div className="text-gray-500 text-sm">{inv.patientPhone}</div>
-                      </td>
-                      <td className="px-8 py-6 text-gray-600">
-                        {format(new Date(inv.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                      </td>
-                      <td className="px-8 py-6 text-right font-bold text-2xl text-gray-800">
-                        {formatPrice(inv.totalAmount)}
-                      </td>
-                      <td className="px-8 py-6 text-right font-bold text-2xl text-green-600">
-                        {formatPrice(inv.paidAmount)}
-                      </td>
-                      <td className="px-8 py-6 text-center">{getStatusBadge(inv.status)}</td>
-                      <td className="px-8 py-6 text-center space-x-4">
-                        <button className="text-blue-600 hover:text-blue-800 font-bold">Xem</button>
-                        {Number(inv.remainingAmount) > 0 && (
-                          <button
-                            onClick={() => setSelectedInvoice(inv)}
-                            className="text-green-600 hover:text-green-800 font-bold"
-                          >
-                            Thu tiền
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
-          </div>
-
-          {totalPages > 1 && (
-            <div className="p-8 bg-gray-50 flex justify-center items-center gap-6">
-              <button
-                onClick={() => setPage(p => Math.max(0, p - 1))}
-                disabled={page === 0}
-                className="px-8 py-4 bg-white border-2 rounded-xl disabled:opacity-50 hover:bg-gray-100 font-bold"
-              >
-                Trước
-              </button>
-              <span className="text-xl font-bold">Trang {page + 1} / {totalPages}</span>
-              <button
-                onClick={() => setPage(p => p + 1)}
-                disabled={page >= totalPages - 1}
-                className="px-8 py-4 bg-white border-2 rounded-xl disabled:opacity-50 hover:bg-gray-100 font-bold"
-              >
-                Sau
-              </button>
-            </div>
           )}
         </div>
-      )}
+      </div>
 
-      {/* Modal */}
-      {selectedInvoice && (
+      {/* Modal Thanh toán */}
+      {!isDoctorView && selectedInvoice && (
         <PayInvoiceModal
           invoice={selectedInvoice}
           onClose={() => setSelectedInvoice(null)}
+          onSuccess={fetchInvoices}
+        />
+      )}
+
+      {/* Modal Tạo hóa đơn */}
+      {!isDoctorView && createModalOpen && (
+        <CreateInvoiceModal
+          isOpen={createModalOpen}
+          onClose={() => setCreateModalOpen(false)}
           onSuccess={() => {
-            setSelectedInvoice(null);
+            setCreateModalOpen(false);
             fetchInvoices();
           }}
         />

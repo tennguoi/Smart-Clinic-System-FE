@@ -1,8 +1,15 @@
 import { useState } from 'react';
 import { Menu, X, Phone } from 'lucide-react';
+import { useClinic } from '../contexts/ClinicContext';
+import defaultLogo from '../images/logo.png';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { clinicInfo } = useClinic();
+
+  // Fallback values nếu chưa có dữ liệu
+  const clinicName = clinicInfo?.name || 'Phòng Khám thông minh';
+  const clinicLogoUrl = clinicInfo?.logoUrl;
 
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
@@ -17,11 +24,16 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-teal-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">2CTW</span>
-            </div>
+            <img 
+              src={clinicLogoUrl || defaultLogo} 
+              alt={clinicName || 'Logo phòng khám'}
+              className="w-12 h-12 object-contain rounded-lg"
+              onError={(e) => {
+                e.target.src = defaultLogo;
+              }}
+            />
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Phòng Khám thông minh</h1>
+              <h1 className="text-xl font-bold text-gray-900">{clinicName}</h1>
               <p className="text-xs text-gray-600">Chuyên khoa Tai-Mũi-Họng</p>
             </div>
           </div>

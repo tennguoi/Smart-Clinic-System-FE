@@ -1,7 +1,15 @@
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
+import { useClinic } from '../contexts/ClinicContext';
 import Footer from '../components/Footer';
 
 export default function ContactPage() {
+  const { clinicInfo } = useClinic();
+
+  // Fallback values nếu chưa có dữ liệu
+  const clinicAddress = clinicInfo?.address || '123 Đường Nguyễn Văn Linh, Phường 26, Quận 7, Thành phố Hồ Chí Minh, Việt Nam';
+  const clinicPhone = clinicInfo?.phone || '0123 456 789';
+  const clinicEmail = clinicInfo?.email || 'contact@entclinic.vn';
+
   return (
     <div className="pt-20">
       <div className="bg-gradient-to-br from-blue-50 to-teal-50 py-16">
@@ -26,40 +34,41 @@ export default function ContactPage() {
               </div>
               <div>
                 <h3 className="font-bold text-gray-900 mb-1 text-lg">Địa Chỉ</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  123 Đường Nguyễn Văn Linh<br />
-                  Phường 26, Quận 7<br />
-                  Thành phố Hồ Chí Minh, Việt Nam
+                <p className="text-gray-600 leading-relaxed whitespace-pre-line">
+                  {clinicAddress}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-start space-x-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Phone className="w-6 h-6 text-blue-600" />
+            {clinicPhone && (
+              <div className="flex items-start space-x-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Phone className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-1 text-lg">Điện Thoại</h3>
+                  <p className="text-gray-600">
+                    Hotline: <a href={`tel:${clinicPhone.replace(/\s/g, '')}`} className="text-blue-600 hover:underline font-medium">{clinicPhone}</a>
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-gray-900 mb-1 text-lg">Điện Thoại</h3>
-                <p className="text-gray-600">
-                  Hotline: <a href="tel:0123456789" className="text-blue-600 hover:underline font-medium">0123 456 789</a><br />
-                  Zalo: <a href="tel:0987654321" className="text-blue-600 hover:underline font-medium">0987 654 321</a>
-                </p>
-              </div>
-            </div>
+            )}
 
-            <div className="flex items-start space-x-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Mail className="w-6 h-6 text-blue-600" />
+            {clinicEmail && (
+              <div className="flex items-start space-x-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Mail className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-1 text-lg">Email</h3>
+                  <p className="text-gray-600">
+                    <a href={`mailto:${clinicEmail}`} className="text-blue-600 hover:underline font-medium">
+                      {clinicEmail}
+                    </a>
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-gray-900 mb-1 text-lg">Email</h3>
-                <p className="text-gray-600">
-                  <a href="mailto:contact@entclinic.vn" className="text-blue-600 hover:underline font-medium">
-                    contact@entclinic.vn
-                  </a>
-                </p>
-              </div>
-            </div>
+            )}
 
             <div className="flex items-start space-x-4">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -100,7 +109,7 @@ export default function ContactPage() {
                   type="tel"
                   id="phone"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="0123 456 789"
+                  placeholder={clinicPhone || "0123 456 789"}
                 />
               </div>
 

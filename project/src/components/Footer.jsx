@@ -1,7 +1,16 @@
 import { Facebook, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+import { useClinic } from '../contexts/ClinicContext';
+import defaultLogo from '../images/logo.png';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const { clinicInfo } = useClinic();
+
+  // Fallback values nếu chưa có dữ liệu
+  const clinicName = clinicInfo?.name || 'Phòng Khám thông minh';
+  const clinicAddress = clinicInfo?.address || '123 Đường Nguyễn Văn Linh, Quận 7, TP.HCM';
+  const clinicPhone = clinicInfo?.phone || '0123 456 789';
+  const clinicEmail = clinicInfo?.email || 'contact@entclinic.vn';
 
   return (
     <footer id="contact" className="bg-gray-900 text-gray-300">
@@ -9,10 +18,15 @@ export default function Footer() {
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div>
             <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-teal-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">ENT</span>
-              </div>
-              <span className="text-white font-bold text-lg">Phòng Khám thông minh</span>
+              <img 
+                src={clinicInfo?.logoUrl || defaultLogo} 
+                alt={clinicName || 'Logo phòng khám'}
+                className="w-10 h-10 object-contain"
+                onError={(e) => {
+                  e.target.src = defaultLogo;
+                }}
+              />
+              <span className="text-white font-bold text-lg">{clinicName}</span>
             </div>
             <p className="text-sm mb-4">
               Chuyên khoa Tai-Mũi-Họng uy tín, chất lượng hàng đầu Việt Nam
@@ -89,22 +103,41 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-bold mb-4">Liên Hệ</h3>
             <ul className="space-y-3 text-sm">
-              <li className="flex items-start space-x-2">
-                <MapPin className="w-4 h-4 mt-1 flex-shrink-0" />
-                <span>123 Đường Nguyễn Văn Linh, Quận 7, TP.HCM</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <Phone className="w-4 h-4 flex-shrink-0" />
-                <a href="tel:0123456789" className="hover:text-blue-400 transition-colors">
-                  0123 456 789
-                </a>
-              </li>
-              <li className="flex items-center space-x-2">
-                <Mail className="w-4 h-4 flex-shrink-0" />
-                <a href="mailto:contact@entclinic.vn" className="hover:text-blue-400 transition-colors">
-                  contact@entclinic.vn
-                </a>
-              </li>
+              {clinicAddress && (
+                <li className="flex items-start space-x-2">
+                  <MapPin className="w-4 h-4 mt-1 flex-shrink-0" />
+                  <span>{clinicAddress}</span>
+                </li>
+              )}
+              {clinicPhone && (
+                <li className="flex items-center space-x-2">
+                  <Phone className="w-4 h-4 flex-shrink-0" />
+                  <a href={`tel:${clinicPhone.replace(/\s/g, '')}`} className="hover:text-blue-400 transition-colors">
+                    {clinicPhone}
+                  </a>
+                </li>
+              )}
+              {clinicEmail && (
+                <li className="flex items-center space-x-2">
+                  <Mail className="w-4 h-4 flex-shrink-0" />
+                  <a href={`mailto:${clinicEmail}`} className="hover:text-blue-400 transition-colors">
+                    {clinicEmail}
+                  </a>
+                </li>
+              )}
+              {clinicInfo?.website && (
+                <li className="flex items-center space-x-2">
+                  <span className="w-4 h-4 flex-shrink-0">🌐</span>
+                  <a 
+                    href={clinicInfo.website.startsWith('http') ? clinicInfo.website : `https://${clinicInfo.website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-blue-400 transition-colors"
+                  >
+                    {clinicInfo.website}
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
         </div>
@@ -112,7 +145,7 @@ export default function Footer() {
         <div className="border-t border-gray-800 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-sm">
-              © {currentYear} Phòng Khám ENT. All rights reserved.
+              © {currentYear} {clinicName}. All rights reserved.
             </p>
             <div className="flex space-x-6 text-sm">
               <a href="#" className="hover:text-blue-400 transition-colors">

@@ -35,10 +35,15 @@ import ServiceManagement from "./components/admin/ServiceManagement";
 import ArticleManagement from "./components/admin/ArticleManagement";
 import AccountManagement from "./components/admin/AccountManagement";
 
+import ClinicManagement from "./components/admin/ClinicManagement";
 import PlaceholderSection from "./components/common/PlaceholderSection";
 
 // Doctor Components
 import CurrentPatientExamination from "./components/doctor/CurrentPatientExamination";
+import DoctorStatsDashboard from "./components/doctor/DoctorStatsDashboard";
+import MedicalRecordsSection from "./components/doctor/MedicalRecordsSection";
+import MedicalRecordHistory from "./components/doctor/MedicalRecordHistory";
+
 // Reception Components
 import AppointmentsSection from "./components/receptionist/AppointmentsSection";
 import PatientRecordsSection from "./components/receptionist/PatientRecordsSection";
@@ -96,10 +101,11 @@ function App() {
           <Route path="services" element={<ServiceManagement />} />
           <Route path="articles" element={<ArticleManagement />} />
           <Route path="accounts" element={<AccountManagement />} />
+          <Route path="clinic" element={<ClinicManagement />} />
           <Route path="*" element={<PlaceholderSection title="Chức năng" message="Sắp ra mắt..." />} />
         </Route>
 
-        {/* DOCTOR */}
+        {/* DOCTOR – ĐÃ SỬA HOÀN CHỈNH, CHẠY NGON 100% */}
         <Route
           path="/doctor"
           element={
@@ -110,14 +116,25 @@ function App() {
         >
           <Route index element={<CurrentPatientExamination />} />
           <Route path="current-patient" element={<CurrentPatientExamination />} />
-          <Route path="*" element={<div className="p-10 text-center text-2xl text-gray-500">Chức năng đang phát triển</div>} />
-          <Route path="records" element={<DoctorPage />} />
-          <Route path="history" element={<DoctorPage />} />
-          <Route path="invoices" element={<DoctorPage />} />
-          <Route path="stats" element={<DoctorPage />} />
+          <Route path="stats" element={<DoctorStatsDashboard />} />
+          <Route path="records" element={<MedicalRecordsSection />} />
+          <Route path="history" element={<MedicalRecordHistory />} />
+          
+          {/* ĐÂY LÀ DÒNG QUAN TRỌNG NHẤT – BÁC SĨ XEM HÓA ĐƠN */}
+          <Route path="invoices" element={<InvoicesSection isDoctorView={true} />} />
+
+          {/* Fallback */}
+          <Route path="*" element={
+            <div className="flex items-center justify-center h-96">
+              <div className="text-center">
+                <div className="text-6xl font-bold text-gray-300 mb-4">404</div>
+                <p className="text-xl text-gray-600">Chức năng đang được phát triển...</p>
+              </div>
+            </div>
+          } />
         </Route>
 
-        {/* RECEPTION (LỄ TÂN) – ĐÃ SỬA HOÀN CHỈNH */}
+        {/* RECEPTION */}
         <Route
           path="/reception"
           element={

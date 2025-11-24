@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, Phone } from 'lucide-react';
-
-const HOTLINE = '1900 636 949';
+import { useClinic } from '../contexts/ClinicContext';
+import defaultLogo from '../images/logo.png';
 
 export default function StickyNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
+  const { clinicInfo } = useClinic();
+  const HOTLINE = clinicInfo?.hotline || '1900 1234';
+ const clinicLogoUrl = clinicInfo?.logoUrl;
   const navLinks = [
     { label: 'Trang Chủ', path: '/' },
     { label: 'Giới Thiệu', path: '/about' },
@@ -19,20 +21,24 @@ export default function StickyNavbar() {
     <nav className="fixed top-0 z-50 w-full bg-white shadow-md border-t-2 border-pink-200/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* WRAPPER */}
-        <div className="flex h-24 items-center w-full">
+        <div className="flex h-24 items-center w-full ">
 
           {/* LEFT: LOGO (1/3 chiều rộng) */}
-          <div className="flex flex-1 lg:basis-1/3 items-center">
+             <div className="flex flex-1 lg:basis-1/3 items-center">
             <Link
               to="/"
               className="flex items-center space-x-3 hover:opacity-90 transition-all group"
             >
-              <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300">
-                <span className="text-white font-bold text-xl">2CTW</span>
-              </div>
+              <img 
+                src={clinicLogoUrl || defaultLogo} 
+                className="w-16 h-16 object-contain rounded-xl shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300"
+                onError={(e) => {
+                  e.target.src = defaultLogo;
+                }}
+              />
               <div className="flex flex-col justify-center">
-                <h1 className="text-xl font-bold text-gray-900 leading-tight whitespace-nowrap">
-                TMH Ánh dương
+                <h1 className="text-lg font-bold text-gray-900 leading-tight whitespace-nowrap">
+                Tai-Mũi-Họng 2CTW
                 </h1>
                 
               </div>
@@ -40,7 +46,7 @@ export default function StickyNavbar() {
           </div>
 
           {/* CENTER: NAV LINKS (1/3 chiều rộng) */}
-          <div className="hidden lg:flex flex-1 lg:basis-1/3 items-center justify-center space-x-2">
+          <div className="hidden lg:flex flex-1 lg:basis-1/3 items-center justify-center space-x-2 pl-12">
             {navLinks.map((link) => (
               <Link
                 key={link.path}

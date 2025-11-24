@@ -15,6 +15,7 @@ export default function AdminPage() {
     else if (path.includes('/doctors')) setActiveMenu('doctors');
     else if (path.includes('/services')) setActiveMenu('services');
     else if (path.includes('/articles')) setActiveMenu('articles');
+    else if (path.includes('/clinic')) setActiveMenu('clinic');
     else if (path.includes('/accounts')) setActiveMenu('accounts');
     else if (path.includes('/staff')) setActiveMenu('staff');
     else if (path.includes('/patients')) setActiveMenu('patients');
