@@ -1,81 +1,167 @@
-// src/components/admin/ArticleManagement.jsx – ĐÃ FIX HOÀN TOÀN, KHÔNG CÒN LỖI .map!
-import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, X, FileText } from 'lucide-react';
-import axiosInstance from '../../utils/axiosConfig';
+// src/components/admin/ArticleManagement.jsx
+import { useState, useEffect } from "react";
+import { Plus, Edit, Trash2, X, FileText } from "lucide-react";
+import axiosInstance from "../../utils/axiosConfig";
 
 export default function ArticleManagement() {
   const [articles, setArticles] = useState([]);
+  const [filteredArticles, setFilteredArticles] = useState([]);
   const [loading, setLoading] = useState(false);
+
   const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState('create');
+  const [modalMode, setModalMode] = useState("create");
   const [selectedArticle, setSelectedArticle] = useState(null);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const [page, setPage] = useState(0);
+  const size = 6;
+  const [totalPages, setTotalPages] = useState(0);
+
+  const [filterTitle, setFilterTitle] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
+
+  const [categories, setCategories] = useState([]);
 
   const [formData, setFormData] = useState({
-    title: '',
-    content: '',
-    category: '',
-    author: '',
-    source: '',
-    image: '',
+    title: "",
+    content: "",
+    category: "",
+    author: "",
+    source: "",
+    image: "",
   });
+
+  const normalizeCategory = (str) => {
+    if (!str) return "";
+    return str
+      .trim()
+      .replace(/\s+/g, " ")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+  };
+
+  const categoryColors = {
+    "suc khoe": "bg-green-100 text-green-700",
+    "tu van": "bg-blue-100 text-blue-700",
+    "dieu tri": "bg-purple-100 text-purple-700",
+    "canh bao": "bg-red-100 text-red-700",
+    "cong nghe": "bg-orange-100 text-orange-700",
+    default: "bg-gray-100 text-gray-700",
+  };
 
   useEffect(() => {
     fetchArticles();
-  }, []);
+  }, [page]);
 
-  // FIX CHÍNH TẠI ĐÂY – ĐÃ XỬ LÝ CẢ 2 TRƯỜNG HỢP API TRẢ VỀ
   const fetchArticles = async () => {
     setLoading(true);
-    setError('');
+    setError("");
     try {
-      const response = await axiosInstance.get('/api/public/articles');
-      const data = response.data;
+      const res = await axiosInstance.get(
+        `/api/public/articles?page=${page}&size=${size}`
+      );
 
-      // Trường hợp 1: API trả về { content: [...] } (phân trang)
-      // Trường hợp 2: API trả về trực tiếp mảng [...]
-      const articleList = data?.content ?? data ?? [];
+      const list = res.data.content || [];
+      setArticles(list);
+      setFilteredArticles(list);
 
-      // Đảm bảo 100% là array, không bao giờ bị lỗi .map
-      if (Array.isArray(articleList)) {
-        setArticles(articleList);
-      } else {
-        console.warn('Dữ liệu bài viết không phải mảng:', data);
-        setArticles([]);
-      }
+      const cateList = [...new Set(list.map((a) => a.category))];
+      setCategories(cateList);
+
+      setTotalPages(res.data.totalPages);
     } catch (err) {
-      console.error('Lỗi tải bài viết:', err);
-      setError(err.response?.data?.message || 'Không thể tải danh sách bài viết');
-      setArticles([]); // fallback an toàn
+      setError("Không thể tải bài viết");
     } finally {
       setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let data = [...articles];
+
+    if (filterTitle.trim()) {
+      data = data.filter((a) =>
+        a.title.toLowerCase().includes(filterTitle.toLowerCase())
+      );
+    }
+
+    if (filterCategory) {
+      data = data.filter((a) => a.category === filterCategory);
+    }
+
+    if (filterStartDate) {
+      const start = new Date(filterStartDate);
+      data = data.filter((a) => new Date(a.publishedAt) >= start);
+    }
+
+    if (filterEndDate) {
+      const end = new Date(filterEndDate);
+      end.setHours(23, 59, 59, 999);
+      data = data.filter((a) => new Date(a.publishedAt) <= end);
+    }
+
+    setFilteredArticles(data);
+  }, [filterTitle, filterCategory, filterStartDate, filterEndDate, articles]);
+
+  const resetFilter = () => {
+    setFilterTitle("");
+    setFilterCategory("");
+    setFilterStartDate("");
+    setFilterEndDate("");
+    setFilteredArticles(articles);
+  };
+
+  const handleStartDateChange = (e) => {
+    const value = e.target.value;
+    setFilterStartDate(value);
+
+    setFilterEndDate((prev) => {
+      if (!prev) return prev;
+      if (value && new Date(prev) < new Date(value)) {
+        return value;
+      }
+      return prev;
+    });
+  };
+
+  const handleEndDateChange = (e) => {
+    const value = e.target.value;
+
+    if (filterStartDate && value && new Date(value) < new Date(filterStartDate)) {
+      setFilterEndDate(filterStartDate);
+    } else {
+      setFilterEndDate(value);
     }
   };
 
   const handleOpenModal = (mode, article = null) => {
     setModalMode(mode);
     setSelectedArticle(article);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
-    if (mode === 'create') {
+    if (mode === "edit") {
       setFormData({
-        title: '',
-        content: '',
-        category: '',
-        author: '',
-        source: '',
-        image: '',
+        title: article.title,
+        content: article.content,
+        category: article.category,
+        author: article.author,
+        source: article.source,
+        image: article.image,
       });
-    } else if (mode === 'edit' && article) {
+    } else {
       setFormData({
-        title: article.title || '',
-        content: article.content || '',
-        category: article.category || '',
-        author: article.author || '',
-        source: article.source || '',
-        image: article.image || '',
+        title: "",
+        content: "",
+        category: "",
+        author: "",
+        source: "",
+        image: "",
       });
     }
 
@@ -85,82 +171,92 @@ export default function ArticleManagement() {
   const handleCloseModal = () => {
     setShowModal(false);
     setSelectedArticle(null);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     try {
-      if (modalMode === 'edit' && selectedArticle) {
-        await axiosInstance.put(`/api/admin/articles/${selectedArticle.id}`, formData);
-        setSuccess('Cập nhật bài viết thành công!');
+      if (modalMode === "edit") {
+        await axiosInstance.put(
+          `/api/admin/articles/${selectedArticle.id}`,
+          formData
+        );
+        setSuccess("Cập nhật bài viết thành công!");
       } else {
-        await axiosInstance.post('/api/admin/articles', formData);
-        setSuccess('Tạo bài viết thành công!');
+        await axiosInstance.post("/api/admin/articles", formData);
+        setSuccess("Tạo bài viết thành công!");
       }
 
       setTimeout(() => {
-        handleCloseModal();
         fetchArticles();
-      }, 1500);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Có lỗi xảy ra khi lưu bài viết');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (articleId) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa bài viết này?')) return;
-
-    setLoading(true);
-    try {
-      await axiosInstance.delete(`/api/admin/articles/${articleId}`);
-      setSuccess('Xóa bài viết thành công!');
-      fetchArticles();
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Không thể xóa bài viết');
-      setTimeout(() => setError(''), 3000);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Chưa xác định';
-    try {
-      return new Date(dateString).toLocaleDateString('vi-VN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
+        handleCloseModal();
+        setSuccess("");
+      }, 1200);
     } catch {
-      return 'Không hợp lệ';
+      setError("Có lỗi khi lưu bài viết");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Bạn chắc chắn muốn xóa?")) return;
+    try {
+      await axiosInstance.delete(`/api/admin/articles/${id}`);
+      setSuccess("Xóa bài viết thành công!");
+      fetchArticles();
+    } catch {
+      setError("Không thể xóa bài viết");
+    }
+  };
+
+  const formatDate = (d) => {
+    if (!d) return "—";
+    return new Date(d).toLocaleString("vi-VN", { hour12: false });
+  };
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    return (
+      <div className="flex justify-center items-center gap-2 mt-6">
+        {[...Array(totalPages)].map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setPage(i)}
+            className={`px-3 py-1 rounded ${
+              page === i
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 hover:bg-gray-300"
+            }`}
+          >
+            {i + 1}
+          </button>
+        ))}
+      </div>
+    );
   };
 
   return (
     <div className="p-8">
+      {/* HEADER */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Quản lý Bài viết</h1>
-          <p className="text-gray-600 mt-1">Tổng cộng: {articles.length} bài viết</p>
         </div>
+
         <button
-          onClick={() => handleOpenModal('create')}
+          onClick={() => handleOpenModal("create")}
           className="flex items-center gap-2 bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700 transition shadow-sm font-medium"
         >
           <Plus className="w-5 h-5" />
@@ -168,200 +264,263 @@ export default function ArticleManagement() {
         </button>
       </div>
 
-      {/* Thông báo */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-6 flex items-center gap-2">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 p-4 rounded-lg mb-6 flex items-center gap-2">
-          {success}
-        </div>
-      )}
+      {/* NOTIFICATIONS */}
+      {error && <div className="bg-red-100 text-red-700 p-3 mb-4 rounded">{error}</div>}
+      {success && <div className="bg-green-100 text-green-700 p-3 mb-4 rounded">{success}</div>}
 
-      {/* Loading */}
-      {loading && articles.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
-          <p className="mt-4 text-gray-600 text-lg">Đang tải danh sách bài viết...</p>
+      {/* FILTER BAR */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+          <div className="lg:col-span-4">
+            <label className="text-sm font-medium mb-1 block">Tiêu đề</label>
+            <input
+              type="text"
+              placeholder="Tìm theo tiêu đề"
+              className="border px-3 py-2 rounded-lg w-full"
+              value={filterTitle}
+              onChange={(e) => setFilterTitle(e.target.value)}
+            />
+          </div>
+
+          <div className="lg:col-span-3">
+            <label className="text-sm font-medium mb-1 block">Danh mục</label>
+            <select
+              className="border px-3 py-2 rounded-lg w-full"
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+            >
+              <option value="">Tất cả</option>
+              {categories.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="lg:col-span-2">
+            <label className="text-sm font-medium mb-1 block">Từ ngày</label>
+            <input
+              type="date"
+              className="border px-3 py-2 rounded-lg w-full"
+              value={filterStartDate}
+              onChange={handleStartDateChange}
+            />
+          </div>
+
+          <div className="lg:col-span-2">
+            <label className="text-sm font-medium mb-1 block">Đến ngày</label>
+            <input
+              type="date"
+              className="border px-3 py-2 rounded-lg w-full"
+              value={filterEndDate}
+              min={filterStartDate}
+              onChange={handleEndDateChange}
+            />
+          </div>
+
+          <div className="lg:col-span-1 flex lg:justify-end">
+            <button
+              onClick={resetFilter}
+              className="bg-gray-300 px-4 py-2 rounded-lg"
+            >
+              Xóa lọc
+            </button>
+          </div>
         </div>
-      ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          {articles.length === 0 ? (
-            <div className="text-center py-16 text-gray-500">
-              <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <p className="text-xl">Chưa có bài viết nào</p>
-              <p className="text-sm mt-2">Hãy nhấn "Tạo bài viết mới" để bắt đầu</p>
-            </div>
-          ) : (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tiêu đề</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Danh mục</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tác giả</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Ngày đăng</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider pr-8">Thao tác</th>
+      </div>
+
+      {/* TABLE */}
+      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <table className="min-w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-3 text-xs font-semibold text-center">STT</th>
+              <th className="px-4 py-3 text-xs font-semibold text-center">Ảnh</th>
+              <th className="px-4 py-3 text-xs font-semibold text-left">Tiêu đề</th>
+              <th className="px-4 py-3 text-xs font-semibold text-center">Danh mục</th>
+              <th className="px-4 py-3 text-xs font-semibold text-center">Tác giả</th>
+              <th className="px-4 py-3 text-xs font-semibold text-center">Ngày đăng</th>
+              <th className="px-4 py-3 text-xs font-semibold text-right">Thao tác</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {filteredArticles.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="text-center py-8 text-gray-500">
+                  Không tìm thấy bài viết nào
+                </td>
+              </tr>
+            ) : (
+              filteredArticles.map((a, i) => (
+                <tr key={a.id} className="border-t hover:bg-gray-50">
+                  <td className="px-4 py-4 text-center">{i + 1}</td>
+
+                  <td className="px-4 py-4 text-center">
+                    {a.image ? (
+                      <img
+                        src={a.image}
+                        className="w-14 h-14 rounded object-cover border mx-auto"
+                      />
+                    ) : (
+                      <div className="w-14 h-14 mx-auto bg-gray-200 flex items-center justify-center rounded">
+                        <FileText className="w-6 h-6 text-gray-500" />
+                      </div>
+                    )}
+                  </td>
+
+                  <td className="px-4 py-4 font-medium">{a.title}</td>
+
+                  <td className="px-4 py-4 text-center">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        categoryColors[normalizeCategory(a.category)] ||
+                        categoryColors.default
+                      }`}
+                    >
+                      {a.category}
+                    </span>
+                  </td>
+
+                  <td className="px-4 py-4 text-center">{a.author}</td>
+
+                  <td className="px-4 py-4 text-center text-gray-600">
+                    {formatDate(a.publishedAt)}
+                  </td>
+
+                  <td className="px-4 py-4 text-right">
+                    <button
+                      onClick={() => handleOpenModal("edit", a)}
+                      className="text-blue-600 mr-3"
+                    >
+                      <Edit />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(a.id)}
+                      className="text-red-600"
+                    >
+                      <Trash2 />
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {articles.map((article) => (
-                  <tr key={article.id} className="hover:bg-gray-50 transition">
-                    <td className="px-6 py-4 max-w-md">
-                      <div className="flex items-start gap-3">
-                        <FileText className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <div className="text-sm font-semibold text-gray-900 line-clamp-1">{article.title}</div>
-                          <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                            {article.content?.substring(0, 120)}...
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                        {article.category || 'Chưa phân loại'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{article.author || 'Ẩn danh'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{formatDate(article.publishedAt)}</td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-3">
-                        <button
-                          onClick={() => handleOpenModal('edit', article)}
-                          className="text-blue-600 hover:text-blue-800 transition"
-                          title="Chỉnh sửa"
-                        >
-                          <Edit className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(article.id)}
-                          className="text-red-600 hover:text-red-800 transition"
-                          title="Xóa"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      )}
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
-      {/* Modal – giữ nguyên đẹp như cũ */}
+      {renderPagination()}
+
+      {/* MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-800">
-                {modalMode === 'create' ? 'Tạo bài viết mới' : 'Chỉnh sửa bài viết'}
+            <div className="flex justify-between items-center p-6 border-b">
+              <h2 className="text-2xl font-bold">
+                {modalMode === "create" ? "Tạo bài viết mới" : "Chỉnh sửa bài viết"}
               </h2>
-              <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600 transition">
+              <button onClick={handleCloseModal}>
                 <X className="w-7 h-7" />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              {/* Thông báo trong modal */}
-              {error && <div className="bg-red-50 text-red-700 p-4 rounded-lg">{error}</div>}
-              {success && <div className="bg-green-50 text-green-700 p-4 rounded-lg">{success}</div>}
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Title */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tiêu đề *</label>
+                  <label>Tiêu đề *</label>
                   <input
                     type="text"
                     name="title"
+                    required
                     value={formData.title}
                     onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Nhập tiêu đề bài viết"
+                    className="w-full px-4 py-3 border rounded-xl"
                   />
                 </div>
 
+                {/* Content */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Nội dung *</label>
+                  <label>Nội dung *</label>
                   <textarea
                     name="content"
+                    rows="8"
+                    required
                     value={formData.content}
                     onChange={handleInputChange}
-                    rows="10"
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                    placeholder="Viết nội dung bài viết tại đây..."
+                    className="w-full px-4 py-3 border rounded-xl"
                   />
                 </div>
 
+                {/* Category */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Danh mục *</label>
-                  <input
-                    type="text"
+                  <label>Danh mục *</label>
+                  <select
                     name="category"
+                    required
                     value={formData.category}
                     onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
-                    placeholder="VD: Sức khỏe tim mạch"
-                  />
+                    className="w-full px-4 py-3 border rounded-xl"
+                  >
+                    <option value="">-- Chọn danh mục --</option>
+                    {categories.map((c) => (
+                      <option key={c}>{c}</option>
+                    ))}
+                  </select>
                 </div>
 
+                {/* Author */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tác giả *</label>
+                  <label>Tác giả *</label>
                   <input
                     type="text"
                     name="author"
+                    required
                     value={formData.author}
                     onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
-                    placeholder="VD: BS. Nguyễn Văn A"
+                    className="w-full px-4 py-3 border rounded-xl"
                   />
                 </div>
 
+                {/* Source */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Nguồn</label>
+                  <label>Nguồn</label>
                   <input
                     type="text"
                     name="source"
                     value={formData.source}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
-                    placeholder="VD: Bệnh viện Chợ Rẫy"
+                    className="w-full px-4 py-3 border rounded-xl"
                   />
                 </div>
 
+                {/* Image */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">URL ảnh bìa</label>
+                  <label>URL ảnh bìa</label>
                   <input
                     type="url"
                     name="image"
                     value={formData.image}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
-                    placeholder="https://example.com/image.jpg"
+                    className="w-full px-4 py-3 border rounded-xl"
                   />
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-6 border-t border-gray-200">
+              <div className="flex gap-4 pt-6 border-t">
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="flex-1 bg-blue-600 text-white py-3.5 rounded-xl hover:bg-blue-700 transition font-medium disabled:bg-blue-400 disabled:cursor-not-allowed shadow-lg"
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-xl"
                 >
-                  {loading ? 'Đang xử lý...' : modalMode === 'create' ? 'Tạo bài viết' : 'Cập nhật bài viết'}
+                  {modalMode === "create" ? "Tạo bài viết" : "Cập nhật"}
                 </button>
+
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="flex-1 bg-gray-200 text-gray-800 py-3.5 rounded-xl hover:bg-gray-300 transition font-medium"
+                  className="flex-1 bg-gray-200 py-3 rounded-xl"
                 >
-                  Hủy bỏ
+                  Hủy
                 </button>
               </div>
             </form>
