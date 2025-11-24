@@ -24,7 +24,7 @@ import SecurityPage from "./pages/SecurityPage";
 
 // Dashboard Layout
 import AdminPage from "./pages/AdminPage";
-import StatisticsPage from "./pages/StatisticsPage";
+import StatisticsPage from "./components/admin/Statistics";
 import DoctorPage from "./pages/DoctorPage";
 import ReceptionPage from "./pages/ReceptionPage";
 
