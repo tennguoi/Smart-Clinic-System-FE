@@ -12,7 +12,6 @@ const api = axios.create({
   },
 });
 
-// Tự động gắn token từ localStorage (hỗ trợ nhiều key)
 api.interceptors.request.use((config) => {
   const token =
     localStorage.getItem('auth_token') ||
@@ -25,38 +24,32 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Xử lý lỗi chung (tùy chọn – giúp debug dễ hơn)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const msg = error.response?.data?.message || error.message;
-    console.error('Billing API Error:', msg);
+    console.error('Billing API Error:', error.response?.data || error.message);
     return Promise.reject(error);
   }
 );
 
 export const billingApi = {
-  // Lấy danh sách hóa đơn (dùng cho lễ tân + bác sĩ)
-  getAll: async (page = 0, size = 20, search = '', status = '') => {
-    const params = { page, size, search };
-    if (status) params.status = status;
+  getAll: async (page = 0, size = 20, search = '') => {
+    const params = { page, size };
+    if (search) params.search = search;
     const res = await api.get('', { params });
     return res.data;
   },
 
-  // Lấy chi tiết 1 hóa đơn
   getById: async (id) => {
     const res = await api.get(`/${id}`);
     return res.data;
   },
 
-  // TẠO HÓA ĐƠN TỰ ĐỘNG khi bác sĩ hoàn thành khám (QUAN TRỌNG NHẤT)
   create: async (data) => {
     const res = await api.post('', data);
     return res.data;
   },
 
-  // Thu tiền hóa đơn (lễ tân dùng)
   pay: async (billId, paidAmount, paymentMethod = 'Cash') => {
     const res = await api.put(`/${billId}/pay`, {
       paidAmount,
@@ -65,7 +58,6 @@ export const billingApi = {
     return res.data;
   },
 
-  // Xóa hóa đơn (nếu cần – admin dùng)
   delete: async (billId) => {
     const res = await api.delete(`/${billId}`);
     return res.data;

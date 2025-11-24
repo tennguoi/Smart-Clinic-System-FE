@@ -7,6 +7,7 @@ import PayInvoiceModal from './PayInvoiceModal';
 import CreateInvoiceModal from './CreateInvoiceModal';
 import { formatPrice } from '../../utils/formatPrice';
 import { FileText, Search, Plus, X } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 export default function InvoicesSection({ isDoctorView = false }) {
   const [invoices, setInvoices] = useState([]);
@@ -21,20 +22,24 @@ export default function InvoicesSection({ isDoctorView = false }) {
     setLoading(true);
     try {
       const res = await billingApi.getAll(0, 100, search);
-      let data = res.data.content || [];
+      // Backend trả về: { content: [...] } hoặc { data: [...] } tùy config
+      let data = res.content || res.data || [];
 
+      // Lọc theo trạng thái
       if (statusFilter === 'paid') data = data.filter(i => i.paymentStatus === 'Paid');
-      if (statusFilter === 'pending') data = data.filter(i => i.paymentStatus === 'Pending');
-      if (showUnpaidOnly) data = data.filter(i => i.paymentStatus === 'Pending');
+      if (statusFilter === 'pending') data = data.filter(i => i.paymentStatus === 'Pending' || i.paymentStatus === 'PartiallyPaid');
+      if (showUnpaidOnly) data = data.filter(i => i.paymentStatus !== 'Paid');
 
       setInvoices(data);
     } catch (err) {
+      toast.error('Không tải được danh sách hóa đơn');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
+  // Gọi lại khi search hoặc filter thay đổi
   useEffect(() => {
     const timer = setTimeout(fetchInvoices, 300);
     return () => clearTimeout(timer);
@@ -43,11 +48,16 @@ export default function InvoicesSection({ isDoctorView = false }) {
   const hasFilter = search || statusFilter !== 'all' || showUnpaidOnly;
 
   const getStatusBadge = (status) => {
-    if (status === 'Paid')
-      return <span className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-full">Đã thanh toán</span>;
-    if (status === 'Pending')
-      return <span className="px-3 py-1.5 text-xs font-semibold bg-yellow-100 text-yellow-700 rounded-full">Chưa thanh toán</span>;
-    return <span className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-full">—</span>;
+    switch (status) {
+      case 'Paid':
+        return <span className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-full">Đã thanh toán</span>;
+      case 'Pending':
+        return <span className="px-3 py-1.5 text-xs font-semibold bg-yellow-100 text-yellow-700 rounded-full">Chưa thanh toán</span>;
+      case 'PartiallyPaid':
+        return <span className="px-3 py-1.5 text-xs font-semibold bg-orange-100 text-orange-700 rounded-full">Thanh toán 1 phần</span>;
+      default:
+        return <span className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-full">—</span>;
+    }
   };
 
   return (
@@ -69,7 +79,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
             </div>
           </div>
 
-          {/* Chỉ lễ tân mới thấy nút tạo */}
+          {/* Nút tạo hóa đơn – chỉ lễ tân */}
           {!isDoctorView && (
             <button
               onClick={() => setCreateModalOpen(true)}
@@ -105,7 +115,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
               >
                 <option value="all">Tất cả trạng thái</option>
                 <option value="paid">Đã thanh toán</option>
-                <option value="pending">Chưa thanh toán</option>
+                <option value="pending">Chưa thanh toán / Chưa đủ</option>
               </select>
             </div>
 
@@ -171,28 +181,40 @@ export default function InvoicesSection({ isDoctorView = false }) {
               <tbody className="divide-y divide-gray-200">
                 {invoices.map((inv) => (
                   <tr key={inv.billId} className="hover:bg-gray-50 transition">
+                    {/* Mã hóa đơn */}
                     <td className="px-6 py-4 font-mono text-blue-600 font-medium">
-                      {inv.billId?.slice(0, 10).toUpperCase()}
+                      {inv.billCode || inv.billId?.slice(0, 10).toUpperCase()}
                     </td>
+
+                    {/* Bệnh nhân */}
                     <td className="px-6 py-4">
                       <div className="font-medium text-gray-900">{inv.patientName}</div>
                       <div className="text-sm text-gray-500">{inv.patientPhone}</div>
                     </td>
+
+                    {/* Ngày lập */}
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {format(new Date(inv.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
                     </td>
+
+                    {/* Tổng tiền */}
                     <td className="px-6 py-4 text-right font-medium text-gray-900">
-                      {formatPrice(inv.finalAmount || inv.totalAmount)}
+                      {formatPrice(inv.totalAmount)}
                     </td>
+
+                    {/* Đã thu */}
                     <td className="px-6 py-4 text-right font-medium text-green-600">
-                      {formatPrice(inv.amountPaid)}
+                      {formatPrice(inv.amountPaid || 0)}
                     </td>
+
+                    {/* Trạng thái */}
                     <td className="px-6 py-4 text-center">
                       {getStatusBadge(inv.paymentStatus)}
                     </td>
+
+                    {/* Thao tác */}
                     <td className="px-6 py-4 text-center">
-                      {/* Bác sĩ không được thu tiền */}
-                      {!isDoctorView && inv.paymentStatus === 'Pending' && (
+                      {!isDoctorView && inv.paymentStatus !== 'Paid' && (
                         <button
                           onClick={() => setSelectedInvoice(inv)}
                           className="text-blue-600 hover:text-blue-800 font-medium underline decoration-2"
@@ -209,7 +231,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
         </div>
       </div>
 
-      {/* Chỉ lễ tân mới thấy modal */}
+      {/* Modal Thanh toán */}
       {!isDoctorView && selectedInvoice && (
         <PayInvoiceModal
           invoice={selectedInvoice}
@@ -218,6 +240,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
         />
       )}
 
+      {/* Modal Tạo hóa đơn */}
       {!isDoctorView && createModalOpen && (
         <CreateInvoiceModal
           isOpen={createModalOpen}
