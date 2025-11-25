@@ -18,6 +18,19 @@ export const medicalRecordApi = {
 		return Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
 	},
 
+	search: async ({ keyword, startDate, endDate }) => {
+        const params = {
+            keyword,
+            startDate,
+            endDate
+        };
+        // Backend endpoint: GET /api/doctor/medical-records/search?keyword=...&startDate=...
+        const { data } = await axiosInstance.get('/api/doctor/medical-records/search', { params });
+        
+        // Xử lý dữ liệu trả về an toàn giống như các hàm list khác
+        return Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
+    },
+
 	listByPatient: async (patientId) => {
 		const { data } = await axiosInstance.get(`/api/doctor/medical-records/patient/${patientId}`);
 		return Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];

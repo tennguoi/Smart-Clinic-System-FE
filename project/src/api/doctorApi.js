@@ -120,6 +120,37 @@ export const getWaitingQueue = async () => {
   const response = await axiosInstance.get('/api/doctor/queue/waiting');
   return response.data; // Trả về danh sách QueuePatientResponse
 };
+export const searchMedicalRecords = async (params) => {
+  try {
+    // params bao gồm: { keyword, startDate, endDate }
+    const { data } = await axiosInstance.get('/api/doctor/medical-records/search', { params });
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('Error searching medical records:', error);
+    throw error;
+  }
+};
+
+// Hàm này thay thế cho listMine cũ (nếu bạn muốn dùng chung trong file này)
+export const getMyMedicalRecords = async () => {
+  try {
+    const { data } = await axiosInstance.get('/api/doctor/medical-records/mine');
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('Error fetching my medical records:', error);
+    throw error;
+  }
+};
+
+export const createMedicalRecord = async (recordData) => {
+  try {
+    const { data } = await axiosInstance.post('/api/doctor/medical-records', recordData);
+    return data;
+  } catch (error) {
+    console.error('Error creating medical record:', error);
+    throw error;
+  }
+};
 
 export default {
   getWaitingQueue,
@@ -134,4 +165,7 @@ export default {
   getCompletedQueues,
   getDoctorStats,
   getDoctorStatsDetail,
+  searchMedicalRecords,
+  getMyMedicalRecords,
+  createMedicalRecord,
 };
