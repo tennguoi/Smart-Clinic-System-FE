@@ -1,9 +1,9 @@
 // src/components/receptionist/InvoicesSection.jsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { billingApi } from '../../api/billingApi';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import PayInvoiceModal from './PayInvoiceModal';
 import CreateInvoiceModal from './CreateInvoiceModal';
 import InvoiceDetailModal from './InvoiceDetailModal';
 import { formatPrice } from '../../utils/formatPrice';
@@ -11,6 +11,8 @@ import { FileText, Search, Plus, Eye, CreditCard } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 export default function InvoicesSection({ isDoctorView = false }) {
+  const navigate = useNavigate();
+  
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -18,7 +20,6 @@ export default function InvoicesSection({ isDoctorView = false }) {
   const [showUnpaidOnly, setShowUnpaidOnly] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showPayModal, setShowPayModal] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const fetchInvoices = async () => {
@@ -65,26 +66,15 @@ export default function InvoicesSection({ isDoctorView = false }) {
     setShowDetailModal(true);
   };
 
+  // THAY ĐỔI: Navigate đến trang thanh toán thay vì mở modal
   const handlePayInvoice = (invoice) => {
-    setSelectedInvoice(invoice);
-    setShowPayModal(true);
+    navigate(`/reception/payment/${invoice.billId}`);
   };
 
+  // THAY ĐỔI: Navigate đến trang thanh toán từ modal chi tiết
   const handlePayFromDetail = (invoice) => {
     setShowDetailModal(false);
-    setShowPayModal(true);
-  };
-
-  const handleClosePayModal = () => {
-    setShowPayModal(false);
-    setSelectedInvoice(null);
-  };
-
-  const handlePaymentSuccess = () => {
-    setShowPayModal(false);
-    setShowDetailModal(false);
-    setSelectedInvoice(null);
-    fetchInvoices();
+    navigate(`/reception/payment/${invoice.billId}`);
   };
 
   return (
@@ -280,15 +270,6 @@ export default function InvoicesSection({ isDoctorView = false }) {
           }}
           onUpdate={fetchInvoices}
           onPay={handlePayFromDetail}
-        />
-      )}
-
-      {/* Modal Thanh toán */}
-      {showPayModal && selectedInvoice && (
-        <PayInvoiceModal
-          invoice={selectedInvoice}
-          onClose={handleClosePayModal}
-          onSuccess={handlePaymentSuccess}
         />
       )}
 
