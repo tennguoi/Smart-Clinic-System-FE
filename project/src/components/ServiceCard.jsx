@@ -1,10 +1,13 @@
 // src/components/ServiceCard.jsx
 import { useState } from 'react';
-import { getCategoryLabel, formatPrice } from '../api/serviceApi';
+import { getCategoryLabel, formatPrice, getServiceImage } from '../api/serviceApi';
 
 export default function ServiceCard({ service, index }) {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+
+  // Lấy URL ảnh (từ database hoặc placeholder)
+  const imageUrl = getServiceImage(service);
 
   const getCategoryColor = (category) => {
     const colors = {
@@ -19,24 +22,29 @@ export default function ServiceCard({ service, index }) {
     <div className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 flex flex-col h-full hover:-translate-y-1">
       {/* Image Section */}
       <div className="relative h-48 overflow-hidden bg-gradient-to-br from-cyan-50 to-emerald-50">
-        {service.photoUrl && !imageError ? (
+        {!imageError ? (
           <>
+            {/* Loading Spinner */}
             {imageLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
                 <div className="w-8 h-8 border-3 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
+            
+            {/* Image from Database */}
             <img
-              src={service.photoUrl}
+              src={imageUrl}
               alt={service.name}
               onError={() => setImageError(true)}
               onLoad={() => setImageLoading(false)}
               className={`w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${
                 imageLoading ? 'opacity-0' : 'opacity-100'
               }`}
+              loading="lazy"
             />
           </>
         ) : (
+          // Fallback UI when image fails to load
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-100 via-emerald-50 to-blue-100">
             <svg className="w-20 h-20 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
