@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
+import { useClinic } from '../contexts/ClinicContext';
 import logo from '../images/logo.png';
 import backgroundImage from '../images/background.png';
 
@@ -12,6 +13,12 @@ const Login = () => {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { clinicInfo } = useClinic();
+  
+  const baseLogoUrl = clinicInfo?.logoUrl?.trim() || '';
+  const cacheBuster = clinicInfo?.updatedAt ? new Date(clinicInfo.updatedAt).getTime() : Date.now();
+  const clinicLogoUrl = baseLogoUrl ? `${baseLogoUrl}?v=${cacheBuster}` : '';
+  const showDefaultLogo = !clinicLogoUrl;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -76,7 +83,15 @@ const Login = () => {
 
       <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl relative z-10 animate-fadeIn">
         <div className="flex justify-center mb-6">
-          <img src={logo} alt="Logo" className="w-full max-w-[150px] h-auto object-contain" />
+          <img 
+            key={clinicLogoUrl || 'default'}
+            src={showDefaultLogo ? logo : clinicLogoUrl} 
+            alt={showDefaultLogo ? "Logo" : "Logo phòng khám"} 
+            className="w-full max-w-[150px] h-auto object-contain"
+            onError={(e) => {
+              e.currentTarget.src = logo;
+            }}
+          />
         </div>
 
         <h2 className="text-3xl font-bold text-center text-teal-700 mb-6">

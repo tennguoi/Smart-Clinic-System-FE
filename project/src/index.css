@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    font-size: 90%; /* Giảm font-size gốc xuống 90% */
+  }
+  
+  @media (min-width: 1920px) {
+    html {
+      font-size: 85%; /* Màn hình lớn hơn giảm thêm */
+    }
+  }
+}
+
 @layer utilities {
   @keyframes fade-in {
     from {

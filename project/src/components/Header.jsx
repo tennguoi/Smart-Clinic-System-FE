@@ -7,7 +7,9 @@ export default function Header() {
   const { clinicInfo } = useClinic();
 
   const clinicName = clinicInfo?.name?.trim() || '';
-  const clinicLogoUrl = clinicInfo?.logoUrl?.trim() || '';
+  const baseLogoUrl = clinicInfo?.logoUrl?.trim() || '';
+  const cacheBuster = clinicInfo?.updatedAt ? new Date(clinicInfo.updatedAt).getTime() : Date.now();
+  const clinicLogoUrl = baseLogoUrl ? `${baseLogoUrl}?v=${cacheBuster}` : '';
 
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
@@ -24,6 +26,7 @@ export default function Header() {
           <div className="flex items-center space-x-3">
             {clinicLogoUrl ? (
               <img
+                key={clinicLogoUrl}
                 src={clinicLogoUrl}
                 alt={clinicName || 'Logo phòng khám'}
                 className="w-12 h-12 object-contain rounded-lg"

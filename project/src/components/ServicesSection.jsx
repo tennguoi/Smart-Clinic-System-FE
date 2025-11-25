@@ -74,7 +74,7 @@ export default function ServicesSection() {
   ];
 
   return (
-    <section id="services" className="py-16 md:py-24 bg-gradient-to-b from-cyan-50/50 via-white to-white">
+    <section id="services" className="py-12 bg-gradient-to-b from-cyan-50/50 via-white to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
@@ -92,7 +92,7 @@ export default function ServicesSection() {
               onClick={() => setSelectedCategory(cat.id)}
               className={`px-6 py-3 rounded-full font-medium transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-xl ${
                 selectedCategory === cat.id
-                  ? 'bg-gradient-to-r from-cyan-500 to-emerald-500 text-white shadow-cyan-500/30'
+                  ? 'bg-cyan-600 text-white shadow-cyan-500/30'
                   : 'bg-white text-gray-700 border border-gray-300 hover:border-cyan-400'
               }`}
             >
@@ -124,9 +124,9 @@ export default function ServicesSection() {
             <div className="mt-16 text-center">
               <button
                 onClick={handleViewAll}
-                className="group inline-flex items-center px-10 py-4 bg-gradient-to-r from-cyan-500 to-emerald-500 text-white text-lg font-semibold rounded-full shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                className="group inline-flex items-center px-10 py-4 bg-cyan-600 hover:bg-cyan-700 text-white text-lg font-semibold rounded-full shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
               >
-                Xem toàn bộ bảng giá dịch vụ
+                Xem tất cả dịch vụ
                 <svg className="ml-3 w-6 h-6 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
