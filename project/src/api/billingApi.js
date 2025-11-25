@@ -62,6 +62,11 @@ export const billingApi = {
     const res = await api.delete(`/${billId}`);
     return res.data;
   },
+  updateInvoice: async (billId, payload) => {
+  const { data } = await axiosInstance.put(`/api/billing/${billId}`, payload);
+  return data;
+ },
 };
+
 
 export default billingApi;
