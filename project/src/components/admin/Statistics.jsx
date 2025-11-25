@@ -2,13 +2,14 @@
 import React, { useEffect, useState } from 'react';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
-    LineChart, Line, AreaChart, Area
+    LineChart, Line
 } from 'recharts';
 import axios from 'axios';
-import { FaCalendarCheck, FaUserInjured, FaMoneyBillWave, FaUserMd, FaArrowUp, FaArrowDown, FaCalendar } from 'react-icons/fa';
+import { FaCalendarCheck, FaUserInjured, FaMoneyBillWave, FaUserMd, FaArrowUp, FaArrowDown, FaCalendar, FaChartBar, FaStethoscope, FaCoins } from 'react-icons/fa';
 
 const StatisticsPage = () => {
     const [topServices, setTopServices] = useState([]);
+    const [statType, setStatType] = useState('appointment'); // 'appointment', 'medical_record', 'revenue'
     const [kpi, setKpi] = useState({
         totalAppointmentsToday: 0,
         appointmentsGrowth: 0,
@@ -43,7 +44,6 @@ const StatisticsPage = () => {
 
                 if (!token) {
                     console.warn("Không tìm thấy Token. Đang hiển thị dữ liệu mẫu (Demo Mode).");
-                    // Mock data logic here if needed, or just return
                     setLoading(false);
                     return;
                 }
@@ -55,8 +55,17 @@ const StatisticsPage = () => {
 
                 // Gọi API song song với date filter
                 const params = { startDate, endDate };
+                
+                // Determine which Top Services API to call
+                let topServicesUrl = 'http://localhost:8082/api/admin/dashboard/top-services-by-appointments';
+                if (statType === 'medical_record') {
+                    topServicesUrl = 'http://localhost:8082/api/admin/dashboard/top-services-by-medical-records';
+                } else if (statType === 'revenue') {
+                    topServicesUrl = 'http://localhost:8082/api/admin/dashboard/top-services-by-revenue';
+                }
+
                 const [topServicesRes, kpiRes, apptTrendRes, revTrendRes] = await Promise.all([
-                    axios.get('http://localhost:8082/api/admin/dashboard/top-services', { headers, params }),
+                    axios.get(topServicesUrl, { headers, params }),
                     axios.get('http://localhost:8082/api/admin/dashboard/kpi', { headers, params }),
                     axios.get('http://localhost:8082/api/admin/dashboard/trend/appointments', { headers, params }),
                     axios.get('http://localhost:8082/api/admin/dashboard/trend/revenue', { headers, params })
@@ -64,10 +73,14 @@ const StatisticsPage = () => {
 
                 // Map dữ liệu Top Services
                 const formattedTopServices = topServicesRes.data.map((item) => ({
-                    name: item.service.name,       
-                    usage: item.totalUsage,        
-                    price: item.service.price,     
-                    image: item.service.photoUrl   
+                    name: item.serviceName,       
+                    usage: statType === 'revenue' ? item.totalRevenue : item.quantity,        
+                    price: item.servicePrice,     
+                    image: item.photoUrl,
+                    category: item.serviceCategory,
+                    displayValue: statType === 'revenue' 
+                        ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.totalRevenue)
+                        : `${item.quantity} lượt`
                 }));
 
                 setTopServices(formattedTopServices);
@@ -88,7 +101,7 @@ const StatisticsPage = () => {
         };
 
         fetchData();
-    }, [startDate, endDate]);
+    }, [startDate, endDate, statType]);
 
     if (loading) return (
         <div className="flex justify-center items-center h-full min-h-[400px]">
@@ -104,7 +117,6 @@ const StatisticsPage = () => {
     );
 
     const StatCard = ({ title, value, subValue, growth, icon: Icon, color, bgColor, isReverse = false }) => {
-        // isReverse: true means lower is better (e.g. cancel rate)
         const isPositive = growth >= 0;
         const isGood = isReverse ? !isPositive : isPositive;
         
@@ -279,7 +291,35 @@ const StatisticsPage = () => {
                 
                 {/* Top Services Chart */}
                 <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h2 className="text-lg font-semibold text-gray-700 mb-6">Top 5 Dịch Vụ Phổ Biến</h2>
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-lg font-semibold text-gray-700">Top 5 Dịch Vụ Phổ Biến</h2>
+                        
+                        {/* Selector for Stat Type */}
+                        <div className="flex bg-gray-100 p-1 rounded-lg">
+                            <button
+                                onClick={() => setStatType('appointment')}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
+                                    ${statType === 'appointment' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                <FaCalendarCheck /> Đặt lịch
+                            </button>
+                            <button
+                                onClick={() => setStatType('medical_record')}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
+                                    ${statType === 'medical_record' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                <FaStethoscope /> Khám thật
+                            </button>
+                            <button
+                                onClick={() => setStatType('revenue')}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
+                                    ${statType === 'revenue' ? 'bg-white text-yellow-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                <FaCoins /> Doanh thu
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="h-[400px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart
@@ -298,9 +338,12 @@ const StatisticsPage = () => {
                                 <Tooltip 
                                     cursor={{fill: 'transparent'}}
                                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                    formatter={(value) => [`${value} lượt`, 'Số lượng']}
+                                    formatter={(value, name, props) => [
+                                        props.payload.displayValue, 
+                                        statType === 'revenue' ? 'Doanh thu' : 'Số lượng'
+                                    ]}
                                 />
-                                <Bar dataKey="usage" name="Lượt sử dụng" radius={[0, 4, 4, 0]} barSize={32}>
+                                <Bar dataKey="usage" name="Giá trị" radius={[0, 4, 4, 0]} barSize={32}>
                                     {topServices.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
@@ -314,6 +357,9 @@ const StatisticsPage = () => {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[480px]">
                     <div className="p-4 border-b border-gray-100 bg-gray-50">
                         <h2 className="text-lg font-semibold text-gray-700">Bảng Xếp Hạng</h2>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Theo: {statType === 'appointment' ? 'Nhu cầu đặt lịch' : statType === 'medical_record' ? 'Lượt khám thực tế' : 'Doanh thu thực tế'}
+                        </p>
                     </div>
                     <div className="overflow-y-auto flex-1">
                         {topServices.map((item, index) => (
@@ -335,16 +381,18 @@ const StatisticsPage = () => {
                                             className="w-8 h-8 rounded object-cover mr-2 border bg-white flex-shrink-0"
                                             onError={(e) => {e.target.src = 'https://via.placeholder.com/40'}}
                                         />
-                                        <p className="text-sm font-medium text-gray-900 truncate" title={item.name}>{item.name}</p>
+                                        <div className="truncate">
+                                            <p className="text-sm font-medium text-gray-900 truncate" title={item.name}>{item.name}</p>
+                                            <p className="text-xs text-gray-500 truncate">{item.category}</p>
+                                        </div>
                                     </div>
-                                    <p className="text-xs text-gray-500 ml-10">
-                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
-                                    </p>
                                 </div>
 
-                                {/* Số lượt */}
+                                {/* Số liệu */}
                                 <div className="text-right ml-2 flex-shrink-0">
-                                    <span className="block text-lg font-bold text-blue-600">{item.usage}</span>
+                                    <span className="block text-sm font-bold text-blue-600">
+                                        {item.displayValue}
+                                    </span>
                                 </div>
                             </div>
                         ))}
