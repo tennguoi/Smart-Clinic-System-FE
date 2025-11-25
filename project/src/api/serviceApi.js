@@ -53,15 +53,19 @@ export const serviceApi = {
   },
 
   /**
-   * 🔍 Tìm kiếm dịch vụ theo category (phân trang) - bao gồm photoUrl
-   * @param {string} category - Danh mục (Consultation / Test / Procedure)
-   * @param {number} page - Số trang (bắt đầu từ 0)
-   * @param {number} size - Số lượng items mỗi trang
+   * 🔍 Tìm kiếm dịch vụ (name, category)
    */
-  getServicesByCategory: async (category, page = 0, size = 6) => {
+  searchServices: async (name, category, page = 0, size = 6) => {
     try {
-      const url = `${API_BASE_URL}/api/public/services/search?category=${encodeURIComponent(category)}&page=${page}&size=${size}`;
-      console.log('Searching by category:', url);
+      const params = new URLSearchParams({
+        page,
+        size,
+      });
+      if (name) params.append('name', name);
+      if (category && category !== 'all') params.append('category', category);
+
+      const url = `${API_BASE_URL}/api/public/services/search?${params.toString()}`;
+      console.log('Searching services:', url);
 
       const response = await fetch(url, {
         method: 'GET',
@@ -136,6 +140,13 @@ export const serviceApi = {
       console.error('Error fetching service by ID:', error);
       throw error;
     }
+  },
+
+  /**
+   * 🔍 Tìm kiếm dịch vụ theo category (Wrapper cho searchServices)
+   */
+  getServicesByCategory: async (category, page = 0, size = 6) => {
+    return serviceApi.searchServices(null, category, page, size);
   },
 };
 

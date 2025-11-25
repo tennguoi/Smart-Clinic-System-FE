@@ -38,34 +38,24 @@ export default function AppointmentForm() {
     };
   }, []);
 
-  // --- SMART SEARCH UTILS ---
-  const normalize = (str = '') =>
-    str
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // bỏ dấu
-      .replace(/đ/g, 'd')              // đặc thù tiếng Việt
-      .replace(/[^a-z0-9\s-]/g, ' ')   // loại ký tự lạ (optional)
-      .replace(/\s+/g, ' ')
-      .trim();
+  // --- API SEARCH UTILS ---
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchServices(serviceSearch);
+    }, 300); // Debounce 300ms
 
-  // Levenshtein tương đối (0..1)
-  const levenshteinRatio = (a, b) => {
-    a = normalize(a); b = normalize(b);
-    const la = a.length, lb = b.length;
-    if (!la && !lb) return 1;
-    const dp = Array.from({ length: la + 1 }, () => Array(lb + 1).fill(0));
-    for (let i = 0; i <= la; i++) dp[i][0] = i;
-    for (let j = 0; j <= lb; j++) dp[0][j] = j;
-    for (let i = 1; i <= la; i++) {
-      for (let j = 1; j <= lb; j++) {
-        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-        dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
-      }
+    return () => clearTimeout(timer);
+  }, [serviceSearch]);
+
+  const fetchServices = async (keyword) => {
+    try {
+      const { serviceApi } = await import('../api/serviceApi');
+      // Tìm kiếm theo tên, lấy 50 kết quả để hiển thị
+      const data = await serviceApi.searchServices(keyword, null, 0, 50);
+      setServices(data?.services ?? []);
+    } catch (err) {
+      console.error('Failed to load services', err);
     }
-    const dist = dp[la][lb];
-    const maxLen = Math.max(la, lb);
-    return 1 - dist / maxLen;
   };
 
   // Hàm kiểm tra thời gian hợp lệ (08:00–12:00 và 14:00–17:00)
@@ -82,58 +72,8 @@ export default function AppointmentForm() {
     return 'Vui lòng chọn thời gian trong khung giờ: 8:00-12:00 hoặc 14:00-17:00';
   };
 
-  // Lọc dịch vụ theo từ khóa tìm kiếm (smart: bỏ dấu, multi-keyword, fuzzy nhẹ, ranking)
-  const filteredServices = useMemo(() => {
-    if (!serviceSearch) return services;
-
-    const q = normalize(serviceSearch);
-    const keywords = q.split(' ').filter(Boolean);
-
-    const scored = services
-      .map((svc) => {
-        const nameNorm = normalize(svc.name);
-        const catNorm  = normalize(svc.category ?? '');
-        const descNorm = normalize(svc.description ?? '');
-        const haystack = `${nameNorm} ${catNorm} ${descNorm}`;
-
-        // AND: mọi keyword đều phải xuất hiện
-        const matchesAll = keywords.every((kw) => haystack.includes(kw));
-        if (!matchesAll) return null;
-
-        // Điểm xếp hạng: ưu tiên name, rồi desc, rồi category + fuzzy
-        const bestTokenSim = Math.max(
-          ...nameNorm.split(' ').map((t) => levenshteinRatio(t, q)),
-          0
-        );
-        const score =
-          (nameNorm === q ? 100 : 0) +
-          (nameNorm.startsWith(q) ? 60 : 0) +
-          keywords.reduce((acc, kw) => acc + (nameNorm.includes(kw) ? 12 : 0), 0) +
-          keywords.reduce((acc, kw) => acc + (descNorm.includes(kw) ? 6 : 0), 0) +
-          (catNorm === q ? 20 : 0) +
-          Math.round(bestTokenSim * 30);
-
-        return { svc, score };
-      })
-      .filter(Boolean)
-      .sort((a, b) => b.score - a.score)
-      .map((x) => x.svc);
-
-    return scored;
-  }, [services, serviceSearch]);
-
-  // Load services list
-  useEffect(() => {
-    (async () => {
-      try {
-        const { serviceApi } = await import('../api/serviceApi');
-        const data = await serviceApi.getAllServices(0, 50);
-        setServices(data?.services ?? []);
-      } catch (err) {
-        console.error('Failed to load services', err);
-      }
-    })();
-  }, []);
+  // Load services list (initial load handled by useEffect above with empty search)
+  // useEffect(() => { ... }, []) removed because the debounce effect handles initial load when serviceSearch is ''
 
   // Mặc định gán ngày = minDate (ngày mai) để người dùng không cần mở lịch
   useEffect(() => {
@@ -459,12 +399,12 @@ export default function AppointmentForm() {
 
                 {/* Danh sách dịch vụ */}
                 <div className="max-h-48 overflow-y-auto">
-                  {filteredServices.length === 0 ? (
+                  {services.length === 0 ? (
                     <div className="px-3 py-2 text-sm text-gray-500 text-center">
-                      {serviceSearch ? 'Không tìm thấy dịch vụ phù hợp' : 'Không có dịch vụ'}
+                      {serviceSearch ? 'Không tìm thấy dịch vụ phù hợp' : 'Đang tải...'}
                     </div>
                   ) : (
-                    filteredServices.map((svc) => (
+                    services.map((svc) => (
                       <label
                         key={svc.serviceId}
                         className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
