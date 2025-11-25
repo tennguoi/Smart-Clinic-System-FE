@@ -5,7 +5,7 @@ import {
     LineChart, Line, AreaChart, Area
 } from 'recharts';
 import axios from 'axios';
-import { FaCalendarCheck, FaUserInjured, FaMoneyBillWave, FaUserMd, FaArrowUp, FaArrowDown } from 'react-icons/fa';
+import { FaCalendarCheck, FaUserInjured, FaMoneyBillWave, FaUserMd, FaArrowUp, FaArrowDown, FaCalendar } from 'react-icons/fa';
 
 const StatisticsPage = () => {
     const [topServices, setTopServices] = useState([]);
@@ -23,6 +23,14 @@ const StatisticsPage = () => {
     const [revenueTrend, setRevenueTrend] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    
+    // Date filter states
+    const [startDate, setStartDate] = useState(() => {
+        const date = new Date();
+        date.setDate(date.getDate() - 30);
+        return date.toISOString().split('T')[0];
+    });
+    const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
 
     // Bảng màu cho biểu đồ
     const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
@@ -45,12 +53,13 @@ const StatisticsPage = () => {
                     'Content-Type': 'application/json'
                 };
 
-                // Gọi API song song
+                // Gọi API song song với date filter
+                const params = { startDate, endDate };
                 const [topServicesRes, kpiRes, apptTrendRes, revTrendRes] = await Promise.all([
-                    axios.get('http://localhost:8082/api/admin/dashboard/top-services', { headers }),
-                    axios.get('http://localhost:8082/api/admin/dashboard/kpi', { headers }),
-                    axios.get('http://localhost:8082/api/admin/dashboard/trend/appointments', { headers }),
-                    axios.get('http://localhost:8082/api/admin/dashboard/trend/revenue', { headers })
+                    axios.get('http://localhost:8082/api/admin/dashboard/top-services', { headers, params }),
+                    axios.get('http://localhost:8082/api/admin/dashboard/kpi', { headers, params }),
+                    axios.get('http://localhost:8082/api/admin/dashboard/trend/appointments', { headers, params }),
+                    axios.get('http://localhost:8082/api/admin/dashboard/trend/revenue', { headers, params })
                 ]);
 
                 // Map dữ liệu Top Services
@@ -79,7 +88,7 @@ const StatisticsPage = () => {
         };
 
         fetchData();
-    }, []);
+    }, [startDate, endDate]);
 
     if (loading) return (
         <div className="flex justify-center items-center h-full min-h-[400px]">
@@ -129,6 +138,66 @@ const StatisticsPage = () => {
                 </div>
             </div>
 
+            {/* Date Filter */}
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                    <FaCalendar className="text-blue-600" size={18} />
+                    <span className="text-gray-700 font-medium">Lọc theo ngày:</span>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="flex flex-col">
+                        <label className="text-xs text-gray-500 mb-1">Từ ngày</label>
+                        <input 
+                            type="date" 
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                    <div className="flex flex-col">
+                        <label className="text-xs text-gray-500 mb-1">Đến ngày</label>
+                        <input 
+                            type="date" 
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                    <button
+                        onClick={() => {
+                            const date = new Date();
+                            date.setDate(date.getDate() - 30);
+                            setStartDate(date.toISOString().split('T')[0]);
+                            setEndDate(new Date().toISOString().split('T')[0]);
+                        }}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm self-end"
+                    >
+                        30 Ngày
+                    </button>
+                    <button
+                        onClick={() => {
+                            const date = new Date();
+                            date.setDate(date.getDate() - 7);
+                            setStartDate(date.toISOString().split('T')[0]);
+                            setEndDate(new Date().toISOString().split('T')[0]);
+                        }}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm self-end"
+                    >
+                        7 Ngày
+                    </button>
+                    <button
+                        onClick={() => {
+                            const today = new Date().toISOString().split('T')[0];
+                            setStartDate(today);
+                            setEndDate(today);
+                        }}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm self-end"
+                    >
+                        Hôm Nay
+                    </button>
+                </div>
+            </div>
+
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard 
@@ -140,7 +209,7 @@ const StatisticsPage = () => {
                     bgColor="bg-blue-50" 
                 />
                 <StatCard 
-                    title="Bệnh Nhân Mới" 
+                    title="Hồ Sơ Bệnh Án Mới" 
                     value={kpi.totalPatientsToday} 
                     growth={kpi.patientsGrowth}
                     icon={FaUserInjured} 
