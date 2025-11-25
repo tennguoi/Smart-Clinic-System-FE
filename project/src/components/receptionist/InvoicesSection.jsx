@@ -6,7 +6,7 @@ import { vi } from 'date-fns/locale';
 import PayInvoiceModal from './PayInvoiceModal';
 import CreateInvoiceModal from './CreateInvoiceModal';
 import { formatPrice } from '../../utils/formatPrice';
-import { FileText, Search, Plus, X } from 'lucide-react';
+import { FileText, Search, Plus } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 export default function InvoicesSection({ isDoctorView = false }) {
@@ -22,10 +22,8 @@ export default function InvoicesSection({ isDoctorView = false }) {
     setLoading(true);
     try {
       const res = await billingApi.getAll(0, 100, search);
-      // Backend trả về: { content: [...] } hoặc { data: [...] } tùy config
       let data = res.content || res.data || [];
 
-      // Lọc theo trạng thái
       if (statusFilter === 'paid') data = data.filter(i => i.paymentStatus === 'Paid');
       if (statusFilter === 'pending') data = data.filter(i => i.paymentStatus === 'Pending' || i.paymentStatus === 'PartiallyPaid');
       if (showUnpaidOnly) data = data.filter(i => i.paymentStatus !== 'Paid');
@@ -39,7 +37,6 @@ export default function InvoicesSection({ isDoctorView = false }) {
     }
   };
 
-  // Gọi lại khi search hoặc filter thay đổi
   useEffect(() => {
     const timer = setTimeout(fetchInvoices, 300);
     return () => clearTimeout(timer);
@@ -54,7 +51,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
       case 'Pending':
         return <span className="px-3 py-1.5 text-xs font-semibold bg-yellow-100 text-yellow-700 rounded-full">Chưa thanh toán</span>;
       case 'PartiallyPaid':
-        return <span className="px-3 py-1.5 text-xs font-semibold bg-orange-100 text-orange-700 rounded-full">Thanh toán 1 phần</span>;
+        return <span className="px-3 py-1.5 text-xs font-semibold bg-orange-100 text-orange-700 rounded-full">Thanh toán một phần</span>;
       default:
         return <span className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-full">—</span>;
     }
@@ -79,7 +76,6 @@ export default function InvoicesSection({ isDoctorView = false }) {
             </div>
           </div>
 
-          {/* Nút tạo hóa đơn – chỉ lễ tân */}
           {!isDoctorView && (
             <button
               onClick={() => setCreateModalOpen(true)}
@@ -146,7 +142,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
           </div>
         </div>
 
-        {/* Bảng hóa đơn */}
+        {/* Bảng hóa đơn – ĐÃ BỎ CỘT "ĐÃ THU" */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           {loading ? (
             <div className="p-16 text-center text-gray-500">
@@ -173,7 +169,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
                   <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">BỆNH NHÂN</th>
                   <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">NGÀY LẬP</th>
                   <th className="text-right px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">TỔNG TIỀN</th>
-                  <th className="text-right px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">ĐÃ THU</th>
+                  {/* ĐÃ BỎ CỘT "ĐÃ THU" */}
                   <th className="text-center px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">TRẠNG THÁI</th>
                   <th className="text-center px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">THAO TÁC</th>
                 </tr>
@@ -197,14 +193,9 @@ export default function InvoicesSection({ isDoctorView = false }) {
                       {format(new Date(inv.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
                     </td>
 
-                    {/* Tổng tiền */}
-                    <td className="px-6 py-4 text-right font-medium text-gray-900">
+                    {/* Tổng tiền – BÂY GIỜ LÀ CỘT DUY NHẤT VỀ SỐ TIỀN */}
+                    <td className="px-6 py-4 text-right font-bold text-lg text-gray-900">
                       {formatPrice(inv.totalAmount)}
-                    </td>
-
-                    {/* Đã thu */}
-                    <td className="px-6 py-4 text-right font-medium text-green-600">
-                      {formatPrice(inv.amountPaid || 0)}
                     </td>
 
                     {/* Trạng thái */}
