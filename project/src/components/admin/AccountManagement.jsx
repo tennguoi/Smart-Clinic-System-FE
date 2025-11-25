@@ -24,18 +24,6 @@ const dateToISOString = (date) => {
   return `${year}-${month}-${day}`;
 };
 
-const roleOptions = [
-  { value: 'admin', label: 'Quản trị viên' },
-  { value: 'bac_si', label: 'Bác sĩ' },
-  { value: 'tiep_tan', label: 'Tiếp tân' },
-];
-
-const genderOptions = [
-  { value: 'male', label: 'Nam' },
-  { value: 'female', label: 'Nữ' },
-  { value: 'other', label: 'Khác' },
-];
-
 const getRoleLabel = (role) => {
   const map = { admin: 'Quản trị viên', bac_si: 'Bác sĩ', tiep_tan: 'Tiếp tân' };
   return map[role] || role;
@@ -60,7 +48,6 @@ const CustomDateInput = forwardRef(({ value, onClick, placeholder, required }, r
     ref={ref}
     placeholder={placeholder}
     required={required}
-    style={{ width: '190%' }}
     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 transition cursor-pointer"
     readOnly
   />
@@ -83,6 +70,112 @@ const ToastNotification = ({ message, type, onClose }) => {
   );
 };
 
+// ====================== PHÂN TRANG RIÊNG - ĐẸP NHƯ SERVICE ======================
+const Pagination = ({ currentPage, totalPages, totalElements, goToPage }) => {
+  if (totalPages <= 1) return null;
+
+  const maxVisible = 5;
+  let startPage = Math.max(0, currentPage - Math.floor(maxVisible / 2));
+  let endPage = Math.min(totalPages - 1, startPage + maxVisible - 1);
+
+  if (endPage - startPage + 1 < maxVisible) {
+    startPage = Math.max(0, endPage - maxVisible + 1);
+  }
+
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-3 mt-8 py-4 border-t border-gray-200">
+      {/* First & Prev */}
+      <button
+        onClick={() => goToPage(0)}
+        disabled={currentPage === 0}
+        className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+      >
+        <ChevronsLeft className="w-5 h-5" />
+      </button>
+      <button
+        onClick={() => goToPage(currentPage - 1)}
+        disabled={currentPage === 0}
+        className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+      >
+        <ChevronLeft className="w-5 h-5" />
+      </button>
+
+      {/* Page Numbers */}
+      <div className="flex items-center gap-1">
+        {/* Trang 1 luôn hiện */}
+        {startPage > 0 && (
+          <>
+            <button
+              onClick={() => goToPage(0)}
+              className={`px-4 py-2.5 rounded-lg border font-medium transition ${
+                currentPage === 0
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'border-gray-300 hover:bg-gray-100'
+              }`}
+            >
+              1
+            </button>
+            {startPage > 1 && <span className="px-2 text-gray-500">...</span>}
+          </>
+        )}
+
+        {/* Các trang ở giữa */}
+        {Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map(page => (
+          <button
+            key={page}
+            onClick={() => goToPage(page)}
+            className={`px-4 py-2.5 rounded-lg border font-medium transition ${
+              currentPage === page
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'border-gray-300 hover:bg-gray-100'
+            }`}
+          >
+            {page + 1}
+          </button>
+        ))}
+
+        {/* Trang cuối */}
+        {endPage < totalPages - 1 && (
+          <>
+            {endPage < totalPages - 2 && <span className="px-2 text-gray-500">...</span>}
+            <button
+              onClick={() => goToPage(totalPages - 1)}
+              className={`px-4 py-2.5 rounded-lg border font-medium transition ${
+                currentPage === totalPages - 1
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'border-gray-300 hover:bg-gray-100'
+              }`}
+            >
+              {totalPages}
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Next & Last */}
+      <button
+        onClick={() => goToPage(currentPage + 1)}
+        disabled={currentPage === totalPages - 1}
+        className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+      >
+        <ChevronRight className="w-5 h-5" />
+      </button>
+      <button
+        onClick={() => goToPage(totalPages - 1)}
+        disabled={currentPage === totalPages - 1}
+        className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+      >
+        <ChevronsRight className="w-5 h-5" />
+      </button>
+
+      {/* Info */}
+      <span className="ml-4 text-sm text-gray-600 hidden sm:block">
+        Trang <strong>{currentPage + 1}</strong> / <strong>{totalPages}</strong> (Tổng <strong>{totalElements}</strong> tài khoản)
+      </span>
+    </div>
+  );
+};
+
 // ====================== MAIN COMPONENT ======================
 export default function AccountManagement() {
   const [users, setUsers] = useState([]);
@@ -93,7 +186,7 @@ export default function AccountManagement() {
 
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState('create'); // create | view | edit
+  const [modalMode, setModalMode] = useState('create');
   const [selectedUser, setSelectedUser] = useState(null);
   const [toast, setToast] = useState({ message: '', type: 'success' });
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -109,19 +202,11 @@ export default function AccountManagement() {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [filterGender, setFilterGender] = useState('');
   const [filterRole, setFilterRole] = useState('');
-  const [filterStatus, setFilterStatus] = useState(''); // '' | 'true' | 'false'
+  const [filterStatus, setFilterStatus] = useState('');
 
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    fullName: '',
-    phone: '',
-    dob: '',
-    gender: 'male',
-    address: '',
-    experienceYears: 0,
-    bio: '',
-    roles: ['tiep_tan'],
+    email: '', password: '', fullName: '', phone: '', dob: '', gender: 'male',
+    address: '', experienceYears: 0, bio: '', roles: ['tiep_tan'],
   });
 
   const isViewMode = modalMode === 'view';
@@ -140,7 +225,7 @@ export default function AccountManagement() {
     setFilterStatus('');
   };
 
-  // ====================== FETCH USERS VỚI PHÂN TRANG + LỌC SERVER-SIDE ======================
+  // ====================== FETCH USERS ======================
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
@@ -171,7 +256,6 @@ export default function AccountManagement() {
     fetchUsers();
   }, [fetchUsers]);
 
-  // Reset về trang 1 khi thay đổi bộ lọc
   useEffect(() => {
     setCurrentPage(0);
   }, [searchKeyword, filterGender, filterRole, filterStatus]);
@@ -181,82 +265,6 @@ export default function AccountManagement() {
     if (page >= 0 && page < totalPages && page !== currentPage) {
       setCurrentPage(page);
     }
-  };
-
-  const renderPagination = () => {
-    if (totalPages <= 1) return null;
-
-    const pages = [];
-    const maxVisible = 5;
-    let startPage = Math.max(0, currentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(totalPages - 1, startPage + maxVisible - 1);
-    if (endPage - startPage + 1 < maxVisible) {
-      startPage = Math.max(0, endPage - maxVisible + 1);
-    }
-
-    return (
-      <div className="flex items-center justify-center gap-2 py-4 border-t border-gray-200">
-        <button
-          onClick={() => goToPage(0)}
-          disabled={currentPage === 0}
-          className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
-        >
-          <ChevronsLeft className="w-5 h-5" />
-        </button>
-        <button
-          onClick={() => goToPage(currentPage - 1)}
-          disabled={currentPage === 0}
-          className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-
-        {startPage > 0 && (
-          <>
-            <button onClick={() => goToPage(0)} className="px-4 py-2 rounded-lg hover:bg-gray-100 transition">1</button>
-            {startPage > 1 && <span className="px-2 text-gray-500">...</span>}
-          </>
-        )}
-
-        {Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map(page => (
-          <button
-            key={page}
-            onClick={() => goToPage(page)}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              currentPage === page
-                ? 'bg-blue-600 text-white'
-                : 'hover:bg-gray-100 text-gray-700'
-            }`}
-          >
-            {page + 1}
-          </button>
-        ))}
-
-        {endPage < totalPages - 1 && (
-          <>
-            {endPage < totalPages - 2 && <span className="px-2 text-gray-500">...</span>}
-            <button onClick={() => goToPage(totalPages - 1)} className="px-4 py-2 rounded-lg hover:bg-gray-100 transition">
-              {totalPages}
-            </button>
-          </>
-        )}
-
-        <button
-          onClick={() => goToPage(currentPage + 1)}
-          disabled={currentPage === totalPages - 1}
-          className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
-        <button
-          onClick={() => goToPage(totalPages - 1)}
-          disabled={currentPage === totalPages - 1}
-          className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
-        >
-          <ChevronsRight className="w-5 h-5" />
-        </button>
-      </div>
-    );
   };
 
   // ====================== CRUD FUNCTIONS ======================
@@ -311,7 +319,7 @@ export default function AccountManagement() {
   const handleOpenModal = (mode, user = null) => {
     resetFormAndState();
     setSelectedUser(user);
-  setModalMode(mode);
+    setModalMode(mode);
     if (user) loadUserData(user);
     setShowModal(true);
   };
@@ -336,14 +344,28 @@ export default function AccountManagement() {
     reader.readAsDataURL(file);
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    if (name === 'phone') {
-      if (value && !/^[0-9]+$/.test(value)) return;
-      if (value.length > 10) return;
-    }
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+ const handleInputChange = (e) => {
+  const { name, value } = e.target;
+
+  // Giới hạn số điện thoại: chỉ số + max 10 ký tự
+  if (name === 'phone') {
+    if (value && !/^[0-9]+$/.test(value)) return;
+    if (value.length > 10) return;
+  }
+
+  // Giới hạn kinh nghiệm: chỉ số nguyên >= 0
+  if (name === 'experienceYears') {
+    if (value !== '' && (!/^\d+$/.test(value) || Number(value) < 0)) return;
+    return;
+    setFormData(prev => ({
+      ...prev,
+      experienceYears: value === '' ? 0 : Number(value)
+    }));
+    return;
+  }
+
+  setFormData(prev => ({ ...prev, [name]: value }));
+};
 
   const handleRoleChange = (e) => {
     setFormData(prev => ({ ...prev, roles: [e.target.value] }));
@@ -378,7 +400,6 @@ export default function AccountManagement() {
       handleCloseModal();
       fetchUsers();
     } catch (err) {
-      console.error('Error submitting form:', err);
       showToast(err.response?.data?.message || 'Có lỗi xảy ra', 'error');
     } finally {
       setLoading(false);
@@ -428,13 +449,13 @@ export default function AccountManagement() {
         <div className="grid grid-cols-12 gap-4 items-end">
           <div className="col-span-12 lg:col-span-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Search className="inline w-4 h-4 mr-1" /> Tìm kiếm (Tên, SĐT, Email)
+              <Search className="inline w-4 h-4 mr-1" /> Tìm kiếm
             </label>
             <input
               type="text"
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
-              placeholder="Nhập từ khóa..."
+              placeholder="Tên, SĐT, Email..."
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -467,7 +488,7 @@ export default function AccountManagement() {
           <div className="col-span-12 lg:col-span-2">
             <button
               onClick={resetFilters}
-              className="w-full h-[52px] flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 bg-white border border-gray-400 text-gray-700 hover:bg-gray-50 hover:border-gray-500 hover:text-gray-900 shadow-sm hover:shadow"
+              className="w-full h-[52px] flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold bg-white border border-gray-400 text-gray-700 hover:bg-gray-50 hover:border-gray-500"
             >
               <X className="w-5 h-5" /> Xóa bộ lọc
             </button>
@@ -475,12 +496,7 @@ export default function AccountManagement() {
         </div>
       </div>
 
-      {/* THÔNG TIN PHÂN TRANG */}
-      {totalElements > 0 && (
-        <div className="text-center text-sm text-gray-600 mb-4">
-          Hiển thị {currentPage * pageSize + 1} - {Math.min((currentPage + 1) * pageSize, totalElements)} trong tổng số {totalElements} tài khoản
-        </div>
-      )}
+     
 
       {/* TABLE */}
       {loading ? (
@@ -491,7 +507,7 @@ export default function AccountManagement() {
       ) : (
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-y divide-gray-200">
               <thead className="bg-blue-50">
                 <tr>
                   <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase">STT</th>
@@ -546,7 +562,7 @@ export default function AccountManagement() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-3">
-                        <button onClick={() => handleOpenModal('view', user)} className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-100 transition" title="Xem chi tiết">
+                        <button onClick={() => handleOpenModal('view', user)} className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-100 transition" title="Xem">
                           <Eye className="w-5 h-5" />
                         </button>
                         <button onClick={() => initiateDelete(user)} className="text-red-600 hover:text-red-800 p-2 rounded-full hover:bg-red-100 transition" title="Xóa">
@@ -573,11 +589,16 @@ export default function AccountManagement() {
               </div>
             )}
           </div>
-
-          {/* PHÂN TRANG */}
-          {renderPagination()}
         </div>
       )}
+
+      {/* PHÂN TRANG - TÁCH RIÊNG */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalElements={totalElements}
+        goToPage={goToPage}
+      />
 
       {/* ====================== MODAL ====================== */}
       {showModal && (
@@ -788,4 +809,4 @@ export default function AccountManagement() {
       )}
     </div>
   );
-}
+};

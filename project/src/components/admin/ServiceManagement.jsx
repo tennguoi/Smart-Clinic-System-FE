@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Plus, Edit, Trash2, X, Power, ChevronLeft, ChevronRight,
-  ChevronsLeft, ChevronsRight, Upload, Image as ImageIcon, Search, AlertTriangle
+  ChevronsLeft, ChevronsRight, Upload, Image as ImageIcon, Search, AlertTriangle, ToggleLeft, ToggleRight
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import AdminServiceApi from '../../api/AdminServiceApi';
@@ -16,6 +16,10 @@ export default function ServiceManagement() {
   // Xác nhận xóa
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState(null);
+
+  // Xác nhận bật/tắt trạng thái
+  const [showToggleConfirmation, setShowToggleConfirmation] = useState(false);
+  const [toggleTarget, setToggleTarget] = useState(null); // { serviceId, name, currentStatus }
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(0);
@@ -67,7 +71,6 @@ export default function ServiceManagement() {
       minPrice = min ? parseFloat(min) : null;
       maxPrice = max ? parseFloat(max) : null;
     }
-
     const filters = {
       name: searchTerm.trim() || null,
       category: filterCategory || null,
@@ -75,7 +78,6 @@ export default function ServiceManagement() {
       minPrice,
       maxPrice,
     };
-
     try {
       const data = await AdminServiceApi.getAllServices(page, pageSize, filters);
       setServices(data.content || []);
@@ -106,7 +108,7 @@ export default function ServiceManagement() {
     setCurrentPage(0);
   };
 
-  // ==================== XÓA DỊCH VỤ VỚI XÁC NHẬN ====================
+  // ==================== XÓA DỊCH VỤ ====================
   const handleDeleteClick = (service) => {
     setServiceToDelete(service);
     setShowDeleteConfirmation(true);
@@ -132,14 +134,29 @@ export default function ServiceManagement() {
     }
   };
 
-  // ==================== BẬT/TẮT TRẠNG THÁI ====================
-  const handleToggleStatus = async (id, currentStatus) => {
+  // ==================== BẬT/TẮT TRẠNG THÁI VỚI XÁC NHẬN ====================
+  const handleToggleStatusClick = (service) => {
+    setToggleTarget({
+      serviceId: service.serviceId,
+      name: service.name,
+      currentStatus: service.isActive
+    });
+    setShowToggleConfirmation(true);
+  };
+
+  const handleConfirmToggle = async () => {
+    if (!toggleTarget) return;
+    setLoading(true);
     try {
-      await AdminServiceApi.toggleServiceStatus(id);
-      toast.success(currentStatus ? 'Đã tắt dịch vụ' : 'Đã bật dịch vụ');
+      await AdminServiceApi.toggleServiceStatus(toggleTarget.serviceId);
+      toast.success(toggleTarget.currentStatus ? 'Đã ngưng hoạt động dịch vụ' : 'Đã kích hoạt dịch vụ');
+      setShowToggleConfirmation(false);
+      setToggleTarget(null);
       fetchServices(currentPage);
     } catch (err) {
       toast.error('Không thể thay đổi trạng thái');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -149,7 +166,6 @@ export default function ServiceManagement() {
     setSelectedService(service);
     setSelectedImage(null);
     setImagePreview('');
-
     if (mode === 'create') {
       setFormData({ name: '', description: '', category: 'Consultation', price: '', isActive: true, photoUrl: '' });
     } else if (service) {
@@ -176,7 +192,6 @@ export default function ServiceManagement() {
     if (!file) return;
     if (!file.type.startsWith('image/')) return toast.error('Vui lòng chọn file ảnh');
     if (file.size > 10 * 1024 * 1024) return toast.error('Ảnh không được quá 10MB');
-
     setSelectedImage(file);
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result);
@@ -194,7 +209,6 @@ export default function ServiceManagement() {
         photoUrl = res.photoUrl;
       }
       const payload = { ...formData, price: parseFloat(formData.price), photoUrl };
-
       if (modalMode === 'edit') {
         await AdminServiceApi.updateService(selectedService.serviceId, payload);
         toast.success('Cập nhật dịch vụ thành công!');
@@ -228,7 +242,6 @@ export default function ServiceManagement() {
   return (
     <>
       <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
-
       <div className="p-4 md:p-8 min-h-screen bg-gray-50">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
@@ -238,7 +251,7 @@ export default function ServiceManagement() {
           </button>
         </div>
 
-        {/* Khung tìm kiếm + lọc - MÀU TRẮNG */}
+        {/* Bộ lọc */}
         <div className="bg-white border border-gray-300 rounded-lg p-5 mb-6 shadow-md">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
             <div className="lg:col-span-2">
@@ -259,7 +272,6 @@ export default function ServiceManagement() {
                 )}
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Danh mục</label>
               <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
@@ -267,7 +279,6 @@ export default function ServiceManagement() {
                 {categoryOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
               <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
@@ -276,19 +287,14 @@ export default function ServiceManagement() {
                 <option value="false">Ngưng hoạt động</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Khoảng giá</label>
               <select value={filterPriceRange} onChange={(e) => setFilterPriceRange(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                 {priceRanges.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
               </select>
             </div>
-
             <div>
-              <button
-                onClick={handleClearFilters}
-                className="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium px-4 py-2.5 rounded-lg transition shadow border border-gray-400"
-              >
+              <button onClick={handleClearFilters} className="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium px-4 py-2.5 rounded-lg transition shadow border border-gray-400">
                 <X className="w-5 h-5" /> Xóa lọc
               </button>
             </div>
@@ -351,8 +357,8 @@ export default function ServiceManagement() {
                       {formatPrice(service.price)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${service.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                        {service.isActive ? 'Hoạt động' : 'Ngưng'}
+                      <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${service.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {service.isActive ? 'Hoạt động' : 'Ngưng hoạt động'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -364,9 +370,9 @@ export default function ServiceManagement() {
                           <Trash2 className="w-5 h-5" />
                         </button>
                         <button
-                          onClick={() => handleToggleStatus(service.serviceId, service.isActive)}
-                          className={`${service.isActive ? 'text-green-600 hover:text-green-900 hover:bg-green-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'} p-1 rounded-full transition`}
-                          title={service.isActive ? 'Tắt dịch vụ' : 'Bật dịch vụ'}
+                          onClick={() => handleToggleStatusClick(service)}
+                          className={`p-2 rounded-full transition-all ${service.isActive ? 'text-green-600 hover:bg-green-50' : 'text-red-600 hover:bg-red-50'}`}
+                          title={service.isActive ? 'Ngưng hoạt động' : 'Kích hoạt'}
                         >
                           <Power className="w-5 h-5" />
                         </button>
@@ -376,7 +382,6 @@ export default function ServiceManagement() {
                 ))}
               </tbody>
             </table>
-
             {services.length === 0 && (
               <div className="text-center py-12 text-gray-500">
                 Không tìm thấy dịch vụ nào phù hợp.
@@ -385,48 +390,111 @@ export default function ServiceManagement() {
           </div>
         )}
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
-            <button onClick={() => handlePageChange(0)} disabled={currentPage === 0} className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50">
-              <ChevronsLeft className="w-5 h-5" />
-            </button>
-            <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 0} className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50">
-              <ChevronLeft className="w-5 h-5" />
-            </button>
+{/* Pagination - ĐÃ SỬA ĐẸP 100% */}
+{totalPages > 1 && (
+  <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
+    {/* First & Prev */}
+    <button
+      onClick={() => handlePageChange(0)}
+      disabled={currentPage === 0}
+      className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+    >
+      <ChevronsLeft className="w-5 h-5" />
+    </button>
+    <button
+      onClick={() => handlePageChange(currentPage - 1)}
+      disabled={currentPage === 0}
+      className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+    >
+      <ChevronLeft className="w-5 h-5" />
+    </button>
 
-            <div className="flex items-center gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i).map(page => {
-                if (page === 0 || page === totalPages - 1 || (page >= currentPage - 1 && page <= currentPage + 1)) {
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`px-4 py-2 rounded-lg border ${currentPage === page ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 hover:bg-gray-100'}`}
-                    >
-                      {page + 1}
-                    </button>
-                  );
-                } else if (page === currentPage - 2 || page === currentPage + 2) {
-                  return <span key={page} className="px-2 text-gray-500">...</span>;
-                }
-                return null;
-              })}
-            </div>
+    {/* Page Numbers */}
+    <div className="flex items-center gap-1">
+      {(() => {
+        const pages = [];
+        const startPage = Math.max(0, currentPage - 2);
+        const endPage = Math.min(totalPages - 1, currentPage + 2);
 
-            <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages - 1} className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50">
-              <ChevronRight className="w-5 h-5" />
+        // Luôn hiển thị trang 1
+        if (startPage > 0) {
+          pages.push(
+            <button
+              key={0}
+              onClick={() => handlePageChange(0)}
+              className={`px-4 py-2.5 rounded-lg border font-medium transition ${
+                currentPage === 0
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'border-gray-300 hover:bg-gray-100'
+              }`}
+            >
+              1
             </button>
-            <button onClick={() => handlePageChange(totalPages - 1)} disabled={currentPage === totalPages - 1} className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50">
-              <ChevronsRight className="w-5 h-5" />
+          );
+          if (startPage > 1) pages.push(<span key="start-ellipsis" className="px-2">...</span>);
+        }
+
+        // Các trang ở giữa
+        for (let i = startPage; i <= endPage; i++) {
+          pages.push(
+            <button
+              key={i}
+              onClick={() => handlePageChange(i)}
+              className={`px-4 py-2.5 rounded-lg border font-medium transition ${
+                currentPage === i
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'border-gray-300 hover:bg-gray-100'
+              }`}
+            >
+              {i + 1}
             </button>
+          );
+        }
 
-            <span className="ml-4 text-sm text-gray-600 hidden sm:block">
-              Trang <strong>{currentPage + 1}</strong> / <strong>{totalPages}</strong> (Tổng <strong>{totalElements}</strong> dịch vụ)
-            </span>
-          </div>
-        )}
+        // Trang cuối
+        if (endPage < totalPages - 1) {
+          if (endPage < totalPages - 2) pages.push(<span key="end-ellipsis" className="px-2">...</span>);
+          pages.push(
+            <button
+              key={totalPages - 1}
+              onClick={() => handlePageChange(totalPages - 1)}
+              className={`px-4 py-2.5 rounded-lg border font-medium transition ${
+                currentPage === totalPages - 1
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'border-gray-300 hover:bg-gray-100'
+              }`}
+            >
+              {totalPages}
+            </button>
+          );
+        }
 
+        return pages;
+      })()}
+    </div>
+
+    {/* Next & Last */}
+    <button
+      onClick={() => handlePageChange(currentPage + 1)}
+      disabled={currentPage === totalPages - 1}
+      className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+    >
+      <ChevronRight className="w-5 h-5" />
+    </button>
+    <button
+      onClick={() => handlePageChange(totalPages - 1)}
+      disabled={currentPage === totalPages - 1}
+      className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+    >
+      <ChevronsRight className="w-5 h-5" />
+    </button>
+
+    {/* Info */}
+    <span className="ml-4 text-sm text-gray-600 hidden sm:block">
+      Trang <strong>{currentPage + 1}</strong> / <strong>{totalPages}</strong> (Tổng <strong>{totalElements}</strong> dịch vụ)
+    </span>
+  </div>
+)}
         {/* Modal Tạo / Sửa */}
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -439,9 +507,7 @@ export default function ServiceManagement() {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                {/* Ảnh */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Ảnh dịch vụ</label>
                   <div className="flex items-center gap-4">
@@ -464,7 +530,6 @@ export default function ServiceManagement() {
                     </div>
                   </div>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Tên dịch vụ <span className="text-red-500">*</span></label>
@@ -485,7 +550,6 @@ export default function ServiceManagement() {
                     <input type="number" name="price" value={formData.price} onChange={handleInputChange} min="0" step="1000" required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
                   </div>
                 </div>
-
                 <div className="flex gap-3 pt-4">
                   <button type="submit" disabled={loading || uploadingImage} className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-70">
                     {uploadingImage ? 'Đang tải ảnh...' : loading ? 'Đang xử lý...' : modalMode === 'create' ? 'Tạo dịch vụ' : 'Cập nhật'}
@@ -499,7 +563,7 @@ export default function ServiceManagement() {
           </div>
         )}
 
-        {/* Modal XÁC NHẬN XÓA */}
+        {/* Modal Xác nhận XÓA */}
         {showDeleteConfirmation && serviceToDelete && (
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
@@ -510,15 +574,41 @@ export default function ServiceManagement() {
                 Thao tác này <span className="text-red-600 font-semibold">không thể hoàn tác</span>.
               </p>
               <div className="flex gap-3">
-                <button
-                  onClick={handleConfirmDelete}
-                  disabled={loading}
-                  className="flex-1 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 font-semibold transition disabled:opacity-70"
-                >
+                <button onClick={handleConfirmDelete} disabled={loading} className="flex-1 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 font-semibold transition disabled:opacity-70">
                   {loading ? 'Đang xóa...' : 'Xóa'}
                 </button>
+                <button onClick={() => { setShowDeleteConfirmation(false); setServiceToDelete(null); }} className="flex-1 bg-gray-300 text-gray-700 py-2.5 rounded-lg hover:bg-gray-400 font-semibold transition">
+                  Hủy
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Xác nhận BẬT/TẮT trạng thái */}
+        {showToggleConfirmation && toggleTarget && (
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
+              <Power className={`w-12 h-12 mx-auto mb-4 ${toggleTarget.currentStatus ? 'text-red-500' : 'text-green-500'}`} />
+              <h3 className="text-xl font-bold mb-2">
+                {toggleTarget.currentStatus ? 'Ngưng hoạt động dịch vụ?' : 'Kích hoạt dịch vụ?'}
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Dịch vụ: <strong>{toggleTarget.name}</strong><br />
+                {toggleTarget.currentStatus
+                  ? 'Dịch vụ sẽ không hiển thị và không thể đặt lịch.'
+                  : 'Dịch vụ sẽ được hiển thị và có thể đặt lịch trở lại.'}
+              </p>
+              <div className="flex gap-3">
                 <button
-                  onClick={() => { setShowDeleteConfirmation(false); setServiceToDelete(null); }}
+                  onClick={handleConfirmToggle}
+                  disabled={loading}
+                  className={`flex-1 py-2.5 rounded-lg font-semibold transition disabled:opacity-70 ${toggleTarget.currentStatus ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
+                >
+                  {loading ? 'Đang xử lý...' : 'Xác nhận'}
+                </button>
+                <button
+                  onClick={() => { setShowToggleConfirmation(false); setToggleTarget(null); }}
                   className="flex-1 bg-gray-300 text-gray-700 py-2.5 rounded-lg hover:bg-gray-400 font-semibold transition"
                 >
                   Hủy
