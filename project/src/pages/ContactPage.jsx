@@ -5,10 +5,9 @@ import Footer from '../components/Footer';
 export default function ContactPage() {
   const { clinicInfo } = useClinic();
 
-  // Fallback values nếu chưa có dữ liệu
-  const clinicAddress = clinicInfo?.address || '123 Đường Nguyễn Văn Linh, Phường 26, Quận 7, Thành phố Hồ Chí Minh, Việt Nam';
-  const clinicPhone = clinicInfo?.phone || '0123 456 789';
-  const clinicEmail = clinicInfo?.email || 'contact@entclinic.vn';
+  const clinicAddress = clinicInfo?.address?.trim() || '';
+  const clinicPhone = clinicInfo?.phone?.trim() || '';
+  const clinicEmail = clinicInfo?.email?.trim() || '';
 
   return (
     <div className="pt-20">
@@ -34,9 +33,13 @@ export default function ContactPage() {
               </div>
               <div>
                 <h3 className="font-bold text-gray-900 mb-1 text-lg">Địa Chỉ</h3>
-                <p className="text-gray-600 leading-relaxed whitespace-pre-line">
-                  {clinicAddress}
-                </p>
+                {clinicAddress ? (
+                  <p className="text-gray-600 leading-relaxed whitespace-pre-line">
+                    {clinicAddress}
+                  </p>
+                ) : (
+                  <p className="text-gray-500">Chưa cập nhật địa chỉ phòng khám.</p>
+                )}
               </div>
             </div>
 
@@ -109,7 +112,7 @@ export default function ContactPage() {
                   type="tel"
                   id="phone"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder={clinicPhone || "0123 456 789"}
+                  placeholder="Nhập số điện thoại"
                 />
               </div>
 

@@ -1,16 +1,15 @@
 import { Facebook, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react';
 import { useClinic } from '../contexts/ClinicContext';
-import defaultLogo from '../images/logo.png';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const { clinicInfo } = useClinic();
 
-  // Fallback values nếu chưa có dữ liệu
-  const clinicName = clinicInfo?.name || 'Phòng Khám thông minh';
-  const clinicAddress = clinicInfo?.address || '123 Đường Nguyễn Văn Linh, Quận 7, TP.HCM';
-  const clinicPhone = clinicInfo?.phone || '0123 456 789';
-  const clinicEmail = clinicInfo?.email || 'contact@entclinic.vn';
+  const clinicName = clinicInfo?.name?.trim() || '';
+  const clinicAddress = clinicInfo?.address?.trim() || '';
+  const clinicPhone = clinicInfo?.phone?.trim() || '';
+  const clinicEmail = clinicInfo?.email?.trim() || '';
+  const clinicLogoUrl = clinicInfo?.logoUrl?.trim() || '';
 
   return (
     <footer id="contact" className="bg-gray-900 text-gray-300">
@@ -18,18 +17,28 @@ export default function Footer() {
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div>
             <div className="flex items-center space-x-3 mb-4">
-              <img 
-                src={clinicInfo?.logoUrl || defaultLogo} 
-                alt={clinicName || 'Logo phòng khám'}
-                className="w-10 h-10 object-contain"
-                onError={(e) => {
-                  e.target.src = defaultLogo;
-                }}
-              />
-              <span className="text-white font-bold text-lg">{clinicName}</span>
+              {clinicLogoUrl ? (
+                <img
+                  src={clinicLogoUrl}
+                  alt={clinicName || 'Logo phòng khám'}
+                  className="w-10 h-10 object-contain"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-lg bg-gray-800 text-gray-400 flex items-center justify-center text-xs uppercase">
+                  Logo
+                </div>
+              )}
+              {clinicName ? (
+                <span className="text-white font-bold text-lg">{clinicName}</span>
+              ) : (
+                <span className="text-sm text-gray-400">Chưa cập nhật tên phòng khám</span>
+              )}
             </div>
-            <p className="text-sm mb-4">
-              Chuyên khoa Tai-Mũi-Họng uy tín, chất lượng hàng đầu Việt Nam
+            <p className="text-sm mb-4 text-gray-400">
+              Cập nhật thông tin tại trang quản trị để hiển thị nội dung phòng khám.
             </p>
             <div className="flex space-x-3">
               <a
@@ -145,7 +154,7 @@ export default function Footer() {
         <div className="border-t border-gray-800 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-sm">
-              © {currentYear} {clinicName}. All rights reserved.
+              © {currentYear} {clinicName || 'Chưa cập nhật tên phòng khám'}.
             </p>
             <div className="flex space-x-6 text-sm">
               <a href="#" className="hover:text-blue-400 transition-colors">

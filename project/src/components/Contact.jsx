@@ -4,10 +4,10 @@ import { useClinic } from '../contexts/ClinicContext';
 export default function Contact() {
   const { clinicInfo } = useClinic();
 
-  // Fallback values nếu chưa có dữ liệu
-  const clinicAddress = clinicInfo?.address || '123 Đường Nguyễn Văn Linh, Quận 7, Thành phố Hồ Chí Minh';
-  const clinicPhone = clinicInfo?.phone || '0123 456 789';
-  const clinicEmail = clinicInfo?.email || 'contact@entclinic.vn';
+  const clinicAddress = clinicInfo?.address?.trim() || '';
+  const clinicPhone = clinicInfo?.phone?.trim() || '';
+  const clinicEmail = clinicInfo?.email?.trim() || '';
+  const hasContactInfo = !!(clinicAddress || clinicPhone || clinicEmail);
 
   return (
     <section id="contact" className="py-20 bg-white">
@@ -23,6 +23,11 @@ export default function Contact() {
 
         <div className="grid lg:grid-cols-2 gap-12">
           <div className="space-y-8">
+            {!hasContactInfo && (
+              <div className="p-4 rounded-xl border border-dashed border-gray-300 text-gray-500">
+                Chưa có thông tin liên hệ. Vui lòng cập nhật tại trang quản trị.
+              </div>
+            )}
             {clinicAddress && (
               <div className="flex items-start space-x-4 p-4 rounded-xl hover:bg-cyan-50/50 transition-all group">
                 <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
