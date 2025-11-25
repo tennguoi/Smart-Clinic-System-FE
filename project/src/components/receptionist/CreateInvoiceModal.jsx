@@ -211,7 +211,6 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
             </div>
           </div>
 
-          {/* Danh sách dịch vụ đã chọn */}
           {selectedServices.length > 0 && (
             <div className="bg-gray-50 rounded-xl p-5 space-y-3">
               <h4 className="font-semibold text-gray-900">Dịch vụ đã chọn ({selectedServices.length})</h4>

@@ -84,6 +84,7 @@ export default function CurrentPatientExamination() {
       if (patientRes) {
         const patient = {
           ...patientRes,
+          notes: patientRes.notes || patientRes.patient?.notes || '',
           fullName: patientRes.patientName || patientRes.fullName,
           queueNumber: patientRes.queueNumber,
           gender: patientRes.gender === 'Male' || patientRes.gender === 'Nam' ? 'Nam' : 'Nữ',
@@ -327,9 +328,29 @@ export default function CurrentPatientExamination() {
                 <div className="text-5xl font-bold text-blue-600 mb-2">{currentPatient.queueNumber}</div>
                 <h2 className="text-2xl font-bold text-slate-800">{currentPatient.fullName}</h2>
                 <div className="mt-4 space-y-2 text-slate-600">
-                  <div><Calendar className="inline w-5 h-5 mr-2" />{currentPatient.gender} • {currentPatient.age} tuổi</div>
-                  <div><Clock className="inline w-5 h-5 mr-2" />Vào lúc: {currentPatient.checkInTime}</div>
-                </div>
+  <div><Calendar className="inline w-5 h-5 mr-2" />{currentPatient.gender} • {currentPatient.age} tuổi</div>
+  <div><Clock className="inline w-5 h-5 mr-2" />Vào lúc: {currentPatient.checkInTime}</div>
+</div>
+
+<div className="mt-6 p-5 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl shadow-sm">
+  <div className="flex items-start gap-3">
+    <div className="bg-amber-200 p-2.5 rounded-xl flex-shrink-0">
+      <FileText className="w-7 h-7 text-amber-800" />
+    </div>
+    <div className="flex-1">
+      <h3 className="font-bold text-amber-900 text-lg mb-2">
+        Triệu chứng / Lý do đến khám
+      </h3>
+      <div className="bg-white p-4 rounded-xl border border-amber-200 min-h-28 text-slate-800 leading-relaxed whitespace-pre-wrap text-base">
+        {currentPatient.notes?.trim() ? (
+          currentPatient.notes.trim()
+        ) : (
+          <span className="text-slate-400 italic">Chưa có ghi chú từ lễ tân</span>
+        )}
+      </div>
+    </div>
+  </div>
+</div>
               </div>
             </div>
 
