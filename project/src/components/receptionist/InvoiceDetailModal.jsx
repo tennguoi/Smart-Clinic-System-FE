@@ -1,8 +1,20 @@
-// src/components/receptionist/InvoiceDetailModal.jsx (hoặc đường dẫn hiện tại của bạn)
+// src/components/receptionist/InvoiceDetailModal.jsx
 import React, { useState, useEffect } from 'react';
-import { X, Edit2, Save, Trash2, Plus, Search, Loader2,FileText, User, Calendar, DollarSign, CreditCard } from 'lucide-react';
+import {
+  X,
+  Edit2,
+  Save,
+  Trash2,
+  Plus,
+  Search,
+  Loader2,
+  FileText,
+  User,
+  Calendar,
+  DollarSign,
+  CreditCard
+} from 'lucide-react';
 import axiosInstance from '../../utils/axiosConfig';
-import { billingApi } from '../../api/billingApi';
 import { toast } from 'react-toastify';
 
 const PAYMENT_METHODS = {
@@ -29,17 +41,23 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddService, setShowAddService] = useState(false);
 
-  // Khởi tạo items từ invoice
+  // Khởi tạo items từ invoice (bảo vệ null/undefined)
   useEffect(() => {
-    if (invoice?.items) {
+    if (invoice?.items && Array.isArray(invoice.items)) {
       setEditedItems(invoice.items.map(item => ({
-        ...item,
+        serviceId: item.serviceId,
+        serviceName: item.serviceName,
+        quantity: item.quantity || 1,
+        unitPrice: item.unitPrice || 0,
+        subTotal: item.subTotal || 0,
         description: item.description || ''
       })));
+    } else {
+      setEditedItems([]);
     }
   }, [invoice]);
 
-  // TẢI DANH SÁCH DỊCH VỤ KHI BẬT CHỈNH SỬA – GIỐNG HỆT CurrentPatient
+  // Tải danh sách dịch vụ khi bật chỉnh sửa
   useEffect(() => {
     if (isEditing && availableServices.length === 0) {
       const loadServices = async () => {
@@ -49,12 +67,12 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
           const list = (data.content || data.services || []).map(s => ({
             serviceId: s.serviceId,
             name: s.name,
-            price: s.price
+            price: s.price || 0
           }));
           setAvailableServices(list);
         } catch (err) {
-          toast.error('Không tải được danh sách dịch vụ');
-          console.error(err);
+          console.error('Lỗi tải dịch vụ:', err);
+          toast.error('Không thể tải danh sách dịch vụ');
         } finally {
           setLoadingServices(false);
         }
@@ -67,16 +85,15 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
 
   const canEdit = invoice.paymentStatus === 'Pending' && (!invoice.amountPaid || invoice.amountPaid === 0);
   const totalAmount = editedItems.reduce((sum, item) => sum + (item.subTotal || 0), 0);
+  const status = PAYMENT_STATUS[invoice.paymentStatus] || PAYMENT_STATUS.Pending;
 
-  // Lọc dịch vụ theo tìm kiếm
   const filteredServices = availableServices.filter(s =>
     s.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleAddService = (service) => {
-    const exists = editedItems.some(item => item.serviceId === service.serviceId);
-    if (exists) {
-      toast.warning('Dịch vụ đã có trong hóa đơn');
+    if (editedItems.some(i => i.serviceId === service.serviceId)) {
+      toast.warning('Dịch vụ đã tồn tại trong hóa đơn');
       return;
     }
     setEditedItems(prev => [...prev, {
@@ -99,17 +116,16 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
   };
 
   const handleUpdateQuantity = (index, delta) => {
-    const newQty = editedItems[index].quantity + delta;
-    if (newQty < 1) return;
     setEditedItems(prev => {
       const updated = [...prev];
+      const newQty = updated[index].quantity + delta;
+      if (newQty < 1) return prev;
       updated[index].quantity = newQty;
       updated[index].subTotal = updated[index].unitPrice * newQty;
       return updated;
     });
   };
 
-  // DÙNG billingApi.updateInvoice ĐÃ CÓ SẴN
   const handleSave = async () => {
     if (editedItems.length === 0) {
       toast.error('Hóa đơn phải có ít nhất 1 dịch vụ');
@@ -117,266 +133,219 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
     }
 
     try {
-      await billingApi.updateInvoice(invoice.billId, {
+      await axiosInstance.put(`/api/billing/${invoice.billId}`, {
         items: editedItems.map(item => ({
           serviceId: item.serviceId,
           quantity: item.quantity,
           description: item.description || ''
         }))
       });
+
       toast.success('Cập nhật hóa đơn thành công!');
       setIsEditing(false);
       setShowAddService(false);
       onUpdate?.();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Cập nhật thất bại');
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Cập nhật hóa đơn thất bại');
     }
   };
-
-  const status = PAYMENT_STATUS[invoice.paymentStatus] || PAYMENT_STATUS.Pending;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <FileText className="w-6 h-6 text-blue-600" />
+              <FileText className="w-7 h-7 text-blue-600" />
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Chi tiết hóa đơn</h2>
-              <p className="text-sm text-gray-500 mt-0.5">
-                Mã: {invoice.billId?.slice(0, 8).toUpperCase()}
+              <p className="text-sm text-gray-500">
+                Mã: {invoice.billId?.slice(0, 8).toUpperCase() || 'N/A'}
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
+          <button onClick={onClose} className="p-3 hover:bg-gray-100 rounded-xl transition">
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        {/* Content */}
         <div className="p-6 space-y-6">
-          {/* Thông tin cơ bản */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-200">
+          {/* Thông tin bệnh nhân & hóa đơn */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
               <div className="flex items-center gap-3 mb-4">
                 <User className="w-5 h-5 text-blue-600" />
-                <span className="font-semibold text-gray-700">Thông tin bệnh nhân</span>
+                <span className="font-bold">Bệnh nhân</span>
               </div>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Họ tên:</span>
-                  <span className="font-semibold text-gray-900">{invoice.patientName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Số điện thoại:</span>
-                  <span className="font-semibold text-gray-900">{invoice.patientPhone || 'N/A'}</span>
-                </div>
-              </div>
+              <p className="text-lg font-semibold">{invoice.patientName || 'Chưa có tên'}</p>
+              <p className="text-gray-600">{invoice.patientPhone || 'Không có SĐT'}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-5 border border-purple-200">
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200">
               <div className="flex items-center gap-3 mb-4">
                 <Calendar className="w-5 h-5 text-purple-600" />
-                <span className="font-semibold text-gray-700">Thông tin hóa đơn</span>
+                <span className="font-bold">Thông tin hóa đơn</span>
               </div>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Ngày tạo:</span>
-                  <span className="font-semibold text-gray-900">
-                    {new Date(invoice.createdAt).toLocaleDateString('vi-VN')}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Người tạo:</span>
-                  <span className="font-semibold text-gray-900">{invoice.createdBy || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Trạng thái:</span>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${status.color}`}>
-                    {status.label}
-                  </span>
-                </div>
-              </div>
+              <p>Ngày tạo: {new Date(invoice.createdAt).toLocaleDateString('vi-VN')}</p>
+              <p className="mt-2">
+                Trạng thái: <span className={`ml-2 px-3 py-1 rounded-full text-xs font-bold ${status.color}`}>{status.label}</span>
+              </p>
             </div>
           </div>
 
           {/* Danh sách dịch vụ */}
-          <div className="bg-gray-50 rounded-xl p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <DollarSign className="w-5 h-5" />
+          <div className="bg-gray-50 rounded-xl p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <DollarSign className="w-6 h-6 text-green-600" />
                 Dịch vụ & Chi phí
               </h3>
-              {canEdit && (
-                <div className="flex gap-2">
-                  {!isEditing ? (
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                      Chỉnh sửa
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => setShowAddService(!showAddService)}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Thêm dịch vụ
-                      </button>
-                      <button
-                        onClick={handleSave}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition"
-                      >
-                        <Save className="w-4 h-4" />
-                        Lưu
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsEditing(false);
-                          setShowAddService(false);
-                          setEditedItems(invoice.items || []);
-                        }}
-                        className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm font-medium transition"
-                      >
-                        Hủy
-                      </button>
-                    </>
-                  )}
+
+              {canEdit && !isEditing && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition"
+                >
+                  <Edit2 className="w-5 h-5" />
+                  Chỉnh sửa
+                </button>
+              )}
+
+              {isEditing && (
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowAddService(true)}
+                    className="flex items-center gap-2 px-5 py-3 bg-green-600 text-white rounded-xl font-semibold"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Thêm dịch vụ
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl font-semibold"
+                  >
+                    <Save className="w-5 h-5" />
+                    Lưu thay đổi
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEditing(false);
+                      setShowAddService(false);
+                      setEditedItems(invoice.items || []);
+                    }}
+                    className="px-5 py-3 bg-gray-500 text-white rounded-xl font-semibold"
+                  >
+                    Hủy
+                  </button>
                 </div>
               )}
             </div>
 
-            {/* Panel thêm dịch vụ – giờ đã hoạt động hoàn hảo */}
+            {/* Panel thêm dịch vụ */}
             {showAddService && (
-              <div className="mb-6 p-4 bg-white rounded-lg border-2 border-green-200">
+              <div className="mb-6 p-6 bg-white rounded-xl border-2 border-dashed border-green-300">
                 <div className="relative mb-4">
-                  <Search className="absolute left-4 top-3 w-5 h-5 text-gray-400" />
+                  <Search className="absolute left-4 top-3.5 w-5 h-5 text-gray
+
+-400" />
                   <input
-                    type="text"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={e => setSearchQuery(e.target.value)}
                     placeholder="Tìm kiếm dịch vụ..."
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring focus:ring-blue-200"
+                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-green-100"
                   />
                 </div>
 
-                <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+                <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-xl">
                   {loadingServices ? (
-                    <div className="p-8 text-center">
-                      <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600" />
+                    <div className="p-10 text-center">
+                      <Loader2 className="w-10 h-10 animate-spin mx-auto text-blue-600" />
                     </div>
                   ) : filteredServices.length === 0 ? (
-                    <p className="p-8 text-center text-gray-500">Không tìm thấy dịch vụ</p>
+                    <p className="p-10 text-center text-gray-500">Không tìm thấy dịch vụ nào</p>
                   ) : (
-                    filteredServices.map(service => (
+                    filteredServices.map(s => (
                       <button
-                        key={service.serviceId}
-                        onClick={() => handleAddService(service)}
-                        className="w-full text-left p-3 border-b border-gray-100 hover:bg-green-50 transition last:border-0 flex justify-between items-center"
+                        key={s.serviceId}
+                        onClick={() => handleAddService(s)}
+                        className="w-full text-left p-4 hover:bg-green-50 border-b last:border-0 flex justify-between items-center transition"
                       >
                         <div>
-                          <div className="font-medium text-gray-900">{service.name}</div>
-                          <div className="text-sm text-gray-600">{formatPrice(service.price)}</div>
+                          <div className="font-medium text-gray-900">{s.name}</div>
+                          <div className="text-sm text-gray-600">{formatPrice(s.price)}</div>
                         </div>
-                        <Plus className="w-5 h-5 text-green-600" />
+                        <Plus className="w-6 h-6 text-green-600" />
                       </button>
                     ))
                   )}
                 </div>
+                <button
+                  onClick={() => setShowAddService(false)}
+                  className="mt-4 text-sm text-blue-600 hover:underline"
+                >
+                  ← Đóng
+                </button>
               </div>
             )}
 
             {/* Danh sách dịch vụ hiện tại */}
-            <div className="space-y-2">
-              {editedItems.map((item, index) => (
-                <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="font-semibold text-gray-900">{item.serviceName}</div>
-                      <div className="text-sm text-gray-500 mt-1">
-                        {formatPrice(item.unitPrice)} × {item.quantity}
-                      </div>
+            <div className="space-y-4">
+              {editedItems.length === 0 ? (
+                <p className="text-center text-gray-500 py-10">Chưa có dịch vụ nào</p>
+              ) : (
+                editedItems.map((item, idx) => (
+                  <div key={idx} className="bg-white p-5 rounded-xl border shadow-sm flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-lg">{item.serviceName}</div>
+                      <div className="text-gray-600">{formatPrice(item.unitPrice)} × {item.quantity}</div>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-6">
                       {isEditing && (
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleUpdateQuantity(index, -1)}
-                            className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg font-bold"
-                          >
-                            -
+                        <>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => handleUpdateQuantity(idx, -1)} className="w-10 h-10 bg-gray-200 rounded-lg hover:bg-gray-300 text-xl">-</button>
+                            <span className="w-16 text-center font-bold text-xl">{item.quantity}</span>
+                            <button onClick={() => handleUpdateQuantity(idx, 1)} className="w-10 h-10 bg-gray-200 rounded-lg hover:bg-gray-300 text-xl">+</button>
+                          </div>
+                          <button onClick={() => handleRemoveItem(idx)} className="text-red-600 hover:text-red-800">
+                            <Trash2 className="w-6 h-6" />
                           </button>
-                          <span className="w-12 text-center font-semibold">{item.quantity}</span>
-                          <button
-                            onClick={() => handleUpdateQuantity(index, 1)}
-                            className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg font-bold"
-                          >
-                            +
-                          </button>
-                        </div>
+                        </>
                       )}
-                      <div className="text-lg font-bold text-gray-900 min-w-[120px] text-right">
+                      <div className="text-2xl font-bold text-blue-600 w-40 text-right">
                         {formatPrice(item.subTotal)}
                       </div>
-                      {isEditing && (
-                        <button
-                          onClick={() => handleRemoveItem(index)}
-                          className="text-red-500 hover:text-red-700 transition"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
-          {/* Tổng tiền */}
-          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-6 border-2 border-emerald-200">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center text-lg">
-                <span className="font-semibold text-gray-700">Tổng cộng:</span>
-                <span className="text-2xl font-bold text-gray-900">
-                  {formatPrice(isEditing ? totalAmount : invoice.totalAmount)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="font-semibold text-gray-700">Đã thanh toán:</span>
-                <span className="text-xl font-bold text-green-600">
-                  {formatPrice(invoice.amountPaid || 0)}
-                </span>
-              </div>
-              <div className="pt-3 border-t-2 border-emerald-300 flex justify-between items-center">
-                <span className="text-lg font-bold text-gray-900">Còn lại:</span>
-                <span className="text-3xl font-bold text-red-600">
-                  {formatPrice((isEditing ? totalAmount : invoice.totalAmount) - (invoice.amountPaid || 0))}
-                </span>
-              </div>
+          {/* Tổng kết */}
+          <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl p-8 text-center shadow-2xl">
+            <div className="text-4xl font-bold">
+              Còn lại: {formatPrice(totalAmount - (invoice.amountPaid || 0))}
+            </div>
+            <div className="mt-4 text-xl opacity-90">
+              Tổng tiền: {formatPrice(totalAmount)} • Đã thu: {formatPrice(invoice.amountPaid || 0)}
             </div>
           </div>
 
           {/* Footer */}
-          <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-6 flex justify-between">
-            <button
-              onClick={onClose}
-              className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition"
-            >
+          <div className="flex justify-end gap-4 pt-4">
+            <button onClick={onClose} className="px-8 py-4 bg-gray-200 hover:bg-gray-300 rounded-xl font-bold text-lg">
               Đóng
             </button>
             {invoice.paymentStatus === 'Pending' && !isEditing && (
               <button
                 onClick={() => onPay?.(invoice)}
-                className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold flex items-center gap-2 transition shadow-lg"
+                className="px-12 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold text-xl shadow-2xl flex items-center gap-3"
               >
-                <CreditCard className="w-5 h-5" />
+                <CreditCard className="w-7 h-7" />
                 Thanh toán ngay
               </button>
             )}
