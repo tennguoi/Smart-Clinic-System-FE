@@ -3,12 +3,13 @@ import {
   UserPlus, Edit, Trash2, X, Eye, EyeOff, User, Upload,
   CheckCircle, AlertTriangle, Power, AlertCircle
 } from 'lucide-react';
+// --- ĐÃ XÓA: Dòng import react-icons vì không còn dùng icon nào ở đây nữa ---
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import adminAccountApi from '../../api/adminAccountApi';
 import React, { forwardRef } from 'react';
 
-// ====================== HELPER ======================
+// ====================== HELPER (GIỮ NGUYÊN) ======================
 const dateStringToDate = (dateStr) => {
   if (!dateStr || dateStr.includes('/')) return null;
   const [year, month, day] = dateStr.split('-');
@@ -50,7 +51,6 @@ const getAvatarUrl = (photoUrl) => {
   return photoUrl.startsWith('http') ? photoUrl : `http://localhost:8082${photoUrl}`;
 };
 
-// ====================== CUSTOM INPUT ======================
 const CustomDateInput = forwardRef(({ value, onClick, placeholder, required }, ref) => (
   <input
     type="text"
@@ -65,7 +65,6 @@ const CustomDateInput = forwardRef(({ value, onClick, placeholder, required }, r
   />
 ));
 
-// ====================== TOAST ======================
 const ToastNotification = ({ message, type, onClose }) => {
   if (!message) return null;
   const styles = { success: 'bg-green-600', error: 'bg-red-600' };
@@ -93,23 +92,19 @@ export default function AccountManagement() {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
   const [showToggleConfirmation, setShowToggleConfirmation] = useState(false);
-  const [toggleTarget, setToggleTarget] = useState(null); // { userId, currentStatus }
+  const [toggleTarget, setToggleTarget] = useState(null); 
 
   const [showPassword, setShowPassword] = useState(false);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
 
+  // State cho bộ lọc
+  const [filterName, setFilterName] = useState("");
+  const [filterPhone, setFilterPhone] = useState("");
+
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    fullName: '',
-    phone: '',
-    dob: '',
-    gender: 'male',
-    address: '',
-    experienceYears: 0,
-    bio: '',
-    roles: ['tiep_tan'],
+    email: '', password: '', fullName: '', phone: '', dob: '', gender: 'male',
+    address: '', experienceYears: 0, bio: '', roles: ['tiep_tan'],
   });
 
   const isViewMode = modalMode === 'view';
@@ -121,12 +116,18 @@ export default function AccountManagement() {
     setTimeout(() => setToast({ message: '', type: 'success' }), 4000);
   };
 
-  const fetchUsers = useCallback(async () => {
+  // Hàm gọi API
+  const fetchUsers = useCallback(async (keyword = "", phone = "") => {
     setLoading(true);
     try {
-      const data = await adminAccountApi.getAllUsers();
-      data.sort((a, b) => (a.fullName || '').localeCompare(b.fullName || '', 'vi', { sensitivity: 'base' }));
-      setUsers(data);
+      const data = await adminAccountApi.getAllUsers(keyword, phone);
+      
+      if (Array.isArray(data)) {
+          data.sort((a, b) => (a.fullName || '').localeCompare(b.fullName || '', 'vi', { sensitivity: 'base' }));
+          setUsers(data);
+      } else {
+          setUsers(data.content || []);
+      }
     } catch (err) {
       console.error('Error fetching users:', err);
       showToast(err.message || 'Không thể tải danh sách người dùng', 'error');
@@ -135,9 +136,22 @@ export default function AccountManagement() {
     }
   }, []);
 
-  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+  // Tự động tìm kiếm khi nhập liệu (Debounce)
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchUsers(filterName, filterPhone);
+    }, 500);
 
-  // Xác nhận bật/tắt trạng thái
+    return () => clearTimeout(delayDebounceFn);
+  }, [filterName, filterPhone, fetchUsers]);
+
+  // Hàm xử lý nút Xóa bộ lọc
+  const handleResetFilter = () => {
+    setFilterName("");
+    setFilterPhone("");
+  };
+
+  // ... (Các hàm xử lý Modal, Toggle, Delete, FormSubmit GIỮ NGUYÊN NHƯ CŨ) ...
   const openToggleConfirmation = (userId, currentStatus) => {
     setToggleTarget({ userId, currentStatus });
     setShowToggleConfirmation(true);
@@ -155,7 +169,7 @@ export default function AccountManagement() {
     } catch (err) {
       console.error('Lỗi thay đổi trạng thái:', err);
       showToast('Không thể thay đổi trạng thái tài khoản', 'error');
-      fetchUsers();
+      fetchUsers(filterName, filterPhone); 
     } finally {
       setLoading(false);
       setToggleTarget(null);
@@ -175,7 +189,7 @@ export default function AccountManagement() {
   const loadUserData = (user) => {
     setFormData({
       email: user.email || '',
-      password: user.password || '', // Giờ hiển thị mật khẩu thật khi xem
+      password: user.password || '',
       fullName: user.fullName || '',
       phone: user.phone || '',
       dob: user.dob || '',
@@ -218,19 +232,10 @@ export default function AccountManagement() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
-    // RÀNG BUỘC SỐ ĐIỆN THOẠI
     if (name === 'phone') {
-      // 1. Chỉ cho phép nhập số (Regex: /^[0-9\b]+$/)
-      if (value && !/^[0-9]+$/.test(value)) {
-        return; // Nếu nhập chữ thì chặn luôn, không cập nhật state
-      }
-      // 2. Chặn nếu dài hơn 10 số (dù đã có maxLength nhưng chặn thêm ở đây cho chắc)
-      if (value.length > 10) {
-        return;
-      }
+      if (value && !/^[0-9]+$/.test(value)) return;
+      if (value.length > 10) return;
     }
-
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -264,7 +269,7 @@ export default function AccountManagement() {
         await adminAccountApi.createUser(createData, photoFile);
         showToast('Tạo tài khoản thành công!');
       }
-      setTimeout(() => { handleCloseModal(); fetchUsers(); }, 1000);
+      setTimeout(() => { handleCloseModal(); fetchUsers(filterName, filterPhone); }, 1000);
     } catch (err) {
       console.error('Error submitting form:', err);
       showToast(err.message || 'Có lỗi xảy ra', 'error');
@@ -284,7 +289,7 @@ export default function AccountManagement() {
     try {
       await adminAccountApi.deleteUser(userToDelete.userId);
       showToast('Xóa tài khoản thành công!');
-      fetchUsers();
+      fetchUsers(filterName, filterPhone); 
     } catch (err) {
       showToast('Không thể xóa tài khoản', 'error');
     } finally {
@@ -305,6 +310,48 @@ export default function AccountManagement() {
         </button>
       </div>
 
+      {/* --- KHU VỰC BỘ LỌC --- */}
+      <div className="bg-white p-4 rounded-lg shadow-sm mb-6 border border-gray-200">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+          
+          {/* Ô nhập Tên */}
+          <div className="md:col-span-5">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Họ tên</label>
+            <input
+              type="text"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Nhập tên nhân viên để tìm..."
+              value={filterName}
+              onChange={(e) => setFilterName(e.target.value)} 
+            />
+          </div>
+
+          {/* Ô nhập SĐT */}
+          <div className="md:col-span-5">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+            <input
+              type="text"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Nhập số điện thoại để tìm..."
+              value={filterPhone}
+              onChange={(e) => setFilterPhone(e.target.value)} 
+            />
+          </div>
+
+          {/* --- ĐÃ SỬA: Nút Xóa bộ lọc (Màu xám, không icon) --- */}
+          <div className="md:col-span-2">
+            <button
+              onClick={handleResetFilter}
+              className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition flex justify-center items-center h-[42px] font-medium"
+              title="Xóa bộ lọc"
+            >
+              Xóa bộ lọc
+            </button>
+          </div>
+        </div>
+      </div>
+      {/* --- HẾT KHU VỰC BỘ LỌC --- */}
+
       {loading && !showModal ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-10 w-10 border-t-4 border-b-4 border-blue-600"></div>
@@ -312,6 +359,7 @@ export default function AccountManagement() {
         </div>
       ) : (
         <div className="bg-white rounded-xl shadow-2xl overflow-x-auto">
+          {/* ... Bảng dữ liệu giữ nguyên ... */}
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-blue-50">
               <tr>
@@ -327,7 +375,8 @@ export default function AccountManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {users.map((user, idx) => (
+              {users.length > 0 ? (
+                users.map((user, idx) => (
                 <tr key={user.userId} className="hover:bg-blue-50 transition">
                   <td className="px-6 py-3 text-center text-sm font-medium text-gray-600">{idx + 1}</td>
                   <td className="px-6 py-3">
@@ -381,20 +430,24 @@ export default function AccountManagement() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              ))
+            ) : (
+              <tr>
+                <td colSpan="9" className="px-6 py-12 text-center text-gray-500">
+                  <div className="flex flex-col items-center justify-center">
+                    <User className="w-12 h-12 text-gray-300 mb-3" />
+                    <p className="text-lg font-medium">Không tìm thấy tài khoản nào.</p>
+                    <p className="text-sm">Vui lòng thử từ khóa tìm kiếm khác.</p>
+                  </div>
+                </td>
+              </tr>
+            )}
             </tbody>
           </table>
-
-          {users.length === 0 && !loading && (
-            <div className="text-center py-12 text-gray-500">
-              <UserPlus className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-              <p className="text-lg">Chưa có tài khoản nào</p>
-            </div>
-          )}
         </div>
       )}
 
-      {/* ====================== MODAL ====================== */}
+      {/* ====================== MODAL (GIỮ NGUYÊN) ====================== */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
@@ -419,12 +472,11 @@ export default function AccountManagement() {
               <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-              {/* --- ẢNH ĐẠI DIỆN (Giữ nguyên ở trên cùng, full chiều rộng) --- */}
+              {/* --- ẢNH ĐẠI DIỆN (Giữ nguyên) --- */}
     <div className="md:col-span-2 flex flex-col items-center border border-dashed border-gray-300 p-4 rounded-xl bg-gray-50/50">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         Ảnh đại diện
       </label>
-      {/* ... Logic hiển thị ảnh đại diện ... */}
       <div className="w-32 h-32 rounded-full bg-white overflow-hidden flex items-center justify-center border-4 border-white shadow-lg ring-4 ring-blue-200">
         {photoPreview ? (
           <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
@@ -518,10 +570,10 @@ export default function AccountManagement() {
     onChange={handleInputChange}
     disabled={isViewMode}
     required
-    maxLength={10}             // Không cho nhập quá 10 ký tự
-    minLength={10}             // Báo lỗi nếu ít hơn 10 ký tự khi submit
-    pattern="[0-9]{10}"        // Regex kiểm tra bắt buộc phải đủ 10 số
-    title="Số điện thoại phải bao gồm đúng 10 chữ số" // Dòng thông báo lỗi khi hover hoặc submit sai
+    maxLength={10}             
+    minLength={10}             
+    pattern="[0-9]{10}"        
+    title="Số điện thoại phải bao gồm đúng 10 chữ số" 
     placeholder="0912345678"
     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
   />
@@ -552,7 +604,7 @@ export default function AccountManagement() {
                     </select>
                   </div>
 
-                 {/* Số năm kinh nghiệm (Đã thêm required) */}
+                 {/* Số năm kinh nghiệm */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Số năm kinh nghiệm <span className="text-red-500">*</span>
@@ -563,7 +615,7 @@ export default function AccountManagement() {
                 value={formData.experienceYears} 
                 onChange={handleInputChange} 
                 disabled={isViewMode} 
-                required  // <--- Thêm ở đây
+                required  
                 min="0" 
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100" 
               />
@@ -576,7 +628,7 @@ export default function AccountManagement() {
                     </select>
                   </div>
 
-                {/* Địa chỉ (Đã thêm required) */}
+                {/* Địa chỉ */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Địa chỉ <span className="text-red-500">*</span>
@@ -586,13 +638,13 @@ export default function AccountManagement() {
                 value={formData.address} 
                 onChange={handleInputChange} 
                 disabled={isViewMode} 
-                required // <--- Thêm ở đây
+                required 
                 rows={3} 
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100" 
                 placeholder="Số nhà, đường, phường/xã..." 
               />
             </div>
-                 {/* Mô tả (Đã thêm required) */}
+                 {/* Mô tả */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Mô tả công việc / Giới thiệu bản thân <span className="text-red-500">*</span>
@@ -602,7 +654,7 @@ export default function AccountManagement() {
                 value={formData.bio} 
                 onChange={handleInputChange} 
                 disabled={isViewMode} 
-                required // <--- Thêm ở đây
+                required 
                 rows={5} 
                 maxLength={1000} 
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100" 
@@ -627,49 +679,32 @@ export default function AccountManagement() {
         </div>
       )}
 
-      {/* Modal xác nhận xóa */}
+      {/* Modal xác nhận xóa & Modal Toggle (GIỮ NGUYÊN) */}
       {showDeleteConfirmation && userToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
-            <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">Xác nhận xóa</h3>
-            <p className="text-gray-600 mb-6">
-              Xóa tài khoản <strong>{userToDelete.fullName}</strong>?<br />Thao tác này không thể hoàn tác.
-            </p>
-            <div className="flex gap-3">
-              <button onClick={handleConfirmDelete} disabled={loading} className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 font-semibold">
-                {loading ? 'Đang xóa...' : 'Xóa'}
-              </button>
-              <button onClick={() => setShowDeleteConfirmation(false)} className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 font-semibold">
-                Hủy
-              </button>
+            <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
+                <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                <h3 className="text-xl font-bold mb-2">Xác nhận xóa</h3>
+                <p className="text-gray-600 mb-6">Xóa tài khoản <strong>{userToDelete.fullName}</strong>?<br />Thao tác này không thể hoàn tác.</p>
+                <div className="flex gap-3">
+                    <button onClick={handleConfirmDelete} disabled={loading} className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 font-semibold">{loading ? 'Đang xóa...' : 'Xóa'}</button>
+                    <button onClick={() => setShowDeleteConfirmation(false)} className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 font-semibold">Hủy</button>
+                </div>
             </div>
-          </div>
         </div>
       )}
 
-      {/* Modal xác nhận bật/tắt trạng thái */}
       {showToggleConfirmation && toggleTarget && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
-            <AlertCircle className={`w-12 h-12 mx-auto mb-4 ${toggleTarget.currentStatus ? 'text-red-500' : 'text-green-500'}`} />
-            <h3 className="text-xl font-bold mb-2">
-              {toggleTarget.currentStatus ? 'Vô hiệu hóa tài khoản?' : 'Kích hoạt tài khoản?'}
-            </h3>
-            <p className="text-gray-600 mb-6">
-              {toggleTarget.currentStatus
-                ? 'Tài khoản sẽ không thể đăng nhập nữa.'
-                : 'Tài khoản sẽ được phép đăng nhập lại.'}
-            </p>
-            <div className="flex gap-3">
-              <button onClick={confirmToggleStatus} disabled={loading} className={`flex-1 py-2 rounded-lg font-semibold text-white ${toggleTarget.currentStatus ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}>
-                {loading ? 'Đang xử lý...' : 'Xác nhận'}
-              </button>
-              <button onClick={() => { setShowToggleConfirmation(false); setToggleTarget(null); }} className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 font-semibold">
-                Hủy
-              </button>
+            <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
+                <AlertCircle className={`w-12 h-12 mx-auto mb-4 ${toggleTarget.currentStatus ? 'text-red-500' : 'text-green-500'}`} />
+                <h3 className="text-xl font-bold mb-2">{toggleTarget.currentStatus ? 'Vô hiệu hóa tài khoản?' : 'Kích hoạt tài khoản?'}</h3>
+                <p className="text-gray-600 mb-6">{toggleTarget.currentStatus ? 'Tài khoản sẽ không thể đăng nhập nữa.' : 'Tài khoản sẽ được phép đăng nhập lại.'}</p>
+                <div className="flex gap-3">
+                    <button onClick={confirmToggleStatus} disabled={loading} className={`flex-1 py-2 rounded-lg font-semibold text-white ${toggleTarget.currentStatus ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}>{loading ? 'Đang xử lý...' : 'Xác nhận'}</button>
+                    <button onClick={() => { setShowToggleConfirmation(false); setToggleTarget(null); }} className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 font-semibold">Hủy</button>
+                </div>
             </div>
-          </div>
         </div>
       )}
     </div>

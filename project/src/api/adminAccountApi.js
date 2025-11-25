@@ -13,13 +13,13 @@ const adminAccountApi = {
     return response.data;
   },
 
-  getAllUsers: async () => {
-    const response = await axiosInstance.get('/api/admin/users');
-    return response.data;
-  },
-
-  getUserById: async (userId) => {
-    const response = await axiosInstance.get(`/api/admin/users/${userId}`);
+  getAllUsers: async (keyword = "", phone = "") => {
+    const response = await axiosInstance.get('/api/admin/users', {
+      params: {
+        keyword: keyword,
+        phone: phone
+      }
+    });
     return response.data;
   },
 
