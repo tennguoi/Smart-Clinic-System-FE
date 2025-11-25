@@ -157,12 +157,11 @@ export default function AppointmentForm() {
       // chỉ giữ chữ số
       const digitsOnly = value.replace(/\D/g, '');
       // giới hạn <= 11 ký tự
-      const capped = digitsOnly.slice(0, 11);
+      const capped = digitsOnly.slice(0, 10);
 
       let pErr = '';
-      if (digitsOnly.length > 11) pErr = 'Số điện thoại tối đa 11 chữ số.';
-      // optional: kiểm tra tối thiểu
-      if (capped.length < 9) pErr = 'Số điện thoại cần tối thiểu 9 chữ số.';
+      if (digitsOnly.length > 10) pErr = 'Số điện thoại tối đa 10 chữ số.';
+     
 
       setFormData({ ...formData, phone: capped });
       setPhoneError(pErr);

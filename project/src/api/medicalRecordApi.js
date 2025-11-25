@@ -107,6 +107,79 @@ export const medicalRecordApi = {
 		} catch (error) {
 			throw new Error('Xuất đơn thuốc thất bại: ' + (error.response?.data?.message || error.message));
 		}
+	},
+
+	getCompletedRecordsWithServices: async (startDate, endDate) => {
+		try {
+			const params = {};
+			if (startDate) params.startDate = startDate;
+			if (endDate) params.endDate = endDate;
+			
+			const { data } = await axiosInstance.get(
+				'/api/admin/dashboard/completed-records-with-services',
+				{ params }
+			);
+			return Array.isArray(data) ? data : [];
+		} catch (error) {
+			console.error('Lỗi khi lấy hồ sơ bệnh án hoàn thành:', error);
+			return [];
+		}
+	},
+
+	// ============ TOP 5 DỊCH VỤ - 3 LOẠI KHÁC NHAU ============
+
+	// A. Top dịch vụ theo lượt đặt lịch (Appointment) - Đo nhu cầu khách hàng
+	getTopServicesByAppointments: async (startDate, endDate) => {
+		try {
+			const params = {};
+			if (startDate) params.startDate = startDate;
+			if (endDate) params.endDate = endDate;
+			
+			const { data } = await axiosInstance.get(
+				'/api/admin/dashboard/top-services-by-appointments',
+				{ params }
+			);
+			return Array.isArray(data) ? data : [];
+		} catch (error) {
+			console.error('Lỗi khi lấy Top dịch vụ theo Appointment:', error);
+			return [];
+		}
+	},
+
+	// B. Top dịch vụ theo lượt khám thực tế (MedicalRecord) - Đo hiệu suất hoạt động
+	getTopServicesByMedicalRecords: async (startDate, endDate) => {
+		try {
+			const params = {};
+			if (startDate) params.startDate = startDate;
+			if (endDate) params.endDate = endDate;
+			
+			const { data } = await axiosInstance.get(
+				'/api/admin/dashboard/top-services-by-medical-records',
+				{ params }
+			);
+			return Array.isArray(data) ? data : [];
+		} catch (error) {
+			console.error('Lỗi khi lấy Top dịch vụ theo MedicalRecord:', error);
+			return [];
+		}
+	},
+
+	// C. Top dịch vụ theo doanh thu (Invoice) - Đo hiệu quả tài chính
+	getTopServicesByRevenue: async (startDate, endDate) => {
+		try {
+			const params = {};
+			if (startDate) params.startDate = startDate;
+			if (endDate) params.endDate = endDate;
+			
+			const { data } = await axiosInstance.get(
+				'/api/admin/dashboard/top-services-by-revenue',
+				{ params }
+			);
+			return Array.isArray(data) ? data : [];
+		} catch (error) {
+			console.error('Lỗi khi lấy Top dịch vụ theo Revenue:', error);
+			return [];
+		}
 	}
 	
 };
