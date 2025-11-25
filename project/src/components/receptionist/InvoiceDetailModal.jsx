@@ -12,7 +12,8 @@ import {
   User,
   Calendar,
   DollarSign,
-  CreditCard
+  CreditCard,
+  CheckCircle
 } from 'lucide-react';
 import axiosInstance from '../../utils/axiosConfig';
 import { toast } from 'react-toastify';
@@ -40,8 +41,11 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
   const [loadingServices, setLoadingServices] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddService, setShowAddService] = useState(false);
+  
+  // Trạng thái loading khi lưu
+  const [saving, setSaving] = useState(false);
 
-  // Khởi tạo items từ invoice (bảo vệ null/undefined)
+  // Khởi tạo items từ invoice
   useEffect(() => {
     if (invoice?.items && Array.isArray(invoice.items)) {
       setEditedItems(invoice.items.map(item => ({
@@ -105,6 +109,8 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
       description: ''
     }]);
     toast.success(`Đã thêm: ${service.name}`);
+    setShowAddService(false); // Đóng panel sau khi thêm
+    setSearchQuery(''); // Xóa tìm kiếm
   };
 
   const handleRemoveItem = (index) => {
@@ -126,11 +132,19 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
     });
   };
 
+  // Hàm lưu có loading
   const handleSave = async () => {
     if (editedItems.length === 0) {
       toast.error('Hóa đơn phải có ít nhất 1 dịch vụ');
       return;
     }
+
+    if (editedItems.some(item => !item.serviceId)) {
+      toast.error('Có dịch vụ bị thiếu thông tin. Vui lòng kiểm tra lại.');
+      return;
+    }
+
+    setSaving(true); // Bắt đầu loading
 
     try {
       await axiosInstance.put(`/api/billing/${invoice.billId}`, {
@@ -141,13 +155,27 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
         }))
       });
 
-      toast.success('Cập nhật hóa đơn thành công!');
+      toast.success(
+        <div className="flex items-center gap-2">
+          <CheckCircle className="w-5 h-5" />
+          Cập nhật hóa đơn thành công!
+        </div>
+      );
+
       setIsEditing(false);
       setShowAddService(false);
-      onUpdate?.();
+      setSearchQuery('');
+      onUpdate?.(); // Cập nhật danh sách ở component cha
+
     } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || 'Cập nhật hóa đơn thất bại');
+      console.error('Lỗi cập nhật hóa đơn:', err);
+      toast.error(
+        err.response?.data?.message || 
+        err.response?.data?.error || 
+        'Cập nhật hóa đơn thất bại. Vui lòng thử lại.'
+      );
+    } finally {
+      setSaving(false); // Luôn tắt loading
     }
   };
 
@@ -155,7 +183,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
+        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center z-10">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
               <FileText className="w-7 h-7 text-blue-600" />
@@ -167,7 +195,11 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-3 hover:bg-gray-100 rounded-xl transition">
+          <button 
+            onClick={onClose} 
+            className="p-3 hover:bg-gray-100 rounded-xl transition"
+            disabled={saving}
+          >
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -218,25 +250,53 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowAddService(true)}
-                    className="flex items-center gap-2 px-5 py-3 bg-green-600 text-white rounded-xl font-semibold"
+                    className="flex items-center gap-2 px-5 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition"
+                    disabled={saving}
                   >
                     <Plus className="w-5 h-5" />
                     Thêm dịch vụ
                   </button>
+
+                  {/* Nút Lưu với loading */}
                   <button
                     onClick={handleSave}
-                    className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl font-semibold"
+                    disabled={saving}
+                    className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition ${
+                      saving 
+                        ? 'bg-blue-400 cursor-not-allowed' 
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    } text-white`}
                   >
-                    <Save className="w-5 h-5" />
-                    Lưu thay đổi
+                    {saving ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Đang lưu...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-5 h-5" />
+                        Lưu thay đổi
+                      </>
+                    )}
                   </button>
+
                   <button
                     onClick={() => {
                       setIsEditing(false);
                       setShowAddService(false);
-                      setEditedItems(invoice.items || []);
+                      setSearchQuery('');
+                      // Khôi phục dữ liệu gốc
+                      setEditedItems(invoice.items.map(item => ({
+                        serviceId: item.serviceId,
+                        serviceName: item.serviceName,
+                        quantity: item.quantity || 1,
+                        unitPrice: item.unitPrice || 0,
+                        subTotal: item.subTotal || 0,
+                        description: item.description || ''
+                      })));
                     }}
-                    className="px-5 py-3 bg-gray-500 text-white rounded-xl font-semibold"
+                    className="px-5 py-3 bg-gray-500 text-white rounded-xl font-semibold hover:bg-gray-600 transition"
+                    disabled={saving}
                   >
                     Hủy
                   </button>
@@ -248,14 +308,13 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
             {showAddService && (
               <div className="mb-6 p-6 bg-white rounded-xl border-2 border-dashed border-green-300">
                 <div className="relative mb-4">
-                  <Search className="absolute left-4 top-3.5 w-5 h-5 text-gray
-
--400" />
+                  <Search className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
                   <input
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder="Tìm kiếm dịch vụ..."
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-green-100"
+                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-green-100 focus:outline-none"
+                    autoFocus
                   />
                 </div>
 
@@ -263,6 +322,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                   {loadingServices ? (
                     <div className="p-10 text-center">
                       <Loader2 className="w-10 h-10 animate-spin mx-auto text-blue-600" />
+                      <p className="mt-3 text-gray-600">Đang tải dịch vụ...</p>
                     </div>
                   ) : filteredServices.length === 0 ? (
                     <p className="p-10 text-center text-gray-500">Không tìm thấy dịch vụ nào</p>
@@ -286,7 +346,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                   onClick={() => setShowAddService(false)}
                   className="mt-4 text-sm text-blue-600 hover:underline"
                 >
-                  ← Đóng
+                  Đóng
                 </button>
               </div>
             )}
@@ -306,11 +366,23 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                       {isEditing && (
                         <>
                           <div className="flex items-center gap-2">
-                            <button onClick={() => handleUpdateQuantity(idx, -1)} className="w-10 h-10 bg-gray-200 rounded-lg hover:bg-gray-300 text-xl">-</button>
+                            <button 
+                              onClick={() => handleUpdateQuantity(idx, -1)} 
+                              className="w-10 h-10 bg-gray-200 rounded-lg hover:bg-gray-300 text-xl font-bold"
+                              disabled={saving}
+                            >-</button>
                             <span className="w-16 text-center font-bold text-xl">{item.quantity}</span>
-                            <button onClick={() => handleUpdateQuantity(idx, 1)} className="w-10 h-10 bg-gray-200 rounded-lg hover:bg-gray-300 text-xl">+</button>
+                            <button 
+                              onClick={() => handleUpdateQuantity(idx, 1)} 
+                              className="w-10 h-10 bg-gray-200 rounded-lg hover:bg-gray-300 text-xl font-bold"
+                              disabled={saving}
+                            >+</button>
                           </div>
-                          <button onClick={() => handleRemoveItem(idx)} className="text-red-600 hover:text-red-800">
+                          <button 
+                            onClick={() => handleRemoveItem(idx)} 
+                            className="text-red-600 hover:text-red-800"
+                            disabled={saving}
+                          >
                             <Trash2 className="w-6 h-6" />
                           </button>
                         </>
@@ -337,13 +409,17 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
 
           {/* Footer */}
           <div className="flex justify-end gap-4 pt-4">
-            <button onClick={onClose} className="px-8 py-4 bg-gray-200 hover:bg-gray-300 rounded-xl font-bold text-lg">
+            <button 
+              onClick={onClose} 
+              className="px-8 py-4 bg-gray-200 hover:bg-gray-300 rounded-xl font-bold text-lg transition"
+              disabled={saving}
+            >
               Đóng
             </button>
             {invoice.paymentStatus === 'Pending' && !isEditing && (
               <button
                 onClick={() => onPay?.(invoice)}
-                className="px-12 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold text-xl shadow-2xl flex items-center gap-3"
+                className="px-12 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold text-xl shadow-2xl flex items-center gap-3 hover:shadow-green-500/50 transition"
               >
                 <CreditCard className="w-7 h-7" />
                 Thanh toán ngay

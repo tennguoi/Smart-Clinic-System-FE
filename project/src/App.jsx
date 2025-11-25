@@ -50,6 +50,8 @@ import AppointmentsSection from "./components/receptionist/AppointmentsSection";
 import PatientRecordsSection from "./components/receptionist/PatientRecordsSection";
 import ClinicRoomManagement from "./components/receptionist/ClinicRoomManagement";
 import InvoicesSection from "./components/receptionist/InvoicesSection";
+import PaymentPage from "./pages/payment/PaymentPage";
+
 
 function App() {
   return (
@@ -151,6 +153,7 @@ function App() {
           <Route path="records" element={<PatientRecordsSection />} />
           <Route path="rooms" element={<ClinicRoomManagement />} />
           <Route path="invoices" element={<InvoicesSection />} />
+          <Route path="payment/:billId" element={<PaymentPage />} />
         </Route>
 
       </Routes>
