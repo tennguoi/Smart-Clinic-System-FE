@@ -21,7 +21,8 @@ import ForgotPassword from "./components/ForgotPassword";
 import Verify2FA from "./components/Verify2FA";
 import ProfilePage from "./pages/ProfilePage";
 import SecurityPage from "./pages/SecurityPage";
-
+import VerifyOTP from "./components/VerifyOTP";
+import ResetPassword from "./components/ResetPassword";
 // Dashboard Layout
 import AdminPage from "./pages/AdminPage";
 import StatisticsPage from "./components/admin/Statistics";
@@ -61,6 +62,8 @@ function App() {
         <Route path="/verify-2fa" element={<Verify2FA />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/security" element={<SecurityPage />} />
+        <Route path="/verify-otp" element={<VerifyOTP />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* PUBLIC ROUTES */}
         <Route
