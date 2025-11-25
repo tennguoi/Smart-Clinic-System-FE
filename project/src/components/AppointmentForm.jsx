@@ -252,7 +252,7 @@ export default function AppointmentForm() {
               required
               value={formData.fullName}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-sm"
               placeholder="Nhập họ và tên"
             />
           </div>
@@ -271,7 +271,7 @@ export default function AppointmentForm() {
               maxLength={11}
               value={formData.phone}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-sm"
               placeholder="0123456789"
             />
             {phoneError && (
@@ -312,7 +312,7 @@ export default function AppointmentForm() {
                 onChange={handleChange}
                 min={minDate}
                 max={maxDate}
-                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-sm"
               />
             </div>
           </div>
@@ -330,7 +330,7 @@ export default function AppointmentForm() {
                 required
                 value={formData.time}
                 onChange={handleTimeChange}
-                className={`w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm ${
+                className={`w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-sm ${
                   timeError ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
@@ -369,7 +369,7 @@ export default function AppointmentForm() {
             <button
               type="button"
               onClick={() => setIsServicesOpen(!isServicesOpen)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm flex items-center justify-between bg-white"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-sm flex items-center justify-between bg-white"
             >
               <span>
                 {formData.serviceIds.length === 0
@@ -390,7 +390,7 @@ export default function AppointmentForm() {
                       placeholder="Tìm kiếm dịch vụ..."
                       value={serviceSearch}
                       onChange={(e) => setServiceSearch(e.target.value)}
-                      className="w-full pl-8 pr-3 py-1 border border-gray-300 rounded-md focus:ring-1 focus:ring-teal-500 focus:border-transparent text-sm"
+                      className="w-full pl-8 pr-3 py-1 border border-gray-300 rounded-md focus:ring-1 focus:ring-cyan-500 focus:border-transparent text-sm"
                       onClick={(e) => e.stopPropagation()}
                     />
                   </div>
@@ -412,7 +412,7 @@ export default function AppointmentForm() {
                           type="checkbox"
                           checked={formData.serviceIds.includes(svc.serviceId)}
                           onChange={() => toggleService(svc.serviceId)}
-                          className="rounded border-gray-300 text-teal-500 focus:ring-teal-500"
+                          className="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
                         />
                         <div className="flex-1">
                           <div className="font-medium">{svc.name}</div>
@@ -438,13 +438,13 @@ export default function AppointmentForm() {
                   .map((svc) => (
                     <span
                       key={svc.serviceId}
-                      className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-teal-100 text-teal-800"
+                      className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-cyan-100 text-cyan-800"
                     >
                       {svc.name}
                       <button
                         type="button"
                         onClick={() => toggleService(svc.serviceId)}
-                        className="ml-1 hover:text-teal-900"
+                        className="ml-1 hover:text-cyan-900"
                       >
                         ×
                       </button>
@@ -458,7 +458,7 @@ export default function AppointmentForm() {
         <button
           type="submit"
           disabled={isSubmitting || !!timeError || !!phoneError}
-          className="w-full bg-teal-500 hover:bg-teal-600 text-white py-2.5 rounded-lg transition-colors font-semibold text-sm flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-2.5 rounded-lg transition-colors font-semibold text-sm flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (
             <>

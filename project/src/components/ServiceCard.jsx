@@ -19,9 +19,9 @@ export default function ServiceCard({ service, index }) {
   };
 
   return (
-    <div className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 flex flex-col h-full hover:-translate-y-1">
+    <div className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 hover:border-cyan-200 flex flex-col h-full hover:-translate-y-1 cursor-pointer">
       {/* Image Section */}
-      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-cyan-50 to-emerald-50">
+      <div className="relative h-48 overflow-hidden bg-cyan-50">
         {!imageError ? (
           <>
             {/* Loading Spinner */}
@@ -45,7 +45,7 @@ export default function ServiceCard({ service, index }) {
           </>
         ) : (
           // Fallback UI when image fails to load
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-100 via-emerald-50 to-blue-100">
+          <div className="w-full h-full flex items-center justify-center bg-cyan-100">
             <svg className="w-20 h-20 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
@@ -57,7 +57,7 @@ export default function ServiceCard({ service, index }) {
         
         {/* Index Number Badge */}
         <div className="absolute top-3 left-3">
-          <div className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center font-bold text-lg text-cyan-600">
+          <div className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center font-bold text-lg text-cyan-600 group-hover:bg-cyan-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
             {index + 1}
           </div>
         </div>
@@ -73,12 +73,12 @@ export default function ServiceCard({ service, index }) {
         </div>
 
         {/* Title */}
-        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 leading-tight">
+        <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 leading-tight group-hover:text-cyan-600 transition-colors duration-300">
           {service.name}
         </h3>
 
         {/* Description */}
-        <p className="text-gray-600 text-sm line-clamp-2 mb-4 flex-1">
+        <p className="text-gray-600 text-base line-clamp-2 mb-4 flex-1">
           {service.description || 'Dịch vụ chuyên nghiệp với đội ngũ bác sĩ giàu kinh nghiệm.'}
         </p>
 
@@ -94,7 +94,7 @@ export default function ServiceCard({ service, index }) {
       </div>
 
       {/* Bottom accent line */}
-      <div className="h-1 bg-gradient-to-r from-cyan-400 to-emerald-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+      <div className="h-1 bg-cyan-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
     </div>
   );
 }

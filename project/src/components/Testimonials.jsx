@@ -68,13 +68,13 @@ export default function Testimonials() {
   const displayedReviews = reviews.slice(0, 8);
 
   return (
-    <section className="py-6 md:py-10 bg-gray-50">
+    <section className="py-12 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Tiêu đề + Tóm tắt */}
         <div className="text-center mb-8">
        
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-3">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mt-2 mb-3">
             Bệnh Nhân Nói Gì Về Chúng Tôi
           </h2>
       
@@ -84,7 +84,7 @@ export default function Testimonials() {
         <div className="flex justify-center mb-12">
           <div className="inline-flex items-center bg-white rounded-2xl shadow-lg border border-cyan-100 p-6 hover:shadow-xl transition-shadow">
             <div className="text-center mr-6">
-              <div className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-emerald-600 bg-clip-text text-transparent">
+              <div className="text-3xl font-bold text-cyan-600">
                 {averageRating?.toFixed(1) || '—'}/5
               </div>
               <div className="flex justify-center mt-1">
@@ -98,7 +98,7 @@ export default function Testimonials() {
             </div>
             <div className="h-12 w-px bg-gradient-to-b from-transparent via-cyan-200 to-transparent"></div>
             <div className="text-center ml-6">
-              <div className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-emerald-600 bg-clip-text text-transparent">
+              <div className="text-3xl font-bold text-cyan-600">
                 {averageRating ? Math.round((averageRating / 5) * 100) : 0}%
               </div>
               <div className="text-sm text-gray-600">Khuyến nghị</div>
@@ -116,28 +116,33 @@ export default function Testimonials() {
             {displayedReviews.map((review) => (
               <div
                 key={review.id}
-                className="bg-white rounded-xl p-6 shadow-md border border-gray-100 hover:shadow-xl hover:border-cyan-200 transition-all duration-300 transform hover:-translate-y-1"
+                className="group bg-white rounded-xl p-6 shadow-md border border-gray-100 hover:shadow-xl hover:border-cyan-200 transition-all duration-300 transform hover:-translate-y-1 flex flex-col h-full cursor-pointer"
               >
-                <div className="flex mb-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-                    />
-                  ))}
-                </div>
-                <p className="text-gray-700 text-sm italic line-clamp-3 mb-4">
-                  "{review.comment}"
-                </p>
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-emerald-400 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0">
-                    {review.reviewerName.split(' ').pop()[0]?.toUpperCase() || '?'}
+                <div className="flex-1 flex flex-col">
+                  <div className="flex mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-4 h-4 transition-colors duration-300 ${
+                          i < review.rating ? 'text-yellow-400 fill-current group-hover:text-yellow-300' : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">{review.reviewerName}</p>
-                    <p className="text-gray-500">{formatDate(review.createdAt)}</p>
+                  <p className="text-gray-700 text-base italic line-clamp-3 mb-4 flex-1">
+                    "{review.comment}"
+                  </p>
+                  <div className="flex items-center gap-3 text-base mt-2">
+                    <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center text-cyan-600 font-bold text-base shadow-md flex-shrink-0 group-hover:bg-cyan-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
+                      {review.reviewerName.split(' ').pop()[0]?.toUpperCase() || '?'}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 group-hover:text-cyan-600 transition-colors duration-300">{review.reviewerName}</p>
+                      <p className="text-gray-500">{formatDate(review.createdAt)}</p>
+                    </div>
                   </div>
                 </div>
+                <div className="mt-4 h-1 bg-cyan-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
               </div>
             ))}
           </div>

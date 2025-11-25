@@ -4,7 +4,9 @@ import Footer from '../components/Footer';
 export default function AppointmentPage() {
   return (
     <div className="pt-20">
-      <AppointmentForm />
+      <div className="pb-16">
+        <AppointmentForm />
+      </div>
       <Footer />
     </div>
   );

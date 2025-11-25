@@ -9,7 +9,9 @@ export default function Footer() {
   const clinicAddress = clinicInfo?.address?.trim() || '';
   const clinicPhone = clinicInfo?.phone?.trim() || '';
   const clinicEmail = clinicInfo?.email?.trim() || '';
-  const clinicLogoUrl = clinicInfo?.logoUrl?.trim() || '';
+  const baseLogoUrl = clinicInfo?.logoUrl?.trim() || '';
+  const cacheBuster = clinicInfo?.updatedAt ? new Date(clinicInfo.updatedAt).getTime() : Date.now();
+  const clinicLogoUrl = baseLogoUrl ? `${baseLogoUrl}?v=${cacheBuster}` : '';
 
   return (
     <footer id="contact" className="bg-gray-900 text-gray-300">
@@ -19,6 +21,7 @@ export default function Footer() {
             <div className="flex items-center space-x-3 mb-4">
               {clinicLogoUrl ? (
                 <img
+                  key={clinicLogoUrl}
                   src={clinicLogoUrl}
                   alt={clinicName || 'Logo phòng khám'}
                   className="w-10 h-10 object-contain"

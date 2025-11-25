@@ -8,7 +8,10 @@ export default function StickyNavbar() {
   const { clinicInfo, loading } = useClinic();
   const clinicName = clinicInfo?.name?.trim() || '';
   const clinicPhone = clinicInfo?.phone?.trim() || '';
-  const clinicLogoUrl = clinicInfo?.logoUrl?.trim() || '';
+  // Cache busting: thêm timestamp từ updatedAt
+  const baseLogoUrl = clinicInfo?.logoUrl?.trim() || '';
+  const cacheBuster = clinicInfo?.updatedAt ? new Date(clinicInfo.updatedAt).getTime() : Date.now();
+  const clinicLogoUrl = baseLogoUrl ? `${baseLogoUrl}?v=${cacheBuster}` : '';
   const showLoadingPlaceholder = loading && !clinicInfo;
   const navLinks = [
     { label: 'Trang Chủ', path: '/' },
@@ -19,7 +22,7 @@ export default function StickyNavbar() {
   ];
 
   const hotlineButtonClass =
-    'flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-red-600 text-white px-5 py-2.5 min-w-[170px] hover:from-rose-600 hover:to-red-700 transition-all font-semibold text-sm shadow-lg shadow-red-500/30 hover:shadow-red-500/50 hover:scale-105 whitespace-nowrap';
+    'flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-red-600 text-white px-4 py-2.5 hover:from-rose-600 hover:to-red-700 transition-all font-semibold text-sm shadow-lg shadow-red-500/30 hover:shadow-red-500/50 hover:scale-105 whitespace-nowrap';
 
   const renderHotlineButton = (className = hotlineButtonClass, textClassName = '') => {
     if (clinicPhone) {
@@ -57,6 +60,7 @@ export default function StickyNavbar() {
             >
               {clinicLogoUrl ? (
                 <img
+                  key={clinicLogoUrl}
                   src={clinicLogoUrl}
                   alt={clinicName || 'Logo phòng khám'}
                   className="w-16 h-16 object-contain rounded-xl shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300"
@@ -65,17 +69,17 @@ export default function StickyNavbar() {
                   }}
                 />
               ) : (
-                <div className="w-16 h-16 rounded-xl shadow-lg flex items-center justify-center bg-gray-100 text-gray-500 text-sm">
-                  {showLoadingPlaceholder ? 'Logo' : 'Logo'}
+                <div className="w-16 h-16 flex items-center justify-center bg-transparent text-gray-500 text-sm">
+                  Logo
                 </div>
               )}
               <div className="flex flex-col justify-center">
                 {clinicName ? (
-                  <h1 className="text-lg font-bold text-gray-900 leading-tight whitespace-nowrap">
+                  <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight whitespace-nowrap">
                     {clinicName}
                   </h1>
                 ) : (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-base text-gray-500">
                     {showLoadingPlaceholder ? 'Tên phòng khám' : 'Chưa cập nhật tên phòng khám'}
                   </p>
                 )}
@@ -92,7 +96,7 @@ export default function StickyNavbar() {
                 className="px-5 py-2.5 text-gray-700 hover:text-cyan-600 transition-all font-medium text-base rounded-lg hover:bg-cyan-50 whitespace-nowrap relative group"
               >
                 {link.label}
-                <span className="absolute bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-cyan-500 to-emerald-500 group-hover:w-full transition-all duration-300"></span>
+                <span className="absolute bottom-1 left-0 w-0 h-0.5 bg-cyan-600 group-hover:w-full transition-all duration-300"></span>
               </Link>
             ))}
           </div>
@@ -103,7 +107,7 @@ export default function StickyNavbar() {
 
             <Link
               to="/appointment"
-              className="flex items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500 text-white px-5 py-2.5 min-w-[170px] hover:from-cyan-600 hover:to-emerald-600 transition-all font-semibold text-sm shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/40 hover:scale-105 duration-300 whitespace-nowrap"
+              className="flex items-center justify-center rounded-full bg-cyan-600 text-white px-4 py-2.5 hover:bg-cyan-700 transition-all font-semibold text-sm shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/40 hover:scale-105 duration-300 whitespace-nowrap"
             >
               ĐẶT LỊCH NHANH
             </Link>
