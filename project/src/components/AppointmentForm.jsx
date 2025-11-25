@@ -29,9 +29,9 @@ export default function AppointmentForm() {
   const { minDate, maxDate } = useMemo(() => {
     const today = new Date();
     const min = new Date(today);
-    min.setDate(today.getDate());
+    min.setDate(today.getDate()+1);
     const max = new Date(today);
-    max.setDate(today.getDate() + 3);
+    max.setDate(today.getDate() + 4);
     return {
       minDate: min.toISOString().split('T')[0],
       maxDate: max.toISOString().split('T')[0]

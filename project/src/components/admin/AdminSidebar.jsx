@@ -13,7 +13,7 @@ const adminMenuItems = [
   { id: 'articles', label: 'Quản Lý Tin Tức',   icon: Newspaper },
   { id: 'patients', label: 'Bệnh Nhân',         icon: UserCheck },
   { id: 'services', label: 'Quản Lý Dịch Vụ',   icon: Briefcase },
-  { id: 'invoices', label: 'Hóa Đơn',           icon: FileText },
+  
 ];
 
 export default function AdminSidebar({ activeMenu: propActiveMenu, onMenuChange }) {

@@ -79,6 +79,16 @@ export default function PayInvoiceModal({ invoice, onClose, onSuccess }) {
 
       setSuccess(true);
       
+      // Dispatch event to notify other components about payment completion
+      window.dispatchEvent(new CustomEvent('paymentCompleted', {
+        detail: {
+          billId: invoice.billId,
+          amount: remaining,
+          paymentMethod: selectedMethod,
+          timestamp: new Date().toISOString()
+        }
+      }));
+      
       if (onSuccess) {
         onSuccess();
       }

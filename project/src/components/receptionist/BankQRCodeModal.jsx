@@ -47,6 +47,16 @@ export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPaym
     setIsConfirming(true);
     try {
       await onConfirmPayment();
+      
+      // Dispatch event to notify other components about payment completion
+      window.dispatchEvent(new CustomEvent('paymentCompleted', {
+        detail: {
+          billId: billId,
+          amount: amount,
+          paymentMethod: 'BankTransfer',
+          timestamp: new Date().toISOString()
+        }
+      }));
     } finally {
       setIsConfirming(false);
     }

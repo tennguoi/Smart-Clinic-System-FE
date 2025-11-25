@@ -1,6 +1,20 @@
-import { User, Mail, Phone, Calendar, MapPin } from 'lucide-react';
+import { User, Mail, Phone, Calendar, MapPin, Loader } from 'lucide-react';
 
-export default function ProfileSection({ fullName, email, phone, dateOfBirth, gender, address, photoUrl, onPhotoChange, onChange }) {
+export default function ProfileSection({ fullName, email, phone, dateOfBirth, gender, address, photoUrl, onPhotoChange, onChange, isLoading = false }) {
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">Thông Tin Cá Nhân</h2>
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-3">
+            <Loader className="w-8 h-8 text-blue-600 animate-spin" />
+            <p className="text-gray-600">Đang tải thông tin cá nhân...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <h2 className="text-xl font-semibold text-gray-900 mb-6">Thông Tin Cá Nhân</h2>

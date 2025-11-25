@@ -134,6 +134,42 @@ const adminAccountApi = {
     });
     return response.data;
   },
+
+  // ==================== PROFILE ENDPOINTS ====================
+
+  /**
+   * Lấy thông tin cá nhân của người dùng hiện tại
+   */
+  getCurrentUserProfile: async () => {
+    const response = await axiosInstance.get('/api/users/profile');
+    return response.data;
+  },
+
+  /**
+   * Cập nhật thông tin cá nhân
+   */
+  updateProfile: async (profileData, photoFile = null) => {
+    const formData = new FormData();
+    formData.append('data', new Blob([JSON.stringify(profileData)], { type: 'application/json' }));
+    if (photoFile) formData.append('photo', photoFile);
+    
+    const response = await axiosInstance.put('/api/users/profile', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  /**
+   * Upload ảnh đại diện
+   */
+  uploadProfilePhoto: async (photoFile) => {
+    const formData = new FormData();
+    formData.append('photo', photoFile);
+    const response = await axiosInstance.post('/api/users/profile/upload-photo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
 };
 
 export default adminAccountApi;
