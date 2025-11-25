@@ -1,4 +1,4 @@
-// src/api/adminAccountApi.js (hoặc đường dẫn của bạn)
+// src/api/adminAccountApi.js
 import axiosInstance from '../utils/axiosConfig';
 
 const adminAccountApi = {
@@ -13,8 +13,15 @@ const adminAccountApi = {
     return response.data;
   },
 
-  getAllUsers: async () => {
-    const response = await axiosInstance.get('/api/admin/users');
+  /**
+   * Lấy danh sách tất cả users với phân trang
+   * @param {number} page - Số trang (bắt đầu từ 0)
+   * @param {number} size - Số bản ghi mỗi trang (mặc định 8)
+   */
+  getAllUsers: async (page = 0, size = 8) => {
+    const response = await axiosInstance.get('/api/admin/users', {
+      params: { page, size }
+    });
     return response.data;
   },
 
@@ -48,6 +55,84 @@ const adminAccountApi = {
 
   deleteUser: async (userId) => {
     await axiosInstance.delete(`/api/admin/users/${userId}`);
+  },
+
+  // ==================== CÁC HÀM TÌM KIẾM CÓ PHÂN TRANG ====================
+
+  /**
+   * Tìm kiếm user theo tên hoặc số điện thoại với phân trang
+   * @param {string} keyword - Từ khóa tìm kiếm (tên hoặc SĐT)
+   * @param {number} page - Số trang (bắt đầu từ 0)
+   * @param {number} size - Số bản ghi mỗi trang (mặc định 8)
+   */
+  searchByNameOrPhone: async (keyword, page = 0, size = 8) => {
+    const response = await axiosInstance.get('/api/admin/users/search/name-phone', {
+      params: { keyword, page, size }
+    });
+    return response.data;
+  },
+
+  /**
+   * Tìm kiếm user theo vai trò với phân trang
+   * @param {string} roleName - Tên vai trò (vd: "bác sĩ", "tiếp tân")
+   * @param {number} page - Số trang (bắt đầu từ 0)
+   * @param {number} size - Số bản ghi mỗi trang (mặc định 8)
+   */
+  searchByRole: async (roleName, page = 0, size = 8) => {
+    const response = await axiosInstance.get('/api/admin/users/search/role', {
+      params: { roleName, page, size }
+    });
+    return response.data;
+  },
+
+  /**
+   * Tìm kiếm user theo trạng thái hoạt động với phân trang
+   * @param {boolean} isVerified - true: đã kích hoạt, false: chưa kích hoạt
+   * @param {number} page - Số trang (bắt đầu từ 0)
+   * @param {number} size - Số bản ghi mỗi trang (mặc định 8)
+   */
+  searchByVerifiedStatus: async (isVerified, page = 0, size = 8) => {
+    const response = await axiosInstance.get('/api/admin/users/search/verified', {
+      params: { isVerified, page, size }
+    });
+    return response.data;
+  },
+
+  /**
+   * Tìm kiếm user theo giới tính với phân trang
+   * @param {string} gender - "male" hoặc "female"
+   * @param {number} page - Số trang (bắt đầu từ 0)
+   * @param {number} size - Số bản ghi mỗi trang (mặc định 8)
+   */
+  searchByGender: async (gender, page = 0, size = 8) => {
+    const response = await axiosInstance.get('/api/admin/users/search/gender', {
+      params: { gender, page, size }
+    });
+    return response.data;
+  },
+
+  /**
+   * Tìm kiếm user với nhiều tiêu chí kết hợp và phân trang
+   * @param {Object} filters - Object chứa các tiêu chí tìm kiếm
+   * @param {string} filters.keyword - Tên hoặc SĐT
+   * @param {string} filters.roleName - Vai trò
+   * @param {boolean} filters.isVerified - Trạng thái kích hoạt
+   * @param {string} filters.gender - Giới tính
+   * @param {number} page - Số trang (bắt đầu từ 0)
+   * @param {number} size - Số bản ghi mỗi trang (mặc định 8)
+   */
+  searchUsers: async (filters = {}, page = 0, size = 8) => {
+    const response = await axiosInstance.get('/api/admin/users/search', {
+      params: {
+        keyword: filters.keyword || undefined,
+        roleName: filters.roleName || undefined,
+        isVerified: filters.isVerified !== undefined ? filters.isVerified : undefined,
+        gender: filters.gender || undefined,
+        page,
+        size
+      }
+    });
+    return response.data;
   },
 };
 
