@@ -1,11 +1,20 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
     LineChart, Line
 } from 'recharts';
 import axios from 'axios';
 import { FaCalendarCheck, FaUserInjured, FaMoneyBillWave, FaUserMd, FaArrowUp, FaArrowDown, FaCalendar, FaChartBar, FaStethoscope, FaCoins } from 'react-icons/fa';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { CalendarDays } from 'lucide-react';
+
+const RANGE_OPTIONS = [
+    { label: 'Ngày', value: 'day' },
+    { label: 'Tuần', value: 'week' },
+    { label: 'Tháng', value: 'month' },
+    { label: 'Tùy chỉnh', value: 'custom' },
+];
 
 const StatisticsPage = () => {
     const [topServices, setTopServices] = useState([]);
@@ -25,13 +34,70 @@ const StatisticsPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     
-    // Date filter states
-    const [startDate, setStartDate] = useState(() => {
-        const date = new Date();
-        date.setDate(date.getDate() - 30);
-        return date.toISOString().split('T')[0];
-    });
-    const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+    // Date filter states (New Logic to match DoctorStatsDashboard)
+    const [rangeType, setRangeType] = useState('month'); // Default to month for better overview
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    
+    // Custom range state
+    const [customStartDate, setCustomStartDate] = useState(new Date());
+    const [customEndDate, setCustomEndDate] = useState(new Date());
+
+    // Derived startDate and endDate based on rangeType and selectedDate
+    const { startDate, endDate } = useMemo(() => {
+        let start = new Date(selectedDate);
+        let end = new Date(selectedDate);
+
+        if (rangeType === 'day') {
+            // Start and end are the same day
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
+        } else if (rangeType === 'week') {
+            // Calculate start of week (Monday) and end of week (Sunday)
+            const day = start.getDay();
+            const diff = start.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+            start.setDate(diff);
+            start.setHours(0, 0, 0, 0);
+            
+            end = new Date(start);
+            end.setDate(start.getDate() + 6);
+            end.setHours(23, 59, 59, 999);
+        } else if (rangeType === 'month') {
+            // Start of month and end of month
+            start.setDate(1);
+            start.setHours(0, 0, 0, 0);
+            
+            end = new Date(start);
+            end.setMonth(end.getMonth() + 1);
+            end.setDate(0); // Last day of previous month (which is current month since we added 1)
+            end.setHours(23, 59, 59, 999);
+        } else if (rangeType === 'custom') {
+            start = new Date(customStartDate);
+            start.setHours(0, 0, 0, 0);
+            
+            end = new Date(customEndDate);
+            end.setHours(23, 59, 59, 999);
+        }
+
+        // Format to YYYY-MM-DD for API
+        const formatDate = (date) => {
+            const offset = date.getTimezoneOffset();
+            const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+            return localDate.toISOString().split('T')[0];
+        };
+
+        return {
+            startDate: formatDate(start),
+            endDate: formatDate(end)
+        };
+    }, [rangeType, selectedDate, customStartDate, customEndDate]);
+
+    const datePickerConfig = useMemo(() => {
+        if (rangeType === 'month')
+          return { showMonthYearPicker: true, dateFormat: 'MM/yyyy' };
+        if (rangeType === 'week')
+          return { showWeekNumbers: true, dateFormat: "'Tuần' ww, yyyy" };
+        return { dateFormat: 'dd/MM/yyyy' };
+    }, [rangeType]);
 
     // Bảng màu cho biểu đồ
     const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
@@ -141,266 +207,263 @@ const StatisticsPage = () => {
     };
 
     return (
-        <div className="space-y-6 animate-fade-in pb-10">
-            {/* Header */}
-            <div className="flex justify-between items-end mb-2">
+    <div className="space-y-6 animate-fade-in pb-10">
+        {/* Header - Giống DoctorStatsDashboard */}
+        <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+                <div className="rounded-full bg-blue-50 p-3 text-blue-600">
+                    <FaChartBar className="h-6 w-6" />
+                </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Thống Kê Tổng Quan</h1>
-                    <p className="text-gray-500 text-sm mt-1">Báo cáo hoạt động của phòng khám</p>
+                    <p className="text-sm font-medium text-gray-500">Báo cáo tổng hợp</p>
+                    <h2 className="text-xl font-semibold text-gray-900">Thống kê tổng quan</h2>
                 </div>
             </div>
 
-            {/* Date Filter */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                    <FaCalendar className="text-blue-600" size={18} />
-                    <span className="text-gray-700 font-medium">Lọc theo ngày:</span>
-                </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex flex-col">
-                        <label className="text-xs text-gray-500 mb-1">Từ ngày</label>
-                        <input 
-                            type="date" 
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
-                    <div className="flex flex-col">
-                        <label className="text-xs text-gray-500 mb-1">Đến ngày</label>
-                        <input 
-                            type="date" 
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
-                    <button
-                        onClick={() => {
-                            const date = new Date();
-                            date.setDate(date.getDate() - 30);
-                            setStartDate(date.toISOString().split('T')[0]);
-                            setEndDate(new Date().toISOString().split('T')[0]);
-                        }}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm self-end"
-                    >
-                        30 Ngày
-                    </button>
-                    <button
-                        onClick={() => {
-                            const date = new Date();
-                            date.setDate(date.getDate() - 7);
-                            setStartDate(date.toISOString().split('T')[0]);
-                            setEndDate(new Date().toISOString().split('T')[0]);
-                        }}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm self-end"
-                    >
-                        7 Ngày
-                    </button>
-                    <button
-                        onClick={() => {
-                            const today = new Date().toISOString().split('T')[0];
-                            setStartDate(today);
-                            setEndDate(today);
-                        }}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm self-end"
-                    >
-                        Hôm Nay
-                    </button>
-                </div>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard 
-                    title="Lịch Hẹn Hôm Nay" 
-                    value={kpi.totalAppointmentsToday} 
-                    growth={kpi.appointmentsGrowth}
-                    icon={FaCalendarCheck} 
-                    color="text-blue-600" 
-                    bgColor="bg-blue-50" 
-                />
-                <StatCard 
-                    title="Hồ Sơ Bệnh Án Mới" 
-                    value={kpi.totalPatientsToday} 
-                    growth={kpi.patientsGrowth}
-                    icon={FaUserInjured} 
-                    color="text-green-600" 
-                    bgColor="bg-green-50" 
-                />
-                <StatCard 
-                    title="Doanh Thu Tháng" 
-                    value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(kpi.totalRevenueMonth)} 
-                    growth={kpi.revenueGrowth}
-                    icon={FaMoneyBillWave} 
-                    color="text-yellow-600" 
-                    bgColor="bg-yellow-50" 
-                />
-                <StatCard 
-                    title="Tỷ Lệ Hủy Lịch" 
-                    value={`${kpi.cancelRate.toFixed(1)}%`} 
-                    growth={kpi.cancelRateGrowth}
-                    icon={FaUserMd} 
-                    color="text-red-600" 
-                    bgColor="bg-red-50"
-                    isReverse={true}
-                />
-            </div>
-
-            {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Appointment Trend */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h2 className="text-lg font-semibold text-gray-700 mb-6">Xu Hướng Lịch Hẹn (7 Ngày)</h2>
-                    <div className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={appointmentTrend}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="date" tick={{fontSize: 12}} />
-                                <YAxis tick={{fontSize: 12}} />
-                                <Tooltip 
-                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                />
-                                <Line type="monotone" dataKey="value" name="Lịch hẹn" stroke="#3B82F6" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </div>
+            <div className="flex flex-wrap items-center gap-4">
+                <div className="flex rounded-full bg-gray-100 p-1">
+                    {RANGE_OPTIONS.map((option) => (
+                        <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => setRangeType(option.value)}
+                            className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${
+                                option.value === rangeType
+                                    ? 'bg-white text-blue-600 shadow'
+                                    : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            {option.label}
+                        </button>
+                    ))}
                 </div>
 
-                {/* Revenue Trend */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h2 className="text-lg font-semibold text-gray-700 mb-6">Xu Hướng Doanh Thu (7 Ngày)</h2>
-                    <div className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={revenueTrend}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="date" tick={{fontSize: 12}} />
-                                <YAxis tick={{fontSize: 12}} tickFormatter={(value) => new Intl.NumberFormat('vi-VN', { notation: "compact" }).format(value)} />
-                                <Tooltip 
-                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                    formatter={(value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)}
-                                />
-                                <Bar dataKey="value" name="Doanh thu" fill="#F59E0B" radius={[4, 4, 0, 0]} barSize={40} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* Top Services Chart */}
-                <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-lg font-semibold text-gray-700">Top 5 Dịch Vụ Phổ Biến</h2>
-                        
-                        {/* Selector for Stat Type */}
-                        <div className="flex bg-gray-100 p-1 rounded-lg">
-                            <button
-                                onClick={() => setStatType('appointment')}
-                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
-                                    ${statType === 'appointment' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                            >
-                                <FaCalendarCheck /> Đặt lịch
-                            </button>
-                            <button
-                                onClick={() => setStatType('medical_record')}
-                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
-                                    ${statType === 'medical_record' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                            >
-                                <FaStethoscope /> Khám thật
-                            </button>
-                            <button
-                                onClick={() => setStatType('revenue')}
-                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
-                                    ${statType === 'revenue' ? 'bg-white text-yellow-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                            >
-                                <FaCoins /> Doanh thu
-                            </button>
+                <div className="flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 shadow-sm">
+                    <CalendarDays className="h-5 w-5 text-blue-600" />
+                    {rangeType === 'custom' ? (
+                        <div className="flex items-center gap-2">
+                            <DatePicker
+                                selected={customStartDate}
+                                onChange={(date) => date && setCustomStartDate(date)}
+                                className="w-24 bg-transparent text-sm font-semibold text-gray-800 focus:outline-none text-center"
+                                dateFormat="dd/MM/yyyy"
+                                placeholderText="Từ ngày"
+                            />
+                            <span className="text-gray-400">-</span>
+                            <DatePicker
+                                selected={customEndDate}
+                                onChange={(date) => date && setCustomEndDate(date)}
+                                className="w-24 bg-transparent text-sm font-semibold text-gray-800 focus:outline-none text-center"
+                                dateFormat="dd/MM/yyyy"
+                                placeholderText="Đến ngày"
+                                minDate={customStartDate}
+                            />
                         </div>
-                    </div>
-
-                    <div className="h-[400px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart
-                                layout="vertical"
-                                data={topServices}
-                                margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                                <XAxis type="number" hide />
-                                <YAxis 
-                                    dataKey="name" 
-                                    type="category" 
-                                    width={180} 
-                                    tick={{fontSize: 12, fill: '#4B5563', fontWeight: 500}} 
-                                />
-                                <Tooltip 
-                                    cursor={{fill: 'transparent'}}
-                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                    formatter={(value, name, props) => [
-                                        props.payload.displayValue, 
-                                        statType === 'revenue' ? 'Doanh thu' : 'Số lượng'
-                                    ]}
-                                />
-                                <Bar dataKey="usage" name="Giá trị" radius={[0, 4, 4, 0]} barSize={32}>
-                                    {topServices.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
+                    ) : (
+                        <DatePicker
+                            selected={selectedDate}
+                            onChange={(date) => date && setSelectedDate(date)}
+                            className="w-32 bg-transparent text-sm font-semibold text-gray-800 focus:outline-none"
+                            calendarClassName="rounded-xl border border-gray-200 shadow-lg"
+                            {...datePickerConfig}
+                        />
+                    )}
                 </div>
+            </div>
+        </header>
 
-                {/* Ranking Table */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[480px]">
-                    <div className="p-4 border-b border-gray-100 bg-gray-50">
-                        <h2 className="text-lg font-semibold text-gray-700">Bảng Xếp Hạng</h2>
-                        <p className="text-xs text-gray-500 mt-1">
-                            Theo: {statType === 'appointment' ? 'Nhu cầu đặt lịch' : statType === 'medical_record' ? 'Lượt khám thực tế' : 'Doanh thu thực tế'}
-                        </p>
-                    </div>
-                    <div className="overflow-y-auto flex-1">
-                        {topServices.map((item, index) => (
-                            <div key={index} className="flex items-center p-4 border-b border-gray-50 last:border-0 hover:bg-blue-50 transition-colors">
-                                {/* STT */}
-                                <div className={`w-8 h-8 flex items-center justify-center rounded-full font-bold mr-3 flex-shrink-0
-                                    ${index === 0 ? 'bg-yellow-100 text-yellow-600' : 
-                                      index === 1 ? 'bg-gray-200 text-gray-600' : 
-                                      index === 2 ? 'bg-orange-100 text-orange-600' : 'bg-white text-gray-400 border'}`}>
-                                    {index + 1}
-                                </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+            <StatCard 
+                title="Lịch Hẹn Hôm Nay" 
+                value={kpi.totalAppointmentsToday} 
+                growth={kpi.appointmentsGrowth}
+                icon={FaCalendarCheck} 
+                color="text-blue-600" 
+                bgColor="bg-blue-50" 
+            />
+            <StatCard 
+                title="Hồ Sơ Bệnh Án Mới" 
+                value={kpi.totalPatientsToday} 
+                growth={kpi.patientsGrowth}
+                icon={FaUserInjured} 
+                color="text-green-600" 
+                bgColor="bg-green-50" 
+            />
+            <StatCard 
+                title="Doanh Thu Tháng" 
+                value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(kpi.totalRevenueMonth)} 
+                growth={kpi.revenueGrowth}
+                icon={FaMoneyBillWave} 
+                color="text-yellow-600" 
+                bgColor="bg-yellow-50" 
+            />
+            <StatCard 
+                title="Tỷ Lệ Hủy Lịch" 
+                value={`${kpi.cancelRate.toFixed(1)}%`} 
+                growth={kpi.cancelRateGrowth}
+                icon={FaUserMd} 
+                color="text-red-600" 
+                bgColor="bg-red-50"
+                isReverse={true}
+            />
+        </div>
 
-                                {/* Thông tin */}
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center">
-                                        <img 
-                                            src={item.image || "https://via.placeholder.com/40"} 
-                                            alt=""
-                                            className="w-8 h-8 rounded object-cover mr-2 border bg-white flex-shrink-0"
-                                            onError={(e) => {e.target.src = 'https://via.placeholder.com/40'}}
-                                        />
-                                        <div className="truncate">
-                                            <p className="text-sm font-medium text-gray-900 truncate" title={item.name}>{item.name}</p>
-                                            <p className="text-xs text-gray-500 truncate">{item.category}</p>
-                                        </div>
-                                    </div>
-                                </div>
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            {/* Appointment Trend */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h2 className="text-lg font-semibold text-gray-700 mb-6">Xu Hướng Lịch Hẹn (7 Ngày)</h2>
+                <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={appointmentTrend}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis dataKey="date" tick={{fontSize: 12}} />
+                            <YAxis tick={{fontSize: 12}} />
+                            <Tooltip 
+                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                            />
+                            <Line type="monotone" dataKey="value" name="Lịch hẹn" stroke="#3B82F6" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
 
-                                {/* Số liệu */}
-                                <div className="text-right ml-2 flex-shrink-0">
-                                    <span className="block text-sm font-bold text-blue-600">
-                                        {item.displayValue}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+            {/* Revenue Trend */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h2 className="text-lg font-semibold text-gray-700 mb-6">Xu Hướng Doanh Thu (7 Ngày)</h2>
+                <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={revenueTrend}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis dataKey="date" tick={{fontSize: 12}} />
+                            <YAxis tick={{fontSize: 12}} tickFormatter={(value) => new Intl.NumberFormat('vi-VN', { notation: "compact" }).format(value)} />
+                            <Tooltip 
+                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                formatter={(value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)}
+                            />
+                            <Bar dataKey="value" name="Doanh thu" fill="#F59E0B" radius={[4, 4, 0, 0]} barSize={40} />
+                        </BarChart>
+                    </ResponsiveContainer>
                 </div>
             </div>
         </div>
-    );
+
+        {/* Top Services Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+            
+            {/* Top Services Chart */}
+            <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-lg font-semibold text-gray-700">Top 5 Dịch Vụ Phổ Biến</h2>
+                    
+                    {/* Selector for Stat Type */}
+                    <div className="flex bg-gray-100 p-1 rounded-lg">
+                        <button
+                            onClick={() => setStatType('appointment')}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
+                                ${statType === 'appointment' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <FaCalendarCheck /> Đặt lịch
+                        </button>
+                        <button
+                            onClick={() => setStatType('medical_record')}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
+                                ${statType === 'medical_record' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <FaStethoscope /> Khám thật
+                        </button>
+                        <button
+                            onClick={() => setStatType('revenue')}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
+                                ${statType === 'revenue' ? 'bg-white text-yellow-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <FaCoins /> Doanh thu
+                        </button>
+                    </div>
+                </div>
+
+                <div className="h-[400px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                            layout="vertical"
+                            data={topServices}
+                            margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+                        >
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                            <XAxis type="number" hide />
+                            <YAxis 
+                                dataKey="name" 
+                                type="category" 
+                                width={180} 
+                                tick={{fontSize: 12, fill: '#4B5563', fontWeight: 500}} 
+                            />
+                            <Tooltip 
+                                cursor={{fill: 'transparent'}}
+                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                formatter={(value, name, props) => [
+                                    props.payload.displayValue, 
+                                    statType === 'revenue' ? 'Doanh thu' : 'Số lượng'
+                                ]}
+                            />
+                            <Bar dataKey="usage" name="Giá trị" radius={[0, 4, 4, 0]} barSize={32}>
+                                {topServices.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* Ranking Table */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[480px]">
+                <div className="p-4 border-b border-gray-100 bg-gray-50">
+                    <h2 className="text-lg font-semibold text-gray-700">Bảng Xếp Hạng</h2>
+                    <p className="text-xs text-gray-500 mt-1">
+                        Theo: {statType === 'appointment' ? 'Nhu cầu đặt lịch' : statType === 'medical_record' ? 'Lượt khám thực tế' : 'Doanh thu thực tế'}
+                    </p>
+                </div>
+                <div className="overflow-y-auto flex-1">
+                    {topServices.map((item, index) => (
+                        <div key={index} className="flex items-center p-4 border-b border-gray-50 last:border-0 hover:bg-blue-50 transition-colors">
+                            {/* STT */}
+                            <div className={`w-8 h-8 flex items-center justify-center rounded-full font-bold mr-3 flex-shrink-0
+                                ${index === 0 ? 'bg-yellow-100 text-yellow-600' : 
+                                  index === 1 ? 'bg-gray-200 text-gray-600' : 
+                                  index === 2 ? 'bg-orange-100 text-orange-600' : 'bg-white text-gray-400 border'}`}>
+                                {index + 1}
+                            </div>
+
+                            {/* Thông tin */}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center">
+                                    <img 
+                                        src={item.image || "https://via.placeholder.com/40"} 
+                                        alt=""
+                                        className="w-8 h-8 rounded object-cover mr-2 border bg-white flex-shrink-0"
+                                        onError={(e) => {e.target.src = 'https://via.placeholder.com/40'}}
+                                    />
+                                    <div className="truncate">
+                                        <p className="text-sm font-medium text-gray-900 truncate" title={item.name}>{item.name}</p>
+                                        <p className="text-xs text-gray-500 truncate">{item.category}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Số liệu */}
+                            <div className="text-right ml-2 flex-shrink-0">
+                                <span className="block text-sm font-bold text-blue-600">
+                                    {item.displayValue}
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    </div>
+);
 };
 
 export default StatisticsPage;
