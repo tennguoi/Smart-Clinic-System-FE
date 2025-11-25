@@ -98,7 +98,10 @@ export const getDoctorStats = async (doctorId, range = 'day', date = null, force
     throw error;
   }
 };
-
+export const callNextPatient = async () => {
+  const res = await axiosInstance.post('/api/doctor/rooms/call-next'); // endpoint mới trong RoomController
+  return res.data;
+};
 export const getDoctorStatsDetail = async (doctorId, range = 'month', date = null, page = 1, pageSize = 10) => {
   try {
     const params = { range, page, pageSize };
@@ -113,8 +116,14 @@ export const getDoctorStatsDetail = async (doctorId, range = 'month', date = nul
     throw error;
   }
 };
+export const getWaitingQueue = async () => {
+  const response = await axiosInstance.get('/api/doctor/queue/waiting');
+  return response.data; // Trả về danh sách QueuePatientResponse
+};
 
 export default {
+  getWaitingQueue,
+  callNextPatient,
   getDoctors,
   getMyQueue,
   getCurrentPatient,
