@@ -1,7 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Save, Building2, Loader2, Upload, X, Edit } from 'lucide-react';
 import { clinicApi } from '../../api/clinicApi';
-import axiosInstance from '../../utils/axiosConfig';
+import { useClinic } from '../../contexts/ClinicContext';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8082';
+
+const toAbsoluteLogoUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  if (url.startsWith('/')) {
+    return `${API_BASE_URL}${url}`;
+  }
+  return url;
+};
 
 export default function ClinicManagement() {
   const [clinicInfo, setClinicInfo] = useState(null);
@@ -22,6 +33,7 @@ export default function ClinicManagement() {
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const { refreshClinicInfo } = useClinic();
 
   useEffect(() => {
     fetchClinicInfo();
@@ -34,12 +46,7 @@ export default function ClinicManagement() {
       const data = await clinicApi.getClinicInfo();
       if (data) {
         setClinicInfo(data);
-        
-        // Xử lý logoUrl - nếu là relative path, thêm base URL
-        let logoUrl = data.logoUrl || '';
-        if (logoUrl && logoUrl.startsWith('/') && !logoUrl.startsWith('http')) {
-          logoUrl = `http://localhost:8082${logoUrl}`;
-        }
+        const normalizedLogoUrl = toAbsoluteLogoUrl(data.logoUrl || '');
         
         setFormData({
           name: data.name || '',
@@ -47,10 +54,10 @@ export default function ClinicManagement() {
           phone: data.phone || '',
           email: data.email || '',
           website: data.website || '',
-          logoUrl: logoUrl,
+          logoUrl: normalizedLogoUrl,
         });
-        if (logoUrl) {
-          setLogoPreview(logoUrl);
+        if (normalizedLogoUrl) {
+          setLogoPreview(normalizedLogoUrl);
         }
         setIsEditing(false); // Reset to view mode when loading data
       } else {
@@ -211,46 +218,6 @@ export default function ClinicManagement() {
     }
   };
 
-  const uploadLogo = async (file) => {
-    const formData = new FormData();
-    formData.append('logo', file); // Backend expects parameter name "logo"
-    
-    // Log file size trước khi upload để debug
-    const fileSizeKB = (file.size / 1024).toFixed(2);
-    console.log(`Đang upload logo: ${file.name}, kích thước: ${fileSizeKB}KB`);
-
-    try {
-      const response = await axiosInstance.post('/api/admin/clinic/upload-logo', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      
-      // Backend returns: { success: true, logoUrl: "...", clinicInfo: {...} }
-      return {
-        logoUrl: response.data?.logoUrl || response.data?.url,
-        clinicInfo: response.data?.clinicInfo,
-      };
-    } catch (error) {
-      console.error('Upload error:', error);
-      console.error('File size:', (file.size / 1024).toFixed(2), 'KB');
-      
-      // Handle specific error codes
-      if (error.response?.status === 413) {
-        const fileSizeKB = (file.size / 1024).toFixed(2);
-        throw new Error(`File quá lớn (${fileSizeKB}KB). Backend không chấp nhận file này. Vui lòng thử file nhỏ hơn hoặc liên hệ admin để tăng giới hạn.`);
-      }
-      
-      if (error.response?.status === 400) {
-        const message = error.response?.data?.message || 'File không hợp lệ';
-        throw new Error(message);
-      }
-      
-      const errorMessage = error.response?.data?.message || error.message || 'Không thể upload logo. Vui lòng thử lại.';
-      throw new Error(errorMessage);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -289,7 +256,7 @@ export default function ClinicManagement() {
       if (logoFile) {
         setUploadingLogo(true);
         try {
-          const uploadResult = await uploadLogo(logoFile);
+          const uploadResult = await clinicApi.uploadLogo(logoFile);
           finalLogoUrl = uploadResult.logoUrl;
           
           // Backend returns updated clinicInfo after upload
@@ -299,10 +266,10 @@ export default function ClinicManagement() {
         } catch (uploadError) {
           setError(uploadError.message || 'Không thể upload logo. Vui lòng thử lại.');
           setSaving(false);
-          setUploadingLogo(false);
           return;
+        } finally {
+          setUploadingLogo(false);
         }
-        setUploadingLogo(false);
       }
 
       // If logo was uploaded, backend already updated the clinic info
@@ -317,15 +284,13 @@ export default function ClinicManagement() {
       }
       
       setClinicInfo(updatedClinicData);
+      if (typeof refreshClinicInfo === 'function') {
+        refreshClinicInfo();
+      }
       
       // Ưu tiên dùng logoUrl từ updatedClinicData (backend trả về)
       // Nếu URL là relative path, cần thêm base URL
-      let newLogoUrl = updatedClinicData?.logoUrl || finalLogoUrl;
-      
-      // Nếu URL là relative path (bắt đầu bằng /), thêm base URL
-      if (newLogoUrl && newLogoUrl.startsWith('/') && !newLogoUrl.startsWith('http')) {
-        newLogoUrl = `http://localhost:8082${newLogoUrl}`;
-      }
+      const newLogoUrl = toAbsoluteLogoUrl(updatedClinicData?.logoUrl || finalLogoUrl);
       
       setFormData((prev) => ({
         ...prev,
@@ -605,15 +570,16 @@ export default function ClinicManagement() {
                     setLogoFile(null);
                     // Reset form data to original clinic info
                     if (clinicInfo) {
+                      const normalizedLogoUrl = toAbsoluteLogoUrl(clinicInfo.logoUrl || '');
                       setFormData({
                         name: clinicInfo.name || '',
                         address: clinicInfo.address || '',
                         phone: clinicInfo.phone || '',
                         email: clinicInfo.email || '',
                         website: clinicInfo.website || '',
-                        logoUrl: clinicInfo.logoUrl || '',
+                        logoUrl: normalizedLogoUrl,
                       });
-                      setLogoPreview(clinicInfo.logoUrl || null);
+                      setLogoPreview(normalizedLogoUrl || null);
                     }
                     setError('');
                   }}
