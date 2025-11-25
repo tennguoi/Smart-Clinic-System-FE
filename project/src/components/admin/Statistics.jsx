@@ -350,116 +350,66 @@ const StatisticsPage = () => {
         </div>
 
         {/* Top Services Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-            
-            {/* Top Services Chart */}
-            <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-lg font-semibold text-gray-700">Top 5 Dịch Vụ Phổ Biến</h2>
-                    
-                    {/* Selector for Stat Type */}
-                    <div className="flex bg-gray-100 p-1 rounded-lg">
-                        <button
-                            onClick={() => setStatType('appointment')}
-                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
-                                ${statType === 'appointment' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            <FaCalendarCheck /> Đặt lịch
-                        </button>
-                        <button
-                            onClick={() => setStatType('medical_record')}
-                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
-                                ${statType === 'medical_record' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            <FaStethoscope /> Khám thật
-                        </button>
-                        <button
-                            onClick={() => setStatType('revenue')}
-                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
-                                ${statType === 'revenue' ? 'bg-white text-yellow-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            <FaCoins /> Doanh thu
-                        </button>
-                    </div>
-                </div>
-
-                <div className="h-[400px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                            layout="vertical"
-                            data={topServices}
-                            margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
-                        >
-                            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                            <XAxis type="number" hide />
-                            <YAxis 
-                                dataKey="name" 
-                                type="category" 
-                                width={180} 
-                                tick={{fontSize: 12, fill: '#4B5563', fontWeight: 500}} 
-                            />
-                            <Tooltip 
-                                cursor={{fill: 'transparent'}}
-                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                formatter={(value, name, props) => [
-                                    props.payload.displayValue, 
-                                    statType === 'revenue' ? 'Doanh thu' : 'Số lượng'
-                                ]}
-                            />
-                            <Bar dataKey="usage" name="Giá trị" radius={[0, 4, 4, 0]} barSize={32}>
-                                {topServices.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mt-6">
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold text-gray-700">Top 5 Dịch Vụ Phổ Biến</h2>
+                
+                {/* Selector for Stat Type */}
+                <div className="flex bg-gray-100 p-1 rounded-lg">
+                    <button
+                        onClick={() => setStatType('appointment')}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
+                            ${statType === 'appointment' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        <FaCalendarCheck /> Đặt lịch
+                    </button>
+                    <button
+                        onClick={() => setStatType('medical_record')}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
+                            ${statType === 'medical_record' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        <FaStethoscope /> Khám thật
+                    </button>
+                    <button
+                        onClick={() => setStatType('revenue')}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
+                            ${statType === 'revenue' ? 'bg-white text-yellow-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        <FaCoins /> Doanh thu
+                    </button>
                 </div>
             </div>
 
-            {/* Ranking Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[480px]">
-                <div className="p-4 border-b border-gray-100 bg-gray-50">
-                    <h2 className="text-lg font-semibold text-gray-700">Bảng Xếp Hạng</h2>
-                    <p className="text-xs text-gray-500 mt-1">
-                        Theo: {statType === 'appointment' ? 'Nhu cầu đặt lịch' : statType === 'medical_record' ? 'Lượt khám thực tế' : 'Doanh thu thực tế'}
-                    </p>
-                </div>
-                <div className="overflow-y-auto flex-1">
-                    {topServices.map((item, index) => (
-                        <div key={index} className="flex items-center p-4 border-b border-gray-50 last:border-0 hover:bg-blue-50 transition-colors">
-                            {/* STT */}
-                            <div className={`w-8 h-8 flex items-center justify-center rounded-full font-bold mr-3 flex-shrink-0
-                                ${index === 0 ? 'bg-yellow-100 text-yellow-600' : 
-                                  index === 1 ? 'bg-gray-200 text-gray-600' : 
-                                  index === 2 ? 'bg-orange-100 text-orange-600' : 'bg-white text-gray-400 border'}`}>
-                                {index + 1}
-                            </div>
-
-                            {/* Thông tin */}
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center">
-                                    <img 
-                                        src={item.image || "https://via.placeholder.com/40"} 
-                                        alt=""
-                                        className="w-8 h-8 rounded object-cover mr-2 border bg-white flex-shrink-0"
-                                        onError={(e) => {e.target.src = 'https://via.placeholder.com/40'}}
-                                    />
-                                    <div className="truncate">
-                                        <p className="text-sm font-medium text-gray-900 truncate" title={item.name}>{item.name}</p>
-                                        <p className="text-xs text-gray-500 truncate">{item.category}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Số liệu */}
-                            <div className="text-right ml-2 flex-shrink-0">
-                                <span className="block text-sm font-bold text-blue-600">
-                                    {item.displayValue}
-                                </span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+            <div className="h-[400px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                        layout="vertical"
+                        data={topServices}
+                        margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+                    >
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                        <XAxis type="number" hide />
+                        <YAxis 
+                            dataKey="name" 
+                            type="category" 
+                            width={180} 
+                            tick={{fontSize: 12, fill: '#4B5563', fontWeight: 500}} 
+                        />
+                        <Tooltip 
+                            cursor={{fill: 'transparent'}}
+                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                            formatter={(value, name, props) => [
+                                props.payload.displayValue, 
+                                statType === 'revenue' ? 'Doanh thu' : 'Số lượng'
+                            ]}
+                        />
+                        <Bar dataKey="usage" name="Giá trị" radius={[0, 4, 4, 0]} barSize={32}>
+                            {topServices.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
             </div>
         </div>
     </div>
