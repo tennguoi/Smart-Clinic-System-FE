@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Copy, Download, CheckCircle, Smartphone } from 'lucide-react';
+import { X, Copy, Download, CheckCircle, Smartphone, AlertCircle, Loader } from 'lucide-react';
+import { billingApi } from '../../api/billingApi';
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -9,6 +10,10 @@ export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPaym
   const [qrUrl, setQrUrl] = useState('');
   const [copied, setCopied] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState(null);
+  const [isCheckingPayment, setIsCheckingPayment] = useState(false);
+  const [error, setError] = useState(null);
+  const [pollInterval, setPollInterval] = useState(null);
 
   // Thông tin ngân hàng của bạn - CẬP NHẬT THÔNG TIN NÀY
   const bankInfo = {
@@ -43,24 +48,105 @@ export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPaym
     document.body.removeChild(link);
   };
 
+  // Check payment status from backend
+  const checkPaymentStatusFromBackend = async () => {
+    try {
+      setIsCheckingPayment(true);
+      setError(null);
+      const status = await billingApi.checkPaymentStatus(billId);
+      setPaymentStatus(status);
+      return status.isPaid;
+    } catch (err) {
+      console.error('Error checking payment status:', err);
+      setError('Không thể kiểm tra trạng thái thanh toán');
+      return false;
+    } finally {
+      setIsCheckingPayment(false);
+    }
+  };
+
+  // Start polling for payment status
+  const startPaymentPolling = () => {
+    let attempts = 0;
+    const maxAttempts = 30; // 5 minutes with 10-second intervals
+
+    const interval = setInterval(async () => {
+      attempts++;
+      console.log(`Checking payment status... (Attempt ${attempts}/${maxAttempts})`);
+      
+      const isPaid = await checkPaymentStatusFromBackend();
+      
+      if (isPaid) {
+        clearInterval(interval);
+        setPollInterval(null);
+        
+        // Payment confirmed, call onConfirmPayment
+        if (onConfirmPayment) {
+          await onConfirmPayment();
+        }
+        
+        // Dispatch event to notify other components about payment completion
+        window.dispatchEvent(new CustomEvent('paymentCompleted', {
+          detail: {
+            billId: billId,
+            amount: amount,
+            paymentMethod: 'BankTransfer',
+            timestamp: new Date().toISOString()
+          }
+        }));
+      } else if (attempts >= maxAttempts) {
+        clearInterval(interval);
+        setPollInterval(null);
+        setError('Hết thời gian chờ. Vui lòng kiểm tra lại hoặc liên hệ hỗ trợ.');
+      }
+    }, 10000); // Check every 10 seconds
+
+    setPollInterval(interval);
+  };
+
   const handleConfirmPayment = async () => {
     setIsConfirming(true);
+    setError(null);
+    
     try {
-      await onConfirmPayment();
+      // First, check current payment status
+      const currentStatus = await checkPaymentStatusFromBackend();
       
-      // Dispatch event to notify other components about payment completion
-      window.dispatchEvent(new CustomEvent('paymentCompleted', {
-        detail: {
-          billId: billId,
-          amount: amount,
-          paymentMethod: 'BankTransfer',
-          timestamp: new Date().toISOString()
+      if (currentStatus.isPaid) {
+        // Already paid, process immediately
+        if (onConfirmPayment) {
+          await onConfirmPayment();
         }
-      }));
+        
+        window.dispatchEvent(new CustomEvent('paymentCompleted', {
+          detail: {
+            billId: billId,
+            amount: amount,
+            paymentMethod: 'BankTransfer',
+            timestamp: new Date().toISOString()
+          }
+        }));
+      } else {
+        // Not paid yet, start polling
+        setError(null);
+        startPaymentPolling();
+      }
+    } catch (err) {
+      setError('Lỗi khi xác nhận thanh toán. Vui lòng thử lại.');
+      console.error('Error confirming payment:', err);
     } finally {
       setIsConfirming(false);
     }
   };
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
+  }, [pollInterval]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
@@ -177,6 +263,45 @@ export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPaym
             </div>
           </div>
 
+          {/* Payment Status Display */}
+          {paymentStatus && (
+            <div className={`rounded-xl p-4 border-2 ${
+              paymentStatus.isPaid 
+                ? 'bg-green-50 border-green-300' 
+                : 'bg-yellow-50 border-yellow-300'
+            }`}>
+              <div className="flex items-start gap-3">
+                {paymentStatus.isPaid ? (
+                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                )}
+                <div className="flex-1">
+                  <p className={`font-semibold text-sm ${
+                    paymentStatus.isPaid ? 'text-green-900' : 'text-yellow-900'
+                  }`}>
+                    {paymentStatus.isPaid ? 'Thanh toán thành công!' : 'Đang chờ thanh toán...'}
+                  </p>
+                  <div className={`text-xs mt-2 space-y-1 ${
+                    paymentStatus.isPaid ? 'text-green-700' : 'text-yellow-700'
+                  }`}>
+                    <p>Trạng thái: <strong>{paymentStatus.paymentStatus}</strong></p>
+                    <p>Đã thanh toán: <strong>{formatPrice(paymentStatus.amountPaid)}</strong></p>
+                    <p>Còn lại: <strong>{formatPrice(paymentStatus.remainingAmount)}</strong></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-300 rounded-xl p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
+
           {/* Lưu ý - Compact */}
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
             <h4 className="font-semibold text-blue-900 mb-1.5 flex items-center gap-1.5 text-sm">
@@ -186,6 +311,7 @@ export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPaym
             <ul className="text-xs text-blue-800 space-y-0.5 list-disc list-inside">
               <li>Chuyển <strong>đúng số tiền</strong> và <strong>đúng nội dung</strong></li>
               <li>Sau khi CK, nhấn "Xác nhận đã thanh toán"</li>
+              <li>Hệ thống sẽ tự động kiểm tra thanh toán mỗi 10 giây</li>
               <li>Giao dịch được xác nhận trong vài phút</li>
             </ul>
           </div>

@@ -204,7 +204,7 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
               >
                 <Pencil className="w-4 h-4" />
               </button>
-              <button
+              {/* <button
                 onClick={handleDelete}
                 disabled={deleting}
                 className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 disabled:opacity-60"
@@ -212,7 +212,7 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
                 title={deleting ? 'Đang xóa...' : 'Xóa'}
               >
                 <Trash2 className="w-4 h-4" />
-              </button>
+              </button> */}
             </div>
           )}
         </td>

@@ -37,6 +37,12 @@ export const billingApi = {
     const { data } = await axiosInstance.delete(`/api/billing/${billId}`);
     return data;
   },
+
+  // ← API KIỂM TRA TRẠNG THÁI THANH TOÁN
+  checkPaymentStatus: async (billId) => {
+    const { data } = await axiosInstance.get(`/api/billing/${billId}/payment-status`);
+    return data;
+  },
 };
 
 export default billingApi;
