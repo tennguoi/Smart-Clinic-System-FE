@@ -15,7 +15,17 @@ const dateStringToDate = (dateStr) => {
   const [year, month, day] = dateStr.split('-');
   return new Date(year, month - 1, day);
 };
+const genderOptions = [
+  { value: 'male', label: 'Nam' },
+  { value: 'female', label: 'Nữ' },
+  { value: 'other', label: 'Khác' },
+];
 
+const roleOptions = [
+  { value: 'admin', label: 'Quản trị viên' },
+  { value: 'bac_si', label: 'Bác sĩ' },
+  { value: 'tiep_tan', label: 'Tiếp tân' },
+];
 const dateToISOString = (date) => {
   if (!date || isNaN(date)) return '';
   const year = date.getFullYear();
@@ -48,6 +58,7 @@ const CustomDateInput = forwardRef(({ value, onClick, placeholder, required }, r
     ref={ref}
     placeholder={placeholder}
     required={required}
+    style={{ width: '190%' }}
     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 transition cursor-pointer"
     readOnly
   />

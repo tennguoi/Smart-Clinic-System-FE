@@ -5,6 +5,20 @@ import Footer from '../components/Footer';
 
 const categories = ['', 'Công nghệ', 'Sức khỏe', 'Điều trị', 'Cảnh báo', 'Tư vấn'];
 
+// Hàm tạo URL đầy đủ cho ảnh
+const getImageUrl = (imageUrl) => {
+  if (!imageUrl) return 'https://via.placeholder.com/400x200?text=No+Image';
+  
+  // Nếu đã là URL đầy đủ (http/https) thì return luôn
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  
+  // Nếu là relative URL thì thêm base URL
+  const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8082';
+  return `${baseURL}${imageUrl}`;
+};
+
 export default function NewsPage() {
   const navigate = useNavigate();
   const [news, setNews] = useState([]);
@@ -15,18 +29,19 @@ export default function NewsPage() {
   const PAGE_SIZE = 6;
 
   const loadArticles = async () => {
-    let url = `http://localhost:8082/api/public/articles?page=${page}&size=${PAGE_SIZE}`;
+    const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8082';
+    let url = `${baseURL}/api/public/articles?page=${page}&size=${PAGE_SIZE}`;
 
     if (keyword.trim() && category) {
-      url = `http://localhost:8082/api/public/articles/search?title=${encodeURIComponent(keyword.trim())}&page=${page}&size=${PAGE_SIZE}`;
+      url = `${baseURL}/api/public/articles/search?title=${encodeURIComponent(keyword.trim())}&page=${page}&size=${PAGE_SIZE}`;
     }
     // Chỉ có từ khóa → tìm toàn bộ
     else if (keyword.trim()) {
-      url = `http://localhost:8082/api/public/articles/search?title=${encodeURIComponent(keyword.trim())}&page=${page}&size=${PAGE_SIZE}`;
+      url = `${baseURL}/api/public/articles/search?title=${encodeURIComponent(keyword.trim())}&page=${page}&size=${PAGE_SIZE}`;
     }
     // Chỉ có chuyên mục
     else if (category) {
-      url = `http://localhost:8082/api/public/articles/category/${encodeURIComponent(category)}?page=${page}&size=${PAGE_SIZE}`;
+      url = `${baseURL}/api/public/articles/category/${encodeURIComponent(category)}?page=${page}&size=${PAGE_SIZE}`;
     }
     // Không có gì → tất cả
 
@@ -156,9 +171,15 @@ export default function NewsPage() {
                 {/* Image Section */}
                 <div className="relative h-48 overflow-hidden bg-cyan-50">
                   <img
-                    src={a.image || 'https://via.placeholder.com/400x200'}
+                    src={getImageUrl(a.image)}
                     alt={a.title}
                     className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105"
+                    onError={(e) => {
+                      // Nếu ảnh load lỗi, hiển thị placeholder
+                      e.target.onerror = null;
+                      e.target.src = 'https://via.placeholder.com/400x200?text=No+Image';
+                    }}
+                    loading="lazy"
                   />
                   
                   {/* Gradient overlay on hover */}
