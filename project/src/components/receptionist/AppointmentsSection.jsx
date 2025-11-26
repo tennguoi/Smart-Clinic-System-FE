@@ -2,8 +2,8 @@
 import { useEffect, useState } from 'react';
 import {
   Plus, X, Calendar, User, Phone, Mail, FileText,
-  Loader2, Search, Check, Edit2, Clock, CheckCircle2, XCircle,
-  ChevronLeft, ChevronRight
+  Loader2, Search, CheckCircle2, XCircle,
+  ChevronLeft, ChevronRight, Edit2, Check, Trash2, Clock
 } from 'lucide-react';
 import axiosInstance from '../../utils/axiosConfig';
 
@@ -145,9 +145,8 @@ export default function AppointmentsSection() {
   const handleSubmit = async () => {
     if (!form.patientName.trim()) return setError('Vui lòng nhập họ tên');
     if (!form.phone.trim()) return setError('Vui lòng nhập số điện thoại');
-    if (!form.appointmentTime) return setError('Vui lòng chọn thời gian');
-    if (form.selectedServices.length === 0)
-      return setError('Vui lòng chọn ít nhất 1 dịch vụ');
+    if (form.phone.length !== 10) return setError('Số điện thoại phải đúng 10 chữ số');
+    if (!form.appointmentTime) return setError('Vui lòng chọn thời gian hẹn');
 
     setSubmitting(true);
     setError('');
@@ -162,19 +161,15 @@ export default function AppointmentsSection() {
       };
 
       if (editingAppointment) {
-        await axiosInstance.put(
-          `/api/appointments/${editingAppointment.appointmentId}`,
-          payload
-        );
-        setSuccess('Cập nhật thành công!');
+        await axiosInstance.put(`/api/appointments/${editingAppointment.appointmentId}`, payload);
+        setSuccess('Cập nhật lịch hẹn thành công!');
       } else {
         const res = await axiosInstance.post('/api/appointments', payload);
-        setSuccess(`Tạo thành công! Mã lịch: ${res.data.appointmentCode}`);
+        setSuccess(`Tạo lịch hẹn thành công! Mã lịch: ${res.data.appointmentCode}`);
       }
 
       setShowForm(false);
 
-      // Refresh danh sách
       const refreshed = await axiosInstance.get('/api/appointments', {
         params: {
           status: selectedStatus,
@@ -194,15 +189,9 @@ export default function AppointmentsSection() {
 
   const handleConfirm = async (id) => {
     try {
-      await axiosInstance.patch(`/api/appointments/${id}/status`, null, {
-        params: { status: 'Confirmed' },
-      });
-      setAppointments((prev) =>
-        prev.map((a) =>
-          a.appointmentId === id ? { ...a, status: 'Confirmed' } : a
-        )
-      );
-      setSuccess('Đã xác nhận');
+      await axiosInstance.patch(`/api/appointments/${id}/status`, null, { params: { status: 'Confirmed' } });
+      setAppointments((prev) => prev.map((a) => a.appointmentId === id ? { ...a, status: 'Confirmed' } : a));
+      setSuccess('Đã xác nhận lịch hẹn');
     } catch {
       setError('Xác nhận thất bại');
     }
@@ -210,19 +199,18 @@ export default function AppointmentsSection() {
 
   const handleCancel = async (id) => {
     try {
-      await axiosInstance.patch(`/api/appointments/${id}/status`, null, {
-        params: { status: 'Cancelled' },
-      });
-      setAppointments((prev) =>
-        prev.map((a) =>
-          a.appointmentId === id ? { ...a, status: 'Cancelled' } : a
-        )
-      );
-      setSuccess('Đã hủy');
+      await axiosInstance.patch(`/api/appointments/${id}/status`, null, { params: { status: 'Cancelled' } });
+      setAppointments((prev) => prev.map((a) => a.appointmentId === id ? { ...a, status: 'Cancelled' } : a));
+      setSuccess('Đã hủy lịch hẹn');
     } catch {
       setError('Hủy thất bại');
     }
   };
+
+  const now = new Date();
+  const minDateTime = now.toISOString().slice(0, 16);
+  const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+  const maxDateTime = threeDaysLater.toISOString().slice(0, 16);
 
   const handleClearSearch = () => {
     setSearchQueryAppointments('');
@@ -242,44 +230,26 @@ export default function AppointmentsSection() {
     const maxVisible = 5;
     let start = Math.max(0, currentPage - Math.floor(maxVisible / 2));
     let end = Math.min(totalPages - 1, start + maxVisible - 1);
-
-    if (end - start + 1 < maxVisible) {
-      start = Math.max(0, end - maxVisible + 1);
-    }
-
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
-    }
+    if (end - start + 1 < maxVisible) start = Math.max(0, end - maxVisible + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
 
     return (
       <div className="flex items-center justify-center gap-2 mt-4 p-4">
-        <button
-          onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
-          disabled={currentPage === 0}
-          className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 flex items-center"
-        >
+        <button onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}
+          className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
           <ChevronLeft className="w-4 h-4" />
         </button>
 
         {start > 0 && (
           <>
-            <button onClick={() => setCurrentPage(0)} className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-              1
-            </button>
+            <button onClick={() => setCurrentPage(0)} className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">1</button>
             {start > 1 && <span className="px-3 py-2 text-gray-500">..</span>}
           </>
         )}
 
-        {pages.map((page) => (
-          <button
-            key={page}
-            onClick={() => setCurrentPage(page)}
-            className={`px-4 py-2 rounded-lg border ${
-              currentPage === page
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white border-gray-300 hover:bg-gray-50'
-            }`}
-          >
+        {pages.map(page => (
+          <button key={page} onClick={() => setCurrentPage(page)}
+            className={`px-4 py-2 rounded-lg border ${currentPage === page ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-gray-300 hover:bg-gray-50'}`}>
             {page + 1}
           </button>
         ))}
@@ -293,11 +263,8 @@ export default function AppointmentsSection() {
           </>
         )}
 
-        <button
-          onClick={() => setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1))}
-          disabled={currentPage === totalPages - 1}
-          className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 flex items-center"
-        >
+        <button onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage === totalPages - 1}
+          className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
@@ -308,13 +275,9 @@ export default function AppointmentsSection() {
     <div className="space-y-6">
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <h2 className="text-2xl font-semibold text-gray-800">
-          Quản lý lịch hẹn
-        </h2>
-        <button
-          onClick={handleOpenAdd}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors shadow-sm"
-        >
+        <h2 className="text-2xl font-semibold text-gray-800">Quản lý lịch hẹn</h2>
+        <button onClick={handleOpenAdd}
+          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors shadow-sm">
           <Plus className="w-5 h-5" />
           Tạo lịch hẹn mới
         </button>
@@ -327,7 +290,6 @@ export default function AppointmentsSection() {
           {error}
         </div>
       )}
-
       {success && (
         <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md flex items-center gap-2">
           <CheckCircle2 className="w-5 h-5" />
@@ -342,16 +304,10 @@ export default function AppointmentsSection() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Tìm kiếm</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Tên bệnh nhân hoặc số điện thoại..."
+              <input type="text" placeholder="Tên bệnh nhân hoặc số điện thoại..."
                 value={searchQueryAppointments}
-                onChange={(e) => {
-                  setSearchQueryAppointments(e.target.value);
-                  setCurrentPage(0);
-                }}
-                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+                onChange={(e) => { setSearchQueryAppointments(e.target.value); setCurrentPage(0); }}
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
               {searchQueryAppointments && (
                 <button onClick={handleClearSearch} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   <X className="w-4 h-4" />
@@ -362,14 +318,8 @@ export default function AppointmentsSection() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
-            <select
-              value={selectedStatus}
-              onChange={(e) => {
-                setSelectedStatus(e.target.value);
-                setCurrentPage(0);
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
+            <select value={selectedStatus} onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(0); }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="Pending">Chờ xác nhận</option>
               <option value="Confirmed">Đã xác nhận</option>
               <option value="Cancelled">Đã hủy</option>
@@ -377,10 +327,8 @@ export default function AppointmentsSection() {
           </div>
 
           <div className="flex items-end">
-            <button
-              onClick={handleClearFilters}
-              className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
-            >
+            <button onClick={handleClearFilters}
+              className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
               Xóa bộ lọc
             </button>
           </div>
@@ -398,45 +346,26 @@ export default function AppointmentsSection() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-20">
-                  STT
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Bệnh nhân
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Thời gian
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Dịch vụ
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Mã lịch
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Trạng thái
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Thao tác
-                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-20">STT</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Bệnh nhân</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Thời gian</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Dịch vụ</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Mã lịch</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Trạng thái</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Thao tác</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {appointments.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-16 text-center text-gray-500">
-                    Chưa có lịch hẹn nào
-                  </td>
+                  <td colSpan={7} className="px-4 py-16 text-center text-gray-500">Chưa có lịch hẹn nào</td>
                 </tr>
               ) : (
                 appointments.map((a, index) => {
                   const rowNumber = currentPage * pageSize + index + 1;
-
                   return (
                     <tr key={a.appointmentId} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-4 text-sm font-medium text-gray-700 text-center">
-                        {rowNumber}
-                      </td>
+                      <td className="px-4 py-4 text-sm font-medium text-gray-700 text-center">{rowNumber}</td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <User className="w-5 h-5 text-gray-400" />
@@ -456,10 +385,7 @@ export default function AppointmentsSection() {
                         <div className="flex flex-wrap gap-1.5">
                           {a.services?.length > 0 ? (
                             a.services.map((svc, i) => (
-                              <span
-                                key={i}
-                                className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200"
-                              >
+                              <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">
                                 {svc.name}
                               </span>
                             ))
@@ -474,29 +400,31 @@ export default function AppointmentsSection() {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center">
-                        <span
-                          className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
-                            a.status === 'Confirmed'
-                              ? 'bg-green-100 text-green-700'
-                              : a.status === 'Cancelled'
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-yellow-100 text-yellow-700'
-                          }`}
-                        >
+                        <span className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
+                          a.status === 'Confirmed' ? 'bg-green-100 text-green-700' :
+                          a.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                          'bg-yellow-100 text-yellow-700'
+                        }`}>
                           {a.status === 'Pending' ? 'Chờ xác nhận' : a.status === 'Confirmed' ? 'Đã xác nhận' : 'Đã hủy'}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-center text-sm">
+                      <td className="px-4 py-4 text-center">
                         {a.status === 'Pending' ? (
-                          <div className="flex items-center justify-center gap-3">
-                            <button onClick={() => handleOpenEdit(a)} className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
-                              <Edit2 className="w-4 h-4" /> Sửa
+                          <div className="flex items-center justify-center gap-5">
+                            {/* Sửa */}
+                            <button onClick={() => handleOpenEdit(a)} title="Sửa"
+                              className="text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors">
+                              <Edit2 className="w-5 h-5" />
                             </button>
-                            <button onClick={() => handleConfirm(a.appointmentId)} className="text-green-600 hover:text-green-800 font-medium">
-                              Xác nhận
+                            {/* Xác nhận */}
+                            <button onClick={() => handleConfirm(a.appointmentId)} title="Xác nhận"
+                              className="text-green-600 hover:bg-green-50 p-2 rounded-full transition-colors">
+                              <Check className="w-5 h-5" />
                             </button>
-                            <button onClick={() => handleCancel(a.appointmentId)} className="text-red-600 hover:text-red-800 font-medium">
-                              Hủy
+                            {/* Hủy */}
+                            <button onClick={() => handleCancel(a.appointmentId)} title="Hủy"
+                              className="text-red-600 hover:bg-red-50 p-2 rounded-full transition-colors">
+                              <Trash2 className="w-5 h-5" />
                             </button>
                           </div>
                         ) : (
@@ -509,12 +437,11 @@ export default function AppointmentsSection() {
               )}
             </tbody>
           </table>
-
           {renderPagination()}
         </div>
       )}
 
-      {/* MODAL FORM - giữ nguyên như cũ */}
+      {/* MODAL FORM */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -541,82 +468,49 @@ export default function AppointmentsSection() {
               {/* Họ tên + SĐT */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Họ tên <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    value={form.patientName}
-                    onChange={(e) =>
-                      setForm({ ...form, patientName: e.target.value })
-                    }
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Họ tên <span className="text-red-500">*</span></label>
+                  <input value={form.patientName} onChange={(e) => setForm({ ...form, patientName: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Nguyễn Văn A"
-                  />
+                    placeholder="Nguyễn Văn A" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Số điện thoại <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    value={form.phone}
-                    onChange={(e) =>
-                      setForm({ ...form, phone: e.target.value })
-                    }
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại <span className="text-red-500">*</span></label>
+                  <input type="tel" maxLength={10} value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="0901234567"
-                  />
+                    placeholder="0901234567" />
+                  {form.phone && form.phone.length !== 10 && (
+                    <p className="text-xs text-red-600 mt-1">Số điện thoại phải đúng 10 chữ số</p>
+                  )}
                 </div>
               </div>
 
-              {/* Email + thời gian */}
+              {/* Email + Thời gian */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email (tùy chọn)
-                  </label>
-                  <input
-                    value={form.email}
-                    onChange={(e) =>
-                      setForm({ ...form, email: e.target.value })
-                    }
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email (tùy chọn)</label>
+                  <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="example@gmail.com"
-                  />
+                    placeholder="example@gmail.com" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Thời gian hẹn <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={form.appointmentTime}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        appointmentTime: e.target.value,
-                      })
-                    }
-                    min={new Date().toISOString().slice(0, 16)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Thời gian hẹn <span className="text-red-500">*</span></label>
+                  <input type="datetime-local" value={form.appointmentTime}
+                    onChange={(e) => setForm({ ...form, appointmentTime: e.target.value })}
+                    min={minDateTime} max={maxDateTime}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <p className="text-xs text-gray-500 mt-1">Chỉ đặt được trong vòng 3 ngày tới</p>
                 </div>
               </div>
 
               {/* Dịch vụ */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Dịch vụ <span className="text-red-500">*</span>
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Dịch vụ (tùy chọn)</label>
                 <div className="relative mb-3">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    value={searchQueryServices}
-                    onChange={(e) =>
-                      setSearchQueryServices(e.target.value)
-                    }
+                  <input value={searchQueryServices} onChange={(e) => setSearchQueryServices(e.target.value)}
                     placeholder="Tìm kiếm dịch vụ..."
-                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  />
+                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" />
                 </div>
 
                 <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-md bg-gray-50">
@@ -625,33 +519,20 @@ export default function AppointmentsSection() {
                       <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
                       Đang tải danh sách dịch vụ...
                     </div>
+                  ) : filteredServices.length === 0 ? (
+                    <div className="p-6 text-center text-gray-400">Không tìm thấy dịch vụ nào</div>
                   ) : (
                     filteredServices.map((svc) => {
-                      const isSelected = form.selectedServices.some(
-                        (s) => s.id === svc.id
-                      );
+                      const isSelected = form.selectedServices.some(s => s.id === svc.id);
                       return (
-                        <div
-                          key={svc.id}
-                          onClick={() => toggleService(svc)}
-                          className={`p-4 cursor-pointer border-b border-gray-100 last:border-0 hover:bg-white ${
-                            isSelected
-                              ? 'bg-purple-50 border-l-4 border-l-purple-600'
-                              : ''
-                          }`}
-                        >
+                        <div key={svc.id} onClick={() => toggleService(svc)}
+                          className={`p-4 cursor-pointer border-b border-gray-100 last:border-0 hover:bg-white transition-colors ${isSelected ? 'bg-purple-50 border-l-4 border-l-purple-600' : ''}`}>
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="text-sm font-semibold text-gray-900">
-                                {svc.name}
-                              </div>
-                              <div className="text-xs text-gray-600 mt-1">
-                                {formatPrice(svc.price)}
-                              </div>
+                              <div className="text-sm font-semibold text-gray-900">{svc.name}</div>
+                              <div className="text-xs text-gray-600 mt-1">{formatPrice(svc.price)}</div>
                             </div>
-                            {isSelected && (
-                              <Check className="w-6 h-6 text-purple-600" />
-                            )}
+                            {isSelected && <Check className="w-6 h-6 text-purple-600" />}
                           </div>
                         </div>
                       );
@@ -662,15 +543,9 @@ export default function AppointmentsSection() {
                 {form.selectedServices.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {form.selectedServices.map((svc) => (
-                      <div
-                        key={svc.id}
-                        className="flex items-center gap-1 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-medium"
-                      >
+                      <div key={svc.id} className="flex items-center gap-1 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-medium">
                         {svc.name}
-                        <button
-                          onClick={() => toggleService(svc)}
-                          className="hover:bg-purple-200 rounded-full p-0.5"
-                        >
+                        <button onClick={() => toggleService(svc)} className="hover:bg-purple-200 rounded-full p-0.5 ml-1">
                           <X className="w-3 h-3" />
                         </button>
                       </div>
@@ -681,41 +556,22 @@ export default function AppointmentsSection() {
 
               {/* Ghi chú */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Ghi chú (tùy chọn)
-                </label>
-                <textarea
-                  rows={4}
-                  value={form.notes}
-                  onChange={(e) =>
-                    setForm({ ...form, notes: e.target.value })
-                  }
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ghi chú (tùy chọn)</label>
+                <textarea rows={4} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                  placeholder="Triệu chứng, yêu cầu đặc biệt..."
-                />
+                  placeholder="Triệu chứng, yêu cầu đặc biệt..." />
               </div>
             </div>
 
             <div className="flex gap-3 p-6 border-t bg-gray-50">
-              <button
-                onClick={() => setShowForm(false)}
-                className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors font-medium"
-              >
+              <button onClick={() => setShowForm(false)}
+                className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors font-medium">
                 Hủy
               </button>
-              <button
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed font-medium inline-flex items-center justify-center gap-2"
-              >
-                {submitting && (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                )}
-                {submitting
-                  ? 'Đang xử lý...'
-                  : editingAppointment
-                  ? 'Lưu thay đổi'
-                  : 'Tạo lịch hẹn'}
+              <button onClick={handleSubmit} disabled={submitting}
+                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed font-medium inline-flex items-center justify-center gap-2">
+                {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {submitting ? 'Đang xử lý...' : editingAppointment ? 'Lưu thay đổi' : 'Tạo lịch hẹn'}
               </button>
             </div>
           </div>

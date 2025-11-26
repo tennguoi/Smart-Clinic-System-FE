@@ -12,7 +12,7 @@ import { toast } from 'react-toastify';
 
 export default function InvoicesSection({ isDoctorView = false }) {
   const navigate = useNavigate();
-  
+
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -66,12 +66,10 @@ export default function InvoicesSection({ isDoctorView = false }) {
     setShowDetailModal(true);
   };
 
-  // THAY ĐỔI: Navigate đến trang thanh toán thay vì mở modal
   const handlePayInvoice = (invoice) => {
     navigate(`/reception/payment/${invoice.billId}`);
   };
 
-  // THAY ĐỔI: Navigate đến trang thanh toán từ modal chi tiết
   const handlePayFromDetail = (invoice) => {
     setShowDetailModal(false);
     navigate(`/reception/payment/${invoice.billId}`);
@@ -185,6 +183,9 @@ export default function InvoicesSection({ isDoctorView = false }) {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
+                  <th className="text-center px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-20">
+                    STT
+                  </th>
                   <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Mã hóa đơn</th>
                   <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Bệnh nhân</th>
                   <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Ngày lập</th>
@@ -194,8 +195,13 @@ export default function InvoicesSection({ isDoctorView = false }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {invoices.map((inv) => (
+                {invoices.map((inv, index) => (
                   <tr key={inv.billId} className="hover:bg-gray-50 transition">
+                    {/* STT - Đã thêm */}
+                    <td className="px-4 py-4 text-center font-semibold text-gray-700">
+                      {index + 1}
+                    </td>
+
                     {/* Mã hóa đơn */}
                     <td className="px-6 py-4 font-mono text-blue-600 font-medium">
                       #{inv.billId?.slice(0, 8).toUpperCase()}
@@ -224,11 +230,11 @@ export default function InvoicesSection({ isDoctorView = false }) {
 
                     {/* Thao tác */}
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        {/* Nút Xem chi tiết */}
+                      <div className="flex items-center justify-center gap-3">
+                        {/* Xem chi tiết */}
                         <button
                           onClick={() => handleViewDetail(inv)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition group relative"
+                          className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-full transition group relative"
                           title="Xem chi tiết"
                         >
                           <Eye className="w-5 h-5" />
@@ -237,11 +243,11 @@ export default function InvoicesSection({ isDoctorView = false }) {
                           </span>
                         </button>
 
-                        {/* Nút Thu tiền - chỉ hiện khi chưa thanh toán và không phải doctor view */}
+                        {/* Thu tiền - chỉ hiện khi chưa thanh toán và không phải doctor */}
                         {!isDoctorView && inv.paymentStatus !== 'Paid' && (
                           <button
                             onClick={() => handlePayInvoice(inv)}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition group relative"
+                            className="p-2.5 text-green-600 hover:bg-green-50 rounded-full transition group relative"
                             title="Thu tiền"
                           >
                             <CreditCard className="w-5 h-5" />

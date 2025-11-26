@@ -7,11 +7,11 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 const adminMenuItems = [
   { id: 'statistics',    label: 'Thống kê',          icon: BarChart3 },
-  { id: 'revenue',  label: 'Doanh Thu',         icon: TrendingUp },
+  // { id: 'revenue',  label: 'Doanh Thu',         icon: TrendingUp },
   { id: 'clinic',   label: 'Thông Tin Phòng Khám', icon: Building2 },
   { id: 'accounts', label: 'Tài Khoản',         icon: UserCircle },
   { id: 'articles', label: 'Quản Lý Tin Tức',   icon: Newspaper },
-  { id: 'patients', label: 'Bệnh Nhân',         icon: UserCheck },
+  // { id: 'patients', label: 'Bệnh Nhân',         icon: UserCheck },
   { id: 'services', label: 'Quản Lý Dịch Vụ',   icon: Briefcase },
   
 ];

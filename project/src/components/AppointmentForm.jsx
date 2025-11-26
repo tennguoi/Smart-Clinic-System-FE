@@ -29,9 +29,9 @@ export default function AppointmentForm() {
   const { minDate, maxDate } = useMemo(() => {
     const today = new Date();
     const min = new Date(today);
-    min.setDate(today.getDate()+1);
+    min.setDate(today.getDate());
     const max = new Date(today);
-    max.setDate(today.getDate() + 4);
+    max.setDate(today.getDate() + 3);
     return {
       minDate: min.toISOString().split('T')[0],
       maxDate: max.toISOString().split('T')[0]
@@ -64,12 +64,12 @@ export default function AppointmentForm() {
     const [hours, minutes] = time.split(':').map(Number);
     const totalMinutes = hours * 60 + minutes;
     const isMorning = totalMinutes >= 8 * 60 && totalMinutes <= 12 * 60;
-    const isAfternoon = totalMinutes >= 14 * 60 && totalMinutes <= 17 * 60;
+    const isAfternoon = totalMinutes >= 14 * 60 && totalMinutes <= 18 * 60;
     return isMorning || isAfternoon;
   };
 
   const getTimeErrorMessage = () => {
-    return 'Vui lòng chọn thời gian trong khung giờ: 8:00-12:00 hoặc 14:00-17:00';
+    return 'Vui lòng chọn thời gian trong khung giờ: 8:00-12:00 hoặc 14:00-18:00';
   };
 
   // Load services list (initial load handled by useEffect above with empty search)
@@ -339,7 +339,7 @@ export default function AppointmentForm() {
               <p className="mt-1 text-sm text-red-600">{timeError}</p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              Khung giờ làm việc: 8:00-12:00 và 14:00-17:00
+              Khung giờ làm việc: 8:00-12:00 và 14:00-18:00
             </p>
           </div>
         </div>

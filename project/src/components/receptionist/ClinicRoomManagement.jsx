@@ -35,7 +35,6 @@ export default function ClinicRoomManagement() {
   }, [filterStatus, searchKeyword, activeOnly]);
 
   useEffect(() => {
-    // Load danh sách bác sĩ khi component mount hoặc khi modal mở
     if (showModal) {
       if (modalMode === 'edit' && selectedRoom) {
         fetchDoctorsForUpdate(selectedRoom.roomId);
@@ -65,7 +64,6 @@ export default function ClinicRoomManagement() {
       setDoctors(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error fetching doctors for update:', err);
-      // Fallback về getAllDoctors nếu endpoint không tồn tại
       fetchDoctors();
     } finally {
       setLoadingDoctors(false);
@@ -80,32 +78,29 @@ export default function ClinicRoomManagement() {
       if (filterStatus) params.status = filterStatus;
       if (searchKeyword) params.keyword = searchKeyword;
       if (activeOnly) params.activeOnly = true;
-      
+
       const data = await roomApi.getAllRooms(params);
       const roomsArray = Array.isArray(data) ? data : [];
       setRooms(roomsArray);
-      
+
       if (roomsArray.length === 0 && !filterStatus && !searchKeyword && !activeOnly) {
         setError('Chưa có phòng khám nào trong hệ thống. Vui lòng tạo phòng mới.');
       }
     } catch (err) {
       console.error('Error fetching rooms:', err);
       const status = err.response?.status;
-      
+
       if (status === 401) {
         setError('Bạn không có quyền truy cập tính năng này hoặc phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-        setRooms([]);
       } else if (status === 403) {
         setError('Bạn không có quyền truy cập tính năng quản lý phòng khám. Vui lòng liên hệ quản trị viên để được cấp quyền.');
-        setRooms([]);
       } else if (status === 404) {
         setError('API quản lý phòng khám chưa được triển khai trên backend.');
-        setRooms([]);
       } else {
         const errorMessage = err.response?.data?.message || err.message || 'Không thể tải danh sách phòng khám';
         setError(`Lỗi: ${errorMessage}`);
-        setRooms([]);
       }
+      setRooms([]);
     } finally {
       setLoading(false);
     }
@@ -160,38 +155,20 @@ export default function ClinicRoomManagement() {
     setSuccess('');
 
     try {
-      // Chuẩn bị payload theo ExaminationRoomRequest
       const payload = {
         roomName: formData.roomName.trim(),
         status: formData.status,
         isActive: formData.isActive,
-        // Chỉ gửi doctorId và currentQueueId nếu có giá trị
         ...(formData.doctorId && { doctorId: formData.doctorId }),
         ...(formData.currentQueueId && { currentQueueId: formData.currentQueueId }),
       };
 
       if (modalMode === 'edit' && selectedRoom) {
         await roomApi.updateRoom(selectedRoom.roomId, payload);
-        // Kiểm tra xem có bác sĩ được gán không và đã có phòng khác chưa
-        const doctorHasOtherRoom = payload.doctorId && rooms.some(
-          (r) => r.doctorId === payload.doctorId && r.isActive && r.roomId !== selectedRoom.roomId
-        );
-        if (doctorHasOtherRoom) {
-          setSuccess('Cập nhật phòng khám thành công! Bác sĩ đã được tự động gỡ khỏi phòng cũ.');
-        } else {
-          setSuccess('Cập nhật phòng khám thành công!');
-        }
+        setSuccess('Cập nhật phòng khám thành công!');
       } else {
         await roomApi.createRoom(payload);
-        // Kiểm tra xem có bác sĩ được gán không và đã có phòng khác chưa
-        const doctorHasOtherRoom = payload.doctorId && rooms.some(
-          (r) => r.doctorId === payload.doctorId && r.isActive
-        );
-        if (doctorHasOtherRoom) {
-          setSuccess('Tạo phòng khám thành công! Bác sĩ đã được tự động gỡ khỏi phòng cũ.');
-        } else {
-          setSuccess('Tạo phòng khám thành công!');
-        }
+        setSuccess('Tạo phòng khám thành công!');
       }
 
       setTimeout(() => {
@@ -207,9 +184,7 @@ export default function ClinicRoomManagement() {
   };
 
   const handleDelete = async (roomId) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa phòng khám này?')) {
-      return;
-    }
+    if (!window.confirm('Bạn có chắc chắn muốn xóa phòng khám này?')) return;
 
     setLoading(true);
     setError('');
@@ -229,20 +204,17 @@ export default function ClinicRoomManagement() {
   };
 
   const getStatusLabel = (status) => {
-  if (!status) return 'Không xác định';
-  
-  const s = String(status).toUpperCase(); // chuẩn hóa
-  
-  if (s === 'AVAILABLE') return 'Sẵn sàng';
-  if (s === 'OCCUPIED') return 'Đang sử dụng';
-  
-  return 'Không xác định';
-};
+    if (!status) return 'Không xác định';
+    const s = String(status).toUpperCase();
+    if (s === 'AVAILABLE') return 'Sẵn sàng';
+    if (s === 'OCCUPIED') return 'Đang sử dụng';
+    return 'Không xác định';
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <h2 className="text-2xl font-semibold text-gray-800">🏥 Quản lý phòng khám</h2>
+        <h2 className="text-2xl font-semibold text-gray-800">Quản lý phòng khám</h2>
         <button
           onClick={() => handleOpenModal('create')}
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors shadow-sm"
@@ -318,9 +290,10 @@ export default function ClinicRoomManagement() {
         </div>
       </div>
 
+      {/* Bảng danh sách phòng */}
       {loading && !showModal ? (
-        <div className="bg-white rounded-lg shadow border border-gray-200 p-6 text-center text-gray-500">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+        <div className="bg-white rounded-lg shadow border border-gray-200 p-12 text-center text-gray-500">
+          <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
           <p>Đang tải danh sách phòng khám...</p>
         </div>
       ) : (
@@ -328,6 +301,9 @@ export default function ClinicRoomManagement() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-20">
+                  STT
+                </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Tên phòng
                 </th>
@@ -340,7 +316,7 @@ export default function ClinicRoomManagement() {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Hoạt động
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Thao tác
                 </th>
               </tr>
@@ -348,18 +324,18 @@ export default function ClinicRoomManagement() {
             <tbody className="bg-white divide-y divide-gray-200">
               {rooms.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-4 py-10 text-center text-gray-500">
+                  <td colSpan="6" className="px-6 py-16 text-center text-gray-500">
                     {error ? (
                       <div>
                         <p className="text-red-600 font-medium mb-2">{error}</p>
-                        <p className="text-sm text-gray-500">Vui lòng kiểm tra console để xem chi tiết lỗi.</p>
+                        <p className="text-sm">Vui lòng kiểm tra console để xem chi tiết lỗi.</p>
                       </div>
                     ) : (
                       <div>
-                        <p className="mb-2">Chưa có phòng khám nào</p>
+                        <p className="mb-4 text-lg">Chưa có phòng khám nào</p>
                         <button
                           onClick={() => handleOpenModal('create')}
-                          className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                          className="px-5 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
                         >
                           Tạo phòng đầu tiên
                         </button>
@@ -368,56 +344,67 @@ export default function ClinicRoomManagement() {
                   </td>
                 </tr>
               ) : (
-                rooms.map((room) => (
-                  <tr key={room.roomId} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
+                rooms.map((room, index) => (
+                  <tr key={room.roomId} className="hover:bg-gray-50 transition-colors">
+                    {/* STT - Đã thêm */}
+                    <td className="px-4 py-4 text-center font-semibold text-gray-700">
+                      {index + 1}
+                    </td>
+
+                    <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-gray-400" />
+                        <Building2 className="w-5 h-5 text-gray-400" />
                         <span className="text-sm font-medium text-gray-900">{room.roomName || 'N/A'}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
+
+                    <td className="px-4 py-4 text-sm text-gray-700">
                       {room.doctorName ? (
                         <span className="font-medium">{room.doctorName}</span>
                       ) : (
-                        <span className="text-gray-400">Chưa gán bác sĩ</span>
+                        <span className="text-gray-400 italic">Chưa gán bác sĩ</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-sm">
+
+                    <td className="px-4 py-4 text-sm">
                       <span
-                        className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
                           room.status === 'Available'
                             ? 'bg-green-100 text-green-700'
-                            : 'bg-red-100 text-red-700'
+                            : room.status === 'Occupied'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-gray-100 text-gray-600'
                         }`}
                       >
                         {getStatusLabel(room.status)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm">
+
+                    <td className="px-4 py-4 text-sm">
                       <span
-                        className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
                           room.isActive
                             ? 'bg-blue-100 text-blue-700'
-                            : 'bg-gray-100 text-gray-700'
+                            : 'bg-gray-100 text-gray-600'
                         }`}
                       >
                         {room.isActive ? 'Hoạt động' : 'Ngưng hoạt động'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-center">
-                      <div className="flex items-center justify-center gap-2">
+
+                    <td className="px-4 py-4 text-center">
+                      <div className="flex items-center justify-center gap-4">
                         <button
                           onClick={() => handleOpenModal('edit', room)}
-                          className="text-blue-600 hover:text-blue-900 transition-colors"
+                          className="text-blue-600 hover:text-blue-800 transition-colors"
                           title="Chỉnh sửa"
                         >
                           <Edit className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => handleDelete(room.roomId)}
-                          className="text-red-600 hover:text-red-900 transition-colors"
-                          title="Xóa"
+                          className="text-red-600 hover:text-red-800 transition-colors"
+                          title="Xóa phòng"
                         >
                           <Trash2 className="w-5 h-5" />
                         </button>
@@ -431,7 +418,7 @@ export default function ClinicRoomManagement() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Modal tạo/sửa phòng */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -447,129 +434,116 @@ export default function ClinicRoomManagement() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6">
+            <form onSubmit={handleSubmit} className="p-6 space-y-5">
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
                   {error}
                 </div>
               )}
-
               {success && (
-                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md mb-4">
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
                   {success}
                 </div>
               )}
 
-              <div className="space-y-4">
-                {/* Room Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tên phòng <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="roomName"
-                    value={formData.roomName}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="VD: Phòng khám Tai-Mũi-Họng số 1"
-                    required
-                  />
-                </div>
-
-                {/* Status */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Trạng thái <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    {statusOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Doctor Selection (Optional) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Bác sĩ phụ trách (Tùy chọn)
-                  </label>
-                  {loadingDoctors ? (
-                    <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 text-sm">
-                      Đang tải danh sách bác sĩ...
-                    </div>
-                  ) : (
-                    <select
-                      name="doctorId"
-                      value={formData.doctorId || ''}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setFormData((prev) => ({
-                          ...prev,
-                          doctorId: value ? value : null,
-                        }));
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">-- Chưa gán bác sĩ --</option>
-                      {doctors.map((doctor) => {
-                        // Kiểm tra xem bác sĩ này đã có phòng chưa (trừ phòng hiện tại khi edit)
-                        const hasRoom = rooms.some(
-                          (r) => r.doctorId === doctor.doctorId && r.isActive && r.roomId !== selectedRoom?.roomId
-                        );
-                        // Kiểm tra xem đây có phải bác sĩ hiện tại của phòng đang edit không
-                        const isCurrentDoctor = modalMode === 'edit' && selectedRoom?.doctorId === doctor.doctorId;
-                        return (
-                          <option key={doctor.doctorId} value={doctor.doctorId}>
-                            {doctor.fullName} {doctor.email ? `(${doctor.email})` : ''}
-                            {isCurrentDoctor ? ' [Bác sĩ hiện tại]' : hasRoom ? ' [Đã có phòng]' : ''}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  )}
-                  <p className="text-xs text-gray-500 mt-1">
-                    {doctors.length === 0 && !loadingDoctors
-                      ? 'Không có bác sĩ nào trong hệ thống'
-                      : 'Chọn bác sĩ phụ trách phòng khám này'}
-                  </p>
-                </div>
-
-                {/* Is Active */}
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="isActive"
-                    checked={formData.isActive}
-                    onChange={handleInputChange}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label className="ml-2 block text-sm text-gray-700">
-                    Phòng đang hoạt động
-                  </label>
-                </div>
+              {/* Form fields giữ nguyên như cũ */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tên phòng <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="roomName"
+                  value={formData.roomName}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="VD: Phòng khám Tai-Mũi-Họng số 1"
+                  required
+                />
               </div>
 
-              <div className="flex gap-3 mt-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Trạng thái <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none:2 focus:ring-blue-500"
+                  required
+                >
+                  {statusOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Bác sĩ phụ trách (Tùy chọn)
+                </label>
+                {loadingDoctors ? (
+                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 text-sm">
+                    Đang tải danh sách bác sĩ...
+                  </div>
+                ) : (
+                  <select
+                    name="doctorId"
+                    value={formData.doctorId || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        doctorId: value ? value : null,
+                      }));
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">-- Chưa gán bác sĩ --</option>
+                    {doctors.map((doctor) => {
+                      const hasRoom = rooms.some(
+                        (r) => r.doctorId === doctor.doctorId && r.isActive && r.roomId !== selectedRoom?.roomId
+                      );
+                      const isCurrentDoctor = modalMode === 'edit' && selectedRoom?.doctorId === doctor.doctorId;
+                      return (
+                        <option key={doctor.doctorId} value={doctor.doctorId}>
+                          {doctor.fullName} {doctor.email ? `(${doctor.email})` : ''}
+                          {isCurrentDoctor ? ' [Bác sĩ hiện tại]' : hasRoom ? ' [Đã có phòng]' : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                )}
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="isActive"
+                  checked={formData.isActive}
+                  onChange={handleInputChange}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label className="ml-2 block text-sm text-gray-700">
+                  Phòng đang hoạt động
+                </label>
+              </div>
+
+              <div className="flex gap-3 pt-4">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed font-medium"
+                  className="flex-1 bg-blue-600 text-white py-2.5 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 font-medium"
                 >
                   {loading ? 'Đang xử lý...' : modalMode === 'create' ? 'Tạo phòng' : 'Cập nhật'}
                 </button>
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition-colors font-medium"
+                  className="flex-1 bg-gray-300 text-gray-700 py-2.5 px-4 rounded-md hover:bg-gray-400 transition-colors font-medium"
                 >
                   Hủy
                 </button>
@@ -581,4 +555,3 @@ export default function ClinicRoomManagement() {
     </div>
   );
 }
-
