@@ -18,7 +18,7 @@ export default function ProfilePage() {
             <ArrowLeft className="w-5 h-5" />
             <span>Quay lại</span>
           </button>
-          <h1 className="text-2xl font-bold">Hồ Sơ Người Dùng</h1>
+          <h1 className="text-2xl font-bold">Cài Đặt</h1>
           <div className="w-40"></div>
         </div>
       </div>

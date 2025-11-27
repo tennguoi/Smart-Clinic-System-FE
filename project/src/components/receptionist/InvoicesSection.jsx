@@ -7,8 +7,10 @@ import { vi } from 'date-fns/locale';
 import CreateInvoiceModal from './CreateInvoiceModal';
 import InvoiceDetailModal from './InvoiceDetailModal';
 import { formatPrice } from '../../utils/formatPrice';
-import { FileText, Search, Plus, Eye, CreditCard } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { FileText, Search, Plus, Eye, CreditCard, Receipt } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
+import { toastConfig } from '../../config/toastConfig';
+import CountBadge from '../common/CountBadge';
 
 export default function InvoicesSection({ isDoctorView = false }) {
   const navigate = useNavigate();
@@ -76,92 +78,92 @@ export default function InvoicesSection({ isDoctorView = false }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
+      <Toaster {...toastConfig} />
+
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <FileText className="w-6 h-6 text-purple-600" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Quản lý Hóa đơn</h1>
-              <p className="text-sm text-gray-500">
-                {isDoctorView
-                  ? 'Xem chi tiết thanh toán của bệnh nhân'
-                  : 'Theo dõi và xử lý thanh toán bệnh nhân'}
-              </p>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
+          <Receipt className="w-9 h-9 text-blue-600" />
+          <span>Quản Lý Hóa Đơn</span>
+          <CountBadge 
+            currentCount={invoices.length} 
+            totalCount={invoices.length} 
+            label="hóa đơn" 
+          />
+        </h1>
+
+        {!isDoctorView && (
+          <button
+            onClick={() => setCreateModalOpen(true)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            Tạo hóa đơn
+          </button>
+        )}
+      </div>
+      {/* Bộ lọc */}
+      <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-5">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tìm kiếm</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Tìm tên bệnh nhân, số điện thoại..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-4 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
           </div>
 
-          {!isDoctorView && (
-            <button
-              onClick={() => setCreateModalOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2.5 rounded-xl flex items-center gap-2 transition"
+          <div className="lg:col-span-3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <Plus className="w-5 h-5" />
-              Tạo hóa đơn mới
-            </button>
+              <option value="all">Tất cả trạng thái</option>
+              <option value="paid">Đã thanh toán</option>
+              <option value="pending">Chưa thanh toán / Chưa đủ</option>
+            </select>
+          </div>
+
+          <div className="lg:col-span-3 flex items-end">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showUnpaidOnly}
+                onChange={(e) => setShowUnpaidOnly(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded"
+              />
+              <span className="text-sm text-gray-700">Chỉ chưa thanh toán</span>
+            </label>
+          </div>
+
+          {hasFilter && (
+            <div className="lg:col-span-1 flex items-end">
+              <button
+                onClick={() => {
+                  setSearch('');
+                  setStatusFilter('all');
+                  setShowUnpaidOnly(false);
+                }}
+                className="w-full px-4 py-3 bg-gray-300 text-gray-700 rounded-xl hover:bg-gray-400 transition font-medium"
+              >
+                Xóa lọc
+              </button>
+            </div>
           )}
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
-        {/* Bộ lọc */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
-            <div className="flex-1 flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Tìm tên bệnh nhân, số điện thoại..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">Tất cả trạng thái</option>
-                <option value="paid">Đã thanh toán</option>
-                <option value="pending">Chưa thanh toán / Chưa đủ</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showUnpaidOnly}
-                  onChange={(e) => setShowUnpaidOnly(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded"
-                />
-                <span className="text-sm text-gray-700">Chỉ hiển thị chưa thanh toán</span>
-              </label>
-
-              {hasFilter && (
-                <button
-                  onClick={() => {
-                    setSearch('');
-                    setStatusFilter('all');
-                    setShowUnpaidOnly(false);
-                  }}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-lg transition"
-                >
-                  Xóa bộ lọc
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Bảng hóa đơn */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      {/* Bảng hóa đơn */}
+      <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
           {loading ? (
             <div className="p-16 text-center text-gray-500">
               <div className="inline-flex items-center gap-3">
@@ -264,7 +266,6 @@ export default function InvoicesSection({ isDoctorView = false }) {
             </table>
           )}
         </div>
-      </div>
 
       {/* Modal Chi tiết hóa đơn */}
       {showDetailModal && selectedInvoice && (

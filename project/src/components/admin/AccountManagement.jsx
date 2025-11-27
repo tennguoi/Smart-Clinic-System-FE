@@ -7,10 +7,13 @@ import {
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
   UserCog
 } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
+import { toastConfig } from '../../config/toastConfig';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import adminAccountApi from '../../api/adminAccountApi';
 import React, { forwardRef } from 'react';
+import CountBadge from '../common/CountBadge';
 
 // ====================== HELPER ======================
 const dateStringToDate = (dateStr) => {
@@ -40,8 +43,20 @@ const dateToISOString = (date) => {
 };
 
 const getRoleLabel = (role) => {
-  const map = { admin: 'Quản trị viên', bac_si: 'Bác sĩ', tiep_tan: 'Tiếp tân' };
-  return map[role] || role;
+  if (!role) return '';
+  
+  // Chuẩn hóa role về lowercase và loại bỏ "ROLE_" prefix
+  const normalizedRole = role.toLowerCase().replace('role_', '');
+  
+  const map = { 
+    admin: 'Quản trị viên', 
+    bac_si: 'Bác sĩ',
+    bacsi: 'Bác sĩ',
+    tiep_tan: 'Tiếp tân',
+    tieptan: 'Tiếp tân'
+  };
+  
+  return map[normalizedRole] || role;
 };
 
 const getGenderLabel = (gender) => {
@@ -68,29 +83,6 @@ const CustomDateInput = forwardRef(({ value, onClick, placeholder, required }, r
     readOnly
   />
 ));
-
-// ====================== TOAST ======================
-const ToastNotification = ({ message, type, onClose }) => {
-  if (!message) return null;
-  const styles = { success: 'bg-green-600', error: 'bg-red-600' };
-  const Icon = type === 'success' ? CheckCircle : AlertTriangle;
-
-  return (
-    <div
-      className={`fixed top-4 right-4 z-[100] p-4 rounded-xl shadow-2xl text-white ${styles[type]} flex items-center gap-3 animate-bounce-in`}
-      style={{ minWidth: '300px' }}
-    >
-      <Icon className="w-6 h-6" />
-      <span className="font-medium">{message}</span>
-      <button
-        onClick={onClose}
-        className="ml-auto opacity-70 hover:opacity-100 p-1 rounded-full hover:bg-white/20"
-      >
-        <X className="w-5 h-5" />
-      </button>
-    </div>
-  );
-};
 
 // ====================== PHÂN TRANG ======================
 const Pagination = ({ currentPage, totalPages, goToPage }) => {
@@ -170,8 +162,6 @@ export default function AccountManagement() {
   const [modalMode, setModalMode] = useState('create');
   const [selectedUser, setSelectedUser] = useState(null);
 
-  const [toast, setToast] = useState({ message: '', type: 'success' });
-
   const [showToggleConfirmation, setShowToggleConfirmation] = useState(false);
   const [toggleTarget, setToggleTarget] = useState(null);
 
@@ -201,10 +191,6 @@ export default function AccountManagement() {
   const isEditMode = modalMode === 'edit';
 
 
-  const showToastMessage = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast({ message: '', type: 'success' }), 4000);
-  };
 
   const resetFilters = () => {
     setSearchKeyword('');
@@ -231,7 +217,7 @@ export default function AccountManagement() {
       setTotalElements(response.totalElements || 0);
       setTotalPages(response.totalPages || 0);
     } catch (err) {
-      showToastMessage('Không thể tải danh sách người dùng', 'error');
+      toast.error('Không thể tải danh sách người dùng');
       setUsers([]);
       setTotalElements(0);
       setTotalPages(0);
@@ -273,12 +259,11 @@ export default function AccountManagement() {
         )
       );
 
-      showToastMessage(
-        newStatus ? 'Tài khoản đã được kích hoạt!' : 'Tài khoản đã bị vô hiệu hóa!',
-        'success'
+      toast.success(
+        newStatus ? 'Tài khoản đã được kích hoạt!' : 'Tài khoản đã bị vô hiệu hóa!'
       );
     } catch (err) {
-      showToastMessage('Không thể thay đổi trạng thái tài khoản', 'error');
+      toast.error('Không thể thay đổi trạng thái tài khoản');
     } finally {
       setLoading(false);
       setToggleTarget(null);
@@ -340,7 +325,7 @@ export default function AccountManagement() {
     const file = e.target.files[0];
     if (!file) return;
     if (!file.type.startsWith('image/'))
-      return showToastMessage('Chỉ chấp nhận file ảnh', 'error');
+      return toast.error('Chỉ chấp nhận file ảnh');
     setPhotoFile(file);
 
     const reader = new FileReader();
@@ -382,7 +367,7 @@ export default function AccountManagement() {
         };
 
         await adminAccountApi.updateUser(selectedUser.userId, updateData, photoFile);
-        showToastMessage('Cập nhật tài khoản thành công!');
+        toast.success('Cập nhật tài khoản thành công!');
       } else if (isCreateMode) {
         const createData = {
           ...formData,
@@ -392,34 +377,35 @@ export default function AccountManagement() {
         };
 
         await adminAccountApi.createUser(createData, photoFile);
-        showToastMessage('Tạo tài khoản thành công!');
+        toast.success('Tạo tài khoản thành công!');
       }
 
       handleCloseModal();
       fetchUsers();
     } catch (err) {
-      showToastMessage(err.response?.data?.message || 'Có lỗi xảy ra', 'error');
+      toast.error(err.response?.data?.message || 'Có lỗi xảy ra');
     } finally {
       setLoading(false);
     }
   };
   return (
-    <div className="p-4 sm:p-8 min-h-screen bg-gray-50 font-sans">
-
-      <ToastNotification
-        message={toast.message}
-        type={toast.type}
-        onClose={() => setToast({ message: '', type: 'success' })}
-      />
+    <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50 font-sans">
+      <Toaster {...toastConfig} />
 
       {/* HEADER */}
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
-  <UserCog className="w-9 h-9 text-blue-600" />
-  <span>Quản Lý Tài Khoản</span>
-</h1>
-
+          <div className="flex items-center gap-4">
+            <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
+              <UserCog className="w-9 h-9 text-blue-600" />
+              <span>Quản Lý Tài Khoản</span>
+            </h1>
+            <CountBadge 
+              currentCount={users.length} 
+              totalCount={totalElements} 
+              label="tài khoản" 
+            />
+          </div>
 
           <button
             onClick={() => handleOpenModal('create')}
@@ -432,10 +418,10 @@ export default function AccountManagement() {
 
 {/* SEARCH & FILTER BAR */}
 <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
 
     {/* Tìm kiếm */}
-    <div>
+    <div className="lg:col-span-5">
       <label className="block text-sm font-medium text-gray-700 mb-2">
         <Search className="inline w-4 h-4 mr-1" /> Tìm kiếm
       </label>
@@ -449,7 +435,7 @@ export default function AccountManagement() {
     </div>
 
     {/* Vai trò */}
-    <div>
+    <div className="lg:col-span-3">
       <label className="block text-sm font-medium text-gray-700 mb-2">
         Vai trò
       </label>
@@ -466,7 +452,7 @@ export default function AccountManagement() {
     </div>
 
     {/* Trạng thái */}
-    <div>
+    <div className="lg:col-span-3">
       <label className="block text-sm font-medium text-gray-700 mb-2">
         Trạng thái
       </label>
@@ -481,13 +467,13 @@ export default function AccountManagement() {
       </select>
     </div>
 
-    {/* Xóa bộ lọc */}
-    <div className="flex md:block">
+    {/* Xóa lọc */}
+    <div className="flex md:block lg:col-span-1">
       <button
         onClick={resetFilters}
-        className="w-full h-[52px] flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold bg-white border border-gray-400 text-gray-700 hover:bg-gray-50 hover:border-gray-500"
+        className="w-full px-4 py-3 bg-gray-300 text-gray-700 rounded-xl hover:bg-gray-400 transition font-medium"
       >
-        <X className="w-5 h-5" /> Xóa bộ lọc
+        Xóa lọc
       </button>
     </div>
 
@@ -563,23 +549,30 @@ export default function AccountManagement() {
 
                     <td className="px-6 py-4">
                       <div className="flex gap-1 flex-wrap">
-                        {user.roles?.map((r, i) => {
-                          const color =
-                            r === 'admin'
-                              ? 'bg-red-100 text-red-700 border-red-200'
-                              : r === 'bac_si'
-                              ? 'bg-green-100 text-green-700 border-green-200'
-                              : 'bg-blue-100 text-blue-700 border-blue-200';
+                        {Array.isArray(user.roles) && user.roles.length > 0 ? (
+                          user.roles.map((r, i) => {
+                            // Chuẩn hóa role để so sánh
+                            const normalizedRole = r ? r.toLowerCase().replace('role_', '') : '';
+                            
+                            const color =
+                              normalizedRole === 'admin'
+                                ? 'bg-red-100 text-red-700 border-red-200'
+                                : normalizedRole === 'bac_si' || normalizedRole === 'bacsi'
+                                ? 'bg-green-100 text-green-700 border-green-200'
+                                : 'bg-purple-100 text-purple-700 border-purple-200';
 
-                          return (
-                            <span
-                              key={i}
-                              className={`px-2 py-1 rounded-full text-xs border ${color}`}
-                            >
-                              {getRoleLabel(r)}
-                            </span>
-                          );
-                        })}
+                            return (
+                              <span
+                                key={i}
+                                className={`px-2 py-1 rounded-full text-xs border ${color}`}
+                              >
+                                {getRoleLabel(r)}
+                              </span>
+                            );
+                          })
+                        ) : (
+                          <span className="text-gray-400 text-xs italic">Chưa có vai trò</span>
+                        )}
                       </div>
                     </td>
 
@@ -645,7 +638,7 @@ export default function AccountManagement() {
           <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
 
             {/* Header */}
-            <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-blue-50/80">
+            <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-blue-50/80 backdrop-blur">
               <h2 className="text-2xl font-bold text-blue-700">
                 {isCreateMode
                   ? 'Tạo tài khoản mới'
@@ -654,22 +647,22 @@ export default function AccountManagement() {
                   : 'Chỉnh sửa tài khoản'}
               </h2>
 
-              <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-700">
-                <X className="w-7 h-7" />
-              </button>
+              <div className="flex items-center gap-3">
+                {isViewMode && (
+                  <button
+                    onClick={handleSwitchToEdit}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
+                    <Edit className="w-4 h-4" /> Chỉnh sửa
+                  </button>
+                )}
+                <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-white/50">
+                  <X className="w-7 h-7" />
+                </button>
+              </div>
             </div>
 
             {/* Form */}
             <div className="p-6">
-              {isViewMode && (
-                <div className="mb-6 text-right">
-                  <button
-                    onClick={handleSwitchToEdit}
-                    className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-2 rounded-xl hover:bg-yellow-600">
-                    <Edit className="w-5 h-5" /> Chuyển sang chỉnh sửa
-                  </button>
-                </div>
-              )}
 
               <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

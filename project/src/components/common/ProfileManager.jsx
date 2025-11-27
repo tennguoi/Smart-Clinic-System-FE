@@ -10,6 +10,7 @@ const persistUser = (data) => {
 
 export default function ProfileManager({ initialData = {} }) {
   const [isLoading, setIsLoading] = useState(true);
+  const [isViewMode, setIsViewMode] = useState(true);
   const [userData, setUserData] = useState({
     fullName: initialData.fullName || '',
     email: initialData.email || '',
@@ -61,6 +62,10 @@ export default function ProfileManager({ initialData = {} }) {
     setUserData(prev => ({ ...prev, [field]: value }));
   }, []);
 
+  const handleSwitchToEdit = () => {
+    setIsViewMode(false);
+  };
+
   const handleUpdate = async () => {
     try {
       setIsLoading(true);
@@ -75,7 +80,12 @@ export default function ProfileManager({ initialData = {} }) {
       // API returns the updated user object directly
       if (response && response.userId) {
         persistUser(response);
+        
+        // Trigger event để Header cập nhật
+        window.dispatchEvent(new CustomEvent('userInfoUpdated'));
+        
         setMessage('Cập nhật thông tin thành công!');
+        setIsViewMode(true); // Chuyển về view mode sau khi cập nhật thành công
         setTimeout(() => setMessage(''), 3000);
       }
     } catch (err) {
@@ -106,10 +116,14 @@ export default function ProfileManager({ initialData = {} }) {
         setUserData(updatedUserData);
         
         // Update localStorage with the new photo URL
-        persistUser({ 
+        const updatedUser = { 
           ...initialData, 
           photoUrl: updatedUserData.photoUrl 
-        });
+        };
+        persistUser(updatedUser);
+        
+        // Trigger event để Header cập nhật
+        window.dispatchEvent(new CustomEvent('userInfoUpdated'));
         
         setMessage('Cập nhật ảnh đại diện thành công!');
         setTimeout(() => setMessage(''), 3000);
@@ -158,20 +172,31 @@ export default function ProfileManager({ initialData = {} }) {
         onChange={handleChange}
         onPhotoChange={handleFileInput}
         isLoading={isLoading}
+        isViewMode={isViewMode}
+        onSwitchToEdit={handleSwitchToEdit}
       />
-      <div className="flex justify-end">
-        <button
-          onClick={handleUpdate}
-          disabled={isLoading}
-          className={`px-6 py-3 font-medium rounded-lg transition-colors shadow-sm ${
-            isLoading 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-blue-600 hover:bg-blue-700 text-white'
-          }`}
-        >
-          {isLoading ? 'Đang xử lý...' : 'Cập Nhật Thông Tin'}
-        </button>
-      </div>
+      {!isViewMode && (
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => setIsViewMode(true)}
+            disabled={isLoading}
+            className="px-6 py-3 font-medium rounded-lg transition-colors shadow-sm bg-gray-300 text-gray-700 hover:bg-gray-400"
+          >
+            Hủy
+          </button>
+          <button
+            onClick={handleUpdate}
+            disabled={isLoading}
+            className={`px-6 py-3 font-medium rounded-lg transition-colors shadow-sm ${
+              isLoading 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+            }`}
+          >
+            {isLoading ? 'Đang xử lý...' : 'Cập Nhật Thông Tin'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

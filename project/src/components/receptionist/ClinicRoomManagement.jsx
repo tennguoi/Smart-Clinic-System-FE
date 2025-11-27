@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, X, Building2 } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Building2, DoorOpen } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
+import { toastConfig } from '../../config/toastConfig';
 import { roomApi } from '../../api/roomApi';
+import CountBadge from '../common/CountBadge';
 
 export default function ClinicRoomManagement() {
   const [rooms, setRooms] = useState([]);
@@ -10,8 +13,6 @@ export default function ClinicRoomManagement() {
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('create'); // 'create' or 'edit'
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const [formData, setFormData] = useState({
     roomName: '',
@@ -22,8 +23,8 @@ export default function ClinicRoomManagement() {
   });
 
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterActive, setFilterActive] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [activeOnly, setActiveOnly] = useState(false);
 
   const statusOptions = [
     { value: 'Available', label: 'Sẵn sàng' },
@@ -31,8 +32,12 @@ export default function ClinicRoomManagement() {
   ];
 
   useEffect(() => {
+    fetchDoctors(); // Load doctors once on mount
+  }, []);
+
+  useEffect(() => {
     fetchRooms();
-  }, [filterStatus, searchKeyword, activeOnly]);
+  }, [filterStatus, filterActive, searchKeyword]);
 
   useEffect(() => {
     if (showModal) {
@@ -72,33 +77,39 @@ export default function ClinicRoomManagement() {
 
   const fetchRooms = async () => {
     setLoading(true);
-    setError('');
     try {
       const params = {};
       if (filterStatus) params.status = filterStatus;
       if (searchKeyword) params.keyword = searchKeyword;
-      if (activeOnly) params.activeOnly = true;
 
       const data = await roomApi.getAllRooms(params);
-      const roomsArray = Array.isArray(data) ? data : [];
+      let roomsArray = Array.isArray(data) ? data : [];
+      
+      // Client-side filter by active status
+      if (filterActive === 'active') {
+        roomsArray = roomsArray.filter(room => room.isActive === true);
+      } else if (filterActive === 'inactive') {
+        roomsArray = roomsArray.filter(room => room.isActive === false);
+      }
+      
       setRooms(roomsArray);
 
-      if (roomsArray.length === 0 && !filterStatus && !searchKeyword && !activeOnly) {
-        setError('Chưa có phòng khám nào trong hệ thống. Vui lòng tạo phòng mới.');
+      if (roomsArray.length === 0 && !filterStatus && !filterActive && !searchKeyword) {
+        toast.error('Chưa có phòng khám nào trong hệ thống. Vui lòng tạo phòng mới.');
       }
     } catch (err) {
       console.error('Error fetching rooms:', err);
       const status = err.response?.status;
 
       if (status === 401) {
-        setError('Bạn không có quyền truy cập tính năng này hoặc phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        toast.error('Bạn không có quyền truy cập tính năng này hoặc phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
       } else if (status === 403) {
-        setError('Bạn không có quyền truy cập tính năng quản lý phòng khám. Vui lòng liên hệ quản trị viên để được cấp quyền.');
+        toast.error('Bạn không có quyền truy cập tính năng quản lý phòng khám. Vui lòng liên hệ quản trị viên để được cấp quyền.');
       } else if (status === 404) {
-        setError('API quản lý phòng khám chưa được triển khai trên backend.');
+        toast.error('API quản lý phòng khám chưa được triển khai trên backend.');
       } else {
         const errorMessage = err.response?.data?.message || err.message || 'Không thể tải danh sách phòng khám';
-        setError(`Lỗi: ${errorMessage}`);
+        toast.error(`Lỗi: ${errorMessage}`);
       }
       setRooms([]);
     } finally {
@@ -109,8 +120,6 @@ export default function ClinicRoomManagement() {
   const handleOpenModal = (mode, room = null) => {
     setModalMode(mode);
     setSelectedRoom(room);
-    setError('');
-    setSuccess('');
 
     if (mode === 'create') {
       setFormData({
@@ -136,8 +145,6 @@ export default function ClinicRoomManagement() {
   const handleCloseModal = () => {
     setShowModal(false);
     setSelectedRoom(null);
-    setError('');
-    setSuccess('');
   };
 
   const handleInputChange = (e) => {
@@ -151,8 +158,6 @@ export default function ClinicRoomManagement() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccess('');
 
     try {
       const payload = {
@@ -165,10 +170,10 @@ export default function ClinicRoomManagement() {
 
       if (modalMode === 'edit' && selectedRoom) {
         await roomApi.updateRoom(selectedRoom.roomId, payload);
-        setSuccess('Cập nhật phòng khám thành công!');
+        toast.success('Cập nhật phòng khám thành công!');
       } else {
         await roomApi.createRoom(payload);
-        setSuccess('Tạo phòng khám thành công!');
+        toast.success('Tạo phòng khám thành công!');
       }
 
       setTimeout(() => {
@@ -177,7 +182,7 @@ export default function ClinicRoomManagement() {
       }, 1500);
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || 'Có lỗi xảy ra';
-      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -187,17 +192,14 @@ export default function ClinicRoomManagement() {
     if (!window.confirm('Bạn có chắc chắn muốn xóa phòng khám này?')) return;
 
     setLoading(true);
-    setError('');
 
     try {
       await roomApi.deleteRoom(roomId);
-      setSuccess('Xóa phòng khám thành công!');
+      toast.success('Xóa phòng khám thành công!');
       fetchRooms();
-      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || 'Không thể xóa phòng khám';
-      setError(errorMessage);
-      setTimeout(() => setError(''), 3000);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -212,49 +214,47 @@ export default function ClinicRoomManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <h2 className="text-2xl font-semibold text-gray-800">Quản lý phòng khám</h2>
+    <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
+      <Toaster {...toastConfig} />
+      
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
+          <DoorOpen className="w-9 h-9 text-blue-600" />
+          <span>Quản Lý Phòng Khám</span>
+          <CountBadge 
+            currentCount={rooms.length} 
+            totalCount={rooms.length} 
+            label="phòng" 
+          />
+        </h1>
         <button
           onClick={() => handleOpenModal('create')}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors shadow-sm"
+          className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2"
         >
           <Plus className="w-5 h-5" />
           Thêm phòng mới
         </button>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
-          {success}
-        </div>
-      )}
-
       {/* Filter và Search */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tìm kiếm</label>
+      <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-5">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tìm kiếm</label>
             <input
               type="text"
               placeholder="Nhập tên phòng..."
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+          <div className="lg:col-span-3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Tất cả</option>
               {statusOptions.map((option) => (
@@ -264,27 +264,29 @@ export default function ClinicRoomManagement() {
               ))}
             </select>
           </div>
-          <div className="flex items-end">
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={activeOnly}
-                onChange={(e) => setActiveOnly(e.target.checked)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <span className="text-sm text-gray-700">Chỉ hiển thị phòng hoạt động</span>
-            </label>
+          <div className="lg:col-span-3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Hoạt động</label>
+            <select
+              value={filterActive}
+              onChange={(e) => setFilterActive(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Tất cả</option>
+              <option value="active">Hoạt động</option>
+              <option value="inactive">Không hoạt động</option>
+            </select>
           </div>
-          <div className="flex items-end">
+          <div className="lg:col-span-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">&nbsp;</label>
             <button
               onClick={() => {
                 setFilterStatus('');
+                setFilterActive('');
                 setSearchKeyword('');
-                setActiveOnly(false);
               }}
-              className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+              className="w-full px-4 py-3 bg-gray-300 text-gray-700 rounded-xl hover:bg-gray-400 transition font-medium whitespace-nowrap"
             >
-              Xóa bộ lọc
+              Xóa lọc
             </button>
           </div>
         </div>
@@ -325,22 +327,15 @@ export default function ClinicRoomManagement() {
               {rooms.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="px-6 py-16 text-center text-gray-500">
-                    {error ? (
-                      <div>
-                        <p className="text-red-600 font-medium mb-2">{error}</p>
-                        <p className="text-sm">Vui lòng kiểm tra console để xem chi tiết lỗi.</p>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="mb-4 text-lg">Chưa có phòng khám nào</p>
-                        <button
-                          onClick={() => handleOpenModal('create')}
-                          className="px-5 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
-                        >
-                          Tạo phòng đầu tiên
-                        </button>
-                      </div>
-                    )}
+                    <div>
+                      <p className="mb-4 text-lg">Chưa có phòng khám nào</p>
+                      <button
+                        onClick={() => handleOpenModal('create')}
+                        className="px-5 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+                      >
+                        Tạo phòng đầu tiên
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -435,17 +430,6 @@ export default function ClinicRoomManagement() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-                  {error}
-                </div>
-              )}
-              {success && (
-                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
-                  {success}
-                </div>
-              )}
-
               {/* Form fields giữ nguyên như cũ */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Save, Building2, Loader2, Upload, X, Edit } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
+import { toastConfig } from '../../config/toastConfig';
 import { clinicApi } from '../../api/clinicApi';
 import { useClinic } from '../../contexts/ClinicContext';
 
@@ -31,8 +33,6 @@ export default function ClinicManagement() {
   const [clinicInfo, setClinicInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -60,7 +60,6 @@ export default function ClinicManagement() {
     if (!skipLoading) {
       setLoading(true);
     }
-    setError('');
     try {
       console.log('🔄 Fetching clinic info...');
       const data = await clinicApi.getClinicInfo();
@@ -104,7 +103,7 @@ export default function ClinicManagement() {
         return;
       }
       console.error('❌ Error fetching clinic info:', err);
-      setError(err.response?.data?.message || err.message || 'Không thể tải thông tin phòng khám');
+      toast.error(err.response?.data?.message || err.message || 'Không thể tải thông tin phòng khám');
     } finally {
       if (!skipLoading) {
         setLoading(false);
@@ -126,7 +125,7 @@ export default function ClinicManagement() {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      setError('Vui lòng chọn file ảnh (PNG, JPG, JPEG, GIF, WebP)');
+      toast.error('Vui lòng chọn file ảnh (PNG, JPG, JPEG, GIF, WebP)');
       return;
     }
 
@@ -134,11 +133,10 @@ export default function ClinicManagement() {
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-      setError(`Kích thước file quá lớn (${fileSizeMB}MB). Vui lòng chọn file nhỏ hơn 10MB.`);
+      toast.error(`Kích thước file quá lớn (${fileSizeMB}MB). Vui lòng chọn file nhỏ hơn 10MB.`);
       return;
     }
 
-    setError('');
     setLogoFile(file);
     
     // Log file info
@@ -168,13 +166,11 @@ export default function ClinicManagement() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    setError('');
-    setSuccess('');
 
     try {
       // Validate required fields
       if (!formData.name.trim()) {
-        setError('Tên phòng khám không được để trống');
+        toast.error('Tên phòng khám không được để trống');
         setSaving(false);
         return;
       }
@@ -182,7 +178,7 @@ export default function ClinicManagement() {
       // Validate email format if provided (match backend regex)
       const EMAIL_REGEX = /^[a-zA-Z0-9_+&*-]+(?:\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,7}$/;
       if (formData.email && !EMAIL_REGEX.test(formData.email)) {
-        setError('Email không hợp lệ');
+        toast.error('Email không hợp lệ');
         setSaving(false);
         return;
       }
@@ -200,7 +196,7 @@ export default function ClinicManagement() {
       // Validate working hours
       if (formData.morningStartTime && formData.morningEndTime) {
         if (formData.morningStartTime >= formData.morningEndTime) {
-          setError('Giờ kết thúc buổi sáng phải sau giờ bắt đầu');
+          toast.error('Giờ kết thúc buổi sáng phải sau giờ bắt đầu');
           setSaving(false);
           return;
         }
@@ -208,7 +204,7 @@ export default function ClinicManagement() {
 
       if (formData.afternoonStartTime && formData.afternoonEndTime) {
         if (formData.afternoonStartTime >= formData.afternoonEndTime) {
-          setError('Giờ kết thúc buổi chiều phải sau giờ bắt đầu');
+          toast.error('Giờ kết thúc buổi chiều phải sau giờ bắt đầu');
           setSaving(false);
           return;
         }
@@ -217,7 +213,7 @@ export default function ClinicManagement() {
       // Validate morning ends before afternoon starts (if both are set)
       if (formData.morningEndTime && formData.afternoonStartTime) {
         if (formData.morningEndTime >= formData.afternoonStartTime) {
-          setError('Giờ kết thúc buổi sáng phải trước giờ bắt đầu buổi chiều');
+          toast.error('Giờ kết thúc buổi sáng phải trước giờ bắt đầu buổi chiều');
           setSaving(false);
           return;
         }
@@ -238,7 +234,7 @@ export default function ClinicManagement() {
             updatedClinicData = uploadResult.clinicInfo;
           }
         } catch (uploadError) {
-          setError(uploadError.message || 'Không thể upload logo. Vui lòng thử lại.');
+          toast.error(uploadError.message || 'Không thể upload logo. Vui lòng thử lại.');
           setSaving(false);
           return;
         } finally {
@@ -302,14 +298,10 @@ export default function ClinicManagement() {
       }
       
       console.log('✅ All updates completed!');
-      setSuccess('Cập nhật thông tin phòng khám thành công!');
-      
-      setTimeout(() => {
-        setSuccess('');
-      }, 3000);
+      toast.success('Cập nhật thông tin phòng khám thành công!');
     } catch (err) {
       console.error('❌ Error during update:', err);
-      setError(err.response?.data?.message || err.message || 'Có lỗi xảy ra khi cập nhật');
+      toast.error(err.response?.data?.message || err.message || 'Có lỗi xảy ra khi cập nhật');
       setSaving(false);
       setUploadingLogo(false);
     }
@@ -339,23 +331,13 @@ export default function ClinicManagement() {
   }
 
   return (
-    <div className="p-8">
-      <div className="flex items-center gap-3 mb-6">
-        <Building2 className="w-8 h-8 text-blue-600" />
-        <h1 className="text-3xl font-bold text-gray-800">Quản lý Thông tin Phòng khám</h1>
-      </div>
-
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6">
-          {success}
-        </div>
-      )}
+    <div className="px-8 pt-4 pb-8">
+      <Toaster {...toastConfig} />
+      
+      <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3 mb-6">
+        <Building2 className="w-9 h-9 text-blue-600" />
+        <span>Quản Lý Thông Tin Phòng Khám</span>
+      </h1>
 
       <div className="bg-white rounded-lg shadow-lg p-6">
         {!clinicInfo && (
@@ -673,7 +655,6 @@ export default function ClinicManagement() {
                       });
                       setLogoPreview(normalizedLogoUrl || null);
                     }
-                    setError('');
                   }}
                   className="flex items-center gap-2 bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition"
                 >

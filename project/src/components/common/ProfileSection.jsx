@@ -1,6 +1,6 @@
-import { User, Mail, Phone, Calendar, MapPin, Loader } from 'lucide-react';
+import { User, Mail, Phone, Calendar, MapPin, Loader, Edit } from 'lucide-react';
 
-export default function ProfileSection({ fullName, email, phone, dateOfBirth, gender, address, photoUrl, onPhotoChange, onChange, isLoading = false }) {
+export default function ProfileSection({ fullName, email, phone, dateOfBirth, gender, address, photoUrl, onPhotoChange, onChange, isLoading = false, isViewMode = false, onSwitchToEdit }) {
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -17,7 +17,17 @@ export default function ProfileSection({ fullName, email, phone, dateOfBirth, ge
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">Thông Tin Cá Nhân</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-semibold text-gray-900">Thông Tin Cá Nhân</h2>
+        {isViewMode && onSwitchToEdit && (
+          <button
+            onClick={onSwitchToEdit}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+          >
+            <Edit className="w-4 h-4" /> Chỉnh sửa
+          </button>
+        )}
+      </div>
 
       <div className="flex items-start gap-6 mb-6 pb-6 border-b border-gray-200">
         <div className="relative">
@@ -30,12 +40,14 @@ export default function ProfileSection({ fullName, email, phone, dateOfBirth, ge
               </div>
             )}
           </div>
-          <button
-            onClick={onPhotoChange}
-            className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-2 hover:bg-blue-700 transition-colors shadow-lg"
-          >
-            <User className="w-4 h-4" />
-          </button>
+          {!isViewMode && (
+            <button
+              onClick={onPhotoChange}
+              className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-2 hover:bg-blue-700 transition-colors shadow-lg"
+            >
+              <User className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         <div className="flex-1">
@@ -54,7 +66,8 @@ export default function ProfileSection({ fullName, email, phone, dateOfBirth, ge
             type="text"
             value={fullName || ''}
             onChange={(e) => onChange('fullName', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            disabled={isViewMode}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
             placeholder="Nhập tên đầy đủ"
           />
         </div>
@@ -82,9 +95,17 @@ export default function ProfileSection({ fullName, email, phone, dateOfBirth, ge
             <input
               type="tel"
               value={phone || ''}
-              onChange={(e) => onChange('phone', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              placeholder="+84 xxx xxx xxx"
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, ''); // Chỉ cho phép số
+                if (value.length <= 10) {
+                  onChange('phone', value);
+                }
+              }}
+              disabled={isViewMode}
+              maxLength="10"
+              pattern="[0-9]{10}"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+              placeholder="0xxxxxxxxx (10 số)"
             />
           </div>
 
@@ -97,7 +118,8 @@ export default function ProfileSection({ fullName, email, phone, dateOfBirth, ge
               type="date"
               value={dateOfBirth || ''}
               onChange={(e) => onChange('dateOfBirth', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              disabled={isViewMode}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
             />
           </div>
         </div>
@@ -106,14 +128,15 @@ export default function ProfileSection({ fullName, email, phone, dateOfBirth, ge
           <label className="block text-sm font-medium text-gray-700 mb-2">Giới tính</label>
           <div className="flex gap-4">
             {['male', 'female', 'other'].map((option) => (
-              <label key={option} className="flex items-center cursor-pointer">
+              <label key={option} className={`flex items-center ${isViewMode ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                 <input
                   type="radio"
                   name="gender"
                   value={option}
                   checked={gender === option}
                   onChange={(e) => onChange('gender', e.target.value)}
-                  className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                  disabled={isViewMode}
+                  className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed"
                 />
                 <span className="ml-2 text-sm text-gray-700">
                   {option === 'male' ? 'Nam' : option === 'female' ? 'Nữ' : 'Khác'}
@@ -131,8 +154,9 @@ export default function ProfileSection({ fullName, email, phone, dateOfBirth, ge
           <textarea
             value={address || ''}
             onChange={(e) => onChange('address', e.target.value)}
+            disabled={isViewMode}
             rows={3}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none disabled:bg-gray-50 disabled:cursor-not-allowed"
             placeholder="Nhập địa chỉ của bạn"
           />
         </div>

@@ -3,9 +3,12 @@ import { useEffect, useState } from 'react';
 import {
   Plus, X, Calendar, User, Phone, Mail, FileText,
   Loader2, Search, CheckCircle2, XCircle,
-  ChevronLeft, ChevronRight, Edit2, Check, Trash2, Clock
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit2, Check, Trash2, Clock, Eye
 } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
+import { toastConfig } from '../../config/toastConfig';
 import axiosInstance from '../../utils/axiosConfig';
+import CountBadge from '../common/CountBadge';
 
 const formatDateTime = (date) => {
   if (!date) return '—';
@@ -26,12 +29,19 @@ export default function AppointmentsSection() {
   const [appointments, setAppointments] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState('Pending');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  
+  // Date filters
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
 
   const [showForm, setShowForm] = useState(false);
+  const [modalMode, setModalMode] = useState('create'); // 'create', 'view', 'edit'
   const [editingAppointment, setEditingAppointment] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  
+  const isViewMode = modalMode === 'view';
+  const isCreateMode = modalMode === 'create';
+  const isEditMode = modalMode === 'edit';
 
   const [services, setServices] = useState([]);
   const [loadingServices, setLoadingServices] = useState(false);
@@ -49,6 +59,7 @@ export default function AppointmentsSection() {
   // Pagination + search
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
   const [searchQueryAppointments, setSearchQueryAppointments] = useState('');
   const pageSize = 10;
 
@@ -56,7 +67,6 @@ export default function AppointmentsSection() {
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
-      setError('');
       try {
         const res = await axiosInstance.get('/api/appointments', {
           params: {
@@ -66,16 +76,37 @@ export default function AppointmentsSection() {
             keyword: searchQueryAppointments.trim() || null,
           },
         });
-        setAppointments(res.data.content || []);
+        
+        let data = res.data.content || [];
+        
+        // Client-side date filtering
+        if (filterStartDate) {
+          data = data.filter(appt => {
+            if (!appt.appointmentTime) return false;
+            const apptDate = new Date(appt.appointmentTime).toISOString().split('T')[0];
+            return apptDate >= filterStartDate;
+          });
+        }
+        
+        if (filterEndDate) {
+          data = data.filter(appt => {
+            if (!appt.appointmentTime) return false;
+            const apptDate = new Date(appt.appointmentTime).toISOString().split('T')[0];
+            return apptDate <= filterEndDate;
+          });
+        }
+        
+        setAppointments(data);
         setTotalPages(res.data.totalPages || 0);
+        setTotalElements(res.data.totalElements || 0);
       } catch (err) {
-        setError('Không thể tải lịch hẹn');
+        toast.error('Không thể tải lịch hẹn');
       } finally {
         setLoading(false);
       }
     };
     fetch();
-  }, [selectedStatus, currentPage, searchQueryAppointments]);
+  }, [selectedStatus, currentPage, searchQueryAppointments, filterStartDate, filterEndDate]);
 
   // Load services khi mở form
   useEffect(() => {
@@ -87,7 +118,7 @@ export default function AppointmentsSection() {
         const normalized = (res.data.content || []).map((s) => ({ ...s, id: s.serviceId }));
         setServices(normalized);
       } catch {
-        setError('Không thể tải danh sách dịch vụ');
+        toast.error('Không thể tải danh sách dịch vụ');
       } finally {
         setLoadingServices(false);
       }
@@ -112,6 +143,7 @@ export default function AppointmentsSection() {
   };
 
   const handleOpenAdd = () => {
+    setModalMode('create');
     setEditingAppointment(null);
     setForm({
       patientName: '',
@@ -125,7 +157,8 @@ export default function AppointmentsSection() {
     setShowForm(true);
   };
 
-  const handleOpenEdit = (appt) => {
+  const handleOpenView = (appt) => {
+    setModalMode('view');
     setEditingAppointment(appt);
     const normalized = (appt.services || []).map((s) => ({ ...s, id: s.serviceId }));
     setForm({
@@ -142,14 +175,17 @@ export default function AppointmentsSection() {
     setShowForm(true);
   };
 
+  const handleSwitchToEdit = () => {
+    setModalMode('edit');
+  };
+
   const handleSubmit = async () => {
-    if (!form.patientName.trim()) return setError('Vui lòng nhập họ tên');
-    if (!form.phone.trim()) return setError('Vui lòng nhập số điện thoại');
-    if (form.phone.length !== 10) return setError('Số điện thoại phải đúng 10 chữ số');
-    if (!form.appointmentTime) return setError('Vui lòng chọn thời gian hẹn');
+    if (!form.patientName.trim()) return toast.error('Vui lòng nhập họ tên');
+    if (!form.phone.trim()) return toast.error('Vui lòng nhập số điện thoại');
+    if (form.phone.length !== 10) return toast.error('Số điện thoại phải đúng 10 chữ số');
+    if (!form.appointmentTime) return toast.error('Vui lòng chọn thời gian hẹn');
 
     setSubmitting(true);
-    setError('');
     try {
       const payload = {
         patientName: form.patientName.trim(),
@@ -162,10 +198,10 @@ export default function AppointmentsSection() {
 
       if (editingAppointment) {
         await axiosInstance.put(`/api/appointments/${editingAppointment.appointmentId}`, payload);
-        setSuccess('Cập nhật lịch hẹn thành công!');
+        toast.success('Cập nhật lịch hẹn thành công!');
       } else {
         const res = await axiosInstance.post('/api/appointments', payload);
-        setSuccess(`Tạo lịch hẹn thành công! Mã lịch: ${res.data.appointmentCode}`);
+        toast.success(`Tạo lịch hẹn thành công! Mã lịch: ${res.data.appointmentCode}`);
       }
 
       setShowForm(false);
@@ -178,10 +214,30 @@ export default function AppointmentsSection() {
           keyword: searchQueryAppointments.trim() || null,
         },
       });
-      setAppointments(refreshed.data.content || []);
+      
+      let data = refreshed.data.content || [];
+      
+      // Apply date filters
+      if (filterStartDate) {
+        data = data.filter(appt => {
+          if (!appt.appointmentTime) return false;
+          const apptDate = new Date(appt.appointmentTime).toISOString().split('T')[0];
+          return apptDate >= filterStartDate;
+        });
+      }
+      
+      if (filterEndDate) {
+        data = data.filter(appt => {
+          if (!appt.appointmentTime) return false;
+          const apptDate = new Date(appt.appointmentTime).toISOString().split('T')[0];
+          return apptDate <= filterEndDate;
+        });
+      }
+      
+      setAppointments(data);
       setTotalPages(refreshed.data.totalPages || 0);
     } catch (err) {
-      setError(err.response?.data?.message || 'Thao tác thất bại');
+      toast.error(err.response?.data?.message || 'Thao tác thất bại');
     } finally {
       setSubmitting(false);
     }
@@ -191,9 +247,97 @@ export default function AppointmentsSection() {
     try {
       await axiosInstance.patch(`/api/appointments/${id}/status`, null, { params: { status: 'Confirmed' } });
       setAppointments((prev) => prev.map((a) => a.appointmentId === id ? { ...a, status: 'Confirmed' } : a));
-      setSuccess('Đã xác nhận lịch hẹn');
+      toast.success('Đã xác nhận lịch hẹn');
     } catch {
-      setError('Xác nhận thất bại');
+      toast.error('Xác nhận thất bại');
+    }
+  };
+
+  const handleConfirmFromModal = async () => {
+    if (!editingAppointment) return;
+    try {
+      await axiosInstance.patch(`/api/appointments/${editingAppointment.appointmentId}/status`, null, { params: { status: 'Confirmed' } });
+      toast.success('Đã xác nhận lịch hẹn');
+      setShowForm(false);
+      
+      // Refresh data
+      const refreshed = await axiosInstance.get('/api/appointments', {
+        params: {
+          status: selectedStatus,
+          page: currentPage,
+          size: pageSize,
+          keyword: searchQueryAppointments.trim() || null,
+        },
+      });
+      
+      let data = refreshed.data.content || [];
+      
+      // Apply date filters
+      if (filterStartDate) {
+        data = data.filter(appt => {
+          if (!appt.appointmentTime) return false;
+          const apptDate = new Date(appt.appointmentTime).toISOString().split('T')[0];
+          return apptDate >= filterStartDate;
+        });
+      }
+      
+      if (filterEndDate) {
+        data = data.filter(appt => {
+          if (!appt.appointmentTime) return false;
+          const apptDate = new Date(appt.appointmentTime).toISOString().split('T')[0];
+          return apptDate <= filterEndDate;
+        });
+      }
+      
+      setAppointments(data);
+      setTotalPages(refreshed.data.totalPages || 0);
+    } catch {
+      toast.error('Xác nhận thất bại');
+    }
+  };
+
+  const handleCancelFromModal = async () => {
+    if (!editingAppointment) return;
+    if (!window.confirm('Bạn có chắc chắn muốn hủy lịch hẹn này?')) return;
+    
+    try {
+      await axiosInstance.patch(`/api/appointments/${editingAppointment.appointmentId}/status`, null, { params: { status: 'Cancelled' } });
+      toast.success('Đã hủy lịch hẹn');
+      setShowForm(false);
+      
+      // Refresh data
+      const refreshed = await axiosInstance.get('/api/appointments', {
+        params: {
+          status: selectedStatus,
+          page: currentPage,
+          size: pageSize,
+          keyword: searchQueryAppointments.trim() || null,
+        },
+      });
+      
+      let data = refreshed.data.content || [];
+      
+      // Apply date filters
+      if (filterStartDate) {
+        data = data.filter(appt => {
+          if (!appt.appointmentTime) return false;
+          const apptDate = new Date(appt.appointmentTime).toISOString().split('T')[0];
+          return apptDate >= filterStartDate;
+        });
+      }
+      
+      if (filterEndDate) {
+        data = data.filter(appt => {
+          if (!appt.appointmentTime) return false;
+          const apptDate = new Date(appt.appointmentTime).toISOString().split('T')[0];
+          return apptDate <= filterEndDate;
+        });
+      }
+      
+      setAppointments(data);
+      setTotalPages(refreshed.data.totalPages || 0);
+    } catch {
+      toast.error('Hủy lịch hẹn thất bại');
     }
   };
 
@@ -201,9 +345,9 @@ export default function AppointmentsSection() {
     try {
       await axiosInstance.patch(`/api/appointments/${id}/status`, null, { params: { status: 'Cancelled' } });
       setAppointments((prev) => prev.map((a) => a.appointmentId === id ? { ...a, status: 'Cancelled' } : a));
-      setSuccess('Đã hủy lịch hẹn');
+      toast.success('Đã hủy lịch hẹn');
     } catch {
-      setError('Hủy thất bại');
+      toast.error('Hủy thất bại');
     }
   };
 
@@ -220,6 +364,8 @@ export default function AppointmentsSection() {
   const handleClearFilters = () => {
     setSelectedStatus('Pending');
     setSearchQueryAppointments('');
+    setFilterStartDate('');
+    setFilterEndDate('');
     setCurrentPage(0);
   };
 
@@ -235,101 +381,137 @@ export default function AppointmentsSection() {
 
     return (
       <div className="flex items-center justify-center gap-2 mt-4 p-4">
+        <button onClick={() => setCurrentPage(0)} disabled={currentPage === 0}
+          className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition">
+          <ChevronsLeft className="w-4 h-4" />
+        </button>
+        
         <button onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}
-          className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
+          className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition">
           <ChevronLeft className="w-4 h-4" />
         </button>
 
-        {start > 0 && (
-          <>
-            <button onClick={() => setCurrentPage(0)} className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">1</button>
-            {start > 1 && <span className="px-3 py-2 text-gray-500">..</span>}
-          </>
-        )}
+        {start > 0 && start > 1 && <span className="px-3 py-2 text-gray-500">...</span>}
 
         {pages.map(page => (
           <button key={page} onClick={() => setCurrentPage(page)}
-            className={`px-4 py-2 rounded-lg border ${currentPage === page ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-gray-300 hover:bg-gray-50'}`}>
+            className={`px-4 py-2 rounded-lg border transition font-medium ${
+              currentPage === page 
+                ? 'bg-blue-600 text-white border-blue-600' 
+                : 'bg-white border-gray-300 hover:bg-gray-50'
+            }`}>
             {page + 1}
           </button>
         ))}
 
-        {end < totalPages - 1 && (
-          <>
-            {end < totalPages - 2 && <span className="px-3 py-2 text-gray-500">..</span>}
-            <button onClick={() => setCurrentPage(totalPages - 1)} className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-              {totalPages}
-            </button>
-          </>
-        )}
+        {end < totalPages - 1 && end < totalPages - 2 && <span className="px-3 py-2 text-gray-500">...</span>}
 
         <button onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage === totalPages - 1}
-          className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
+          className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition">
           <ChevronRight className="w-4 h-4" />
+        </button>
+        
+        <button onClick={() => setCurrentPage(totalPages - 1)} disabled={currentPage === totalPages - 1}
+          className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition">
+          <ChevronsRight className="w-4 h-4" />
         </button>
       </div>
     );
   };
 
   return (
-    <div className="space-y-6">
+    <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
+      <Toaster {...toastConfig} />
+
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <h2 className="text-2xl font-semibold text-gray-800">Quản lý lịch hẹn</h2>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
+          <Calendar className="w-9 h-9 text-blue-600" />
+          <span>Quản Lý Lịch Hẹn</span>
+          <CountBadge 
+            currentCount={appointments.length} 
+            totalCount={totalElements} 
+            label="lịch hẹn" 
+          />
+        </h1>
         <button onClick={handleOpenAdd}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors shadow-sm">
+          className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2">
           <Plus className="w-5 h-5" />
-          Tạo lịch hẹn mới
+          Tạo lịch hẹn
         </button>
       </div>
 
-      {/* ALERTS */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md flex items-center gap-2">
-          <XCircle className="w-5 h-5" />
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md flex items-center gap-2">
-          <CheckCircle2 className="w-5 h-5" />
-          {success}
-        </div>
-      )}
-
       {/* FILTER BAR */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tìm kiếm</label>
+      <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tìm kiếm</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input type="text" placeholder="Tên bệnh nhân hoặc số điện thoại..."
                 value={searchQueryAppointments}
                 onChange={(e) => { setSearchQueryAppointments(e.target.value); setCurrentPage(0); }}
-                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full pl-9 pr-10 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
               {searchQueryAppointments && (
-                <button onClick={handleClearSearch} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <button onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   <X className="w-4 h-4" />
                 </button>
               )}
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+          <div className="lg:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
             <select value={selectedStatus} onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(0); }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
               <option value="Pending">Chờ xác nhận</option>
               <option value="Confirmed">Đã xác nhận</option>
               <option value="Cancelled">Đã hủy</option>
             </select>
           </div>
 
-          <div className="flex items-end">
+          <div className="lg:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Từ ngày</label>
+            <input 
+              type="date" 
+              value={filterStartDate}
+              onChange={(e) => {
+                const newStartDate = e.target.value;
+                if (filterEndDate && newStartDate > filterEndDate) {
+                  toast.error('Từ ngày phải nhỏ hơn hoặc bằng Đến ngày');
+                  return;
+                }
+                setFilterStartDate(newStartDate);
+                setCurrentPage(0);
+              }}
+              max={filterEndDate || undefined}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div className="lg:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Đến ngày</label>
+            <input 
+              type="date" 
+              value={filterEndDate}
+              onChange={(e) => {
+                const newEndDate = e.target.value;
+                if (filterStartDate && newEndDate < filterStartDate) {
+                  toast.error('Đến ngày phải lớn hơn hoặc bằng Từ ngày');
+                  return;
+                }
+                setFilterEndDate(newEndDate);
+                setCurrentPage(0);
+              }}
+              min={filterStartDate || undefined}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div className="lg:col-span-2 flex items-end">
             <button onClick={handleClearFilters}
-              className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
-              Xóa bộ lọc
+              className="w-full px-4 py-3 bg-gray-300 text-gray-700 rounded-xl hover:bg-gray-400 transition font-medium whitespace-nowrap">
+              Xóa lọc
             </button>
           </div>
         </div>
@@ -347,10 +529,11 @@ export default function AppointmentsSection() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-20">STT</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Mã lịch</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Bệnh nhân</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Số điện thoại</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Thời gian</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Dịch vụ</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Mã lịch</th>
                 <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Trạng thái</th>
                 <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Thao tác</th>
               </tr>
@@ -358,7 +541,7 @@ export default function AppointmentsSection() {
             <tbody className="bg-white divide-y divide-gray-200">
               {appointments.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-16 text-center text-gray-500">Chưa có lịch hẹn nào</td>
+                  <td colSpan={8} className="px-4 py-16 text-center text-gray-500">Chưa có lịch hẹn nào</td>
                 </tr>
               ) : (
                 appointments.map((a, index) => {
@@ -366,13 +549,21 @@ export default function AppointmentsSection() {
                   return (
                     <tr key={a.appointmentId} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-4 text-sm font-medium text-gray-700 text-center">{rowNumber}</td>
+                      <td className="px-4 py-4 text-sm">
+                        <span className="inline-flex px-3 py-1.5 rounded-md text-xs font-mono bg-blue-50 text-blue-700 border border-blue-200">
+                          {a.appointmentCode}
+                        </span>
+                      </td>
                       <td className="px-4 py-4">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                           <User className="w-5 h-5 text-gray-400" />
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{a.patientName}</div>
-                            <div className="text-xs text-gray-500">{a.phone}</div>
-                          </div>
+                          <div className="text-sm font-medium text-gray-900">{a.patientName}</div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm text-gray-700">{a.phone}</span>
                         </div>
                       </td>
                       <td className="px-4 py-4 text-sm text-gray-700">
@@ -384,20 +575,22 @@ export default function AppointmentsSection() {
                       <td className="px-4 py-4 text-sm text-gray-700">
                         <div className="flex flex-wrap gap-1.5">
                           {a.services?.length > 0 ? (
-                            a.services.map((svc, i) => (
-                              <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">
-                                {svc.name}
-                              </span>
-                            ))
+                            <>
+                              {a.services.slice(0, 3).map((svc, i) => (
+                                <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">
+                                  {svc.name}
+                                </span>
+                              ))}
+                              {a.services.length > 3 && (
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300">
+                                  +{a.services.length - 3} dịch vụ
+                                </span>
+                              )}
+                            </>
                           ) : (
                             <span className="text-gray-400 italic text-xs">Chưa chọn dịch vụ</span>
                           )}
                         </div>
-                      </td>
-                      <td className="px-4 py-4 text-sm">
-                        <span className="inline-flex px-3 py-1.5 rounded-md text-xs font-mono bg-blue-50 text-blue-700 border border-blue-200">
-                          {a.appointmentCode}
-                        </span>
                       </td>
                       <td className="px-4 py-4 text-center">
                         <span className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
@@ -409,27 +602,10 @@ export default function AppointmentsSection() {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center">
-                        {a.status === 'Pending' ? (
-                          <div className="flex items-center justify-center gap-5">
-                            {/* Sửa */}
-                            <button onClick={() => handleOpenEdit(a)} title="Sửa"
-                              className="text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors">
-                              <Edit2 className="w-5 h-5" />
-                            </button>
-                            {/* Xác nhận */}
-                            <button onClick={() => handleConfirm(a.appointmentId)} title="Xác nhận"
-                              className="text-green-600 hover:bg-green-50 p-2 rounded-full transition-colors">
-                              <Check className="w-5 h-5" />
-                            </button>
-                            {/* Hủy */}
-                            <button onClick={() => handleCancel(a.appointmentId)} title="Hủy"
-                              className="text-red-600 hover:bg-red-50 p-2 rounded-full transition-colors">
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-400 italic">Không khả dụng</span>
-                        )}
+                        <button onClick={() => handleOpenView(a)} title="Xem chi tiết"
+                          className="text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors">
+                          <Eye className="w-5 h-5" />
+                        </button>
                       </td>
                     </tr>
                   );
@@ -445,23 +621,38 @@ export default function AppointmentsSection() {
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center p-6 border-b">
-              <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                {editingAppointment ? (
+            <div className="flex justify-between items-center p-6 border-b bg-blue-50/80 backdrop-blur">
+              <h2 className="text-2xl font-bold text-blue-700 flex items-center gap-2">
+                {isCreateMode ? (
                   <>
-                    <Edit2 className="w-5 h-5 text-blue-600" />
-                    Sửa lịch hẹn
+                    <Plus className="w-5 h-5" />
+                    Tạo lịch hẹn mới
+                  </>
+                ) : isViewMode ? (
+                  <>
+                    <Eye className="w-5 h-5" />
+                    Chi tiết lịch hẹn
                   </>
                 ) : (
                   <>
-                    <Plus className="w-5 h-5 text-blue-600" />
-                    Tạo lịch hẹn mới
+                    <Edit2 className="w-5 h-5" />
+                    Chỉnh sửa lịch hẹn
                   </>
                 )}
               </h2>
-              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
-                <X className="w-6 h-6" />
-              </button>
+              <div className="flex items-center gap-2">
+                {isViewMode && editingAppointment?.status === 'Pending' && (
+                  <button
+                    onClick={handleSwitchToEdit}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+                  >
+                    Chỉnh sửa
+                  </button>
+                )}
+                <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
             </div>
 
             <div className="p-6 space-y-6">
@@ -470,16 +661,18 @@ export default function AppointmentsSection() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Họ tên <span className="text-red-500">*</span></label>
                   <input value={form.patientName} onChange={(e) => setForm({ ...form, patientName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={isViewMode}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
                     placeholder="Nguyễn Văn A" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại <span className="text-red-500">*</span></label>
                   <input type="tel" maxLength={10} value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={isViewMode}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
                     placeholder="0901234567" />
-                  {form.phone && form.phone.length !== 10 && (
+                  {form.phone && form.phone.length !== 10 && !isViewMode && (
                     <p className="text-xs text-red-600 mt-1">Số điện thoại phải đúng 10 chữ số</p>
                   )}
                 </div>
@@ -490,30 +683,35 @@ export default function AppointmentsSection() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email (tùy chọn)</label>
                   <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={isViewMode}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
                     placeholder="example@gmail.com" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Thời gian hẹn <span className="text-red-500">*</span></label>
                   <input type="datetime-local" value={form.appointmentTime}
                     onChange={(e) => setForm({ ...form, appointmentTime: e.target.value })}
+                    disabled={isViewMode}
                     min={minDateTime} max={maxDateTime}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  <p className="text-xs text-gray-500 mt-1">Chỉ đặt được trong vòng 3 ngày tới</p>
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed" />
+                  {!isViewMode && <p className="text-xs text-gray-500 mt-1">Chỉ đặt được trong vòng 3 ngày tới</p>}
                 </div>
               </div>
 
               {/* Dịch vụ */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Dịch vụ (tùy chọn)</label>
-                <div className="relative mb-3">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input value={searchQueryServices} onChange={(e) => setSearchQueryServices(e.target.value)}
-                    placeholder="Tìm kiếm dịch vụ..."
-                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" />
-                </div>
+                
+                {!isViewMode && (
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input value={searchQueryServices} onChange={(e) => setSearchQueryServices(e.target.value)}
+                      placeholder="Tìm kiếm dịch vụ..."
+                      className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                  </div>
+                )}
 
-                <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-md bg-gray-50">
+                <div className={`max-h-60 overflow-y-auto border border-gray-200 rounded-md ${isViewMode ? 'bg-gray-50' : 'bg-gray-50'}`}>
                   {loadingServices ? (
                     <div className="p-6 text-center text-gray-500">
                       <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
@@ -525,8 +723,8 @@ export default function AppointmentsSection() {
                     filteredServices.map((svc) => {
                       const isSelected = form.selectedServices.some(s => s.id === svc.id);
                       return (
-                        <div key={svc.id} onClick={() => toggleService(svc)}
-                          className={`p-4 cursor-pointer border-b border-gray-100 last:border-0 hover:bg-white transition-colors ${isSelected ? 'bg-purple-50 border-l-4 border-l-purple-600' : ''}`}>
+                        <div key={svc.id} onClick={() => !isViewMode && toggleService(svc)}
+                          className={`p-4 ${!isViewMode ? 'cursor-pointer hover:bg-white' : 'cursor-not-allowed'} border-b border-gray-100 last:border-0 transition-colors ${isSelected ? 'bg-purple-50 border-l-4 border-l-purple-600' : ''}`}>
                           <div className="flex items-center justify-between">
                             <div>
                               <div className="text-sm font-semibold text-gray-900">{svc.name}</div>
@@ -545,9 +743,11 @@ export default function AppointmentsSection() {
                     {form.selectedServices.map((svc) => (
                       <div key={svc.id} className="flex items-center gap-1 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-medium">
                         {svc.name}
-                        <button onClick={() => toggleService(svc)} className="hover:bg-purple-200 rounded-full p-0.5 ml-1">
-                          <X className="w-3 h-3" />
-                        </button>
+                        {!isViewMode && (
+                          <button onClick={() => toggleService(svc)} className="hover:bg-purple-200 rounded-full p-0.5 ml-1">
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -558,21 +758,51 @@ export default function AppointmentsSection() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Ghi chú (tùy chọn)</label>
                 <textarea rows={4} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  disabled={isViewMode}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-50 disabled:cursor-not-allowed"
                   placeholder="Triệu chứng, yêu cầu đặc biệt..." />
               </div>
             </div>
 
             <div className="flex gap-3 p-6 border-t bg-gray-50">
-              <button onClick={() => setShowForm(false)}
-                className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors font-medium">
-                Hủy
-              </button>
-              <button onClick={handleSubmit} disabled={submitting}
-                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed font-medium inline-flex items-center justify-center gap-2">
-                {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                {submitting ? 'Đang xử lý...' : editingAppointment ? 'Lưu thay đổi' : 'Tạo lịch hẹn'}
-              </button>
+              {isViewMode ? (
+                <>
+                  {editingAppointment?.status === 'Pending' && (
+                    <>
+                      <button
+                        onClick={handleConfirmFromModal}
+                        className="flex-1 bg-green-600 text-white py-3 px-4 rounded-xl hover:bg-green-700 transition font-medium inline-flex items-center justify-center gap-2"
+                      >
+                        <Check className="w-5 h-5" />
+                        Xác nhận
+                      </button>
+                      <button
+                        onClick={handleCancelFromModal}
+                        className="flex-1 bg-red-600 text-white py-3 px-4 rounded-xl hover:bg-red-700 transition font-medium inline-flex items-center justify-center gap-2"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                        Hủy lịch
+                      </button>
+                    </>
+                  )}
+                  <button onClick={() => setShowForm(false)}
+                    className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-xl hover:bg-gray-400 transition font-medium">
+                    Đóng
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => setShowForm(false)}
+                    className="flex-1 bg-gray-200 text-gray-700 py-3 px-4 rounded-xl hover:bg-gray-300 transition font-medium">
+                    Hủy
+                  </button>
+                  <button onClick={handleSubmit} disabled={submitting}
+                    className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-xl hover:bg-blue-700 transition disabled:bg-blue-400 disabled:cursor-not-allowed font-medium inline-flex items-center justify-center gap-2">
+                    {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {submitting ? 'Đang xử lý...' : isCreateMode ? 'Tạo lịch hẹn' : 'Lưu thay đổi'}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
