@@ -2,76 +2,13 @@
 import { useState, useEffect, useMemo } from "react";
 import {
   Plus, Edit, Trash2, X, FileText, Upload, Image as ImageIcon,
-  AlertTriangle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye
+  AlertTriangle, Eye
 } from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import axiosInstance from "../../utils/axiosConfig";
 import CountBadge from '../common/CountBadge';
-
-// ====================== PHÂN TRANG ======================
-const Pagination = ({ currentPage, totalPages, goToPage }) => {
-  if (totalPages <= 1) return null;
-
-  const maxVisible = 5;
-  let startPage = Math.max(0, currentPage - Math.floor(maxVisible / 2));
-  let endPage = Math.min(totalPages - 1, startPage + maxVisible - 1);
-
-  if (endPage - startPage + 1 < maxVisible) {
-    startPage = Math.max(0, endPage - maxVisible + 1);
-  }
-
-  return (
-    <div className="flex flex-wrap items-center justify-center gap-3 mt-8 py-4 border-t border-gray-200">
-
-      <button
-        onClick={() => goToPage(0)}
-        disabled={currentPage === 0}
-        className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
-      >
-        <ChevronsLeft className="w-5 h-5" />
-      </button>
-
-      <button
-        onClick={() => goToPage(currentPage - 1)}
-        disabled={currentPage === 0}
-        className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
-      >
-        <ChevronLeft className="w-5 h-5" />
-      </button>
-
-      {Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map((page) => (
-        <button
-          key={page}
-          onClick={() => goToPage(page)}
-          className={`px-4 py-2.5 rounded-lg border font-medium transition ${
-            currentPage === page
-              ? 'bg-blue-600 text-white border-blue-600'
-              : 'border-gray-300 hover:bg-gray-100'
-          }`}
-        >
-          {page + 1}
-        </button>
-      ))}
-
-      <button
-        onClick={() => goToPage(currentPage + 1)}
-        disabled={currentPage === totalPages - 1}
-        className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
-      >
-        <ChevronRight className="w-5 h-5" />
-      </button>
-
-      <button
-        onClick={() => goToPage(totalPages - 1)}
-        disabled={currentPage === totalPages - 1}
-        className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
-      >
-        <ChevronsRight className="w-5 h-5" />
-      </button>
-    </div>
-  );
-};
+import Pagination from '../common/Pagination';
 
 export default function ArticleManagement() {
   const [articles, setArticles] = useState([]);
@@ -561,7 +498,7 @@ export default function ArticleManagement() {
         )}
       </div>
 
-      <Pagination currentPage={page} totalPages={totalPages} goToPage={goToPage} />
+      <Pagination currentPage={page} totalPages={totalPages} onPageChange={goToPage} />
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">

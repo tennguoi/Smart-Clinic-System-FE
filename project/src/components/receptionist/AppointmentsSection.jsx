@@ -3,12 +3,13 @@ import { useEffect, useState } from 'react';
 import {
   Plus, X, Calendar, User, Phone, Mail, FileText,
   Loader2, Search, CheckCircle2, XCircle,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit2, Check, Trash2, Clock, Eye
+  Edit2, Check, Trash2, Clock, Eye
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import axiosInstance from '../../utils/axiosConfig';
 import CountBadge from '../common/CountBadge';
+import Pagination from '../common/Pagination';
 
 const formatDateTime = (date) => {
   if (!date) return '—';
@@ -369,56 +370,6 @@ export default function AppointmentsSection() {
     setCurrentPage(0);
   };
 
-  const renderPagination = () => {
-    if (totalPages <= 1) return null;
-
-    const pages = [];
-    const maxVisible = 5;
-    let start = Math.max(0, currentPage - Math.floor(maxVisible / 2));
-    let end = Math.min(totalPages - 1, start + maxVisible - 1);
-    if (end - start + 1 < maxVisible) start = Math.max(0, end - maxVisible + 1);
-    for (let i = start; i <= end; i++) pages.push(i);
-
-    return (
-      <div className="flex items-center justify-center gap-2 mt-4 p-4">
-        <button onClick={() => setCurrentPage(0)} disabled={currentPage === 0}
-          className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition">
-          <ChevronsLeft className="w-4 h-4" />
-        </button>
-        
-        <button onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}
-          className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition">
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-
-        {start > 0 && start > 1 && <span className="px-3 py-2 text-gray-500">...</span>}
-
-        {pages.map(page => (
-          <button key={page} onClick={() => setCurrentPage(page)}
-            className={`px-4 py-2 rounded-lg border transition font-medium ${
-              currentPage === page 
-                ? 'bg-blue-600 text-white border-blue-600' 
-                : 'bg-white border-gray-300 hover:bg-gray-50'
-            }`}>
-            {page + 1}
-          </button>
-        ))}
-
-        {end < totalPages - 1 && end < totalPages - 2 && <span className="px-3 py-2 text-gray-500">...</span>}
-
-        <button onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage === totalPages - 1}
-          className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition">
-          <ChevronRight className="w-4 h-4" />
-        </button>
-        
-        <button onClick={() => setCurrentPage(totalPages - 1)} disabled={currentPage === totalPages - 1}
-          className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition">
-          <ChevronsRight className="w-4 h-4" />
-        </button>
-      </div>
-    );
-  };
-
   return (
     <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
       <Toaster {...toastConfig} />
@@ -613,7 +564,7 @@ export default function AppointmentsSection() {
               )}
             </tbody>
           </table>
-          {renderPagination()}
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       )}
 

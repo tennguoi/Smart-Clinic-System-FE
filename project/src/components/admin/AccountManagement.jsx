@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   UserPlus, Edit, X, Eye, EyeOff, User, Upload,
   CheckCircle, AlertTriangle, Power, AlertCircle, Search,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
   UserCog
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
@@ -14,6 +13,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import adminAccountApi from '../../api/adminAccountApi';
 import React, { forwardRef } from 'react';
 import CountBadge from '../common/CountBadge';
+import Pagination from '../common/Pagination';
 
 // ====================== HELPER ======================
 const dateStringToDate = (dateStr) => {
@@ -83,70 +83,6 @@ const CustomDateInput = forwardRef(({ value, onClick, placeholder, required }, r
     readOnly
   />
 ));
-
-// ====================== PHÂN TRANG ======================
-const Pagination = ({ currentPage, totalPages, goToPage }) => {
-  if (totalPages <= 1) return null;
-
-  const maxVisible = 5;
-  let startPage = Math.max(0, currentPage - Math.floor(maxVisible / 2));
-  let endPage = Math.min(totalPages - 1, startPage + maxVisible - 1);
-
-  if (endPage - startPage + 1 < maxVisible) {
-    startPage = Math.max(0, endPage - maxVisible + 1);
-  }
-
-  return (
-    <div className="flex flex-wrap items-center justify-center gap-3 mt-8 py-4 border-t border-gray-200">
-
-      <button
-        onClick={() => goToPage(0)}
-        disabled={currentPage === 0}
-        className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
-      >
-        <ChevronsLeft className="w-5 h-5" />
-      </button>
-
-      <button
-        onClick={() => goToPage(currentPage - 1)}
-        disabled={currentPage === 0}
-        className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
-      >
-        <ChevronLeft className="w-5 h-5" />
-      </button>
-
-      {Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map((page) => (
-        <button
-          key={page}
-          onClick={() => goToPage(page)}
-          className={`px-4 py-2.5 rounded-lg border font-medium transition ${
-            currentPage === page
-              ? 'bg-blue-600 text-white border-blue-600'
-              : 'border-gray-300 hover:bg-gray-100'
-          }`}
-        >
-          {page + 1}
-        </button>
-      ))}
-
-      <button
-        onClick={() => goToPage(currentPage + 1)}
-        disabled={currentPage === totalPages - 1}
-        className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
-      >
-        <ChevronRight className="w-5 h-5" />
-      </button>
-
-      <button
-        onClick={() => goToPage(totalPages - 1)}
-        disabled={currentPage === totalPages - 1}
-        className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
-      >
-        <ChevronsRight className="w-5 h-5" />
-      </button>
-    </div>
-  );
-};
 
 // ====================== MAIN COMPONENT ======================
 export default function AccountManagement() {
@@ -631,7 +567,7 @@ export default function AccountManagement() {
         </div>
       )}
 
-      <Pagination currentPage={currentPage} totalPages={totalPages} goToPage={goToPage} />
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={goToPage} />
             {/* ====================== MODAL ====================== */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
