@@ -1,5 +1,6 @@
 // src/App.jsx
 import { Routes, Route } from "react-router-dom";
+import './api/i18n'; // ⭐ Import i18n configuration
 import StickyNavbar from "./components/StickyNavbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -23,6 +24,7 @@ import ProfilePage from "./pages/ProfilePage";
 import SecurityPage from "./pages/SecurityPage";
 import VerifyOTP from "./components/VerifyOTP";
 import ResetPassword from "./components/ResetPassword";
+
 // Dashboard Layout
 import AdminPage from "./pages/AdminPage";
 import StatisticsPage from "./components/admin/Statistics";
@@ -35,7 +37,6 @@ import DoctorManagement from "./components/admin/DoctorManagement";
 import ServiceManagement from "./components/admin/ServiceManagement";
 import ArticleManagement from "./components/admin/ArticleManagement";
 import AccountManagement from "./components/admin/AccountManagement";
-
 import ClinicManagement from "./components/admin/ClinicManagement";
 import PlaceholderSection from "./components/common/PlaceholderSection";
 
@@ -162,4 +163,3 @@ function App() {
 }
 
 export default App;
-//  <Route path="statistics" element={<StatisticsPage />}
