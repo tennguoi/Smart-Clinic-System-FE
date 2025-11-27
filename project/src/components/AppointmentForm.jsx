@@ -70,7 +70,7 @@ export default function AppointmentForm() {
     return 'Vui lòng chọn thời gian trong khung giờ: 8:00-12:00 hoặc 14:00-18:00';
   };
 
-  // Default date = minDate
+  // Default date = minDate (ISO format for date picker)
   useEffect(() => {
     if (!formData.date && minDate) {
       setFormData((prev) => ({ ...prev, date: minDate }));

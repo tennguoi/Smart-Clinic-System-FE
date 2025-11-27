@@ -42,6 +42,10 @@ export default function ClinicManagement() {
     email: '',
     website: '',
     logoUrl: '',
+    morningStartTime: '',
+    morningEndTime: '',
+    afternoonStartTime: '',
+    afternoonEndTime: '',
   });
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
@@ -73,6 +77,10 @@ export default function ClinicManagement() {
           email: data.email || '',
           website: data.website || '',
           logoUrl: normalizedLogoUrl,
+          morningStartTime: data.morningStartTime || '',
+          morningEndTime: data.morningEndTime || '',
+          afternoonStartTime: data.afternoonStartTime || '',
+          afternoonEndTime: data.afternoonEndTime || '',
         };
         
         console.log('📝 Setting form data:', newFormData);
@@ -189,6 +197,32 @@ export default function ClinicManagement() {
         }
       }
 
+      // Validate working hours
+      if (formData.morningStartTime && formData.morningEndTime) {
+        if (formData.morningStartTime >= formData.morningEndTime) {
+          setError('Giờ kết thúc buổi sáng phải sau giờ bắt đầu');
+          setSaving(false);
+          return;
+        }
+      }
+
+      if (formData.afternoonStartTime && formData.afternoonEndTime) {
+        if (formData.afternoonStartTime >= formData.afternoonEndTime) {
+          setError('Giờ kết thúc buổi chiều phải sau giờ bắt đầu');
+          setSaving(false);
+          return;
+        }
+      }
+
+      // Validate morning ends before afternoon starts (if both are set)
+      if (formData.morningEndTime && formData.afternoonStartTime) {
+        if (formData.morningEndTime >= formData.afternoonStartTime) {
+          setError('Giờ kết thúc buổi sáng phải trước giờ bắt đầu buổi chiều');
+          setSaving(false);
+          return;
+        }
+      }
+
       // Upload logo if new file is selected
       let finalLogoUrl = formData.logoUrl;
       let updatedClinicData = null;
@@ -222,6 +256,10 @@ export default function ClinicManagement() {
           ...formData,
           logoUrl: relativeLogoUrl,
           website: normalizedWebsite || formData.website,
+          morningStartTime: formData.morningStartTime || null,
+          morningEndTime: formData.morningEndTime || null,
+          afternoonStartTime: formData.afternoonStartTime || null,
+          afternoonEndTime: formData.afternoonEndTime || null,
         };
         
         console.log('📤 Submitting data to backend:', dataToSubmit);
@@ -241,6 +279,10 @@ export default function ClinicManagement() {
         email: updatedClinicData.email || '',
         website: updatedClinicData.website || '',
         logoUrl: normalizedLogoUrl,
+        morningStartTime: updatedClinicData.morningStartTime || '',
+        morningEndTime: updatedClinicData.morningEndTime || '',
+        afternoonStartTime: updatedClinicData.afternoonStartTime || '',
+        afternoonEndTime: updatedClinicData.afternoonEndTime || '',
       };
       
       console.log('📝 Updating form with new data:', newFormData);
@@ -324,6 +366,91 @@ export default function ClinicManagement() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Logo Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Logo Phòng Khám
+            </label>
+            
+            {/* File Input */}
+            <div className="flex items-center gap-3 mb-3">
+              <label className={`flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-300 rounded-lg transition-colors ${
+                isEditing ? 'cursor-pointer hover:bg-blue-100' : 'cursor-not-allowed opacity-50'
+              }`}>
+                <Upload className="w-5 h-5 text-blue-600" />
+                <span className="text-sm font-medium text-blue-600">
+                  {logoFile ? 'Đổi ảnh' : 'Chọn ảnh từ máy'}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoFileChange}
+                  disabled={!isEditing}
+                  className="hidden"
+                />
+              </label>
+              
+              {logoPreview && isEditing && (
+                <button
+                  type="button"
+                  onClick={handleRemoveLogo}
+                  className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Xóa logo"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+
+            {/* Preview */}
+            {logoPreview && (
+              <div className="mt-3">
+                <p className="text-sm text-gray-600 mb-2">Xem trước logo:</p>
+                <div className="relative inline-block">
+                  <img
+                    src={logoPreview}
+                    alt="Logo preview"
+                    className="max-w-xs h-32 object-contain border border-gray-200 rounded-lg p-2 bg-gray-50"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                  {logoFile && (
+                    <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                      Mới
+                    </div>
+                  )}
+                </div>
+                {logoFile && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    File: {logoFile.name} ({(logoFile.size / 1024).toFixed(2)} KB)
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Current logo info */}
+            {!logoPreview && formData.logoUrl && (
+              <div className="mt-3">
+                <p className="text-sm text-gray-600 mb-2">Logo hiện tại:</p>
+                <img
+                  src={formData.logoUrl}
+                  alt="Current logo"
+                  className="max-w-xs h-32 object-contain border border-gray-200 rounded-lg p-2 bg-gray-50"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
+
+            {!logoPreview && !formData.logoUrl && (
+              <p className="text-sm text-gray-500 mt-2">
+                Chưa có logo. Vui lòng chọn file ảnh từ máy tính.
+              </p>
+            )}
+          </div>
+
           {/* Tên phòng khám */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -418,89 +545,77 @@ export default function ClinicManagement() {
             </p>
           </div>
 
-          {/* Logo Upload */}
+          {/* Giờ làm việc buổi sáng */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Logo Phòng Khám
+              Giờ làm việc buổi sáng
             </label>
-            
-            {/* File Input */}
-            <div className="flex items-center gap-3 mb-3">
-              <label className={`flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-300 rounded-lg transition-colors ${
-                isEditing ? 'cursor-pointer hover:bg-blue-100' : 'cursor-not-allowed opacity-50'
-              }`}>
-                <Upload className="w-5 h-5 text-blue-600" />
-                <span className="text-sm font-medium text-blue-600">
-                  {logoFile ? 'Đổi ảnh' : 'Chọn ảnh từ máy'}
-                </span>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">Giờ bắt đầu</label>
                 <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleLogoFileChange}
+                  type="time"
+                  name="morningStartTime"
+                  value={formData.morningStartTime}
+                  onChange={handleInputChange}
                   disabled={!isEditing}
-                  className="hidden"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                  }`}
                 />
-              </label>
-              
-              {logoPreview && isEditing && (
-                <button
-                  type="button"
-                  onClick={handleRemoveLogo}
-                  className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Xóa logo"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
+              </div>
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">Giờ kết thúc</label>
+                <input
+                  type="time"
+                  name="morningEndTime"
+                  value={formData.morningEndTime}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                  }`}
+                />
+              </div>
             </div>
+          </div>
 
-            {/* Preview */}
-            {logoPreview && (
-              <div className="mt-3">
-                <p className="text-sm text-gray-600 mb-2">Xem trước logo:</p>
-                <div className="relative inline-block">
-                  <img
-                    src={logoPreview}
-                    alt="Logo preview"
-                    className="max-w-xs h-32 object-contain border border-gray-200 rounded-lg p-2 bg-gray-50"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                  {logoFile && (
-                    <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
-                      Mới
-                    </div>
-                  )}
-                </div>
-                {logoFile && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    File: {logoFile.name} ({(logoFile.size / 1024).toFixed(2)} KB)
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Current logo info */}
-            {!logoPreview && formData.logoUrl && (
-              <div className="mt-3">
-                <p className="text-sm text-gray-600 mb-2">Logo hiện tại:</p>
-                <img
-                  src={formData.logoUrl}
-                  alt="Current logo"
-                  className="max-w-xs h-32 object-contain border border-gray-200 rounded-lg p-2 bg-gray-50"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
+          {/* Giờ làm việc buổi chiều */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Giờ làm việc buổi chiều
+            </label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">Giờ bắt đầu</label>
+                <input
+                  type="time"
+                  name="afternoonStartTime"
+                  value={formData.afternoonStartTime}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                  }`}
                 />
               </div>
-            )}
-
-            {!logoPreview && !formData.logoUrl && (
-              <p className="text-sm text-gray-500 mt-2">
-                Chưa có logo. Vui lòng chọn file ảnh từ máy tính.
-              </p>
-            )}
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">Giờ kết thúc</label>
+                <input
+                  type="time"
+                  name="afternoonEndTime"
+                  value={formData.afternoonEndTime}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                  }`}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Để trống nếu phòng khám không làm việc buổi đó
+            </p>
           </div>
 
           {/* Thông tin bổ sung (nếu có) */}
@@ -551,6 +666,10 @@ export default function ClinicManagement() {
                         email: clinicInfo.email || '',
                         website: clinicInfo.website || '',
                         logoUrl: normalizedLogoUrl,
+                        morningStartTime: clinicInfo.morningStartTime || '',
+                        morningEndTime: clinicInfo.morningEndTime || '',
+                        afternoonStartTime: clinicInfo.afternoonStartTime || '',
+                        afternoonEndTime: clinicInfo.afternoonEndTime || '',
                       });
                       setLogoPreview(normalizedLogoUrl || null);
                     }

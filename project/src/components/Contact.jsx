@@ -72,18 +72,28 @@ export default function Contact() {
               </div>
             )}
 
-            <div className="flex items-start space-x-4 p-4 rounded-xl hover:bg-cyan-50/50 transition-all group">
-              <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                <Clock className="w-7 h-7 text-white" />
+            {(clinicInfo?.morningStartTime || clinicInfo?.afternoonStartTime) && (
+              <div className="flex items-start space-x-4 p-4 rounded-xl hover:bg-cyan-50/50 transition-all group">
+                <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                  <Clock className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-1">Giờ Làm Việc</h3>
+                  <div className="text-gray-600 space-y-1">
+                    {clinicInfo.morningStartTime && clinicInfo.morningEndTime && (
+                      <p>
+                        <span className="font-medium">Buổi sáng:</span> {clinicInfo.morningStartTime} - {clinicInfo.morningEndTime}
+                      </p>
+                    )}
+                    {clinicInfo.afternoonStartTime && clinicInfo.afternoonEndTime && (
+                      <p>
+                        <span className="font-medium">Buổi chiều:</span> {clinicInfo.afternoonStartTime} - {clinicInfo.afternoonEndTime}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-gray-900 mb-1">Giờ Làm Việc</h3>
-                <p className="text-gray-600">
-                  Thứ 2 - Thứ 6: 8:00 - 20:00<br />
-                  Thứ 7 - Chủ Nhật: 8:00 - 17:00
-                </p>
-              </div>
-            </div>
+            )}
 
             {clinicPhone && (
               <div className="bg-gradient-to-br from-cyan-50 to-emerald-50 border-2 border-cyan-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow">
