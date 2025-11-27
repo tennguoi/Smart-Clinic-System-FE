@@ -13,6 +13,9 @@ export const medicalRecordApi = {
 		return data;
 	},
 
+	// Backend tự động xử lý role:
+	// - Admin: Trả về TẤT CẢ records
+	// - Doctor: Trả về records của mình
 	listMine: async () => {
 		const { data } = await axiosInstance.get('/api/doctor/medical-records/mine');
 		return Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];

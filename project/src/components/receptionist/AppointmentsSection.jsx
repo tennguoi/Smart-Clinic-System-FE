@@ -62,7 +62,7 @@ export default function AppointmentsSection() {
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [searchQueryAppointments, setSearchQueryAppointments] = useState('');
-  const pageSize = 10;
+  const pageSize = 8;
 
   // Load appointments
   useEffect(() => {

@@ -1,10 +1,11 @@
 // src/components/doctor/MedicalRecordHistory.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import { Search, ClipboardList, X } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import CountBadge from '../common/CountBadge';
+import Pagination from '../common/Pagination';
 
 const MedicalRecordHistory = () => {
   const [records, setRecords] = useState([]);
@@ -12,10 +13,17 @@ const MedicalRecordHistory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(0);
+  const pageSize = 10;
 
   const fetchHistory = async () => {
     setLoading(true);
     try {
+      // Backend tự động check role trong token:
+      // - Admin → trả về TẤT CẢ records
+      // - Doctor → chỉ trả về records của mình
       const data = await medicalRecordApi.listMine();
       setRecords(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -43,38 +51,49 @@ const MedicalRecordHistory = () => {
     setSearchTerm('');
     setFilterStartDate('');
     setFilterEndDate('');
+    setCurrentPage(0);
   };
 
   const handleClearSearch = () => {
     setSearchTerm('');
+    setCurrentPage(0);
   };
 
   // Lọc theo tên bệnh nhân, chẩn đoán và ngày khám
-  const filteredRecords = records.filter((record) => {
-    // Lọc theo search term
-    const matchesSearch = 
-      record.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.diagnosis?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Lọc theo ngày khám
-    let matchesDate = true;
-    if (filterStartDate || filterEndDate) {
-      const recordDate = record.examinationDate ? new Date(record.examinationDate).toISOString().split('T')[0] : null;
+  const filteredRecords = useMemo(() => {
+    return records.filter((record) => {
+      // Lọc theo search term
+      const matchesSearch = 
+        record.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        record.diagnosis?.toLowerCase().includes(searchTerm.toLowerCase());
       
-      if (recordDate) {
-        if (filterStartDate && recordDate < filterStartDate) {
+      // Lọc theo ngày khám
+      let matchesDate = true;
+      if (filterStartDate || filterEndDate) {
+        const recordDate = record.examinationDate ? new Date(record.examinationDate).toISOString().split('T')[0] : null;
+        
+        if (recordDate) {
+          if (filterStartDate && recordDate < filterStartDate) {
+            matchesDate = false;
+          }
+          if (filterEndDate && recordDate > filterEndDate) {
+            matchesDate = false;
+          }
+        } else {
           matchesDate = false;
         }
-        if (filterEndDate && recordDate > filterEndDate) {
-          matchesDate = false;
-        }
-      } else {
-        matchesDate = false;
       }
-    }
-    
-    return matchesSearch && matchesDate;
-  });
+      
+      return matchesSearch && matchesDate;
+    });
+  }, [records, searchTerm, filterStartDate, filterEndDate]);
+
+  // Tính toán phân trang
+  const totalPages = Math.ceil(filteredRecords.length / pageSize);
+  const currentPageRecords = useMemo(() => {
+    const startIndex = currentPage * pageSize;
+    return filteredRecords.slice(startIndex, startIndex + pageSize);
+  }, [filteredRecords, currentPage, pageSize]);
 
   return (
     <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
@@ -170,8 +189,8 @@ const MedicalRecordHistory = () => {
           <thead className="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0">
             <tr>
               <th className="px-4 py-3 text-center w-16">STT</th>
-              <th className="px-4 py-3 text-left">Ngày khám</th>
-              <th className="px-4 py-3 text-left">Bệnh nhân</th>
+              <th className="px-4 py-3 text-left w-32">Ngày khám</th>
+              <th className="px-4 py-3 text-left w-48">Bệnh nhân</th>
               <th className="px-4 py-3 text-left">Chẩn đoán</th>
               <th className="px-4 py-3 text-left">Ghi chú điều trị</th>
             </tr>
@@ -184,7 +203,7 @@ const MedicalRecordHistory = () => {
                   Đang tải dữ liệu...
                 </td>
               </tr>
-            ) : filteredRecords.length === 0 ? (
+            ) : currentPageRecords.length === 0 ? (
               <tr>
                 <td colSpan="5" className="px-4 py-10 text-center text-gray-500">
                   {searchTerm
@@ -193,20 +212,20 @@ const MedicalRecordHistory = () => {
                 </td>
               </tr>
             ) : (
-              filteredRecords.map((record, index) => (
+              currentPageRecords.map((record, index) => (
                 <tr key={record.id} className="border-b hover:bg-gray-50">
                   <td className="px-4 py-3 text-center text-sm font-medium text-gray-600">
-                    {index + 1}
+                    {currentPage * pageSize + index + 1}
                   </td>
-                  <td className="px-4 py-3 text-sm">
+                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
                     {record.createdAt
                       ? new Date(record.createdAt).toLocaleDateString('vi-VN')
                       : 'N/A'}
                   </td>
-                  <td className="px-4 py-3 text-sm font-medium">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900">
                     {record.patientName || 'Khách vãng lai'}
                   </td>
-                  <td className="px-4 py-3 text-sm">{record.diagnosis || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">{record.diagnosis || '-'}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">
                     {record.treatmentNotes || '-'}
                   </td>
@@ -215,6 +234,13 @@ const MedicalRecordHistory = () => {
             )}
           </tbody>
         </table>
+        
+        {/* Pagination */}
+        <Pagination 
+          currentPage={currentPage} 
+          totalPages={totalPages} 
+          onPageChange={setCurrentPage} 
+        />
       </div>
     </div>
   );

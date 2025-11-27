@@ -28,7 +28,7 @@ export default function ArticleManagement() {
   const [articleToDelete, setArticleToDelete] = useState(null);
 
   const [page, setPage] = useState(0);
-  const size = 6;
+  const size = 8;
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
 
