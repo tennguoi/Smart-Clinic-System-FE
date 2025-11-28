@@ -1,5 +1,5 @@
 // src/components/common/Header.jsx
-import { Search, Bell, User2, Shield, LogOut } from 'lucide-react';
+import { Search, Bell, Settings, LogOut } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
@@ -7,10 +7,11 @@ import axiosInstance from '../../utils/axiosConfig';
 
 export default function Header() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [userInfo, setUserInfo] = useState(authService.getUserInfo() || {});
   const navigate = useNavigate();
-  const user = authService.getUserInfo() || {};
-  const fullName = user.fullName || 'Người dùng';
-  const email = user.email || '';
+  const fullName = userInfo.fullName || 'Người dùng';
+  const email = userInfo.email || '';
+  const photoUrl = userInfo.photoUrl || '';
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -20,6 +21,16 @@ export default function Header() {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Lắng nghe sự thay đổi user info từ Profile page
+  useEffect(() => {
+    const handleUserUpdate = () => {
+      setUserInfo(authService.getUserInfo() || {});
+    };
+    
+    window.addEventListener('userInfoUpdated', handleUserUpdate);
+    return () => window.removeEventListener('userInfoUpdated', handleUserUpdate);
   }, []);
 
   const handleLogout = async () => {
@@ -56,8 +67,18 @@ export default function Header() {
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="flex items-center gap-3 hover:bg-gray-50 px-3 py-2 rounded-lg transition"
             >
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white font-bold shadow-md">
-                {fullName.slice(0, 2).toUpperCase()}
+              <div className="w-10 h-10 rounded-full shadow-md overflow-hidden">
+                {photoUrl ? (
+                  <img 
+                    src={`http://localhost:8082${photoUrl}`} 
+                    alt={fullName} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold">
+                    {fullName.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
               </div>
               <div className="text-left">
                 <p className="font-semibold text-gray-800">{fullName}</p>
@@ -81,19 +102,8 @@ export default function Header() {
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition"
                   >
-                    <User2 className="w-5 h-5 text-gray-600" />
-                    <span className="font-medium">Hồ Sơ Cá Nhân</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      navigate('/security');
-                      setIsDropdownOpen(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition"
-                  >
-                    <Shield className="w-5 h-5 text-gray-600" />
-                    <span className="font-medium">Bảo Mật & 2FA</span>
+                    <Settings className="w-5 h-5 text-gray-600" />
+                    <span className="font-medium">Cài Đặt</span>
                   </button>
 
                   <div className="border-t border-gray-200 my-2 mx-4"></div>

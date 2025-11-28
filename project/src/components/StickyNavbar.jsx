@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Phone } from 'lucide-react';
+import { Menu, X, Phone, Clock } from 'lucide-react';
 import { useClinic } from '../contexts/ClinicContext';
 
 export default function StickyNavbar() {
@@ -13,6 +13,9 @@ export default function StickyNavbar() {
   const cacheBuster = clinicInfo?.updatedAt ? new Date(clinicInfo.updatedAt).getTime() : Date.now();
   const clinicLogoUrl = baseLogoUrl ? `${baseLogoUrl}?v=${cacheBuster}` : '';
   const showLoadingPlaceholder = loading && !clinicInfo;
+  const hasMorning = clinicInfo?.morningStartTime && clinicInfo?.morningEndTime;
+  const hasAfternoon = clinicInfo?.afternoonStartTime && clinicInfo?.afternoonEndTime;
+  const hasWorkingHours = hasMorning || hasAfternoon;
   const navLinks = [
     { label: 'Trang Chủ', path: '/' },
     { label: 'Giới Thiệu', path: '/about' },
@@ -73,11 +76,23 @@ export default function StickyNavbar() {
                   Logo
                 </div>
               )}
-              <div className="flex flex-col justify-center">
+              <div className="flex flex-col justify-center -space-y-0.5">
                 {clinicName ? (
-                  <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight whitespace-nowrap">
-                    {clinicName}
-                  </h1>
+                  <>
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">
+                      {clinicName}
+                    </h1>
+                    {hasWorkingHours && (
+                      <div className="flex items-center gap-1 text-[11px] text-cyan-600 leading-tight">
+                        <Clock className="w-3 h-3 flex-shrink-0" />
+                        <span className="whitespace-nowrap">
+                          {hasMorning && `${clinicInfo.morningStartTime}-${clinicInfo.morningEndTime}`}
+                          {hasMorning && hasAfternoon && ' | '}
+                          {hasAfternoon && `${clinicInfo.afternoonStartTime}-${clinicInfo.afternoonEndTime}`}
+                        </span>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <p className="text-base text-gray-500">
                     {showLoadingPlaceholder ? 'Tên phòng khám' : 'Chưa cập nhật tên phòng khám'}

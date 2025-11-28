@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Stethoscope, Mail, Phone, User } from 'lucide-react';
 import axiosInstance from '../../utils/axiosConfig';
+import CountBadge from '../common/CountBadge';
 
 export default function DoctorManagement() {
   const [doctors, setDoctors] = useState([]);
@@ -42,14 +43,18 @@ export default function DoctorManagement() {
   };
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Đội ngũ Bác sĩ</h1>
-          <p className="text-gray-600 mt-1">Danh sách các bác sĩ trong hệ thống</p>
-        </div>
-        <div className="bg-blue-100 px-4 py-2 rounded-lg">
-          <span className="text-blue-800 font-semibold">Tổng số: {doctors.length} bác sĩ</span>
+    <div className="px-8 pt-4 pb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div className="flex items-center gap-4">
+          <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
+            <Stethoscope className="w-9 h-9 text-blue-600" />
+            <span>Quản Lý Bác Sĩ</span>
+          </h1>
+          <CountBadge 
+            currentCount={doctors.length} 
+            totalCount={doctors.length} 
+            label="bác sĩ" 
+          />
         </div>
       </div>
 

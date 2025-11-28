@@ -2,6 +2,7 @@
 import Sidebar from '../common/Sidebar';
 import { Users, ClipboardList, History, UserCircle, Shield, BarChart3,CalendarDays, FileText  } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useClinic } from '../../contexts/ClinicContext';
 
 const doctorMenuItems = [
   { id: 'stats', label: 'Thống kê', icon: BarChart3 },
@@ -14,6 +15,7 @@ const doctorMenuItems = [
 export default function DoctorSidebar({ activeMenu: propActiveMenu, onMenuChange }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { clinicInfo } = useClinic();
 
   const currentPath = location.pathname;
   const activeMenu = propActiveMenu || 
@@ -42,7 +44,7 @@ export default function DoctorSidebar({ activeMenu: propActiveMenu, onMenuChange
 
   return (
     <Sidebar
-      title="HealthCare Doctor"
+      title={clinicInfo?.name}
       menuItems={doctorMenuItems}
       activeMenu={activeMenu}
       onMenuChange={handleMenuChange}

@@ -20,7 +20,6 @@ import Login from "./components/Login";
 import ForgotPassword from "./components/ForgotPassword";
 import Verify2FA from "./components/Verify2FA";
 import ProfilePage from "./pages/ProfilePage";
-import SecurityPage from "./pages/SecurityPage";
 import VerifyOTP from "./components/VerifyOTP";
 import ResetPassword from "./components/ResetPassword";
 // Dashboard Layout
@@ -30,7 +29,6 @@ import DoctorPage from "./pages/DoctorPage";
 import ReceptionPage from "./pages/ReceptionPage";
 
 // Admin Components
-import RevenueTable from "./components/admin/RevenueTable";
 import DoctorManagement from "./components/admin/DoctorManagement";
 import ServiceManagement from "./components/admin/ServiceManagement";
 import ArticleManagement from "./components/admin/ArticleManagement";
@@ -45,7 +43,7 @@ import DoctorStatsDashboard from "./components/doctor/DoctorStatsDashboard";
 import MedicalRecordsSection from "./components/doctor/MedicalRecordsSection";
 import MedicalRecordHistory from "./components/doctor/MedicalRecordHistory";
 
-// Reception Components
+// Reception Components (can be reused by Admin)
 import AppointmentsSection from "./components/receptionist/AppointmentsSection";
 import PatientRecordsSection from "./components/receptionist/PatientRecordsSection";
 import ClinicRoomManagement from "./components/receptionist/ClinicRoomManagement";
@@ -63,7 +61,6 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-2fa" element={<Verify2FA />} />
         <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/security" element={<SecurityPage />} />
         <Route path="/verify-otp" element={<VerifyOTP />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
@@ -73,7 +70,7 @@ function App() {
           element={
             <>
               <StickyNavbar />
-              <div className="w-full h-16 sm:h-20 lg:h-24" aria-hidden="true" />
+              <div className="w-full h-24" aria-hidden="true" />
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/about" element={<AboutPage />} />
@@ -99,14 +96,18 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<RevenueTable />} />
+          <Route index element={<StatisticsPage />} />
           <Route path="statistics" element={<StatisticsPage />} />  
-          <Route path="revenue" element={<RevenueTable />} />
-          <Route path="doctors" element={<DoctorManagement />} />
-          <Route path="services" element={<ServiceManagement />} />
-          <Route path="articles" element={<ArticleManagement />} />
-          <Route path="accounts" element={<AccountManagement />} />
           <Route path="clinic" element={<ClinicManagement />} />
+          <Route path="accounts" element={<AccountManagement />} />
+          <Route path="articles" element={<ArticleManagement />} />
+          <Route path="services" element={<ServiceManagement />} />
+          <Route path="appointments" element={<AppointmentsSection />} />
+          <Route path="rooms" element={<ClinicRoomManagement />} />
+          <Route path="medical-records" element={<MedicalRecordHistory />} />
+          <Route path="invoices" element={<InvoicesSection isDoctorView={true} />} />
+          <Route path="doctors" element={<DoctorManagement />} />
+          
           <Route path="*" element={<PlaceholderSection title="Chức năng" message="Sắp ra mắt..." />} />
         </Route>
 
@@ -143,7 +144,7 @@ function App() {
         <Route
           path="/reception"
           element={
-            <ProtectedRoute allowedRoles={["ROLE_TIEP_TAN", "ROLE_ADMIN"]}>
+            <ProtectedRoute allowedRoles={["ROLE_TIEP_TAN"]}>
               <ReceptionPage />
             </ProtectedRoute>
           }

@@ -1,4 +1,4 @@
-import { Facebook, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Mail, Phone, MapPin, Clock } from 'lucide-react';
 import { useClinic } from '../contexts/ClinicContext';
 
 export default function Footer() {
@@ -148,6 +148,19 @@ export default function Footer() {
                   >
                     {clinicInfo.website}
                   </a>
+                </li>
+              )}
+              {(clinicInfo?.morningStartTime || clinicInfo?.afternoonStartTime) && (
+                <li className="flex items-start space-x-2">
+                  <Clock className="w-4 h-4 mt-1 flex-shrink-0" />
+                  <div className="space-y-1">
+                    {clinicInfo.morningStartTime && clinicInfo.morningEndTime && (
+                      <div>Sáng: {clinicInfo.morningStartTime} - {clinicInfo.morningEndTime}</div>
+                    )}
+                    {clinicInfo.afternoonStartTime && clinicInfo.afternoonEndTime && (
+                      <div>Chiều: {clinicInfo.afternoonStartTime} - {clinicInfo.afternoonEndTime}</div>
+                    )}
+                  </div>
                 </li>
               )}
             </ul>

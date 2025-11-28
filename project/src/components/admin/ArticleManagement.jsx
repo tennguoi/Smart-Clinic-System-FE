@@ -1,37 +1,14 @@
 // src/components/admin/ArticleManagement.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Plus, Edit, Trash2, X, FileText, Upload, Image as ImageIcon,
-  CheckCircle, AlertTriangle
+  AlertTriangle, Eye
 } from "lucide-react";
+import toast, { Toaster } from 'react-hot-toast';
+import { toastConfig } from '../../config/toastConfig';
 import axiosInstance from "../../utils/axiosConfig";
-
-// ====================== TOAST NOTIFICATION ======================
-const ToastNotification = ({ message, type, onClose }) => {
-  if (!message) return null;
-
-  const styles = {
-    success: 'bg-green-600',
-    error: 'bg-red-600'
-  };
-  const Icon = type === 'success' ? CheckCircle : AlertTriangle;
-
-  return (
-    <div
-      className={`fixed top-4 right-4 z-[100] p-4 rounded-xl shadow-2xl text-white ${styles[type]} flex items-center gap-3 animate-bounce-in transition-all`}
-      style={{ minWidth: '320px' }}
-    >
-      <Icon className="w-6 h-6 flex-shrink-0" />
-      <span className="font-medium">{message}</span>
-      <button
-        onClick={onClose}
-        className="ml-auto opacity-70 hover:opacity-100 p-1 rounded-full hover:bg-white/20 transition"
-      >
-        <X className="w-5 h-5" />
-      </button>
-    </div>
-  );
-};
+import CountBadge from '../common/CountBadge';
+import Pagination from '../common/Pagination';
 
 export default function ArticleManagement() {
   const [articles, setArticles] = useState([]);
@@ -42,11 +19,18 @@ export default function ArticleManagement() {
   const [modalMode, setModalMode] = useState("create");
   const [selectedArticle, setSelectedArticle] = useState(null);
 
-  const [toast, setToast] = useState({ message: "", type: "success" });
+  const isViewMode = modalMode === 'view';
+  const isCreateMode = modalMode === 'create';
+  const isEditMode = modalMode === 'edit';
+
+  // Xác nhận xóa
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [articleToDelete, setArticleToDelete] = useState(null);
 
   const [page, setPage] = useState(0);
-  const size = 6;
+  const size = 8;
   const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
 
   const [filterTitle, setFilterTitle] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
@@ -68,84 +52,161 @@ export default function ArticleManagement() {
     image: "",
   });
 
-  const showToast = (message, type = "success") => {
-    setToast({ message, type });
-    setTimeout(() => setToast({ message: "", type: "success" }), 4000);
+
+  // Mapping cố định cho các danh mục phổ biến (chỉ cần 1 variant, normalize sẽ xử lý)
+  const fixedCategoryColors = {
+    "sức khỏe": "bg-green-100 text-green-700 border-green-200",
+    "tư vấn": "bg-blue-100 text-blue-700 border-blue-200",
+    "điều trị": "bg-purple-100 text-purple-700 border-purple-200",
+    "cảnh báo": "bg-red-100 text-red-700 border-red-200",
+    "công nghệ": "bg-orange-100 text-orange-700 border-orange-200",
+    "tin tức": "bg-cyan-100 text-cyan-700 border-cyan-200",
+    "nghiên cứu": "bg-indigo-100 text-indigo-700 border-indigo-200",
+    "phòng bệnh": "bg-teal-100 text-teal-700 border-teal-200",
   };
 
-  const normalizeCategory = (str) => {
-    if (!str) return "";
-    return str
-      .trim()
-      .replace(/\s+/g, " ")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase();
+  // Palette màu dự phòng cho danh mục khác
+  const colorPalette = [
+    "bg-pink-100 text-pink-700 border-pink-200",
+    "bg-amber-100 text-amber-700 border-amber-200",
+    "bg-lime-100 text-lime-700 border-lime-200",
+    "bg-rose-100 text-rose-700 border-rose-200",
+    "bg-violet-100 text-violet-700 border-violet-200",
+    "bg-sky-100 text-sky-700 border-sky-200",
+    "bg-emerald-100 text-emerald-700 border-emerald-200",
+    "bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200",
+  ];
+
+  // Hàm tự động gán màu cho danh mục
+  const getCategoryColor = (category) => {
+    if (!category) return "bg-gray-100 text-gray-700 border-gray-200";
+    
+    // Normalize: trim + lowercase để đảm bảo nhất quán
+    const normalized = category.trim().toLowerCase();
+    
+    // Tìm trong mapping cố định
+    if (fixedCategoryColors[normalized]) {
+      return fixedCategoryColors[normalized];
+    }
+    
+    // Nếu không có trong mapping, dùng hash (dùng normalized để đảm bảo nhất quán)
+    const hash = normalized.split('').reduce((acc, char) => {
+      return char.charCodeAt(0) + ((acc << 5) - acc);
+    }, 0);
+    
+    const index = Math.abs(hash) % colorPalette.length;
+    return colorPalette[index];
   };
 
-  const categoryColors = {
-    "suckhoe": "bg-green-100 text-green-700",
-    "tuvan": "bg-blue-100 text-blue-700",
-    "dieutri": "bg-purple-100 text-purple-700",
-    "canhbao": "bg-red-100 text-red-700",
-    "congnghe": "bg-orange-100 text-orange-700",
-    default: "bg-gray-100 text-gray-700",
-  };
+  const hasActiveFilters = useMemo(() => {
+    return !!(filterTitle || filterCategory || filterStartDate || filterEndDate);
+  }, [filterTitle, filterCategory, filterStartDate, filterEndDate]);
 
   useEffect(() => {
     fetchArticles();
-  }, [page]);
+  }, [page, filterTitle, filterCategory, filterStartDate, filterEndDate]);
 
   const fetchArticles = async () => {
     setLoading(true);
     try {
-      const res = await axiosInstance.get(`/api/public/articles?page=${page}&size=${size}`);
+      // Kiểm tra filter trực tiếp thay vì dùng hasActiveFilters
+      const hasFilters = !!(filterTitle || filterCategory || filterStartDate || filterEndDate);
+      
+      // Nếu có filter, fetch tất cả để filter client-side
+      // Nếu không, chỉ fetch theo page
+      const endpoint = hasFilters 
+        ? `/api/public/articles?page=0&size=1000`  // Fetch all
+        : `/api/public/articles?page=${page}&size=${size}`;
+      
+      const res = await axiosInstance.get(endpoint);
       const list = res.data.content || [];
+      
       setArticles(list);
-      setFilteredArticles(list);
-      const cateList = [...new Set(list.map(a => a.category))].filter(Boolean);
+      
+      // Filter client-side
+      let filtered = [...list];
+      
+      if (filterTitle.trim()) {
+        filtered = filtered.filter(a => a.title.toLowerCase().includes(filterTitle.toLowerCase()));
+      }
+      if (filterCategory) {
+        filtered = filtered.filter(a => a.category === filterCategory);
+      }
+      // Validate: Đến ngày phải >= Từ ngày
+      if (filterStartDate && filterEndDate && filterEndDate < filterStartDate) {
+        toast.error("Khoảng ngày không hợp lệ: Đến ngày phải lớn hơn hoặc bằng Từ ngày");
+        setFilteredArticles([]);
+        setTotalPages(0);
+        setTotalElements(0);
+        setLoading(false);
+        return;
+      }
+
+      if (filterStartDate) {
+        filtered = filtered.filter(a => {
+          if (!a.publishedAt) return false;
+          const articleDate = new Date(a.publishedAt);
+          const articleDateStr = articleDate.toISOString().split('T')[0]; // YYYY-MM-DD
+          return articleDateStr >= filterStartDate;
+        });
+      }
+      if (filterEndDate) {
+        filtered = filtered.filter(a => {
+          if (!a.publishedAt) return false;
+          const articleDate = new Date(a.publishedAt);
+          const articleDateStr = articleDate.toISOString().split('T')[0]; // YYYY-MM-DD
+          return articleDateStr <= filterEndDate;
+        });
+      }
+      
+      setFilteredArticles(filtered);
+      
+      // Categories từ filtered data
+      const cateList = [...new Set(filtered.map(a => a.category))].filter(Boolean);
       setCategories(cateList);
-      setTotalPages(res.data.totalPages || 0);
+      
+      // Tính lại totalPages và totalElements dựa trên filtered data
+      if (hasFilters) {
+        setTotalPages(Math.ceil(filtered.length / size));
+        setTotalElements(filtered.length);
+      } else {
+        setTotalPages(res.data.totalPages || 0);
+        setTotalElements(res.data.totalElements || 0);
+      }
     } catch (err) {
-      showToast("Không thể tải danh sách bài viết", "error");
+      toast.error("Không thể tải danh sách tin tức");
+      setFilteredArticles([]);
+      setTotalPages(0);
+      setTotalElements(0);
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    let data = [...articles];
-
-    if (filterTitle.trim()) {
-      data = data.filter(a => a.title.toLowerCase().includes(filterTitle.toLowerCase()));
-    }
-    if (filterCategory) data = data.filter(a => a.category === filterCategory);
-    if (filterStartDate) {
-      const start = new Date(filterStartDate);
-      data = data.filter(a => new Date(a.publishedAt) >= start);
-    }
-    if (filterEndDate) {
-      const end = new Date(filterEndDate);
-      end.setHours(23, 59, 59, 999);
-      data = data.filter(a => new Date(a.publishedAt) <= end);
-    }
-
-    setFilteredArticles(data);
-  }, [filterTitle, filterCategory, filterStartDate, filterEndDate, articles]);
 
   const resetFilter = () => {
     setFilterTitle("");
     setFilterCategory("");
     setFilterStartDate("");
     setFilterEndDate("");
+    setPage(0);
   };
+
+  // Lấy data cho page hiện tại
+  const currentPageArticles = useMemo(() => {
+    if (hasActiveFilters) {
+      // Khi có filter, slice từ filteredArticles
+      return filteredArticles.slice(page * size, (page + 1) * size);
+    }
+    // Khi không có filter, filteredArticles đã là data của page hiện tại
+    return filteredArticles;
+  }, [filteredArticles, page, size, hasActiveFilters]);
 
   const handleOpenModal = (mode, article = null) => {
     setModalMode(mode);
     setSelectedArticle(article);
     setSelectedFile(null);
 
-    if (mode === "edit" && article) {
+    if ((mode === "edit" || mode === "view") && article) {
       setFormData({
         title: article.title || "",
         content: article.content || "",
@@ -160,6 +221,10 @@ export default function ArticleManagement() {
       setPreviewImage("");
     }
     setShowModal(true);
+  };
+
+  const handleSwitchToEdit = () => {
+    setModalMode('edit');
   };
 
   const handleCloseModal = () => {
@@ -179,11 +244,11 @@ export default function ArticleManagement() {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      showToast("Vui lòng chọn file ảnh hợp lệ", "error");
+      toast.error("Vui lòng chọn file ảnh hợp lệ");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      showToast("Kích thước ảnh không được vượt quá 10MB", "error");
+      toast.error("Kích thước ảnh không được vượt quá 10MB");
       return;
     }
 
@@ -225,31 +290,37 @@ export default function ArticleManagement() {
 
       if (modalMode === "edit") {
         await axiosInstance.put(`/api/admin/articles/${selectedArticle.id}`, dataToSubmit);
-        showToast("Cập nhật bài viết thành công!");
+        toast.success("Cập nhật tin tức thành công!");
       } else {
         await axiosInstance.post("/api/admin/articles", dataToSubmit);
-        showToast("Tạo bài viết thành công!");
+        toast.success("Tạo tin tức thành công!");
       }
 
       handleCloseModal();
       await fetchArticles();
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || "Có lỗi khi lưu bài viết";
-      showToast(msg, "error");
+      const msg = err.response?.data?.message || err.message || "Có lỗi khi lưu tin tức";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
-   
+  const handleDeleteClick = (article) => {
+    setArticleToDelete(article);
+    setShowDeleteConfirmation(true);
+  };
 
+  const handleConfirmDelete = async () => {
+    if (!articleToDelete) return;
     try {
-      await axiosInstance.delete(`/api/admin/articles/${id}`);
-      showToast("Xóa bài viết thành công!");
+      await axiosInstance.delete(`/api/admin/articles/${articleToDelete.id}`);
+      toast.success(`Đã xóa tin tức "${articleToDelete.title}"`);
+      setShowDeleteConfirmation(false);
+      setArticleToDelete(null);
       fetchArticles();
     } catch (err) {
-      showToast("Không thể xóa bài viết", "error");
+      toast.error("Không thể xóa tin tức");
     }
   };
 
@@ -262,46 +333,45 @@ export default function ArticleManagement() {
     return `${baseURL}${imageUrl}`;
   };
 
-  const renderPagination = () => {
-    if (totalPages <= 1) return null;
-    return (
-      <div className="flex justify-center items-center gap-2 mt-8">
-        {[...Array(totalPages)].map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setPage(i)}
-            className={`px-4 py-2.5 rounded-lg font-medium transition ${page === i ? "bg-blue-600 text-white" : "bg-gray-200 hover:bg-gray-300"}`}
-          >
-            {i + 1}
-          </button>
-        ))}
-      </div>
-    );
+  const goToPage = (newPage) => {
+    if (newPage >= 0 && newPage < totalPages) {
+      setPage(newPage);
+    }
   };
 
   return (
-    <div className="p-4 sm:p-8 min-h-screen bg-gray-50">
-      <ToastNotification message={toast.message} type={toast.type} onClose={() => setToast({ message: "", type: "success" })} />
+    <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
+      <Toaster {...toastConfig} />
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <h1 className="text-4xl font-bold text-gray-800">Quản lý Bài viết</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div className="flex items-center gap-4">
+          <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
+            <FileText className="w-9 h-9 text-blue-600" />
+            <span>Quản Lý Tin Tức</span>
+          </h1>
+          <CountBadge 
+            currentCount={currentPageArticles.length} 
+            totalCount={totalElements} 
+            label="tin tức" 
+          />
+        </div>
         <button
           onClick={() => handleOpenModal("create")}
-          className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition font-medium"
+          className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium"
         >
-          <Plus className="w-5 h-5" /> Tạo bài viết mới
+          <Plus className="w-5 h-5" /> Tạo tin tức
         </button>
       </div>
 
       <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
           <div className="lg:col-span-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tiêu đề</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tìm kiếm</label>
             <input
               type="text"
-              placeholder="Tìm theo tiêu đề..."
+              placeholder="Tìm kiếm tin tức..."
               value={filterTitle}
-              onChange={(e) => setFilterTitle(e.target.value)}
+              onChange={(e) => { setFilterTitle(e.target.value); setPage(0); }}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -309,7 +379,7 @@ export default function ArticleManagement() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Danh mục</label>
             <select
               value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
+              onChange={(e) => { setFilterCategory(e.target.value); setPage(0); }}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Tất cả</option>
@@ -318,11 +388,41 @@ export default function ArticleManagement() {
           </div>
           <div className="lg:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">Từ ngày</label>
-            <input type="date" value={filterStartDate} onChange={(e) => setFilterStartDate(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" />
+            <input 
+              type="date" 
+              value={filterStartDate}
+              max={filterEndDate || undefined}
+              onChange={(e) => { 
+                const newStartDate = e.target.value;
+                // Validate: Từ ngày không được > Đến ngày
+                if (filterEndDate && newStartDate > filterEndDate) {
+                  toast.error("Từ ngày phải nhỏ hơn hoặc bằng Đến ngày");
+                  return;
+                }
+                setFilterStartDate(newStartDate);
+                setPage(0);
+              }} 
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" 
+            />
           </div>
           <div className="lg:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">Đến ngày</label>
-            <input type="date" value={filterEndDate} min={filterStartDate} onChange={(e) => setFilterEndDate(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" />
+            <input 
+              type="date" 
+              value={filterEndDate} 
+              min={filterStartDate} 
+              onChange={(e) => { 
+                const newEndDate = e.target.value;
+                // Validate: Đến ngày phải >= Từ ngày
+                if (filterStartDate && newEndDate < filterStartDate) {
+                  toast.error("Đến ngày phải lớn hơn hoặc bằng Từ ngày");
+                  return;
+                }
+                setFilterEndDate(newEndDate); 
+                setPage(0); 
+              }} 
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" 
+            />
           </div>
           <div className="lg:col-span-1">
             <button onClick={resetFilter} className="w-full px-4 py-3 bg-gray-300 text-gray-700 rounded-xl hover:bg-gray-400 transition font-medium">
@@ -352,15 +452,15 @@ export default function ArticleManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {filteredArticles.length === 0 ? (
+              {currentPageArticles.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-16 text-gray-500">
                     <FileText className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                    <p className="text-xl font-medium">Không tìm thấy bài viết nào</p>
+                    <p className="text-xl font-medium">Không tìm thấy tin tức nào</p>
                   </td>
                 </tr>
               ) : (
-                filteredArticles.map((a, i) => (
+                currentPageArticles.map((a, i) => (
                   <tr key={a.id} className="hover:bg-blue-50 transition">
                     <td className="px-6 py-4 text-center text-sm font-medium text-gray-600">{page * size + i + 1}</td>
                     <td className="px-6 py-4 text-center">
@@ -372,9 +472,9 @@ export default function ArticleManagement() {
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 font-medium text-gray-900 max-w-xs truncate">{a.title}</td>
+                    <td className="px-6 py-4 text-gray-900 max-w-xs truncate">{a.title}</td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${categoryColors[normalizeCategory(a.category)] || categoryColors.default}`}>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getCategoryColor(a.category)}`}>
                         {a.category || "—"}
                       </span>
                     </td>
@@ -382,10 +482,10 @@ export default function ArticleManagement() {
                     <td className="px-6 py-4 text-center text-sm text-gray-600">{formatDate(a.publishedAt)}</td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex justify-center gap-3">
-                        <button onClick={() => handleOpenModal("edit", a)} className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-100 transition">
-                          <Edit className="w-5 h-5" />
+                        <button onClick={() => handleOpenModal("view", a)} className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-100 transition" title="Xem chi tiết">
+                          <Eye className="w-5 h-5" />
                         </button>
-                        <button onClick={() => handleDelete(a.id)} className="text-red-600 hover:text-red-800 p-2 rounded-full hover:bg-red-100 transition">
+                        <button onClick={() => handleDeleteClick(a)} className="text-red-600 hover:text-red-800 p-2 rounded-full hover:bg-red-100 transition" title="Xóa tin tức">
                           <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
@@ -398,35 +498,73 @@ export default function ArticleManagement() {
         )}
       </div>
 
-      {renderPagination()}
+      <Pagination currentPage={page} totalPages={totalPages} onPageChange={goToPage} />
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-blue-50/80 backdrop-blur">
               <h2 className="text-2xl font-bold text-blue-700">
-                {modalMode === "create" ? "Tạo bài viết mới" : "Chỉnh sửa bài viết"}
+                {isCreateMode ? "Tạo tin tức mới" : isViewMode ? "Chi tiết tin tức" : "Chỉnh sửa tin tức"}
               </h2>
-              <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-white/50">
-                <X className="w-7 h-7" />
-              </button>
+              <div className="flex items-center gap-3">
+                {isViewMode && (
+                  <button
+                    onClick={handleSwitchToEdit}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+                  >
+                    <Edit className="w-4 h-4" /> Chỉnh sửa
+                  </button>
+                )}
+                <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-white/50">
+                  <X className="w-7 h-7" />
+                </button>
+              </div>
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Ảnh bìa - Lên đầu */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Ảnh bìa</label>
+                  {previewImage && (
+                    <div className="mb-4 relative">
+                      <img src={previewImage} alt="Preview" className="w-full h-64 object-cover rounded-xl border-2 border-gray-300" />
+                      {!isViewMode && (
+                        <button type="button" onClick={() => { setPreviewImage(""); setSelectedFile(null); setFormData(p => ({ ...p, image: "" })); }} className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition">
+                          <X className="w-5 h-5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {!isViewMode && (
+                    <>
+                      <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2 px-5 py-3 bg-blue-50 text-blue-700 rounded-xl cursor-pointer hover:bg-blue-100 transition border-2 border-dashed border-blue-300">
+                          <Upload className="w-5 h-5" />
+                          <span className="font-medium">{selectedFile ? "Thay đổi ảnh" : "Chọn ảnh"}</span>
+                          <input type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+                        </label>
+                        {selectedFile && <span className="text-sm text-gray-600 flex items-center gap-2"><ImageIcon className="w-4 h-4" />{selectedFile.name}</span>}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">JPG, PNG, GIF – Tối đa 10MB</p>
+                    </>
+                  )}
+                </div>
+
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Tiêu đề *</label>
-                  <input type="text" name="title" required value={formData.title} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" placeholder="Nhập tiêu đề bài viết" />
+                  <input type="text" name="title" required disabled={isViewMode} value={formData.title} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed" placeholder="Nhập tiêu đề tin tức" />
                 </div>
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Nội dung *</label>
-                  <textarea name="content" rows={8} required value={formData.content} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 resize-none" placeholder="Nhập nội dung bài viết" />
+                  <textarea name="content" rows={8} required disabled={isViewMode} value={formData.content} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-50 disabled:cursor-not-allowed" placeholder="Nhập nội dung tin tức" />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Danh mục *</label>
-                  <select name="category" required value={formData.category} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                  <select name="category" required disabled={isViewMode} value={formData.category} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed">
                     <option value="">-- Chọn danh mục --</option>
                     {categories.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
@@ -434,45 +572,57 @@ export default function ArticleManagement() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Tác giả *</label>
-                  <input type="text" name="author" required value={formData.author} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" placeholder="Tên tác giả" />
+                  <input type="text" name="author" required disabled={isViewMode} value={formData.author} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed" placeholder="Tên tác giả" />
                 </div>
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Nguồn (tùy chọn)</label>
-                  <input type="text" name="source" value={formData.source} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" placeholder="https://..." />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Ảnh bìa</label>
-                  {previewImage && (
-                    <div className="mb-4 relative">
-                      <img src={previewImage} alt="Preview" className="w-full h-64 object-cover rounded-xl border-2 border-gray-300" />
-                      <button type="button" onClick={() => { setPreviewImage(""); setSelectedFile(null); setFormData(p => ({ ...p, image: "" })); }} className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition">
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2 px-5 py-3 bg-blue-50 text-blue-700 rounded-xl cursor-pointer hover:bg-blue-100 transition border-2 border-dashed border-blue-300">
-                      <Upload className="w-5 h-5" />
-                      <span className="font-medium">{selectedFile ? "Thay đổi ảnh" : "Chọn ảnh"}</span>
-                      <input type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
-                    </label>
-                    {selectedFile && <span className="text-sm text-gray-600 flex items-center gap-2"><ImageIcon className="w-4 h-4" />{selectedFile.name}</span>}
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2">JPG, PNG, GIF – Tối đa 10MB</p>
+                  <input type="text" name="source" disabled={isViewMode} value={formData.source} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed" placeholder="https://..." />
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-6 border-t">
-                <button type="submit" disabled={loading || uploading} className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-70 transition">
-                  {loading || uploading ? "Đang xử lý..." : modalMode === "create" ? "Tạo bài viết" : "Cập nhật"}
-                </button>
-                <button type="button" onClick={handleCloseModal} className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-400 transition">
-                  Hủy
-                </button>
-              </div>
+              {!isViewMode && (
+                <div className="flex gap-4 pt-6 border-t">
+                  <button type="submit" disabled={loading || uploading} className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-70 transition">
+                    {loading || uploading ? "Đang xử lý..." : isCreateMode ? "Tạo tin tức" : "Cập nhật"}
+                  </button>
+                  <button type="button" onClick={handleCloseModal} className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-400 transition">
+                    Hủy
+                  </button>
+                </div>
+              )}
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Xác nhận XÓA */}
+      {showDeleteConfirmation && articleToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
+            <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-xl font-bold mb-2">Xác nhận xóa</h3>
+            <p className="text-gray-600 mb-6">
+              Xóa tin tức <strong>{articleToDelete.title}</strong>?<br />
+              Thao tác này <span className="text-red-600 font-semibold">không thể hoàn tác</span>.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleConfirmDelete}
+                className="flex-1 bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition"
+              >
+                Xóa
+              </button>
+              <button
+                onClick={() => {
+                  setShowDeleteConfirmation(false);
+                  setArticleToDelete(null);
+                }}
+                className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-400 transition"
+              >
+                Hủy
+              </button>
+            </div>
           </div>
         </div>
       )}
