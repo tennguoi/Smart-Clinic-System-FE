@@ -456,13 +456,7 @@ export default function ClinicRoomManagement() {
                         >
                           <Eye className="w-5 h-5" />
                         </button>
-                        <button
-                          onClick={() => handleDelete(room.roomId)}
-                          className="text-red-600 hover:text-red-800 transition-colors"
-                          title="Xóa phòng"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
+                       
                       </div>
                     </td>
                   </tr>

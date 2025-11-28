@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, Trash2, User } from 'lucide-react';
+import { Edit, Trash2, User,Eye } from 'lucide-react';
 
 const priorityLabels = {
   Normal: 'Thường', Urgent: 'Ưu tiên', Emergency: 'Khẩn cấp',
@@ -116,14 +116,10 @@ export default function QueueTable({ queueList, onEdit, onDelete, onStatusChange
                   <div className="flex items-center justify-center gap-2">
                     {onEdit && (
                       <button onClick={() => onEdit(q)} className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50" title="Chỉnh sửa">
-                        <Edit className="w-5 h-5" />
+                        <Eye className="w-5 h-5" />
                       </button>
                     )}
-                    {onDelete && (
-                      <button onClick={() => onDelete(q.queueId)} className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50" title="Xóa">
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    )}
+                  
                   </div>
                 </td>
               </tr>

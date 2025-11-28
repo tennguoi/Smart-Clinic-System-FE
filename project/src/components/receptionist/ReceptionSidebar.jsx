@@ -11,7 +11,7 @@ import { useClinic } from '../../contexts/ClinicContext';
 
 const receptionMenuItems = [
   { id: 'appointments', label: 'Lịch Hẹn',        icon: CalendarCheck },
-  { id: 'records',      label: 'Hồ Sơ Bệnh Án',  icon: Users },
+  { id: 'records',      label: 'Danh Sách Bệnh Nhân',  icon: Users },
   { id: 'rooms',        label: 'Quản Lý Phòng',  icon: BedDouble },
   { id: 'invoices',     label: 'Hóa Đơn',         icon: FileText },
 ];

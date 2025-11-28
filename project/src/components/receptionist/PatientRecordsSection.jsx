@@ -18,7 +18,11 @@ const normalizeStatus = (status) => {
 };
 
 const sortQueueByPriority = (list) => {
-  const order = { 'Emergency': 3, 'Urgent': 2, 'Normal': 1 };
+  const order = { 
+    'Emergency': 3, 'Khẩn cấp': 3, 
+    'Urgent': 2, 'Ưu tiên': 2, 
+    'Normal': 1, 'Thường': 1 
+  };
   return list.slice().sort((a, b) => {
     const diff = (order[b.priority] || 0) - (order[a.priority] || 0);
     return diff !== 0 ? diff : new Date(a.checkInTime) - new Date(b.checkInTime);
@@ -102,7 +106,7 @@ export default function PatientRecordsSection() {
         notes: item.notes || '',
       }));
 
-      setQueueList(sortQueueByPriority(mappedData));
+      setQueueList(sortQueueByPriority(mappedData)); // Áp dụng sắp xếp theo ưu tiên
     } catch (error) {
       const message = error.response?.data?.message || error.message || 'Không thể tải danh sách bệnh nhân.';
       setQueueError(message);
@@ -245,11 +249,11 @@ export default function PatientRecordsSection() {
         // Thông báo đã phân phòng tự động
         if (res.roomName) {
           toast.success(
-            `✅ Đã thêm bệnh nhân thành công!\n🏥 Tự động phân vào: ${res.roomName}${res.doctorName ? `\n👨‍⚕️ Bác sĩ: ${res.doctorName}` : ''}`,
+            ` Đã thêm bệnh nhân thành công!\n Tự động phân vào: ${res.roomName}${res.doctorName ? `\n Bác sĩ: ${res.doctorName}` : ''}`,
             { autoClose: 5000 }
           );
         } else {
-          toast.success('✅ Đã thêm bệnh nhân! Đang chờ phân phòng tự động...');
+          toast.success(' Đã thêm bệnh nhân! Đang chờ phân phòng tự động...');
         }
       }
 
