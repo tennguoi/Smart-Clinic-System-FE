@@ -14,6 +14,7 @@ import AppointmentPage from "./pages/AppointmentPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import NewsDetailPage from "./pages/NewsDetailPage";
 import ChatbotAvatar from "./components/chatbot/ChatbotAvatar";
+import AppointmentTrackingPage from "./pages/AppointmentTrackingPage";
 
 // Auth
 import Login from "./components/Login";
@@ -79,6 +80,7 @@ function App() {
                 <Route path="/pricing" element={<PricingPage />} />
                 <Route path="/news" element={<NewsPage />} />
                 <Route path="/appointment" element={<AppointmentPage />} />
+                <Route path="/appointments/tracking" element={<AppointmentTrackingPage />} />
                 <Route path="/danh-gia" element={<ReviewsPage />} />
                 <Route path="/news/:id" element={<NewsDetailPage />} />
               </Routes>
@@ -163,4 +165,3 @@ function App() {
 }
 
 export default App;
-//  <Route path="statistics" element={<StatisticsPage />}
