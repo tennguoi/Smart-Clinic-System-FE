@@ -159,10 +159,13 @@ export const queueApi = {
   },
 
   // ✨ API MỚI: Check-in từ appointment
-  checkInFromAppointment: async (appointmentId) => {
-    const { data } = await axiosInstance.post(`/api/reception/queue/check-in-appointment/${appointmentId}`);
-    return data;
-  },
+checkInFromAppointmentWithInfo: async (appointmentId, additionalInfo) => {
+  const { data } = await axiosInstance.post(
+    `/api/reception/queue/check-in-appointment/${appointmentId}`,
+    additionalInfo // ← gửi thông tin bổ sung
+  );
+  return data;
+},
 
   // Tìm kiếm bệnh nhân
   searchQueue: async (params) => {

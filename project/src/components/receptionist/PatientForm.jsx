@@ -19,15 +19,15 @@ const genderOptions = [
 export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, onCancel, selectedAppointment }) {
 
   // Tự động điền thông tin khi có selectedAppointment
-  useEffect(() => {
-    if (selectedAppointment && !isEdit) {
-      onChange('patientName', selectedAppointment.patientName);
-      onChange('phone', selectedAppointment.phone);
-      onChange('email', selectedAppointment.email || '');
-      onChange('notes', selectedAppointment.notes || '');
-      onChange('priority', 'Urgent'); // Ưu tiên cho người đặt lịch
-    }
-  }, [selectedAppointment, isEdit, onChange]);
+useEffect(() => {
+  if (selectedAppointment && !isEdit) {
+    onChange('patientName', selectedAppointment.patientName || '');
+    onChange('phone', selectedAppointment.phone || '');
+    onChange('email', selectedAppointment.email || '');
+    onChange('notes', selectedAppointment.notes || '');
+    onChange('priority', selectedAppointment.priority || 'Urgent'); // Ưu tiên
+  }
+}, [selectedAppointment, isEdit, onChange]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

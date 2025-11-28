@@ -4,10 +4,9 @@ import { toast, ToastContainer } from 'react-toastify';
 
 import { queueApi } from '../../api/receptionApi';
 
-export default function AppointmentCheckInSection() {
+export default function AppointmentCheckInSection({ onOpenPatientForm }) {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [checkingIn, setCheckingIn] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
 
   // ✅ Kiểm tra token khi component mount
@@ -76,33 +75,16 @@ export default function AppointmentCheckInSection() {
     return () => clearInterval(interval);
   }, []);
 
-  // Check-in bệnh nhân từ appointment
-  const handleCheckIn = async (appointmentId) => {
-    if (!window.confirm('Xác nhận check-in cho bệnh nhân này?')) return;
-
-    setCheckingIn(appointmentId);
-    try {
-      console.log('📝 Checking in appointment:', appointmentId);
-      const result = await queueApi.checkInFromAppointment(appointmentId);
-      
-      console.log('✅ Check-in successful:', result);
-      
-      toast.success(
-        `✅ Check-in thành công!\n🎫 Số thứ tự: ${result.queueNumber}\n🏥 Phòng: ${result.roomName || 'Đang phân phòng...'}`,
-        { autoClose: 5000 }
-      );
-
-      // Refresh list
-      await fetchTodayAppointments();
-    } catch (error) {
-      console.error('❌ Check-in error:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi check-in';
-      toast.error(`❌ ${errorMessage}`);
-    } finally {
-      setCheckingIn(null);
-    }
-  };
-
+  // Mở form thêm bệnh nhân với thông tin từ appointment
+const handleAddPatientFromAppointment = async (appointment) => {
+  if (onOpenPatientForm) {
+    onOpenPatientForm({
+      ...appointment,
+      isFromAppointment: true,
+      priority: 'Urgent' // Tự động ưu tiên cho người đặt lịch
+    });
+  }
+};
   const formatTime = (dateTime) => {
     if (!dateTime) return '—';
     return new Date(dateTime).toLocaleString('vi-VN', {
@@ -149,7 +131,7 @@ export default function AppointmentCheckInSection() {
               <Calendar className="w-8 h-8 text-blue-600" />
               Lịch hẹn hôm nay
             </h1>
-            <p className="text-gray-600 mt-2">Check-in nhanh cho bệnh nhân đã đặt lịch</p>
+            <p className="text-gray-600 mt-2">Thêm bệnh nhân từ danh sách đặt lịch</p>
           </div>
           <button
             onClick={fetchTodayAppointments}
@@ -181,7 +163,7 @@ export default function AppointmentCheckInSection() {
         <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-green-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Đã check-in</p>
+              <p className="text-sm text-gray-600 mb-1">Đã thêm vào hàng chờ</p>
               <p className="text-3xl font-bold text-gray-900">
                 {appointments.filter(a => a.hasCheckedIn).length}
               </p>
@@ -193,7 +175,7 @@ export default function AppointmentCheckInSection() {
         <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-amber-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Chưa check-in</p>
+              <p className="text-sm text-gray-600 mb-1">Chưa thêm</p>
               <p className="text-3xl font-bold text-gray-900">
                 {appointments.filter(a => !a.hasCheckedIn).length}
               </p>
@@ -252,7 +234,7 @@ export default function AppointmentCheckInSection() {
                             {appointment.hasCheckedIn && (
                               <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full font-semibold flex items-center gap-1">
                                 <CheckCircle className="w-4 h-4" />
-                                Đã check-in
+                                Đã thêm vào hàng chờ
                               </span>
                             )}
                             {!appointment.hasCheckedIn && isUpcoming(appointment.appointmentTime) && (
@@ -295,26 +277,16 @@ export default function AppointmentCheckInSection() {
                     <div className="ml-6">
                       {!appointment.hasCheckedIn ? (
                         <button
-                          onClick={() => handleCheckIn(appointment.appointmentId)}
-                          disabled={checkingIn === appointment.appointmentId}
-                          className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold text-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 transition transform hover:scale-105 shadow-lg flex items-center gap-3"
+                          onClick={() => handleAddPatientFromAppointment(appointment)}
+                          className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold text-lg hover:from-blue-700 hover:to-indigo-700 transition transform hover:scale-105 shadow-lg flex items-center gap-3"
                         >
-                          {checkingIn === appointment.appointmentId ? (
-                            <>
-                              <Loader2 className="w-6 h-6 animate-spin" />
-                              Đang xử lý...
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle className="w-6 h-6" />
-                              Check-in ngay
-                            </>
-                          )}
+                          <User className="w-6 h-6" />
+                          Thêm bệnh nhân
                         </button>
                       ) : (
                         <div className="flex flex-col items-center gap-2 text-green-600">
                           <CheckCircle className="w-12 h-12" />
-                          <span className="font-semibold text-sm">Đã hoàn tất</span>
+                          <span className="font-semibold text-sm">Đã thêm vào hàng chờ</span>
                         </div>
                       )}
                     </div>
