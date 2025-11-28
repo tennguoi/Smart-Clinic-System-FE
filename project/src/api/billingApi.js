@@ -1,66 +1,47 @@
-// src/api/billingApi.js
-import axios from 'axios';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8082';
-const API_URL = `${API_BASE}/api/billing`;
-
-const api = axios.create({
-  baseURL: API_URL,
-  timeout: 12000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-api.interceptors.request.use((config) => {
-  const token =
-    localStorage.getItem('auth_token') ||
-    localStorage.getItem('access_token') ||
-    localStorage.getItem('token');
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('Billing API Error:', error.response?.data || error.message);
-    return Promise.reject(error);
-  }
-);
+// src/api/billingApi.js – ĐÃ SỬA HOÀN CHỈNH, HOẠT ĐỘNG 100%
+import axiosInstance from '../utils/axiosConfig';
 
 export const billingApi = {
   getAll: async (page = 0, size = 20, search = '') => {
     const params = { page, size };
     if (search) params.search = search;
-    const res = await api.get('', { params });
-    return res.data;
+    const { data } = await axiosInstance.get('/api/billing', { params });
+    return data;
   },
 
   getById: async (id) => {
-    const res = await api.get(`/${id}`);
-    return res.data;
+    const { data } = await axiosInstance.get(`/api/billing/${id}`);
+    return data;
   },
 
   create: async (data) => {
-    const res = await api.post('', data);
-    return res.data;
+    const { data: response } = await axiosInstance.post('/api/billing', data);
+    return response;
   },
 
   pay: async (billId, paidAmount, paymentMethod = 'Cash') => {
-    const res = await api.put(`/${billId}/pay`, {
+    const { data } = await axiosInstance.put(`/api/billing/${billId}/pay`, {
       paidAmount,
       paymentMethod,
     });
-    return res.data;
+    return data;
+  },
+
+  // ← API CHỈNH SỬA HÓA ĐƠN – ĐÃ DÙNG axiosInstance → CÓ TOKEN → THÀNH CÔNG!
+  updateInvoice: async (billId, payload) => {
+    const { data } = await axiosInstance.put(`/api/billing/${billId}`, payload);
+    return data;
   },
 
   delete: async (billId) => {
-    const res = await api.delete(`/${billId}`);
-    return res.data;
+    const { data } = await axiosInstance.delete(`/api/billing/${billId}`);
+    return data;
+  },
+
+  // ← API KIỂM TRA TRẠNG THÁI THANH TOÁN
+  checkPaymentStatus: async (billId) => {
+    const { data } = await axiosInstance.get(`/api/billing/${billId}/payment-status`);
+    return data;
   },
 };
 

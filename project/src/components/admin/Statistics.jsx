@@ -169,6 +169,63 @@ const StatisticsPage = () => {
         fetchData();
     }, [startDate, endDate, statType]);
 
+    // Listen for payment completion events and refresh data
+    useEffect(() => {
+        const handlePaymentCompleted = (event) => {
+            console.log('Payment completed event received:', event.detail);
+            // Refresh the statistics data
+            setLoading(true);
+            
+            // Trigger a re-fetch by updating the dependency
+            // This will cause the fetchData useEffect to run again
+            const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
+            if (token) {
+                const headers = { 
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                };
+                const params = { startDate, endDate };
+                
+                let topServicesUrl = 'http://localhost:8082/api/admin/dashboard/top-services-by-appointments';
+                if (statType === 'medical_record') {
+                    topServicesUrl = 'http://localhost:8082/api/admin/dashboard/top-services-by-medical-records';
+                } else if (statType === 'revenue') {
+                    topServicesUrl = 'http://localhost:8082/api/admin/dashboard/top-services-by-revenue';
+                }
+
+                Promise.all([
+                    axios.get(topServicesUrl, { headers, params }),
+                    axios.get('http://localhost:8082/api/admin/dashboard/kpi', { headers, params }),
+                    axios.get('http://localhost:8082/api/admin/dashboard/trend/appointments', { headers, params }),
+                    axios.get('http://localhost:8082/api/admin/dashboard/trend/revenue', { headers, params })
+                ]).then(([topServicesRes, kpiRes, apptTrendRes, revTrendRes]) => {
+                    const formattedTopServices = topServicesRes.data.map((item) => ({
+                        name: item.serviceName,       
+                        usage: statType === 'revenue' ? item.totalRevenue : item.quantity,        
+                        price: item.servicePrice,     
+                        image: item.photoUrl,
+                        category: item.serviceCategory,
+                        displayValue: statType === 'revenue' 
+                            ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.totalRevenue)
+                            : `${item.quantity} lượt`
+                    }));
+
+                    setTopServices(formattedTopServices);
+                    setKpi(kpiRes.data);
+                    setAppointmentTrend(apptTrendRes.data);
+                    setRevenueTrend(revTrendRes.data);
+                    setLoading(false);
+                }).catch(err => {
+                    console.error("Lỗi tải lại thống kê:", err);
+                    setLoading(false);
+                });
+            }
+        };
+
+        window.addEventListener('paymentCompleted', handlePaymentCompleted);
+        return () => window.removeEventListener('paymentCompleted', handlePaymentCompleted);
+    }, [startDate, endDate, statType]);
+
     if (loading) return (
         <div className="flex justify-center items-center h-full min-h-[400px]">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>

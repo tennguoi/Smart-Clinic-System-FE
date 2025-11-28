@@ -1,14 +1,38 @@
 import { useState, useEffect } from 'react';
 import { Save, Building2, Loader2, Upload, X, Edit } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
+import { toastConfig } from '../../config/toastConfig';
 import { clinicApi } from '../../api/clinicApi';
-import axiosInstance from '../../utils/axiosConfig';
+import { useClinic } from '../../contexts/ClinicContext';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8082';
+
+const toAbsoluteLogoUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  if (url.startsWith('/')) {
+    return `${API_BASE_URL}${url}`;
+  }
+  return url;
+};
+
+// Helper: Convert absolute URL back to relative URL for backend
+const toRelativeLogoUrl = (url) => {
+  if (!url) return null;
+  // If already relative, return as is
+  if (url.startsWith('/uploads/logo/')) return url;
+  // If absolute, extract relative part
+  if (url.includes('/uploads/logo/')) {
+    const match = url.match(/\/uploads\/logo\/.+$/);
+    return match ? match[0] : null;
+  }
+  return null;
+};
 
 export default function ClinicManagement() {
   const [clinicInfo, setClinicInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -18,43 +42,56 @@ export default function ClinicManagement() {
     email: '',
     website: '',
     logoUrl: '',
+    morningStartTime: '',
+    morningEndTime: '',
+    afternoonStartTime: '',
+    afternoonEndTime: '',
   });
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const { refreshClinicInfo } = useClinic();
 
   useEffect(() => {
     fetchClinicInfo();
   }, []);
 
-  const fetchClinicInfo = async () => {
-    setLoading(true);
-    setError('');
+  const fetchClinicInfo = async (skipLoading = false) => {
+    if (!skipLoading) {
+      setLoading(true);
+    }
     try {
+      console.log('🔄 Fetching clinic info...');
       const data = await clinicApi.getClinicInfo();
+      console.log('✅ Fetched clinic data:', data);
+      
       if (data) {
         setClinicInfo(data);
+        const normalizedLogoUrl = toAbsoluteLogoUrl(data.logoUrl || '');
         
-        // Xử lý logoUrl - nếu là relative path, thêm base URL
-        let logoUrl = data.logoUrl || '';
-        if (logoUrl && logoUrl.startsWith('/') && !logoUrl.startsWith('http')) {
-          logoUrl = `http://localhost:8082${logoUrl}`;
-        }
-        
-        setFormData({
+        const newFormData = {
           name: data.name || '',
           address: data.address || '',
           phone: data.phone || '',
           email: data.email || '',
           website: data.website || '',
-          logoUrl: logoUrl,
-        });
-        if (logoUrl) {
-          setLogoPreview(logoUrl);
+          logoUrl: normalizedLogoUrl,
+          morningStartTime: data.morningStartTime || '',
+          morningEndTime: data.morningEndTime || '',
+          afternoonStartTime: data.afternoonStartTime || '',
+          afternoonEndTime: data.afternoonEndTime || '',
+        };
+        
+        console.log('📝 Setting form data:', newFormData);
+        setFormData(newFormData);
+        
+        if (normalizedLogoUrl) {
+          setLogoPreview(normalizedLogoUrl);
         }
         setIsEditing(false); // Reset to view mode when loading data
       } else {
         // Chưa có dữ liệu, form sẽ trống - allow editing immediately
+        console.log('⚠️ No clinic data found');
         setClinicInfo(null);
         setIsEditing(true);
       }
@@ -65,9 +102,12 @@ export default function ClinicManagement() {
         // Không cần set error ở đây
         return;
       }
-      setError(err.response?.data?.message || err.message || 'Không thể tải thông tin phòng khám');
+      console.error('❌ Error fetching clinic info:', err);
+      toast.error(err.response?.data?.message || err.message || 'Không thể tải thông tin phòng khám');
     } finally {
-      setLoading(false);
+      if (!skipLoading) {
+        setLoading(false);
+      }
     }
   };
 
@@ -79,125 +119,37 @@ export default function ClinicManagement() {
     }));
   };
 
-  // Helper function to resize image - đảm bảo file < 2MB
-  const resizeImage = (file, targetSizeMB = 1.8) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          
-          // Bắt đầu với kích thước hợp lý cho logo (tối đa 500x500)
-          const maxDimension = 500;
-          let quality = 0.9;
-          
-          // Tính toán kích thước mới
-          if (width > height) {
-            if (width > maxDimension) {
-              height = (height * maxDimension) / width;
-              width = maxDimension;
-            }
-          } else {
-            if (height > maxDimension) {
-              width = (width * maxDimension) / height;
-              height = maxDimension;
-            }
-          }
-
-          const tryResize = (q) => {
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-
-            canvas.toBlob(
-              (blob) => {
-                const sizeMB = blob.size / (1024 * 1024);
-                // Nếu vẫn lớn hơn target, giảm quality và thử lại
-                if (sizeMB > targetSizeMB && q > 0.3) {
-                  tryResize(q - 0.1);
-                } else {
-                  const resizedFile = new File([blob], file.name, {
-                    type: 'image/jpeg', // Chuyển sang JPEG để giảm kích thước
-                    lastModified: Date.now(),
-                  });
-                  resolve(resizedFile);
-                }
-              },
-              'image/jpeg', // Luôn dùng JPEG để giảm kích thước
-              q
-            );
-          };
-
-          tryResize(quality);
-        };
-        img.onerror = () => {
-          // Nếu resize thất bại, trả về file gốc
-          resolve(file);
-        };
-        img.src = e.target.result;
-      };
-      reader.onerror = () => {
-        resolve(file);
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const handleLogoFileChange = async (e) => {
+  const handleLogoFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      setError('Vui lòng chọn file ảnh (PNG, JPG, etc.)');
+      toast.error('Vui lòng chọn file ảnh (PNG, JPG, JPEG, GIF, WebP)');
       return;
     }
 
-    // Validate file size (max 10MB - cho phép file lớn, sẽ tự động resize)
+    // Validate file size (max 10MB - Backend sẽ tự động resize nếu cần)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-      setError(`Kích thước file quá lớn (${fileSizeMB} MB). Vui lòng chọn file nhỏ hơn 10MB.`);
+      toast.error(`Kích thước file quá lớn (${fileSizeMB}MB). Vui lòng chọn file nhỏ hơn 10MB.`);
       return;
     }
 
-    setError('');
+    setLogoFile(file);
     
-    // Chỉ resize nếu file thực sự lớn hơn 1.8MB
-    // File nhỏ hơn 1.8MB (như 100KB) sẽ được upload trực tiếp
-    let processedFile = file;
-    if (file.size > 1.8 * 1024 * 1024) {
-      try {
-        processedFile = await resizeImage(file, 1.8); // Resize xuống < 1.8MB
-        const originalSize = (file.size / (1024 * 1024)).toFixed(2);
-        const newSize = (processedFile.size / (1024 * 1024)).toFixed(2);
-        console.log(`Đã tự động resize logo từ ${originalSize}MB xuống ${newSize}MB`);
-      } catch (err) {
-        console.error('Lỗi khi resize ảnh:', err);
-        // Nếu resize thất bại, vẫn dùng file gốc
-        processedFile = file;
-      }
-    } else {
-      // File nhỏ hơn 1.8MB, không cần resize
-      console.log(`File logo ${(file.size / 1024).toFixed(2)}KB - không cần resize`);
-    }
-
-    setLogoFile(processedFile);
-    
-    // Log file info để debug
-    const fileSizeKB = (processedFile.size / 1024).toFixed(2);
-    console.log(`File logo đã chọn: ${file.name}, kích thước: ${fileSizeKB}KB`);
+    // Log file info
+    const fileSizeKB = (file.size / 1024).toFixed(2);
+    console.log(`📁 File logo đã chọn: ${file.name}, kích thước: ${fileSizeKB}KB`);
+    console.log(`ℹ️ Backend sẽ tự động resize nếu file > 2MB hoặc > 800x800px`);
 
     // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setLogoPreview(reader.result);
     };
-    reader.readAsDataURL(processedFile);
+    reader.readAsDataURL(file);
   };
 
   const handleRemoveLogo = () => {
@@ -211,63 +163,22 @@ export default function ClinicManagement() {
     }
   };
 
-  const uploadLogo = async (file) => {
-    const formData = new FormData();
-    formData.append('logo', file); // Backend expects parameter name "logo"
-    
-    // Log file size trước khi upload để debug
-    const fileSizeKB = (file.size / 1024).toFixed(2);
-    console.log(`Đang upload logo: ${file.name}, kích thước: ${fileSizeKB}KB`);
-
-    try {
-      const response = await axiosInstance.post('/api/admin/clinic/upload-logo', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      
-      // Backend returns: { success: true, logoUrl: "...", clinicInfo: {...} }
-      return {
-        logoUrl: response.data?.logoUrl || response.data?.url,
-        clinicInfo: response.data?.clinicInfo,
-      };
-    } catch (error) {
-      console.error('Upload error:', error);
-      console.error('File size:', (file.size / 1024).toFixed(2), 'KB');
-      
-      // Handle specific error codes
-      if (error.response?.status === 413) {
-        const fileSizeKB = (file.size / 1024).toFixed(2);
-        throw new Error(`File quá lớn (${fileSizeKB}KB). Backend không chấp nhận file này. Vui lòng thử file nhỏ hơn hoặc liên hệ admin để tăng giới hạn.`);
-      }
-      
-      if (error.response?.status === 400) {
-        const message = error.response?.data?.message || 'File không hợp lệ';
-        throw new Error(message);
-      }
-      
-      const errorMessage = error.response?.data?.message || error.message || 'Không thể upload logo. Vui lòng thử lại.';
-      throw new Error(errorMessage);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    setError('');
-    setSuccess('');
 
     try {
       // Validate required fields
       if (!formData.name.trim()) {
-        setError('Tên phòng khám không được để trống');
+        toast.error('Tên phòng khám không được để trống');
         setSaving(false);
         return;
       }
 
-      // Validate email format if provided
-      if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        setError('Email không hợp lệ');
+      // Validate email format if provided (match backend regex)
+      const EMAIL_REGEX = /^[a-zA-Z0-9_+&*-]+(?:\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,7}$/;
+      if (formData.email && !EMAIL_REGEX.test(formData.email)) {
+        toast.error('Email không hợp lệ');
         setSaving(false);
         return;
       }
@@ -282,6 +193,32 @@ export default function ClinicManagement() {
         }
       }
 
+      // Validate working hours
+      if (formData.morningStartTime && formData.morningEndTime) {
+        if (formData.morningStartTime >= formData.morningEndTime) {
+          toast.error('Giờ kết thúc buổi sáng phải sau giờ bắt đầu');
+          setSaving(false);
+          return;
+        }
+      }
+
+      if (formData.afternoonStartTime && formData.afternoonEndTime) {
+        if (formData.afternoonStartTime >= formData.afternoonEndTime) {
+          toast.error('Giờ kết thúc buổi chiều phải sau giờ bắt đầu');
+          setSaving(false);
+          return;
+        }
+      }
+
+      // Validate morning ends before afternoon starts (if both are set)
+      if (formData.morningEndTime && formData.afternoonStartTime) {
+        if (formData.morningEndTime >= formData.afternoonStartTime) {
+          toast.error('Giờ kết thúc buổi sáng phải trước giờ bắt đầu buổi chiều');
+          setSaving(false);
+          return;
+        }
+      }
+
       // Upload logo if new file is selected
       let finalLogoUrl = formData.logoUrl;
       let updatedClinicData = null;
@@ -289,7 +226,7 @@ export default function ClinicManagement() {
       if (logoFile) {
         setUploadingLogo(true);
         try {
-          const uploadResult = await uploadLogo(logoFile);
+          const uploadResult = await clinicApi.uploadLogo(logoFile);
           finalLogoUrl = uploadResult.logoUrl;
           
           // Backend returns updated clinicInfo after upload
@@ -297,51 +234,74 @@ export default function ClinicManagement() {
             updatedClinicData = uploadResult.clinicInfo;
           }
         } catch (uploadError) {
-          setError(uploadError.message || 'Không thể upload logo. Vui lòng thử lại.');
+          toast.error(uploadError.message || 'Không thể upload logo. Vui lòng thử lại.');
           setSaving(false);
-          setUploadingLogo(false);
           return;
+        } finally {
+          setUploadingLogo(false);
         }
-        setUploadingLogo(false);
       }
 
       // If logo was uploaded, backend already updated the clinic info
       // Otherwise, update other fields
       if (!updatedClinicData) {
+        // Convert logoUrl to relative format for backend
+        const relativeLogoUrl = toRelativeLogoUrl(finalLogoUrl);
+        
         const dataToSubmit = {
           ...formData,
-          logoUrl: finalLogoUrl,
+          logoUrl: relativeLogoUrl,
           website: normalizedWebsite || formData.website,
+          morningStartTime: formData.morningStartTime || null,
+          morningEndTime: formData.morningEndTime || null,
+          afternoonStartTime: formData.afternoonStartTime || null,
+          afternoonEndTime: formData.afternoonEndTime || null,
         };
+        
+        console.log('📤 Submitting data to backend:', dataToSubmit);
         updatedClinicData = await clinicApi.updateClinicInfo(dataToSubmit);
       }
       
+      console.log('💾 Update successful, data from backend:', updatedClinicData);
+      
+      // Cập nhật state ngay lập tức với dữ liệu từ backend
       setClinicInfo(updatedClinicData);
       
-      // Ưu tiên dùng logoUrl từ updatedClinicData (backend trả về)
-      // Nếu URL là relative path, cần thêm base URL
-      let newLogoUrl = updatedClinicData?.logoUrl || finalLogoUrl;
+      const normalizedLogoUrl = toAbsoluteLogoUrl(updatedClinicData?.logoUrl || '');
+      const newFormData = {
+        name: updatedClinicData.name || '',
+        address: updatedClinicData.address || '',
+        phone: updatedClinicData.phone || '',
+        email: updatedClinicData.email || '',
+        website: updatedClinicData.website || '',
+        logoUrl: normalizedLogoUrl,
+        morningStartTime: updatedClinicData.morningStartTime || '',
+        morningEndTime: updatedClinicData.morningEndTime || '',
+        afternoonStartTime: updatedClinicData.afternoonStartTime || '',
+        afternoonEndTime: updatedClinicData.afternoonEndTime || '',
+      };
       
-      // Nếu URL là relative path (bắt đầu bằng /), thêm base URL
-      if (newLogoUrl && newLogoUrl.startsWith('/') && !newLogoUrl.startsWith('http')) {
-        newLogoUrl = `http://localhost:8082${newLogoUrl}`;
+      console.log('📝 Updating form with new data:', newFormData);
+      setFormData(newFormData);
+      setLogoFile(null);
+      setLogoPreview(normalizedLogoUrl || null);
+      setIsEditing(false);
+      
+      // Set saving = false TRƯỚC KHI refresh context
+      setSaving(false);
+      setUploadingLogo(false);
+      
+      console.log('🔄 Refreshing global clinic context...');
+      // Force refresh để update tất cả components (navbar, footer, etc.)
+      if (typeof refreshClinicInfo === 'function') {
+        await refreshClinicInfo();
       }
       
-      setFormData((prev) => ({
-        ...prev,
-        logoUrl: newLogoUrl,
-      }));
-      setLogoFile(null); // Clear file after successful upload
-      setLogoPreview(newLogoUrl || null); // Update preview with new URL from backend
-      setIsEditing(false); // Exit edit mode after successful save
-      setSuccess('Cập nhật thông tin phòng khám thành công!');
-      
-      setTimeout(() => {
-        setSuccess('');
-      }, 3000);
+      console.log('✅ All updates completed!');
+      toast.success('Cập nhật thông tin phòng khám thành công!');
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Có lỗi xảy ra khi cập nhật');
-    } finally {
+      console.error('❌ Error during update:', err);
+      toast.error(err.response?.data?.message || err.message || 'Có lỗi xảy ra khi cập nhật');
       setSaving(false);
       setUploadingLogo(false);
     }
@@ -358,24 +318,26 @@ export default function ClinicManagement() {
     );
   }
 
-  return (
-    <div className="p-8">
-      <div className="flex items-center gap-3 mb-6">
-        <Building2 className="w-8 h-8 text-blue-600" />
-        <h1 className="text-3xl font-bold text-gray-800">Quản lý Thông tin Phòng khám</h1>
+  // Hiển thị loading khi đang lưu để tránh hiển thị dữ liệu cũ
+  if (saving) {
+    return (
+      <div className="p-8">
+        <div className="text-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600 mb-4" />
+          <p className="text-gray-600">Đang cập nhật thông tin...</p>
+        </div>
       </div>
+    );
+  }
 
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6">
-          {success}
-        </div>
-      )}
+  return (
+    <div className="px-8 pt-4 pb-8">
+      <Toaster {...toastConfig} />
+      
+      <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3 mb-6">
+        <Building2 className="w-9 h-9 text-blue-600" />
+        <span>Quản Lý Thông Tin Phòng Khám</span>
+      </h1>
 
       <div className="bg-white rounded-lg shadow-lg p-6">
         {!clinicInfo && (
@@ -386,6 +348,91 @@ export default function ClinicManagement() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Logo Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Logo Phòng Khám
+            </label>
+            
+            {/* File Input */}
+            <div className="flex items-center gap-3 mb-3">
+              <label className={`flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-300 rounded-lg transition-colors ${
+                isEditing ? 'cursor-pointer hover:bg-blue-100' : 'cursor-not-allowed opacity-50'
+              }`}>
+                <Upload className="w-5 h-5 text-blue-600" />
+                <span className="text-sm font-medium text-blue-600">
+                  {logoFile ? 'Đổi ảnh' : 'Chọn ảnh từ máy'}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoFileChange}
+                  disabled={!isEditing}
+                  className="hidden"
+                />
+              </label>
+              
+              {logoPreview && isEditing && (
+                <button
+                  type="button"
+                  onClick={handleRemoveLogo}
+                  className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Xóa logo"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+
+            {/* Preview */}
+            {logoPreview && (
+              <div className="mt-3">
+                <p className="text-sm text-gray-600 mb-2">Xem trước logo:</p>
+                <div className="relative inline-block">
+                  <img
+                    src={logoPreview}
+                    alt="Logo preview"
+                    className="max-w-xs h-32 object-contain border border-gray-200 rounded-lg p-2 bg-gray-50"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                  {logoFile && (
+                    <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                      Mới
+                    </div>
+                  )}
+                </div>
+                {logoFile && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    File: {logoFile.name} ({(logoFile.size / 1024).toFixed(2)} KB)
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Current logo info */}
+            {!logoPreview && formData.logoUrl && (
+              <div className="mt-3">
+                <p className="text-sm text-gray-600 mb-2">Logo hiện tại:</p>
+                <img
+                  src={formData.logoUrl}
+                  alt="Current logo"
+                  className="max-w-xs h-32 object-contain border border-gray-200 rounded-lg p-2 bg-gray-50"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
+
+            {!logoPreview && !formData.logoUrl && (
+              <p className="text-sm text-gray-500 mt-2">
+                Chưa có logo. Vui lòng chọn file ảnh từ máy tính.
+              </p>
+            )}
+          </div>
+
           {/* Tên phòng khám */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -480,89 +527,77 @@ export default function ClinicManagement() {
             </p>
           </div>
 
-          {/* Logo Upload */}
+          {/* Giờ làm việc buổi sáng */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Logo Phòng Khám
+              Giờ làm việc buổi sáng
             </label>
-            
-            {/* File Input */}
-            <div className="flex items-center gap-3 mb-3">
-              <label className={`flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-300 rounded-lg transition-colors ${
-                isEditing ? 'cursor-pointer hover:bg-blue-100' : 'cursor-not-allowed opacity-50'
-              }`}>
-                <Upload className="w-5 h-5 text-blue-600" />
-                <span className="text-sm font-medium text-blue-600">
-                  {logoFile ? 'Đổi ảnh' : 'Chọn ảnh từ máy'}
-                </span>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">Giờ bắt đầu</label>
                 <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleLogoFileChange}
+                  type="time"
+                  name="morningStartTime"
+                  value={formData.morningStartTime}
+                  onChange={handleInputChange}
                   disabled={!isEditing}
-                  className="hidden"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                  }`}
                 />
-              </label>
-              
-              {logoPreview && isEditing && (
-                <button
-                  type="button"
-                  onClick={handleRemoveLogo}
-                  className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Xóa logo"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
+              </div>
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">Giờ kết thúc</label>
+                <input
+                  type="time"
+                  name="morningEndTime"
+                  value={formData.morningEndTime}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                  }`}
+                />
+              </div>
             </div>
+          </div>
 
-            {/* Preview */}
-            {logoPreview && (
-              <div className="mt-3">
-                <p className="text-sm text-gray-600 mb-2">Xem trước logo:</p>
-                <div className="relative inline-block">
-                  <img
-                    src={logoPreview}
-                    alt="Logo preview"
-                    className="max-w-xs h-32 object-contain border border-gray-200 rounded-lg p-2 bg-gray-50"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                  {logoFile && (
-                    <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
-                      Mới
-                    </div>
-                  )}
-                </div>
-                {logoFile && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    File: {logoFile.name} ({(logoFile.size / 1024).toFixed(2)} KB)
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Current logo info */}
-            {!logoPreview && formData.logoUrl && (
-              <div className="mt-3">
-                <p className="text-sm text-gray-600 mb-2">Logo hiện tại:</p>
-                <img
-                  src={formData.logoUrl}
-                  alt="Current logo"
-                  className="max-w-xs h-32 object-contain border border-gray-200 rounded-lg p-2 bg-gray-50"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
+          {/* Giờ làm việc buổi chiều */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Giờ làm việc buổi chiều
+            </label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">Giờ bắt đầu</label>
+                <input
+                  type="time"
+                  name="afternoonStartTime"
+                  value={formData.afternoonStartTime}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                  }`}
                 />
               </div>
-            )}
-
-            {!logoPreview && !formData.logoUrl && (
-              <p className="text-sm text-gray-500 mt-2">
-                Chưa có logo. Vui lòng chọn file ảnh từ máy tính.
-              </p>
-            )}
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">Giờ kết thúc</label>
+                <input
+                  type="time"
+                  name="afternoonEndTime"
+                  value={formData.afternoonEndTime}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                  }`}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Để trống nếu phòng khám không làm việc buổi đó
+            </p>
           </div>
 
           {/* Thông tin bổ sung (nếu có) */}
@@ -605,17 +640,21 @@ export default function ClinicManagement() {
                     setLogoFile(null);
                     // Reset form data to original clinic info
                     if (clinicInfo) {
+                      const normalizedLogoUrl = toAbsoluteLogoUrl(clinicInfo.logoUrl || '');
                       setFormData({
                         name: clinicInfo.name || '',
                         address: clinicInfo.address || '',
                         phone: clinicInfo.phone || '',
                         email: clinicInfo.email || '',
                         website: clinicInfo.website || '',
-                        logoUrl: clinicInfo.logoUrl || '',
+                        logoUrl: normalizedLogoUrl,
+                        morningStartTime: clinicInfo.morningStartTime || '',
+                        morningEndTime: clinicInfo.morningEndTime || '',
+                        afternoonStartTime: clinicInfo.afternoonStartTime || '',
+                        afternoonEndTime: clinicInfo.afternoonEndTime || '',
                       });
-                      setLogoPreview(clinicInfo.logoUrl || null);
+                      setLogoPreview(normalizedLogoUrl || null);
                     }
-                    setError('');
                   }}
                   className="flex items-center gap-2 bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition"
                 >

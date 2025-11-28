@@ -54,11 +54,33 @@ export default function FullServicesPage() {
     }
   };
 
+  // Tính toán page numbers để hiển thị
+  const getPageNumbers = () => {
+    const current = pagination.currentPage;
+    const total = pagination.totalPages;
+    const pages = [];
+    
+    if (total <= 5) {
+      for (let i = 0; i < total; i++) pages.push(i);
+    } else {
+      if (current <= 2) {
+        pages.push(0, 1, 2, 3, 4);
+      } else if (current >= total - 3) {
+        for (let i = total - 5; i < total; i++) pages.push(i);
+      } else {
+        pages.push(current - 2, current - 1, current, current + 1, current + 2);
+      }
+    }
+    return pages;
+  };
+
+  const pageNumbers = getPageNumbers();
+
   return (
-    <section className="bg-gradient-to-b from-cyan-50 via-white to-cyan-50/30 min-h-screen -mt-12 sm:-mt-16 lg:-mt-20 pt-18 sm:pt-20 lg:pt-24 pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
+    <section className="bg-gradient-to-b from-cyan-50 via-white to-cyan-50/30 min-h-screen pt-0 pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 -mt-8">
         <div>
-          <h2 className="text-4xl font-bold text-gray-900 mt-4">Danh mục dịch vụ Tai - Mũi - Họng</h2>
+          <h2 className="text-4xl font-bold text-gray-900">Danh mục dịch vụ Tai - Mũi - Họng</h2>
           <p className="text-lg text-gray-600 mt-3">
             Lựa chọn phù hợp cho từng nhu cầu khám – từ tư vấn, chẩn đoán đến thủ thuật chuyên sâu.
           </p>
@@ -77,7 +99,7 @@ export default function FullServicesPage() {
               className={`px-6 py-2.5 rounded-full border text-sm font-semibold transition-all duration-300 transform hover:scale-105
               ${
                 selectedCategory === cat.id
-                  ? 'bg-gradient-to-r from-cyan-500 to-emerald-500 text-white border-transparent shadow-lg shadow-cyan-500/30'
+                  ? 'bg-cyan-600 text-white border-transparent shadow-lg shadow-cyan-500/30'
                   : 'bg-white hover:bg-cyan-50 border-gray-300 text-gray-700 hover:border-cyan-400 shadow-md hover:shadow-lg'
               }`}
             >
@@ -104,35 +126,47 @@ export default function FullServicesPage() {
 
             {/* Pagination */}
             {pagination.totalPages > 1 && (
-              <div className="flex justify-center mt-8 space-x-4">
-                <button
-                  onClick={() => handlePageChange(pagination.currentPage - 1)}
+              <div className="flex justify-center items-center mt-12 gap-3 select-none">
+                <button 
+                  onClick={() => handlePageChange(0)} 
                   disabled={pagination.isFirst}
-                  className={`px-4 py-2 border rounded-lg flex items-center space-x-1 ${
-                    pagination.isFirst
-                      ? 'text-gray-400 border-gray-200'
-                      : 'text-blue-600 border-blue-400 hover:bg-blue-50'
-                  }`}
+                  className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
-                  <ChevronLeft size={18} />
-                  <span>Trước</span>
+                  {'<<'}
                 </button>
-
-                <span className="px-3 py-2 text-gray-700">
-                  Trang {pagination.currentPage + 1} / {pagination.totalPages}
-                </span>
-
-                <button
-                  onClick={() => handlePageChange(pagination.currentPage + 1)}
-                  disabled={pagination.isLast}
-                  className={`px-4 py-2 border rounded-lg flex items-center space-x-1 ${
-                    pagination.isLast
-                      ? 'text-gray-400 border-gray-200'
-                      : 'text-blue-600 border-blue-400 hover:bg-blue-50'
-                  }`}
+                <button 
+                  onClick={() => handlePageChange(pagination.currentPage - 1)} 
+                  disabled={pagination.isFirst}
+                  className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
-                  <span>Tiếp</span>
-                  <ChevronRight size={18} />
+                  {'<'}
+                </button>
+                {pageNumbers.map((p) => (
+                  <button 
+                    key={p} 
+                    onClick={() => handlePageChange(p)}
+                    className={`w-11 h-11 rounded-lg font-medium transition-all ${
+                      p === pagination.currentPage
+                        ? 'bg-gray-800 text-white border-gray-800 shadow-md'
+                        : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    {p + 1}
+                  </button>
+                ))}
+                <button 
+                  onClick={() => handlePageChange(pagination.currentPage + 1)} 
+                  disabled={pagination.isLast}
+                  className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  {'>'}
+                </button>
+                <button 
+                  onClick={() => handlePageChange(pagination.totalPages - 1)} 
+                  disabled={pagination.isLast}
+                  className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  {'>>'}
                 </button>
               </div>
             )}

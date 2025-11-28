@@ -4,13 +4,13 @@ import { useClinic } from '../contexts/ClinicContext';
 export default function Contact() {
   const { clinicInfo } = useClinic();
 
-  // Fallback values nếu chưa có dữ liệu
-  const clinicAddress = clinicInfo?.address || '123 Đường Nguyễn Văn Linh, Quận 7, Thành phố Hồ Chí Minh';
-  const clinicPhone = clinicInfo?.phone || '0123 456 789';
-  const clinicEmail = clinicInfo?.email || 'contact@entclinic.vn';
+  const clinicAddress = clinicInfo?.address?.trim() || '';
+  const clinicPhone = clinicInfo?.phone?.trim() || '';
+  const clinicEmail = clinicInfo?.email?.trim() || '';
+  const hasContactInfo = !!(clinicAddress || clinicPhone || clinicEmail);
 
   return (
-    <section id="contact" className="py-20 bg-white">
+    <section id="contact" className="py-10 md:py-12 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-3 mb-4">
@@ -23,6 +23,11 @@ export default function Contact() {
 
         <div className="grid lg:grid-cols-2 gap-12">
           <div className="space-y-8">
+            {!hasContactInfo && (
+              <div className="p-4 rounded-xl border border-dashed border-gray-300 text-gray-500">
+                Chưa có thông tin liên hệ. Vui lòng cập nhật tại trang quản trị.
+              </div>
+            )}
             {clinicAddress && (
               <div className="flex items-start space-x-4 p-4 rounded-xl hover:bg-cyan-50/50 transition-all group">
                 <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
@@ -67,18 +72,28 @@ export default function Contact() {
               </div>
             )}
 
-            <div className="flex items-start space-x-4 p-4 rounded-xl hover:bg-cyan-50/50 transition-all group">
-              <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                <Clock className="w-7 h-7 text-white" />
+            {(clinicInfo?.morningStartTime || clinicInfo?.afternoonStartTime) && (
+              <div className="flex items-start space-x-4 p-4 rounded-xl hover:bg-cyan-50/50 transition-all group">
+                <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                  <Clock className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-1">Giờ Làm Việc</h3>
+                  <div className="text-gray-600 space-y-1">
+                    {clinicInfo.morningStartTime && clinicInfo.morningEndTime && (
+                      <p>
+                        <span className="font-medium">Buổi sáng:</span> {clinicInfo.morningStartTime} - {clinicInfo.morningEndTime}
+                      </p>
+                    )}
+                    {clinicInfo.afternoonStartTime && clinicInfo.afternoonEndTime && (
+                      <p>
+                        <span className="font-medium">Buổi chiều:</span> {clinicInfo.afternoonStartTime} - {clinicInfo.afternoonEndTime}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-gray-900 mb-1">Giờ Làm Việc</h3>
-                <p className="text-gray-600">
-                  Thứ 2 - Thứ 6: 8:00 - 20:00<br />
-                  Thứ 7 - Chủ Nhật: 8:00 - 17:00
-                </p>
-              </div>
-            </div>
+            )}
 
             {clinicPhone && (
               <div className="bg-gradient-to-br from-cyan-50 to-emerald-50 border-2 border-cyan-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow">

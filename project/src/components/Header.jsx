@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { Menu, X, Phone } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useClinic } from '../contexts/ClinicContext';
-import defaultLogo from '../images/logo.png';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { clinicInfo } = useClinic();
 
-  // Fallback values nếu chưa có dữ liệu
-  const clinicName = clinicInfo?.name || 'Phòng Khám thông minh';
-  const clinicLogoUrl = clinicInfo?.logoUrl;
+  const clinicName = clinicInfo?.name?.trim() || '';
+  const baseLogoUrl = clinicInfo?.logoUrl?.trim() || '';
+  const cacheBuster = clinicInfo?.updatedAt ? new Date(clinicInfo.updatedAt).getTime() : Date.now();
+  const clinicLogoUrl = baseLogoUrl ? `${baseLogoUrl}?v=${cacheBuster}` : '';
 
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
@@ -24,17 +24,28 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <div className="flex items-center space-x-3">
-            <img 
-              src={clinicLogoUrl || defaultLogo} 
-              alt={clinicName || 'Logo phòng khám'}
-              className="w-12 h-12 object-contain rounded-lg"
-              onError={(e) => {
-                e.target.src = defaultLogo;
-              }}
-            />
+            {clinicLogoUrl ? (
+              <img
+                key={clinicLogoUrl}
+                src={clinicLogoUrl}
+                alt={clinicName || 'Logo phòng khám'}
+                className="w-12 h-12 object-contain rounded-lg"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center text-xs">
+                Logo
+              </div>
+            )}
             <div>
-              <h1 className="text-xl font-bold text-gray-900">{clinicName}</h1>
-              <p className="text-xs text-gray-600">Chuyên khoa Tai-Mũi-Họng</p>
+              {clinicName ? (
+                <h1 className="text-xl font-bold text-gray-900">{clinicName}</h1>
+              ) : (
+                <p className="text-sm text-gray-500">Chưa cập nhật tên phòng khám</p>
+              )}
+              <p className="text-xs text-gray-600">Vui lòng cập nhật thông tin trong trang quản trị</p>
             </div>
           </div>
 

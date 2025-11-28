@@ -7,6 +7,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useClinic } from '../../contexts/ClinicContext';
 
 const receptionMenuItems = [
   { id: 'appointments', label: 'Lịch Hẹn',        icon: CalendarCheck },
@@ -18,6 +19,7 @@ const receptionMenuItems = [
 export default function ReceptionSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { clinicInfo } = useClinic();
 
   // Xác định menu đang active theo URL – CỰC CHUẨN!
   const getActiveMenu = () => {
@@ -39,7 +41,7 @@ export default function ReceptionSidebar() {
 
   return (
     <Sidebar
-      title="HealthCare Reception"
+      title={clinicInfo?.name}
       menuItems={receptionMenuItems}
       activeMenu={activeMenu}
       onMenuChange={handleMenuChange}

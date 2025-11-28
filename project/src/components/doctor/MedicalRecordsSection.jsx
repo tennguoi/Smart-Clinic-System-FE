@@ -227,21 +227,7 @@ const MedicalRecordsSection = () => {
               <ClipboardList className="w-6 h-6 text-blue-600"/>
               <h2 className="text-lg font-semibold text-gray-800">Quản lý Hồ sơ & Hoàn thành khám</h2>
             </div>
-            <button
-              onClick={() => {
-                setFormError('');
-                setFormSuccess('');
-                setShowCreateForm(v => !v);
-              }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 shadow-md transition-all"
-            >
-              {showCreateForm ? 'Đóng form' : (
-                <>
-                  <Plus className="w-4 h-4" />
-                  Tạo hồ sơ mới
-                </>
-              )}
-            </button>
+            
           </div>
           {showCreateForm && (
             <div className="mt-4 animate-fadeIn">

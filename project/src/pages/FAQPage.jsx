@@ -7,9 +7,19 @@ export default function FAQPage() {
   const [expandedId, setExpandedId] = useState('faq-1');
   const { clinicInfo } = useClinic();
 
-  // Fallback values nếu chưa có dữ liệu
-  const clinicPhone = clinicInfo?.phone || '0123 456 789';
-  const clinicEmail = clinicInfo?.email || 'contact@entclinic.vn';
+  const clinicPhone = clinicInfo?.phone?.trim() || '';
+  const clinicEmail = clinicInfo?.email?.trim() || '';
+  const bookingChannels = [
+    'Website (sử dụng form đặt lịch online)',
+    clinicPhone ? `Điện thoại: ${clinicPhone}` : null,
+    clinicEmail ? `Email: ${clinicEmail}` : null,
+    'Trực tiếp tại phòng khám.'
+  ].filter(Boolean);
+  const bookingAnswer = bookingChannels.length
+    ? `Bạn có thể đặt lịch qua: ${bookingChannels
+        .map((channel, index) => `${index + 1}) ${channel}`)
+        .join(', ')}`
+    : 'Bạn có thể đặt lịch trực tuyến hoặc trực tiếp tại phòng khám.';
 
   const faqs = [
     {
@@ -34,7 +44,7 @@ export default function FAQPage() {
       id: 'faq-4',
       category: 'Đặt Lịch',
       question: 'Làm thế nào để đặt lịch khám?',
-      answer: `Bạn có thể đặt lịch qua: 1) Website (sử dụng form đặt lịch online), 2) Điện thoại: ${clinicPhone}, 3) Email: ${clinicEmail}, 4) Trực tiếp tại phòng khám. Đặt lịch trước giúp bạn không phải chờ đợi.`
+      answer: `${bookingAnswer} Đặt lịch trước giúp bạn không phải chờ đợi.`
     },
     {
       id: 'faq-5',
@@ -102,14 +112,16 @@ export default function FAQPage() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 mb-12">
-          <div className="bg-gradient-to-br from-blue-50 to-teal-50 rounded-xl p-8 text-center">
-            <div className="text-4xl mb-3">📞</div>
-            <h3 className="font-bold text-gray-900 mb-2">Gọi Điện</h3>
-            <p className="text-gray-600 mb-4">Gọi ngay để được tư vấn</p>
-            <a href={`tel:${clinicPhone.replace(/\s/g, '')}`} className="text-blue-600 font-semibold hover:underline">
-              {clinicPhone}
-            </a>
-          </div>
+          {clinicPhone && (
+            <div className="bg-gradient-to-br from-blue-50 to-teal-50 rounded-xl p-8 text-center">
+              <div className="text-4xl mb-3">📞</div>
+              <h3 className="font-bold text-gray-900 mb-2">Gọi Điện</h3>
+              <p className="text-gray-600 mb-4">Gọi ngay để được tư vấn</p>
+              <a href={`tel:${clinicPhone.replace(/\s/g, '')}`} className="text-blue-600 font-semibold hover:underline">
+                {clinicPhone}
+              </a>
+            </div>
+          )}
           {clinicInfo?.website && (
             <div className="bg-gradient-to-br from-blue-50 to-teal-50 rounded-xl p-8 text-center">
               <div className="text-4xl mb-3">🌐</div>

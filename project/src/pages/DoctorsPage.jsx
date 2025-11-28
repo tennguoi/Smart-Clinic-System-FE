@@ -4,19 +4,49 @@ import DoctorsSection from '../components/DoctorsSection';
 import Footer from '../components/Footer';
 
 export default function DoctorsPage() {
+  const [allDoctors, setAllDoctors] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 8;
 
   useEffect(() => {
     getDoctors()
       .then((data) => {
         const arr = Array.isArray(data) ? data : [];
-        setDoctors(arr);
+        setAllDoctors(arr);
+        setDoctors(arr.slice(0, PAGE_SIZE));
       })
       .catch((e) => setErr(e.message || 'Error'))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    const start = page * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    setDoctors(allDoctors.slice(start, end));
+  }, [page, allDoctors]);
+
+  const totalPages = Math.ceil(allDoctors.length / PAGE_SIZE);
+
+  const getPageNumbers = () => {
+    const pages = [];
+    if (totalPages <= 5) {
+      for (let i = 0; i < totalPages; i++) pages.push(i);
+    } else {
+      if (page <= 2) {
+        pages.push(0, 1, 2, 3, 4);
+      } else if (page >= totalPages - 3) {
+        for (let i = totalPages - 5; i < totalPages; i++) pages.push(i);
+      } else {
+        pages.push(page - 2, page - 1, page, page + 1, page + 2);
+      }
+    }
+    return pages;
+  };
+
+  const pageNumbers = getPageNumbers();
 
   if (loading) {
     return <div className="py-20 text-center">Đang tải bác sĩ...</div>;
@@ -38,6 +68,54 @@ export default function DoctorsPage() {
       </section>
 
       <DoctorsSection doctors={doctors} showHeading={false} />
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center pb-12 gap-3 select-none">
+          <button 
+            onClick={() => setPage(0)} 
+            disabled={page === 0}
+            className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          >
+            {'<<'}
+          </button>
+          <button 
+            onClick={() => setPage(page - 1)} 
+            disabled={page === 0}
+            className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          >
+            {'<'}
+          </button>
+          {pageNumbers.map((p) => (
+            <button 
+              key={p} 
+              onClick={() => setPage(p)}
+              className={`w-11 h-11 rounded-lg font-medium transition-all ${
+                p === page
+                  ? 'bg-gray-800 text-white border-gray-800 shadow-md'
+                  : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              {p + 1}
+            </button>
+          ))}
+          <button 
+            onClick={() => setPage(page + 1)} 
+            disabled={page >= totalPages - 1}
+            className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          >
+            {'>'}
+          </button>
+          <button 
+            onClick={() => setPage(totalPages - 1)} 
+            disabled={page >= totalPages - 1}
+            className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          >
+            {'>>'}
+          </button>
+        </div>
+      )}
+
       <Footer />
     </div>
   );

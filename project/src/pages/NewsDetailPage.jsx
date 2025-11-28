@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 export default function NewsDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [article, setArticle] = useState(null);
 
   useEffect(() => {
@@ -15,6 +17,15 @@ export default function NewsDetailPage() {
 
   return (
     <div className="pt-20 max-w-4xl mx-auto px-4 py-10">
+      {/* Nút quay lại */}
+      <button
+        onClick={() => navigate('/news')}
+        className="flex items-center gap-2 mb-6 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all shadow-sm hover:shadow-md"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="font-semibold">Quay lại</span>
+      </button>
+
       <h1 className="text-4xl font-bold mb-4">{article.title}</h1>
       <p className="text-gray-500 mb-6">
         {article.author} • {new Date(article.publishedAt).toLocaleDateString()}

@@ -41,4 +41,32 @@ export const patientApi = {
       throw error;
     }
   },
+
+  /**
+   * Tìm kiếm bệnh nhân theo tên hoặc số điện thoại
+   */
+  search: async (keyword) => {
+    return patientApi.getAll(0, 100, keyword);
+  },
+
+  /**
+   * Lấy thông tin chi tiết 1 bệnh nhân
+   */
+  getById: async (id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/public/patients/${id}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error('Không tìm thấy bệnh nhân');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching patient by ID:', error);
+      throw error;
+    }
+  }
 };

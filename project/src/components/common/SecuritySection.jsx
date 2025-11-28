@@ -1,10 +1,12 @@
-import { Lock, Shield, Key, X } from 'lucide-react';
+import { Lock, Shield, Key, X, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import axiosInstance from '../../utils/axiosConfig';
 
-export default function SecuritySection({ twoFactorEnabled, onToggle2FA, onVerify2FA, onChangePassword }) {
+export default function SecuritySection({ twoFactorEnabled, onToggle2FA, onVerify2FA, onChangePassword, loading }) {
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+  const [is2FALoading, setIs2FALoading] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [changePasswordData, setChangePasswordData] = useState({
     oldPassword: '',
     newPassword: '',
@@ -48,14 +50,18 @@ export default function SecuritySection({ twoFactorEnabled, onToggle2FA, onVerif
 
   const handleToggle2FAClick = async () => {
     if (!twoFactorEnabled) {
-      // Gọi API để gửi OTP
-      await onToggle2FA();
-      // Mở modal để nhập OTP
-      setIsOtpModalOpen(true);
-      setOtpCode('');
-      setOtpError('');
+      setIs2FALoading(true);
+      try {
+        const shouldOpenOtpModal = await onToggle2FA();
+        if (shouldOpenOtpModal) {
+          setIsOtpModalOpen(true);
+          setOtpCode('');
+          setOtpError('');
+        }
+      } finally {
+        setIs2FALoading(false);
+      }
     } else {
-      // Tắt 2FA trực tiếp
       await onToggle2FA();
     }
   };
@@ -63,19 +69,25 @@ export default function SecuritySection({ twoFactorEnabled, onToggle2FA, onVerif
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
     setOtpError('');
+    setIsVerifying(true);
     
     if (otpCode.length !== 6) {
       setOtpError('Vui lòng nhập mã OTP 6 số.');
+      setIsVerifying(false);
       return;
     }
 
-    const verified = await onVerify2FA(otpCode);
-    if (verified) {
-      setIsOtpModalOpen(false);
-      setOtpCode('');
-      setOtpError('');
-    } else {
-      setOtpError('OTP không hợp lệ. Vui lòng thử lại.');
+    try {
+      const verified = await onVerify2FA(otpCode);
+      if (verified) {
+        setIsOtpModalOpen(false);
+        setOtpCode('');
+        setOtpError('');
+      } else {
+        setOtpError('OTP không hợp lệ. Vui lòng thử lại.');
+      }
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -133,25 +145,24 @@ export default function SecuritySection({ twoFactorEnabled, onToggle2FA, onVerif
 
             <button
               onClick={handleToggle2FAClick}
+              disabled={is2FALoading || loading}
               className={`relative inline-flex h-12 w-24 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-4 ${
                 twoFactorEnabled
                   ? 'bg-green-500 focus:ring-green-200'
                   : 'bg-gray-300 focus:ring-gray-200'
-              }`}
+              } ${(is2FALoading || loading) ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               <span
-                className={`inline-block h-10 w-10 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${
+                className={`inline-flex items-center justify-center h-10 w-10 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${
                   twoFactorEnabled ? 'translate-x-12' : 'translate-x-1'
                 }`}
               >
-                {twoFactorEnabled ? (
-                  <span className="flex items-center justify-center h-full w-full text-green-600 font-bold">
-                    ✓
-                  </span>
+                {is2FALoading || loading ? (
+                  <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                ) : twoFactorEnabled ? (
+                  <span className="text-green-600 font-bold">✓</span>
                 ) : (
-                  <span className="flex items-center justify-center h-full w-full text-gray-400 font-bold">
-                    ✕
-                  </span>
+                  <span className="text-gray-400 font-bold">✕</span>
                 )}
               </span>
             </button>
@@ -289,9 +300,19 @@ export default function SecuritySection({ twoFactorEnabled, onToggle2FA, onVerif
               {otpError && <p className="text-red-600 text-sm text-center">{otpError}</p>}
               <button
                 type="submit"
-                className="w-full px-4 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                disabled={isVerifying}
+                className={`w-full py-2 px-4 rounded-lg text-white font-medium ${
+                  isVerifying ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+                } transition-colors flex items-center justify-center gap-2`}
               >
-                Xác Nhận
+                {isVerifying ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Đang xác thực...
+                  </>
+                ) : (
+                  'Xác nhận OTP'
+                )}
               </button>
               <button
                 type="button"
