@@ -51,7 +51,7 @@ import PatientRecordsSection from "./components/receptionist/PatientRecordsSecti
 import ClinicRoomManagement from "./components/receptionist/ClinicRoomManagement";
 import InvoicesSection from "./components/receptionist/InvoicesSection";
 import PaymentPage from "./pages/payment/PaymentPage";
-
+import AppointmentCheckInSection from "./components/receptionist/AppointmentCheckInSection";
 
 function App() {
   return (
@@ -150,6 +150,7 @@ function App() {
         >
           <Route index element={<AppointmentsSection />} />
           <Route path="appointments" element={<AppointmentsSection />} />
+          <Route path="check-in" element={<AppointmentCheckInSection/>} />
           <Route path="records" element={<PatientRecordsSection />} />
           <Route path="rooms" element={<ClinicRoomManagement />} />
           <Route path="invoices" element={<InvoicesSection />} />

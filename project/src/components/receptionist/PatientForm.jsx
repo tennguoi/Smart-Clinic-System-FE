@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import { vi } from 'date-fns/locale';
-import { X } from 'lucide-react';
+import { X, Calendar, User } from 'lucide-react';
 import 'react-datepicker/dist/react-datepicker.css';
 
 const priorityOptions = [
@@ -16,10 +16,18 @@ const genderOptions = [
   { value: 'other', label: 'Khác' },
 ];
 
-export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, onCancel }) {
-  const handleSubmit = () => {
-    onSubmit();
-  };
+export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, onCancel, selectedAppointment }) {
+
+  // Tự động điền thông tin khi có selectedAppointment
+  useEffect(() => {
+    if (selectedAppointment && !isEdit) {
+      onChange('patientName', selectedAppointment.patientName);
+      onChange('phone', selectedAppointment.phone);
+      onChange('email', selectedAppointment.email || '');
+      onChange('notes', selectedAppointment.notes || '');
+      onChange('priority', 'Urgent'); // Ưu tiên cho người đặt lịch
+    }
+  }, [selectedAppointment, isEdit, onChange]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -36,6 +44,23 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
             <X className="w-6 h-6" />
           </button>
         </div>
+
+        {/* Thông báo nếu đang điền từ lịch hẹn */}
+        {selectedAppointment && !isEdit && (
+          <div className="p-6 bg-blue-50 border-b">
+            <div className="flex items-center gap-3">
+              <Calendar className="w-6 h-6 text-blue-600" />
+              <div>
+                <p className="font-semibold text-blue-900">
+                  Đang điền thông tin từ lịch hẹn: {selectedAppointment.appointmentCode}
+                </p>
+                <p className="text-sm text-blue-700 mt-1">
+                  Vui lòng bổ sung các trường còn thiếu (ngày sinh, giới tính, địa chỉ...) trước khi thêm bệnh nhân
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Form Content */}
         <div className="p-6">
@@ -69,6 +94,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="VD: 0912345678"
+                disabled={selectedAppointment} // Khóa nếu từ appointment
               />
             </div>
 
@@ -111,7 +137,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
             {/* Gender */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Giới tính
+                Giới tính <span className="text-red-500">*</span>
               </label>
               <select
                 value={patientForm.gender}
@@ -142,9 +168,14 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                   </option>
                 ))}
               </select>
+              {selectedAppointment && (
+                <p className="text-xs text-blue-600 mt-1">
+                  ✓ Tự động ưu tiên cho bệnh nhân đặt lịch
+                </p>
+              )}
             </div>
 
-            {/* 🆕 ID Number - Số căn cước */}
+            {/* ID Number */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Số căn cước / CMND
@@ -153,7 +184,6 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 type="text"
                 value={patientForm.idNumber || ''}
                 onChange={(e) => {
-                  // Chỉ cho phép số, giới hạn 12 số
                   let value = e.target.value.replace(/\D/g, '');
                   if (value.length > 12) value = value.slice(0, 12);
                   onChange('idNumber', value);
@@ -164,7 +194,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
               />
             </div>
 
-            {/* 🆕 Insurance Number - Số thẻ BHYT */}
+            {/* Insurance Number */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Số thẻ BHYT
@@ -173,7 +203,6 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 type="text"
                 value={patientForm.insuranceNumber || ''}
                 onChange={(e) => {
-                  // Cho phép chữ và số, viết hoa tự động
                   let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
                   if (value.length > 15) value = value.slice(0, 15);
                   onChange('insuranceNumber', value);
@@ -198,7 +227,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
               />
             </div>
 
-            {/* 🆕 Notes - Triệu chứng */}
+            {/* Notes */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Triệu chứng / Ghi chú
@@ -213,22 +242,10 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
             </div>
           </div>
 
-          {/* Thông báo khung giờ làm việc - Chỉ hiển thị khi thêm mới */}
-          {!isEdit && (
-            <div className="mt-4 bg-blue-50 border border-blue-200 rounded-md p-3">
-              <p className="text-sm text-blue-800 font-medium mb-1">ℹ️ Lưu ý:</p>
-              <p className="text-xs text-blue-700">
-                Hệ thống chỉ cho phép thêm bệnh nhân trong khung giờ làm việc: 
-                <span className="font-semibold"> 8:00-12:00</span> (sáng) và 
-                <span className="font-semibold"> 14:00-18:00</span> (chiều)
-              </p>
-            </div>
-          )}
-
           {/* Action Buttons */}
           <div className="flex gap-3 mt-6">
             <button
-              onClick={handleSubmit}
+              onClick={onSubmit}
               className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
             >
               {isEdit ? 'Cập nhật' : 'Thêm bệnh nhân'}
