@@ -105,7 +105,7 @@ function App() {
           <Route path="appointments" element={<AppointmentsSection />} />
           <Route path="rooms" element={<ClinicRoomManagement />} />
           <Route path="medical-records" element={<MedicalRecordHistory />} />
-          <Route path="invoices" element={<InvoicesSection />} />
+          <Route path="invoices" element={<InvoicesSection isDoctorView={true} />} />
           <Route path="doctors" element={<DoctorManagement />} />
           
           <Route path="*" element={<PlaceholderSection title="Chức năng" message="Sắp ra mắt..." />} />
@@ -144,7 +144,7 @@ function App() {
         <Route
           path="/reception"
           element={
-            <ProtectedRoute allowedRoles={["ROLE_TIEP_TAN", "ROLE_ADMIN"]}>
+            <ProtectedRoute allowedRoles={["ROLE_TIEP_TAN"]}>
               <ReceptionPage />
             </ProtectedRoute>
           }

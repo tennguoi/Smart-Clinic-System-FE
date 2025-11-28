@@ -18,13 +18,41 @@ const MedicalRecordHistory = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 10;
 
+  // LẤY ROLE CHÍNH XÁC TỪ localStorage (dựa đúng dữ liệu bạn đang lưu)
+  const getUserRoles = () => {
+    try {
+      const rolesStr = localStorage.getItem('user_roles');
+      if (rolesStr) {
+        return JSON.parse(rolesStr);
+      }
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        return user.role ? [user.role] : [];
+      }
+      return [];
+    } catch (error) {
+      console.error('Error parsing user roles:', error);
+      return [];
+    }
+  };
+
+  const userRoles = getUserRoles();
+  const isAdmin = userRoles.includes('ROLE_ADMIN');
+
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      // Backend tự động check role trong token:
-      // - Admin → trả về TẤT CẢ records
-      // - Doctor → chỉ trả về records của mình
-      const data = await medicalRecordApi.listMine();
+      let data;
+
+      if (isAdmin) {
+        // ADMIN → LẤY TOÀN BỘ HỒ SƠ
+        data = await medicalRecordApi.getAllForAdmin();
+      } else {
+        // BÁC SĨ → chỉ lấy hồ sơ của mình
+        data = await medicalRecordApi.listMine();
+      }
+
       setRecords(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch history:', err);
@@ -59,26 +87,22 @@ const MedicalRecordHistory = () => {
     setCurrentPage(0);
   };
 
-  // Lọc theo tên bệnh nhân, chẩn đoán và ngày khám
+  // Lọc dữ liệu theo tên bệnh nhân, chẩn đoán và ngày tạo (createdAt)
   const filteredRecords = useMemo(() => {
     return records.filter((record) => {
-      // Lọc theo search term
       const matchesSearch = 
-        record.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.diagnosis?.toLowerCase().includes(searchTerm.toLowerCase());
+        (record.patientName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (record.diagnosis?.toLowerCase() || '').includes(searchTerm.toLowerCase());
       
-      // Lọc theo ngày khám
       let matchesDate = true;
       if (filterStartDate || filterEndDate) {
-        const recordDate = record.examinationDate ? new Date(record.examinationDate).toISOString().split('T')[0] : null;
+        const recordDate = record.createdAt 
+          ? new Date(record.createdAt).toISOString().split('T')[0] 
+          : null;
         
         if (recordDate) {
-          if (filterStartDate && recordDate < filterStartDate) {
-            matchesDate = false;
-          }
-          if (filterEndDate && recordDate > filterEndDate) {
-            matchesDate = false;
-          }
+          if (filterStartDate && recordDate < filterStartDate) matchesDate = false;
+          if (filterEndDate && recordDate > filterEndDate) matchesDate = false;
         } else {
           matchesDate = false;
         }
@@ -88,7 +112,7 @@ const MedicalRecordHistory = () => {
     });
   }, [records, searchTerm, filterStartDate, filterEndDate]);
 
-  // Tính toán phân trang
+  // Phân trang
   const totalPages = Math.ceil(filteredRecords.length / pageSize);
   const currentPageRecords = useMemo(() => {
     const startIndex = currentPage * pageSize;
@@ -102,10 +126,10 @@ const MedicalRecordHistory = () => {
       <div className="mb-6">
         <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
           <ClipboardList className="w-9 h-9 text-blue-600" />
-          <span>Lịch Sử Khám Bệnh</span>
+          <span>Lịch Sử Khám Bệnh {isAdmin && '(Tất cả)'}</span>
           <CountBadge 
             currentCount={filteredRecords.length} 
-            totalCount={filteredRecords.length} 
+            totalCount={records.length} 
             label="hồ sơ" 
           />
         </h1>
@@ -184,6 +208,7 @@ const MedicalRecordHistory = () => {
         </div>
       </div>
 
+      {/* Bảng dữ liệu */}
       <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0">
@@ -206,14 +231,14 @@ const MedicalRecordHistory = () => {
             ) : currentPageRecords.length === 0 ? (
               <tr>
                 <td colSpan="5" className="px-4 py-10 text-center text-gray-500">
-                  {searchTerm
+                  {searchTerm || filterStartDate || filterEndDate
                     ? 'Không tìm thấy kết quả phù hợp.'
                     : 'Chưa có lịch sử khám bệnh nào.'}
                 </td>
               </tr>
             ) : (
               currentPageRecords.map((record, index) => (
-                <tr key={record.id} className="border-b hover:bg-gray-50">
+                <tr key={record.recordId || record.id} className="border-b hover:bg-gray-50">
                   <td className="px-4 py-3 text-center text-sm font-medium text-gray-600">
                     {currentPage * pageSize + index + 1}
                   </td>
@@ -225,7 +250,9 @@ const MedicalRecordHistory = () => {
                   <td className="px-4 py-3 text-sm font-medium text-gray-900">
                     {record.patientName || 'Khách vãng lai'}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-800">{record.diagnosis || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">
+                    {record.diagnosis || '-'}
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-600">
                     {record.treatmentNotes || '-'}
                   </td>
