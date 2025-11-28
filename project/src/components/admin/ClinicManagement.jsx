@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Save, Building2, Loader2, Upload, X, Edit } from 'lucide-react';
 import { clinicApi } from '../../api/clinicApi';
 import { useClinic } from '../../contexts/ClinicContext';
@@ -28,6 +29,7 @@ const toRelativeLogoUrl = (url) => {
 };
 
 export default function ClinicManagement() {
+  const { t } = useTranslation();
   const [clinicInfo, setClinicInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -96,7 +98,7 @@ export default function ClinicManagement() {
         return;
       }
       console.error('❌ Error fetching clinic info:', err);
-      setError(err.response?.data?.message || err.message || 'Không thể tải thông tin phòng khám');
+      setError(err.response?.data?.message || err.message || t('admin.errors.loadFailed'));
     } finally {
       if (!skipLoading) {
         setLoading(false);
@@ -118,7 +120,7 @@ export default function ClinicManagement() {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      setError('Vui lòng chọn file ảnh (PNG, JPG, JPEG, GIF, WebP)');
+      setError(t('admin.errors.invalidImage'));
       return;
     }
 
@@ -126,7 +128,7 @@ export default function ClinicManagement() {
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-      setError(`Kích thước file quá lớn (${fileSizeMB}MB). Vui lòng chọn file nhỏ hơn 10MB.`);
+      setError(t('admin.errors.fileTooLarge').replace('10MB', `${fileSizeMB}MB`));
       return;
     }
 
@@ -166,7 +168,7 @@ export default function ClinicManagement() {
     try {
       // Validate required fields
       if (!formData.name.trim()) {
-        setError('Tên phòng khám không được để trống');
+        setError(t('admin.errors.nameRequired'));
         setSaving(false);
         return;
       }
@@ -174,7 +176,7 @@ export default function ClinicManagement() {
       // Validate email format if provided (match backend regex)
       const EMAIL_REGEX = /^[a-zA-Z0-9_+&*-]+(?:\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,7}$/;
       if (formData.email && !EMAIL_REGEX.test(formData.email)) {
-        setError('Email không hợp lệ');
+        setError(t('admin.errors.invalidEmail'));
         setSaving(false);
         return;
       }
@@ -204,7 +206,7 @@ export default function ClinicManagement() {
             updatedClinicData = uploadResult.clinicInfo;
           }
         } catch (uploadError) {
-          setError(uploadError.message || 'Không thể upload logo. Vui lòng thử lại.');
+          setError(uploadError.message || t('admin.errors.uploadFailed'));
           setSaving(false);
           return;
         } finally {
@@ -260,14 +262,14 @@ export default function ClinicManagement() {
       }
       
       console.log('✅ All updates completed!');
-      setSuccess('Cập nhật thông tin phòng khám thành công!');
+      setSuccess(t('admin.success.updated'));
       
       setTimeout(() => {
         setSuccess('');
       }, 3000);
     } catch (err) {
       console.error('❌ Error during update:', err);
-      setError(err.response?.data?.message || err.message || 'Có lỗi xảy ra khi cập nhật');
+      setError(err.response?.data?.message || err.message || t('admin.errors.updateFailed'));
       setSaving(false);
       setUploadingLogo(false);
     }
@@ -278,7 +280,7 @@ export default function ClinicManagement() {
       <div className="p-8">
         <div className="text-center py-12">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600 mb-4" />
-          <p className="text-gray-600">Đang tải thông tin phòng khám...</p>
+          <p className="text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -290,7 +292,7 @@ export default function ClinicManagement() {
       <div className="p-8">
         <div className="text-center py-12">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600 mb-4" />
-          <p className="text-gray-600">Đang cập nhật thông tin...</p>
+          <p className="text-gray-600">{t('admin.common.processing')}</p>
         </div>
       </div>
     );
@@ -300,7 +302,7 @@ export default function ClinicManagement() {
     <div className="p-8">
       <div className="flex items-center gap-3 mb-6">
         <Building2 className="w-8 h-8 text-blue-600" />
-        <h1 className="text-3xl font-bold text-gray-800">Quản lý Thông tin Phòng khám</h1>
+        <h1 className="text-3xl font-bold text-gray-800">{t('admin.clinic.pageTitle')}</h1>
       </div>
 
       {error && (
@@ -318,8 +320,8 @@ export default function ClinicManagement() {
       <div className="bg-white rounded-lg shadow-lg p-6">
         {!clinicInfo && (
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg mb-6">
-            <p className="font-medium">Chưa có thông tin phòng khám</p>
-            <p className="text-sm mt-1">Vui lòng điền thông tin bên dưới để tạo mới.</p>
+            <p className="font-medium">{t('admin.clinic.noData.title')}</p>
+            <p className="text-sm mt-1">{t('admin.clinic.noData.desc')}</p>
           </div>
         )}
 
@@ -327,7 +329,7 @@ export default function ClinicManagement() {
           {/* Tên phòng khám */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tên phòng khám <span className="text-red-500">*</span>
+              {t('admin.clinic.form.name')} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -338,7 +340,7 @@ export default function ClinicManagement() {
               className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
               }`}
-              placeholder="Nhập tên phòng khám"
+              placeholder={t('admin.clinic.placeholder.name')}
               required
             />
           </div>
@@ -346,7 +348,7 @@ export default function ClinicManagement() {
           {/* Địa chỉ */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Địa chỉ
+              {t('admin.clinic.form.address')}
             </label>
             <textarea
               name="address"
@@ -357,14 +359,14 @@ export default function ClinicManagement() {
               className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
               }`}
-              placeholder="Nhập địa chỉ phòng khám"
+              placeholder={t('admin.clinic.placeholder.address')}
             />
           </div>
 
           {/* Số điện thoại */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Số điện thoại
+              {t('admin.clinic.form.phone')}
             </label>
             <input
               type="tel"
@@ -375,14 +377,14 @@ export default function ClinicManagement() {
               className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
               }`}
-              placeholder="Nhập số điện thoại"
+              placeholder="0123456789"
             />
           </div>
 
           {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
+              {t('admin.clinic.form.email')}
             </label>
             <input
               type="email"
@@ -393,14 +395,14 @@ export default function ClinicManagement() {
               className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
               }`}
-              placeholder="Nhập email phòng khám"
+              placeholder="clinic@example.com"
             />
           </div>
 
           {/* Website */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Website
+              {t('admin.clinic.form.website')}
             </label>
             <input
               type="text"
@@ -411,17 +413,17 @@ export default function ClinicManagement() {
               className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
               }`}
-              placeholder="www.example.com hoặc https://example.com"
+              placeholder="www.example.com"
             />
             <p className="text-xs text-gray-500 mt-1">
-              Có thể nhập domain (www.example.com) hoặc URL đầy đủ (https://example.com)
+              {t('admin.clinic.websiteHint')}
             </p>
           </div>
 
           {/* Logo Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Logo Phòng Khám
+              {t('admin.clinic.form.logo')}
             </label>
             
             {/* File Input */}
@@ -431,7 +433,7 @@ export default function ClinicManagement() {
               }`}>
                 <Upload className="w-5 h-5 text-blue-600" />
                 <span className="text-sm font-medium text-blue-600">
-                  {logoFile ? 'Đổi ảnh' : 'Chọn ảnh từ máy'}
+                  {logoFile ? t('admin.clinic.changeLogo') : t('admin.clinic.chooseLogo')}
                 </span>
                 <input
                   type="file"
@@ -447,7 +449,7 @@ export default function ClinicManagement() {
                   type="button"
                   onClick={handleRemoveLogo}
                   className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Xóa logo"
+                  title={t('admin.common.delete')}
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -457,7 +459,7 @@ export default function ClinicManagement() {
             {/* Preview */}
             {logoPreview && (
               <div className="mt-3">
-                <p className="text-sm text-gray-600 mb-2">Xem trước logo:</p>
+                <p className="text-sm text-gray-600 mb-2">{t('admin.common.preview')}:</p>
                 <div className="relative inline-block">
                   <img
                     src={logoPreview}
@@ -469,7 +471,7 @@ export default function ClinicManagement() {
                   />
                   {logoFile && (
                     <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
-                      Mới
+                      New
                     </div>
                   )}
                 </div>
@@ -484,7 +486,7 @@ export default function ClinicManagement() {
             {/* Current logo info */}
             {!logoPreview && formData.logoUrl && (
               <div className="mt-3">
-                <p className="text-sm text-gray-600 mb-2">Logo hiện tại:</p>
+                <p className="text-sm text-gray-600 mb-2">Current logo:</p>
                 <img
                   src={formData.logoUrl}
                   alt="Current logo"
@@ -498,7 +500,7 @@ export default function ClinicManagement() {
 
             {!logoPreview && !formData.logoUrl && (
               <p className="text-sm text-gray-500 mt-2">
-                Chưa có logo. Vui lòng chọn file ảnh từ máy tính.
+                {t('admin.clinic.noLogo')}
               </p>
             )}
           </div>
@@ -508,13 +510,13 @@ export default function ClinicManagement() {
             <div className="pt-4 border-t border-gray-200">
               <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
                 <div>
-                  <span className="font-medium">Ngày tạo:</span>{' '}
+                  <span className="font-medium">{t('admin.clinic.createdAt')}:</span>{' '}
                   {clinicInfo.createdAt
                     ? new Date(clinicInfo.createdAt).toLocaleString('vi-VN')
                     : 'N/A'}
                 </div>
                 <div>
-                  <span className="font-medium">Cập nhật lần cuối:</span>{' '}
+                  <span className="font-medium">{t('admin.clinic.updatedAt')}:</span>{' '}
                   {clinicInfo.updatedAt
                     ? new Date(clinicInfo.updatedAt).toLocaleString('vi-VN')
                     : 'N/A'}
@@ -532,7 +534,7 @@ export default function ClinicManagement() {
                 className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
               >
                 <Edit className="w-5 h-5" />
-                Cập nhật
+                {t('admin.common.edit')}
               </button>
             ) : (
               <>
@@ -558,7 +560,7 @@ export default function ClinicManagement() {
                   }}
                   className="flex items-center gap-2 bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition"
                 >
-                  Hủy
+                  {t('admin.common.cancel')}
                 </button>
                 <button
                   type="submit"
@@ -568,12 +570,12 @@ export default function ClinicManagement() {
                   {saving || uploadingLogo ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      Đang lưu...
+                      {t('admin.common.processing')}
                     </>
                   ) : (
                     <>
                       <Save className="w-5 h-5" />
-                      Lưu thông tin
+                      {t('admin.common.save')}
                     </>
                   )}
                 </button>
@@ -585,4 +587,3 @@ export default function ClinicManagement() {
     </div>
   );
 }
-

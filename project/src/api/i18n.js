@@ -15,7 +15,11 @@ const resources = {
         contact: "Liên Hệ",
         bookNow: "Đặt Lịch Nhanh",
         defaultName: "Chưa cập nhật tên phòng khám",
-        updateInfo: "Vui lòng cập nhật thông tin trong trang quản trị"
+        updateInfo: "Vui lòng cập nhật thông tin trong trang quản trị",
+        profile: "Hồ Sơ Cá Nhân",
+  security: "Bảo Mật & 2FA",
+  logout: "Đăng Xuất",
+  language: "Ngôn ngữ"
       },
       nav: {
         about: "Giới Thiệu",
@@ -279,6 +283,232 @@ appointment: {
   errorTitle: "Có lỗi xảy ra!",
   confirmationNote: "Chúng tôi sẽ xác nhận lịch khám trong vòng 30 phút"
 },
+//admin sidebar
+adminSidebar: {
+        title: "Quản Trị Hệ Thống",
+        
+        statistics: "Thống Kê",
+        revenue: "Doanh Thu",
+        clinic: "Thông Tin Phòng Khám",
+        doctors: "Quản Lý Bác Sĩ",
+        staff: "Quản Lý Nhân Sự",
+        patients: "Danh Sách Bệnh Nhân",
+        services: "Quản Lý Dịch Vụ",
+        articles: "Quản Lý Tin Tức",
+        invoices: "Hóa Đơn & Thanh Toán",
+        medicine: "Quản Lý Thuốc",
+        accounts: "Tài Khoản Người Dùng",
+      },
+      admin: {
+      common: {
+        loading: "Đang tải...",
+        noData: "Không có dữ liệu",
+        search: "Tìm kiếm",
+        all: "Tất cả",
+        clearFilters: "Xóa bộ lọc",
+        save: "Lưu thay đổi",
+        create: "Tạo mới",
+        edit: "Chỉnh sửa",
+        view: "Xem chi tiết",
+        cancel: "Hủy",
+        confirm: "Xác nhận",
+        delete: "Xóa",
+        active: "Hoạt động",
+        inactive: "Vô hiệu hóa",
+        processing: "Đang xử lý...",
+        success: "Thành công!",
+        error: "Có lỗi xảy ra!"
+      },
+
+      // Trang Quản Lý Tài Khoản
+      accounts: {
+        pageTitle: "Quản Lý Tài Khoản",
+        createButton: "Tạo tài khoản mới",
+        searchPlaceholder: "Tìm theo tên, email, số điện thoại...",
+        filterRole: "Vai trò",
+        filterStatus: "Trạng thái",
+        noAccounts: "Không tìm thấy tài khoản nào",
+
+        table: {
+          no: "STT",
+          avatar: "Ảnh đại diện",
+          fullName: "Họ tên",
+          gender: "Giới tính",
+          phone: "SĐT",
+          email: "Email",
+          role: "Vai trò",
+          status: "Trạng thái",
+          actions: "Thao tác"
+        },
+
+        modal: {
+          createTitle: "Tạo tài khoản mới",
+          editTitle: "Chỉnh sửa tài khoản",
+          viewTitle: "Chi tiết tài khoản",
+          switchToEdit: "Chuyển sang chỉnh sửa",
+          avatar: "Ảnh đại diện",
+          changePhoto: "Thay đổi ảnh",
+          choosePhoto: "Chọn ảnh",
+          email: "Email",
+          password: "Mật khẩu",
+          passwordHint: "Để trống nếu không muốn thay đổi",
+          fullName: "Họ và tên",
+          phone: "Số điện thoại",
+          dob: "Ngày sinh",
+          gender: "Giới tính",
+          address: "Địa chỉ",
+          experienceYears: "Số năm kinh nghiệm",
+          bio: "Giới thiệu bản thân",
+          role: "Vai trò"
+        },
+
+        toast: {
+          createSuccess: "Tạo tài khoản thành công!",
+          updateSuccess: "Cập nhật tài khoản thành công!",
+          toggleActive: "Tài khoản đã được kích hoạt!",
+          toggleInactive: "Tài khoản đã bị vô hiệu hóa!",
+          invalidImage: "Vui lòng chọn file ảnh hợp lệ",
+          loadError: "Không thể tải danh sách tài khoản"
+        },
+
+        confirmToggle: {
+          activate: "Kích hoạt tài khoản?",
+          deactivate: "Vô hiệu hóa tài khoản?",
+          activateDesc: "Tài khoản sẽ được phép đăng nhập lại.",
+          deactivateDesc: "Tài khoản sẽ không thể đăng nhập nữa."
+        },
+
+        gender: { male: "Nam", female: "Nữ", other: "Khác" },
+        role: { 
+          admin: "Quản trị viên", 
+          bac_si: "Bác sĩ", 
+          tiep_tan: "Tiếp tân" 
+        }
+      },
+      statistics: {
+    pageTitle: "Thống kê tổng quan",
+    reportSummary: "Báo cáo tổng hợp",
+    range: { day: "Ngày", week: "Tuần", month: "Tháng", custom: "Tùy chỉnh" },
+    kpi: {
+      appointmentsToday: "Lịch hẹn hôm nay",
+      newRecords: "Hồ sơ bệnh án mới",
+      monthlyRevenue: "Doanh thu tháng",
+      cancelRate: "Tỷ lệ hủy lịch"
+    },
+    comparedToPrevious: "so với kỳ trước",
+    charts: { appointmentTrend: "Xu hướng lịch hẹn", revenueTrend: "Xu hướng doanh thu" },
+    appointments: "lịch hẹn",
+    times: "lượt",
+    topServices: {
+      title: "Top 5 Dịch vụ phổ biến",
+      byAppointment: "Theo đặt lịch",
+      byExamination: "Theo khám thực tế",
+      byRevenue: "Theo doanh thu"
+    },
+    errors: {
+      title: "Đã xảy ra lỗi",
+      noToken: "Không tìm thấy token đăng nhập",
+      unauthorized: "Phiên đăng nhập hết hạn",
+      loadFailed: "Không thể tải dữ liệu thống kê"
+    }
+  },
+  clinic: {
+    pageTitle: "Quản lý Thông tin Phòng khám",
+    noData: { title: "Chưa có thông tin phòng khám", desc: "Vui lòng điền thông tin để tạo mới." },
+    form: {
+      name: "Tên phòng khám",
+      address: "Địa chỉ",
+      phone: "Số điện thoại",
+      email: "Email liên hệ",
+      website: "Website",
+      logo: "Logo phòng khám"
+    },
+    placeholder: { name: "Phòng khám ABC", address: "123 Đường Láng, Hà Nội" },
+    websiteHint: "Nhập domain hoặc URL đầy đủ (sẽ tự thêm http:// nếu thiếu)",
+    changeLogo: "Đổi ảnh logo",
+    chooseLogo: "Chọn ảnh logo",
+    noLogo: "Chưa có logo",
+    createdAt: "Ngày tạo",
+    updatedAt: "Cập nhật lần cuối"
+  },
+  errors: {
+    loadFailed: "Không thể tải thông tin phòng khám",
+    invalidImage: "Vui lòng chọn file ảnh hợp lệ",
+    fileTooLarge: "File quá lớn (tối đa 10MB)",
+    nameRequired: "Tên phòng khám không được để trống",
+    updateFailed: "Cập nhật thất bại"
+  },
+  success: { updated: "Cập nhật thông tin phòng khám thành công!" },
+    articles: {
+    pageTitle: "Quản lý Bài viết",
+    createButton: "Tạo bài viết mới",
+    loading: "Đang tải danh sách...",
+    noArticles: "Không tìm thấy bài viết nào",
+    
+    filter: {
+      title: "Tiêu đề",
+      titlePlaceholder: "Tìm theo tiêu đề...",
+      category: "Danh mục",
+      allCategories: "Tất cả",
+      fromDate: "Từ ngày",
+      toDate: "Đến ngày",
+      clearFilter: "Xóa lọc"
+    },
+    categories: {
+  health: "Sức khỏe",
+  advice: "Tư vấn",
+  treatment: "Điều trị",
+  warning: "Cảnh báo",
+  technology: "Công nghệ"
+},
+    table: {
+      no: "STT",
+      image: "Ảnh",
+      title: "Tiêu đề",
+      category: "Danh mục",
+      author: "Tác giả",
+      publishedAt: "Ngày đăng",
+      actions: "Thao tác"
+    },
+    
+    modal: {
+      createTitle: "Tạo bài viết mới",
+      editTitle: "Chỉnh sửa bài viết",
+      title: "Tiêu đề",
+      titlePlaceholder: "Nhập tiêu đề bài viết",
+      content: "Nội dung",
+      contentPlaceholder: "Nhập nội dung bài viết",
+      category: "Danh mục",
+      selectCategory: "-- Chọn danh mục --",
+      author: "Tác giả",
+      authorPlaceholder: "Tên tác giả",
+      source: "Nguồn (tùy chọn)",
+      coverImage: "Ảnh bìa",
+      changeImage: "Thay đổi ảnh",
+      chooseImage: "Chọn ảnh",
+      imageHint: "JPG, PNG, GIF – Tối đa 10MB",
+      processing: "Đang xử lý...",
+      createButton: "Tạo bài viết",
+      updateButton: "Cập nhật"
+    },
+    
+    toast: {
+      createSuccess: "Tạo bài viết thành công!",
+      updateSuccess: "Cập nhật bài viết thành công!",
+      deleteSuccess: "Xóa bài viết thành công!"
+    },
+    
+    errors: {
+      loadFailed: "Không thể tải danh sách bài viết",
+      invalidImage: "Vui lòng chọn file ảnh hợp lệ",
+      imageTooLarge: "Kích thước ảnh không được vượt quá 10MB",
+      uploadFailed: "Upload ảnh thất bại",
+      saveFailed: "Có lỗi khi lưu bài viết",
+      deleteFailed: "Không thể xóa bài viết"
+    }
+
+  },
+      },
     }
   },
 
@@ -294,7 +524,11 @@ appointment: {
         contact: "Contact",
         bookNow: "Book Now",
         defaultName: "Clinic name not updated",
-        updateInfo: "Please update information in admin panel"
+        updateInfo: "Please update information in admin panel",
+        profile: "Profile",
+  security: "Security & 2FA",
+  logout: "Log Out",
+  language: "Language",
       },
       nav: {
         about: "About Us",
@@ -548,6 +782,230 @@ appointment: {
   errorTitle: "Something went wrong!",
   confirmationNote: "We will confirm your appointment within 30 minutes"
 },
+//admin sidebar
+adminSidebar: {
+        title: "Admin Dashboard",
+
+        statistics: "Statistics",
+        revenue: "Revenue",
+        clinic: "Clinic Information",
+        doctors: "Doctors Management",
+        staff: "Staff Management",
+        patients: "Patients List",
+        services: "Services Management",
+        articles: "News & Articles",
+        invoices: "Invoices & Payments",
+        medicine: "Medicine Inventory",
+        accounts: "User Accounts",
+      },
+    admin: {
+      common: {
+        loading: "Loading...",
+        noData: "No data available",
+        search: "Search",
+        all: "All",
+        clearFilters: "Clear filters",
+        save: "Save Changes",
+        create: "Create New",
+        edit: "Edit",
+        view: "View Details",
+        cancel: "Cancel",
+        confirm: "Confirm",
+        delete: "Delete",
+        active: "Active",
+        inactive: "Inactive",
+        processing: "Processing...",
+        success: "Success!",
+        error: "An error occurred!"
+      },
+
+      accounts: {
+        pageTitle: "Account Management",
+        createButton: "Create New Account",
+        searchPlaceholder: "Search by name, email, phone...",
+        filterRole: "Role",
+        filterStatus: "Status",
+        noAccounts: "No accounts found",
+
+        table: {
+          no: "No.",
+          avatar: "Avatar",
+          fullName: "Full Name",
+          gender: "Gender",
+          phone: "Phone",
+          email: "Email",
+          role: "Role",
+          status: "Status",
+          actions: "Actions"
+        },
+
+        modal: {
+          createTitle: "Create New Account",
+          editTitle: "Edit Account",
+          viewTitle: "Account Details",
+          switchToEdit: "Switch to Edit Mode",
+          avatar: "Profile Picture",
+          changePhoto: "Change Photo",
+          choosePhoto: "Choose Photo",
+          email: "Email",
+          password: "Password",
+          passwordHint: "Leave blank to keep current password",
+          fullName: "Full Name",
+          phone: "Phone Number",
+          dob: "Date of Birth",
+          gender: "Gender",
+          address: "Address",
+          experienceYears: "Years of Experience",
+          bio: "Bio / Introduction",
+          role: "Role"
+        },
+
+        toast: {
+          createSuccess: "Account created successfully!",
+          updateSuccess: "Account updated successfully!",
+          toggleActive: "Account activated!",
+          toggleInactive: "Account deactivated!",
+          invalidImage: "Please select a valid image file",
+          loadError: "Failed to load account list"
+        },
+
+        confirmToggle: {
+          activate: "Activate account?",
+          deactivate: "Deactivate account?",
+          activateDesc: "The account will be able to log in again.",
+          deactivateDesc: "The account will no longer be able to log in."
+        },
+
+        gender: { male: "Male", female: "Female", other: "Other" },
+        role: { 
+          admin: "Administrator", 
+          bac_si: "Doctor", 
+          tiep_tan: "Receptionist" 
+        }
+      },
+      statistics: {
+        pageTitle: "Overview Statistics",
+        reportSummary: "Summary Report",
+        range: { day: "Day", week: "Week", month: "Month", custom: "Custom Range" },
+        kpi: {
+          appointmentsToday: "Today's Appointments",
+          newRecords: "New Medical Records",
+          monthlyRevenue: "Monthly Revenue",
+          cancelRate: "Cancellation Rate"
+        },
+        comparedToPrevious: "vs previous period",
+        charts: { appointmentTrend: "Appointment Trend", revenueTrend: "Revenue Trend" },
+        appointments: "appointments",
+        times: "times",
+        topServices: {
+          title: "Top 5 Most Popular Services",
+          byAppointment: "By Bookings",
+          byExamination: "By Actual Visits",
+          byRevenue: "By Revenue"
+        },
+        errors: {
+          title: "An Error Occurred",
+          noToken: "Login token not found",
+          unauthorized: "Session expired or insufficient permissions",
+          loadFailed: "Failed to load statistics data"
+        }
+      },
+      clinic: {
+    pageTitle: "Clinic Information Management",
+    noData: { title: "No clinic information yet", desc: "Please fill in the details below to create." },
+    form: {
+      name: "Clinic Name",
+      address: "Address",
+      phone: "Phone Number",
+      email: "Contact Email",
+      website: "Website",
+      logo: "Clinic Logo"
+    },
+    placeholder: { name: "ABC Clinic", address: "123 Lang Road, Hanoi" },
+    websiteHint: "Enter domain or full URL (http:// will be added automatically if missing)",
+    changeLogo: "Change logo",
+    chooseLogo: "Choose logo",
+    noLogo: "No logo uploaded",
+    createdAt: "Created At",
+    updatedAt: "Last Updated"
+  },
+  errors: {
+    loadFailed: "Failed to load clinic information",
+    invalidImage: "Please select a valid image file",
+    fileTooLarge: "File too large (max 10MB)",
+    nameRequired: "Clinic name is required",
+    updateFailed: "Update failed"
+  },
+  success: { updated: "Clinic information updated successfully!" },
+   articles: {
+    pageTitle: "Article Management",
+    createButton: "Create New Article",
+    loading: "Loading articles...",
+    noArticles: "No articles found",
+    
+    filter: {
+      title: "Title",
+      titlePlaceholder: "Search by title...",
+      category: "Category",
+      allCategories: "All Categories",
+      fromDate: "From Date",
+      toDate: "To Date",
+      clearFilter: "Clear Filter"
+    },
+    categories: {
+  health: "Health",
+  advice: "Consultation & Advice",
+  treatment: "Treatment",
+  warning: "Warning",
+  technology: "Technology"
+},
+    table: {
+      no: "No.",
+      image: "Image",
+      title: "Title",
+      category: "Category",
+      author: "Author",
+      publishedAt: "Published Date",
+      actions: "Actions"
+    },
+    
+    modal: {
+      createTitle: "Create New Article",
+      editTitle: "Edit Article",
+      title: "Title",
+      titlePlaceholder: "Enter article title",
+      content: "Content",
+      contentPlaceholder: "Enter article content",
+      category: "Category",
+      selectCategory: "-- Select Category --",
+      author: "Author",
+      authorPlaceholder: "Author name",
+      source: "Source (Optional)",
+      coverImage: "Cover Image",
+      changeImage: "Change Image",
+      chooseImage: "Choose Image",
+      imageHint: "JPG, PNG, GIF – Max 10MB",
+      processing: "Processing...",
+      createButton: "Create Article",
+      updateButton: "Update"
+    },
+    
+    toast: {
+      createSuccess: "Article created successfully!",
+      updateSuccess: "Article updated successfully!",
+      deleteSuccess: "Article deleted successfully!"
+    },
+    
+    errors: {
+      loadFailed: "Failed to load articles",
+      invalidImage: "Please select a valid image file",
+      imageTooLarge: "Image size must not exceed 10MB",
+      uploadFailed: "Image upload failed",
+      saveFailed: "Error saving article",
+      deleteFailed: "Failed to delete article"
+    }
+  },
+    }
 }
   }
 };
