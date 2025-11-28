@@ -10,6 +10,7 @@ import { toastConfig } from '../../config/toastConfig';
 import axiosInstance from '../../utils/axiosConfig';
 import CountBadge from '../common/CountBadge';
 import Pagination from '../common/Pagination';
+import Swal from 'sweetalert2'; // <--- Thêm dòng này vào chỗ các import
 
 const formatDateTime = (date) => {
   if (!date) return '—';
@@ -30,6 +31,8 @@ export default function AppointmentsSection() {
   const [appointments, setAppointments] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState('Pending');
   const [loading, setLoading] = useState(false);
+
+  const [confirming, setConfirming] = useState(false);
   
   // Date filters
   const [filterStartDate, setFilterStartDate] = useState('');
@@ -256,6 +259,26 @@ export default function AppointmentsSection() {
 
   const handleConfirmFromModal = async () => {
     if (!editingAppointment) return;
+
+    const result = await Swal.fire({
+      title: 'Xác nhận lịch hẹn?',
+      html: `Bạn có chắc chắn muốn xác nhận cho bệnh nhân <b>${editingAppointment.patientName}</b> không?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#16a34a', // Màu xanh lá (giống bg-green-600)
+      cancelButtonColor: '#dc2626', // Màu đỏ (giống bg-red-600)
+      confirmButtonText: 'Đồng ý xác nhận',
+      cancelButtonText: 'Hủy bỏ',
+      reverseButtons: false // Đảo vị trí nút cho thuận tay
+    });
+
+    // Nếu người dùng bấm "Hủy" hoặc click ra ngoài -> Dừng lại
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    setConfirming(true); // 1. Bắt đầu loading
+    
     try {
       await axiosInstance.patch(`/api/appointments/${editingAppointment.appointmentId}/status`, null, { params: { status: 'Confirmed' } });
       toast.success('Đã xác nhận lịch hẹn');
@@ -292,14 +315,31 @@ export default function AppointmentsSection() {
       
       setAppointments(data);
       setTotalPages(refreshed.data.totalPages || 0);
-    } catch {
+    } catch (error) {
+      console.error(error); // Log lỗi để dễ debug
       toast.error('Xác nhận thất bại');
+    } finally {
+      setConfirming(false); // 2. Kết thúc loading
     }
   };
-
   const handleCancelFromModal = async () => {
     if (!editingAppointment) return;
-    if (!window.confirm('Bạn có chắc chắn muốn hủy lịch hẹn này?')) return;
+    const result = await Swal.fire({
+      title: 'Xác nhận hủy lịch hẹn?',
+      html: `Bạn có chắc chắn muốn xác nhận cho bệnh nhân <b>${editingAppointment.patientName}</b> không?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#16a34a', // Màu xanh lá (giống bg-green-600)
+      cancelButtonColor: '#dc2626', // Màu đỏ (giống bg-red-600)
+      confirmButtonText: 'Đồng ý xác nhận hủy',
+      cancelButtonText: 'Hủy bỏ',
+      reverseButtons: false // Đảo vị trí nút cho thuận tay
+    });
+
+    // Nếu người dùng bấm "Hủy" hoặc click ra ngoài -> Dừng lại
+    if (!result.isConfirmed) {
+      return;
+    }
     
     try {
       await axiosInstance.patch(`/api/appointments/${editingAppointment.appointmentId}/status`, null, { params: { status: 'Cancelled' } });
@@ -722,10 +762,17 @@ export default function AppointmentsSection() {
                     <>
                       <button
                         onClick={handleConfirmFromModal}
+                        disabled={confirming}
                         className="flex-1 bg-green-600 text-white py-3 px-4 rounded-xl hover:bg-green-700 transition font-medium inline-flex items-center justify-center gap-2"
                       >
+                      {confirming ?(
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
                         <Check className="w-5 h-5" />
-                        Xác nhận
+                      )}
+                      {confirming ? 'Đang xử lý...' : 'Xác nhận'}
+
+                        
                       </button>
                       <button
                         onClick={handleCancelFromModal}
