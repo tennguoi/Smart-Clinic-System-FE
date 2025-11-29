@@ -243,17 +243,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
             </div>
           </div>
 
-          {/* Thông báo khung giờ làm việc - Chỉ hiển thị khi thêm mới */}
-          {!isEdit && (
-            <div className="mt-4 bg-blue-50 border border-blue-200 rounded-md p-3">
-              <p className="text-sm text-blue-800 font-medium mb-1">ℹ️ Lưu ý:</p>
-              <p className="text-xs text-blue-700">
-                Hệ thống chỉ cho phép thêm bệnh nhân trong khung giờ làm việc: 
-                <span className="font-semibold"> 8:00-12:00</span> (sáng) và 
-                <span className="font-semibold"> 14:00-18:00</span> (chiều)
-              </p>
-            </div>
-          )}
+         
 
           {/* Action Buttons */}
           {/* Chỉ hiện nút khi KHÔNG phải chế độ xem (isEdit && !isEditMode) */}

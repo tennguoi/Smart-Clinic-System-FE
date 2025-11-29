@@ -44,7 +44,7 @@ const getStatusColor = (status) => {
   return 'bg-gray-100 text-gray-700';
 };
 
-export default function QueueTable({ queueList, onEdit, onDelete, onStatusChange }) {
+export default function QueueTable({ queueList, currentPage = 0,  ITEMS_PER_PAGE= 10, onEdit, onDelete, onStatusChange  }) {
   return (
     <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
       <table className="min-w-full divide-y divide-gray-200">
@@ -72,7 +72,7 @@ export default function QueueTable({ queueList, onEdit, onDelete, onStatusChange
           ) : (
             queueList.map((q, index) => (
               <tr key={q.queueId} className="hover:bg-gray-50">
-                <td className="px-4 py-3 text-sm text-gray-700">{index + 1}</td>
+                <td className="px-4 py-3 text-sm text-gray-700">{currentPage * ITEMS_PER_PAGE + index + 1}</td>
                 <td className="px-4 py-3 text-sm font-medium text-gray-900">{q.queueNumber || '—'}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">

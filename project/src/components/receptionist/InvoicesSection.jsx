@@ -1,5 +1,5 @@
 // src/components/receptionist/InvoicesSection.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { billingApi } from '../../api/billingApi';
 import { format } from 'date-fns';
@@ -11,6 +11,9 @@ import { FileText, Search, Plus, Eye, CreditCard, Receipt } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import CountBadge from '../common/CountBadge';
+import Pagination from '../common/Pagination';
+
+const ITEMS_PER_PAGE = 10;
 
 export default function InvoicesSection({ isDoctorView = false }) {
   const navigate = useNavigate();
@@ -23,6 +26,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
 
   // DÙNG API MỚI: /my-bills → TỰ ĐỘNG PHÂN QUYỀN
   const fetchInvoices = async () => {
@@ -44,6 +48,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
       }
 
       setInvoices(data);
+      setCurrentPage(0); // Reset về trang đầu khi filter
     } catch (err) {
       console.error('Lỗi tải hóa đơn:', err);
       toast.error('Không thể tải danh sách hóa đơn');
@@ -59,6 +64,14 @@ export default function InvoicesSection({ isDoctorView = false }) {
     }, 300);
     return () => clearTimeout(timer);
   }, [search, statusFilter, showUnpaidOnly]);
+
+  // Phân trang
+  const paginatedInvoices = useMemo(() => {
+    const start = currentPage * ITEMS_PER_PAGE;
+    return invoices.slice(start, start + ITEMS_PER_PAGE);
+  }, [invoices, currentPage]);
+
+  const totalPages = Math.max(1, Math.ceil(invoices.length / ITEMS_PER_PAGE));
 
   const hasFilter = search || statusFilter !== 'all' || showUnpaidOnly;
 
@@ -91,15 +104,13 @@ export default function InvoicesSection({ isDoctorView = false }) {
 
   return (
     <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
-      <Toaster {...toastConfig} />
-
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
           <Receipt className="w-9 h-9 text-blue-600" />
           <span>Quản Lý Hóa Đơn</span>
           <CountBadge 
-            currentCount={invoices.length} 
+            currentCount={paginatedInvoices.length} 
             totalCount={invoices.length} 
             label="hóa đơn" 
           />
@@ -134,7 +145,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
             </div>
           </div>
 
-          <div className="lg:col-span-3());">
+          <div className="lg:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
             <select
               value={statusFilter}
@@ -176,7 +187,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
         </div>
       </div>
 
-      {/* Bảng hóa đơn */}
+      {/* Bảng hóa đơn + Phân trang */}
       <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
         {loading ? (
           <div className="p-16 text-center text-gray-500">
@@ -196,72 +207,83 @@ export default function InvoicesSection({ isDoctorView = false }) {
             </p>
           </div>
         ) : (
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-center px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-20">STT</th>
-                <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Mã hóa đơn</th>
-                <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Bệnh nhân</th>
-                <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Ngày lập</th>
-                <th className="text-right px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Tổng tiền</th>
-                <th className="text-center px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Trạng thái</th>
-                <th className="text-center px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {invoices.map((inv, index) => (
-                <tr key={inv.billId} className="hover:bg-gray-50 transition">
-                  <td className="px-4 py-4 text-center font-semibold text-gray-700">
-                    {index + 1}
-                  </td>
-                  <td className="px-6 py-4 font-mono text-blue-600 font-medium">
-                    #{inv.billId?.slice(0, 8).toUpperCase()}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-gray-900">{inv.patientName}</div>
-                    <div className="text-sm text-gray-500">{inv.patientPhone}</div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {format(new Date(inv.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                  </td>
-                  <td className="px-6 py-4 text-right font-bold text-lg text-gray-900">
-                    {formatPrice(inv.totalAmount)}
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    {getStatusBadge(inv.paymentStatus)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-center gap-3">
-                      <button
-                        onClick={() => handleViewDetail(inv)}
-                        className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-full transition group relative"
-                        title="Xem chi tiết"
-                      >
-                        <Eye className="w-5 h-5" />
-                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
-                          Xem chi tiết
-                        </span>
-                      </button>
-
-                      {/* Chỉ lễ tân mới thấy nút thu tiền */}
-                      {!isDoctorView && inv.paymentStatus !== 'Paid' && (
+          <>
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-center px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-20">STT</th>
+                  <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Mã hóa đơn</th>
+                  <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Bệnh nhân</th>
+                  <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Ngày lập</th>
+                  <th className="text-right px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Tổng tiền</th>
+                  <th className="text-center px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Trạng thái</th>
+                  <th className="text-center px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {paginatedInvoices.map((inv, index) => (
+                  <tr key={inv.billId} className="hover:bg-gray-50 transition">
+                    <td className="px-4 py-4 text-center font-semibold text-gray-700">
+                      {currentPage * ITEMS_PER_PAGE + index + 1}
+                    </td>
+                    <td className="px-6 py-4 font-mono text-blue-600 font-medium">
+                      #{inv.billId?.slice(0, 8).toUpperCase()}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-gray-900">{inv.patientName}</div>
+                      <div className="text-sm text-gray-500">{inv.patientPhone}</div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {format(new Date(inv.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                    </td>
+                    <td className="px-6 py-4 text-right font-bold text-lg text-gray-900">
+                      {formatPrice(inv.totalAmount)}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {getStatusBadge(inv.paymentStatus)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-center gap-3">
                         <button
-                          onClick={() => handlePayInvoice(inv)}
-                          className="p-2.5 text-green-600 hover:bg-green-50 rounded-full transition group relative"
-                          title="Thu tiền"
+                          onClick={() => handleViewDetail(inv)}
+                          className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-full transition group relative"
+                          title="Xem chi tiết"
                         >
-                          <CreditCard className="w-5 h-5" />
+                          <Eye className="w-5 h-5" />
                           <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
-                            Thu tiền
+                            Xem chi tiết
                           </span>
                         </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+                        {/* Chỉ lễ tân mới thấy nút thu tiền */}
+                        {!isDoctorView && inv.paymentStatus !== 'Paid' && (
+                          <button
+                            onClick={() => handlePayInvoice(inv)}
+                            className="p-2.5 text-green-600 hover:bg-green-50 rounded-full transition group relative"
+                            title="Thu tiền"
+                          >
+                            <CreditCard className="w-5 h-5" />
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+                              Thu tiền
+                            </span>
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* PAGINATION NẰM TRONG BẢNG */}
+            <div className="border-t border-gray-200 bg-gray-50">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          </>
         )}
       </div>
 
@@ -289,6 +311,13 @@ export default function InvoicesSection({ isDoctorView = false }) {
           }}
         />
       )}
+
+      {/* TOASTER ĐÃ ĐỒNG BỘ 100% VỚI toastConfig.js */}
+      <Toaster
+        position={toastConfig.position}
+        containerStyle={toastConfig.containerStyle}
+        toastOptions={toastConfig.toastOptions}
+      />
     </div>
   );
 }

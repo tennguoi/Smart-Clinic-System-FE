@@ -1,12 +1,17 @@
-import { useCallback, useEffect, useState } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+// src/components/reception/PatientRecordsSection.jsx
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
+import { Users , Plus} from 'lucide-react';
+
 import SearchFilter from './SearchFilter';
 import QueueTable from './QueueTable';
 import PatientForm from './PatientForm';
+import Pagination from '../common/Pagination';
+import CountBadge from '../common/CountBadge';
 import { queueApi } from '../../api/receptionApi';
+import { toastConfig } from '../../config/toastConfig';
 
-// Helper functions
+// ====================== HELPER FUNCTIONS ======================
 const normalizeStatus = (status) => {
   if (!status) return 'Waiting';
   const s = String(status).toLowerCase().trim();
@@ -18,14 +23,11 @@ const normalizeStatus = (status) => {
 };
 
 const sortQueueByPriority = (list) => {
-  const order = { 
-    'Emergency': 3, 'Khẩn cấp': 3, 
-    'Urgent': 2, 'Ưu tiên': 2, 
-    'Normal': 1, 'Thường': 1 
-  };
+  const order = { Emergency: 3, 'Khẩn cấp': 3, Urgent: 2, 'Ưu tiên': 2, Normal: 1, 'Thường': 1 };
   return list.slice().sort((a, b) => {
-    const diff = (order[b.priority] || 0) - (order[a.priority] || 0);
-    return diff !== 0 ? diff : new Date(a.checkInTime) - new Date(b.checkInTime);
+    const pa = order[a.priority] || 0;
+    const pb = order[b.priority] || 0;
+    return pb - pa || new Date(a.checkInTime) - new Date(b.checkInTime);
   });
 };
 
@@ -34,11 +36,7 @@ const formatDateOfBirth = (dateString) => {
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return dateString;
-    return new Intl.DateTimeFormat('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    }).format(date);
+    return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
   } catch {
     return dateString;
   }
@@ -47,25 +45,18 @@ const formatDateOfBirth = (dateString) => {
 const parseIsoToDate = (isoValue) => {
   if (!isoValue) return null;
   const date = new Date(isoValue);
-  return Number.isNaN(date.getTime()) ? null : date;
+  return isNaN(date.getTime()) ? null : date;
 };
 
-// Empty form
+// ====================== CONSTANTS ======================
 const emptyPatientForm = {
-  patientName: '',
-  phone: '',
-  email: '',
-  dob: '',
-  gender: 'male',
-  address: '',
-  priority: 'Normal',
-  checkInTime: '',
-  idNumber: '',
-  insuranceNumber: '',
-  notes: '',
-  dobDate: null,
+  patientName: '', phone: '', email: '', dob: '', gender: 'male',
+  address: '', priority: 'Normal', idNumber: '', insuranceNumber: '', notes: '', dobDate: null,
 };
 
+const ITEMS_PER_PAGE = 10;
+
+// ====================== MAIN COMPONENT ======================
 export default function PatientRecordsSection() {
   const [queueList, setQueueList] = useState([]);
   const [loadingQueue, setLoadingQueue] = useState(false);
@@ -75,30 +66,49 @@ export default function PatientRecordsSection() {
   const [showForm, setShowForm] = useState(false);
   const [editPatientId, setEditPatientId] = useState(null);
   const [patientForm, setPatientForm] = useState(emptyPatientForm);
+  const [currentPage, setCurrentPage] = useState(0);
 
-  // Fetch queue data
+  // Phân trang
+  const paginatedList = useMemo(() => {
+    const start = currentPage * ITEMS_PER_PAGE;
+    return queueList.slice(start, start + ITEMS_PER_PAGE);
+  }, [queueList, currentPage]);
+
+  const totalPages = Math.max(1, Math.ceil(queueList.length / ITEMS_PER_PAGE));
+
+  // Thống kê trạng thái
+  const statusCounts = useMemo(() => {
+    const counts = { Waiting: 0, InProgress: 0, Completed: 0, Cancelled: 0 };
+    queueList.forEach(item => {
+      if (counts.hasOwnProperty(item.status)) counts[item.status]++;
+    });
+    return counts;
+  }, [queueList]);
+
+  // Fetch dữ liệu
   const fetchQueueData = useCallback(async () => {
     setLoadingQueue(true);
     setQueueError('');
+    setCurrentPage(0);
+
     try {
       const params = {};
       if (searchPhone) params.phone = searchPhone;
       if (filterStatus && filterStatus !== 'All') params.status = filterStatus;
 
       const data = await queueApi.searchQueue(params);
-
-      const mappedData = (data || []).map((item) => ({
+      const mapped = (data || []).map(item => ({
         queueId: item.queueId,
         queueNumber: item.queueNumber,
-        patientName: item.patientName,
-        phone: item.phone,
-        email: item.email,
+        patientName: item.patientName || '',
+        phone: item.phone || '',
+        email: item.email || '',
         dob: formatDateOfBirth(item.dob),
-        gender: item.gender,
-        address: item.address,
+        gender: item.gender || 'male',
+        address: item.address || '',
         priority: item.priority || 'Normal',
         status: normalizeStatus(item.status),
-        checkInTime: item.checkInTime,
+        checkInTime: item.checkInTime || new Date().toISOString(),
         roomName: item.roomName || null,
         doctorName: item.doctorName || null,
         idNumber: item.idNumber || '',
@@ -106,10 +116,11 @@ export default function PatientRecordsSection() {
         notes: item.notes || '',
       }));
 
-      setQueueList(sortQueueByPriority(mappedData)); // Áp dụng sắp xếp theo ưu tiên
+      setQueueList(sortQueueByPriority(mapped));
     } catch (error) {
-      const message = error.response?.data?.message || error.message || 'Không thể tải danh sách bệnh nhân.';
-      setQueueError(message);
+      const msg = error.response?.data?.message || error.message || 'Không thể tải danh sách bệnh nhân';
+      setQueueError(msg);
+      toast.error(msg);
     } finally {
       setLoadingQueue(false);
     }
@@ -119,26 +130,13 @@ export default function PatientRecordsSection() {
     fetchQueueData();
   }, [fetchQueueData]);
 
-  // Update local status
-  const updateLocalQueueStatus = (queueId, newStatus) => {
-    const std = normalizeStatus(newStatus);
-    setQueueList(prev => {
-      if (filterStatus && normalizeStatus(filterStatus) !== std && filterStatus !== '') {
-        return prev.filter(p => p.queueId !== queueId);
-      }
-      return sortQueueByPriority(
-        prev.map(p => p.queueId === queueId ? { ...p, status: std } : p)
-      );
-    });
-  };
-
   // Form handlers
   const handleFormChange = (field, value) => {
     if (field === 'phone') {
       const numeric = value.replace(/\D/g, '').slice(0, 10);
       setPatientForm(prev => ({ ...prev, [field]: numeric }));
     } else if (field === 'dob') {
-      if (value && value instanceof Date && !Number.isNaN(value.getTime())) {
+      if (value && value instanceof Date && !isNaN(value.getTime())) {
         const isoValue = value.toISOString().split('T')[0];
         setPatientForm(prev => ({ ...prev, dobDate: value, dob: isoValue }));
       } else {
@@ -160,16 +158,14 @@ export default function PatientRecordsSection() {
       const full = await queueApi.getQueueDetail(patient.queueId);
 
       const normalizeGender = (g) => {
-        if (!g) return 'male';
-        const val = String(g).toLowerCase();
+        const val = String(g || '').toLowerCase();
         if (val.includes('nữ') || val === 'female') return 'female';
         if (val.includes('khác') || val === 'other') return 'other';
         return 'male';
       };
 
       const normalizePriority = (p) => {
-        if (!p) return 'Normal';
-        const val = String(p);
+        const val = String(p || '');
         if (val.includes('Khẩn cấp') || val.includes('Emergency')) return 'Emergency';
         if (val.includes('Ưu tiên') || val.includes('Urgent')) return 'Urgent';
         return 'Normal';
@@ -200,7 +196,7 @@ export default function PatientRecordsSection() {
     try {
       await queueApi.deletePatient(id);
       setQueueList(prev => prev.filter(p => p.queueId !== id));
-      toast.success('Đã xóa bệnh nhân!');
+      toast.success('Đã xóa bệnh nhân thành công!');
     } catch {
       toast.error('Không thể xóa bệnh nhân!');
     }
@@ -212,54 +208,43 @@ export default function PatientRecordsSection() {
         toast.error('Số điện thoại phải đúng 10 chữ số!');
         return;
       }
-
       if (!patientForm.patientName.trim()) {
         toast.error('Vui lòng nhập tên bệnh nhân!');
         return;
       }
-
       if (!patientForm.dob) {
         toast.error('Vui lòng chọn ngày sinh!');
         return;
       }
 
       if (editPatientId) {
-        // CẬP NHẬT
         const res = await queueApi.updatePatient(editPatientId, patientForm);
         setQueueList(prev => sortQueueByPriority(
-          prev.map(p => p.queueId === editPatientId ? {
-            ...p,
-            ...res,
-            dob: formatDateOfBirth(res.dob),
-            roomName: res.roomName || p.roomName,
-            doctorName: res.doctorName || p.doctorName,
-          } : p)
+          prev.map(p => p.queueId === editPatientId ? { ...p, ...res, dob: formatDateOfBirth(res.dob) } : p)
         ));
-        toast.success('Cập nhật thành công!');
+        toast.success('Cập nhật bệnh nhân thành công!');
       } else {
-        // THÊM MỚI - Backend tự động phân phòng
         const res = await queueApi.addPatient(patientForm);
         const newItem = {
           ...res,
           dob: formatDateOfBirth(res.dob),
           status: normalizeStatus(res.status),
         };
-        setQueueList(prev => sortQueueByPriority([...prev, newItem]));
-
-        // Thông báo đã phân phòng tự động
-        if (res.roomName) {
-          toast.success(
-            ` Đã thêm bệnh nhân thành công!\n Tự động phân vào: ${res.roomName}${res.doctorName ? `\n Bác sĩ: ${res.doctorName}` : ''}`,
-            { autoClose: 5000 }
-          );
-        } else {
-          toast.success(' Đã thêm bệnh nhân! Đang chờ phân phòng tự động...');
-        }
+        setQueueList(prev => sortQueueByPriority([newItem, ...prev]));
+        setCurrentPage(0);
+        
+        // Toast với thời gian tùy chỉnh cho thông báo phòng khám
+        const message = res.roomName
+          ? `Đã thêm bệnh nhân!\nPhòng: ${res.roomName}${res.doctorName ? ` - BS. ${res.doctorName}` : ''}`
+          : 'Đã thêm bệnh nhân thành công!';
+        
+        toast.success(message, {
+          duration: res.roomName ? 6000 : toastConfig.toastOptions.success.duration,
+        });
       }
-
       setShowForm(false);
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Có lỗi xảy ra!';
+      const msg = err.response?.data?.message || 'Có lỗi xảy ra!';
       toast.error(msg);
     }
   };
@@ -267,49 +252,99 @@ export default function PatientRecordsSection() {
   const handleQuickUpdateStatus = async (queueId, status) => {
     try {
       await queueApi.updateStatus(queueId, status);
-      updateLocalQueueStatus(queueId, status);
+      setQueueList(prev => {
+        const updated = prev.map(p => p.queueId === queueId ? { ...p, status: normalizeStatus(status) } : p);
+        return sortQueueByPriority(updated);
+      });
       toast.success('Cập nhật trạng thái thành công!');
     } catch {
-      toast.error('Cập nhật thất bại!');
+      toast.error('Cập nhật trạng thái thất bại!');
     }
   };
 
   return (
-    <div className="space-y-6">
-      <SearchFilter
-        searchPhone={searchPhone}
-        filterStatus={filterStatus}
-        onSearchPhoneChange={setSearchPhone}
-        onFilterStatusChange={setFilterStatus}
-        onSearch={fetchQueueData}
-        onClear={() => {
-          setSearchPhone('');
-          setFilterStatus('');
-          fetchQueueData();
-        }}
-        onAddPatient={handleAddPatient}
-      />
+    <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
+      <Toaster {...toastConfig} />
 
+      {/* HEADER - KÉO XUỐNG GẦN FILTER HƠN */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+        <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
+          <Users className="w-9 h-9 text-blue-600" />
+          <span>Quản Lý Bệnh Nhân</span>
+          <CountBadge 
+            currentCount={paginatedList.length} 
+            totalCount={queueList.length} 
+            label="bệnh nhân" 
+          />
+        </h1>
+        <button 
+          onClick={handleAddPatient}
+          className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition font-medium flex items-center gap-2">
+          <Plus className="w-5 h-5" />
+          Thêm bệnh nhân
+        </button>
+      </div>
+
+      {/* Thống kê nhanh – giảm margin */}
+      <div className="flex flex-wrap gap-4 mb-4">
+        <CountBadge label="Đang chờ" count={statusCounts.Waiting} color="blue" />
+        <CountBadge label="Đang khám" count={statusCounts.InProgress} color="orange" />
+        <CountBadge label="Hoàn tất" count={statusCounts.Completed} color="green" />
+        <CountBadge label="Đã hủy" count={statusCounts.Cancelled} color="red" />
+        <CountBadge label="Tổng cộng" count={queueList.length} color="gray" />
+      </div>
+
+      {/* Đưa SearchFilter lên gần hơn (chỉ cách thống kê 1 chút xíu) */}
+      <div className="mb-6">
+        <SearchFilter
+          searchPhone={searchPhone}
+          filterStatus={filterStatus}
+          onSearchPhoneChange={setSearchPhone}
+          onFilterStatusChange={setFilterStatus}
+          onSearch={fetchQueueData}
+          onClear={() => {
+            setSearchPhone('');
+            setFilterStatus('');
+            fetchQueueData();
+          }}
+        />
+      </div>
       {queueError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
           {queueError}
         </div>
       )}
 
-      {loadingQueue ? (
-        <div className="text-center py-10 text-gray-500">
-          <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-          <p className="mt-2">Đang tải dữ liệu...</p>
-        </div>
-      ) : (
-        <QueueTable
-          queueList={queueList}
-          onEdit={handleEditPatient}
-          onDelete={handleDeletePatient}
-          onStatusChange={handleQuickUpdateStatus}
-        />
-      )}
+      {/* BẢNG + PHÂN TRANG */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        {loadingQueue ? (
+          <div className="text-center py-20">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600"></div>
+            <p className="mt-4 text-gray-600 text-lg">Đang tải danh sách bệnh nhân...</p>
+          </div>
+        ) : (
+          <>
+           <QueueTable
+  queueList={paginatedList}
+  currentPage={currentPage}       // thêm dòng này
+  itemsPerPage={ITEMS_PER_PAGE}   // thêm dòng này
+  onEdit={handleEditPatient}
+  onDelete={handleDeletePatient}
+  onStatusChange={handleQuickUpdateStatus}
+/>
 
+            <div className="border-t border-gray-200 bg-gray-50">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Form thêm/sửa */}
       {showForm && (
         <PatientForm
           patientForm={patientForm}
@@ -319,8 +354,6 @@ export default function PatientRecordsSection() {
           onCancel={() => setShowForm(false)}
         />
       )}
-
-      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 }
