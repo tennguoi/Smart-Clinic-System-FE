@@ -1,13 +1,33 @@
 import { useEffect, useState } from 'react';
 import { Calendar, CheckCircle, Clock, User, Phone, Mail, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
-
+import PatientForm from './PatientForm';
 import { queueApi } from '../../api/receptionApi';
+
+const emptyPatientForm = {
+  patientName: '',
+  phone: '',
+  email: '',
+  dob: '',
+  gender: 'male',
+  address: '',
+  priority: 'Urgent',
+  idNumber: '',
+  insuranceNumber: '',
+  notes: '',
+  dobDate: null,
+};
 
 export default function AppointmentCheckInSection({ onOpenPatientForm }) {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [debugInfo, setDebugInfo] = useState(null);
+  
+  // ✅ State quản lý form
+  const [showForm, setShowForm] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [patientForm, setPatientForm] = useState(emptyPatientForm);
+  const [formSubmitting, setFormSubmitting] = useState(false);
 
   // ✅ Kiểm tra token khi component mount
   useEffect(() => {
@@ -16,18 +36,18 @@ export default function AppointmentCheckInSection({ onOpenPatientForm }) {
     
     console.log('🔍 Debug Info:');
     console.log('- Token exists:', !!token);
-    console.log('- Token preview:', token ? token.substring(0, 30) + '...' : 'NONE');
+    console.log('- Token preview:', token ?  token.substring(0, 30) + '...' : 'NONE');
     console.log('- User info:', user);
     console.log('- Current URL:', window.location.href);
     
     setDebugInfo({
       hasToken: !!token,
-      tokenPreview: token ? token.substring(0, 30) + '...' : null,
-      userInfo: user ? JSON.parse(user) : null
+      tokenPreview: token ? token.substring(0, 30) + '.. .' : null,
+      userInfo: user ?  JSON.parse(user) : null
     });
 
-    if (!token) {
-      toast.error('⚠️ Không tìm thấy token đăng nhập. Vui lòng đăng nhập lại!');
+    if (! token) {
+      toast.error('⚠️ Không tìm thấy token đăng nhập. Vui lòng đăng nhập lại! ');
     }
   }, []);
 
@@ -42,13 +62,13 @@ export default function AppointmentCheckInSection({ onOpenPatientForm }) {
       console.log('✅ API Response:', data);
       console.log('- Type:', typeof data);
       console.log('- Is Array:', Array.isArray(data));
-      console.log('- Length:', data?.length);
+      console.log('- Length:', data?. length);
       
       setAppointments(Array.isArray(data) ? data : []);
       
-      if (Array.isArray(data) && data.length === 0) {
-        toast.info('ℹ️ Không có lịch hẹn nào trong ngày hôm nay');
-      }
+      // if (Array.isArray(data) && data.length === 0) {
+      //   toast. info('ℹ️ Không có lịch hẹn nào trong ngày hôm nay');
+      // }
     } catch (error) {
       console.error('❌ Error fetching appointments:', error);
       console.error('- Error type:', error.constructor.name);
@@ -75,16 +95,109 @@ export default function AppointmentCheckInSection({ onOpenPatientForm }) {
     return () => clearInterval(interval);
   }, []);
 
-  // Mở form thêm bệnh nhân với thông tin từ appointment
-const handleAddPatientFromAppointment = async (appointment) => {
-  if (onOpenPatientForm) {
-    onOpenPatientForm({
-      ...appointment,
-      isFromAppointment: true,
-      priority: 'Urgent' // Tự động ưu tiên cho người đặt lịch
+  // ✅ Mở form và điền thông tin từ appointment
+  const handleAddPatientFromAppointment = (appointment) => {
+    setSelectedAppointment(appointment);
+    setPatientForm({
+      patientName: appointment.patientName || '',
+      phone: appointment.phone || '',
+      email: appointment. email || '',
+      dob: '',
+      gender: 'male',
+      address: '',
+      priority: appointment.priority || 'Urgent',
+      idNumber: '',
+      insuranceNumber: '',
+      notes: appointment.notes || '',
+      dobDate: null,
     });
-  }
-};
+    setShowForm(true);
+  };
+
+  // ✅ Xử lý thay đổi form
+  const handleFormChange = (field, value) => {
+    if (field === 'phone') {
+      let numeric = value. replace(/\D/g, ''). slice(0, 10);
+      setPatientForm(prev => ({ ... prev, [field]: numeric }));
+    } else if (field === 'dob') {
+      if (value instanceof Date && !isNaN(value.getTime())) {
+        const isoValue = value.toISOString(). split('T')[0];
+        setPatientForm(prev => ({ ...prev, dobDate: value, dob: isoValue }));
+      } else {
+        setPatientForm(prev => ({ ...prev, dobDate: null, dob: '' }));
+      }
+    } else {
+      setPatientForm(prev => ({ ...prev, [field]: value }));
+    }
+  };
+
+  // ✅ Submit form: Check-in từ lịch hẹn và thêm vào hàng chờ
+  const handleSubmitForm = async () => {
+    if (!selectedAppointment) {
+      toast.error('Không tìm thấy lịch hẹn! ');
+      return;
+    }
+
+    // Validate
+    if (patientForm.phone.length !== 10) {
+      toast. error('Số điện thoại phải đúng 10 chữ số! ');
+      return;
+    }
+
+    if (! patientForm.patientName. trim()) {
+      toast.error('Vui lòng nhập tên bệnh nhân!');
+      return;
+    }
+
+    if (!patientForm. dob) {
+      toast.error('Vui lòng chọn ngày sinh!');
+      return;
+    }
+
+    setFormSubmitting(true);
+    try {
+      // Gọi API check-in từ lịch hẹn
+      const res = await queueApi.checkInFromAppointmentWithInfo(
+        selectedAppointment. appointmentId,
+        patientForm
+      );
+
+      console.log('✅ Check-in response:', res);
+
+      // Thông báo thành công
+      if (res. roomName) {
+        toast.success(
+          `✅ Đã thêm bệnh nhân thành công!\n🏥 Phòng: ${res.roomName}${res.doctorName ? `\nBác sĩ: ${res.doctorName}` : ''}`,
+          { autoClose: 5000 }
+        );
+      } else {
+        toast.success('✅ Đã check-in bệnh nhân!  Đang phân phòng...');
+      }
+
+      // Đóng form
+      setShowForm(false);
+      setSelectedAppointment(null);
+      setPatientForm(emptyPatientForm);
+
+      // Refresh danh sách lịch hẹn
+      await fetchTodayAppointments();
+
+    } catch (error) {
+      const msg = error.response?.data?.message || error.message || 'Có lỗi xảy ra! ';
+      console.error('❌ Error submitting form:', error);
+      toast.error(`❌ ${msg}`);
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
+
+  // ✅ Hủy form
+  const handleCancelForm = () => {
+    setShowForm(false);
+    setSelectedAppointment(null);
+    setPatientForm(emptyPatientForm);
+  };
+
   const formatTime = (dateTime) => {
     if (!dateTime) return '—';
     return new Date(dateTime).toLocaleString('vi-VN', {
@@ -111,12 +224,12 @@ const handleAddPatientFromAppointment = async (appointment) => {
       <ToastContainer position="top-right" autoClose={3000} />
 
       {/* Debug Panel */}
-      {debugInfo && !debugInfo.hasToken && (
+      {debugInfo && ! debugInfo.hasToken && (
         <div className="max-w-7xl mx-auto mb-4 bg-red-50 border-2 border-red-300 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <AlertCircle className="w-6 h-6 text-red-600" />
             <div>
-              <p className="font-bold text-red-900">⚠️ Không tìm thấy token đăng nhập!</p>
+              <p className="font-bold text-red-900">⚠️ Không tìm thấy token đăng nhập! </p>
               <p className="text-sm text-red-700 mt-1">Vui lòng đăng nhập lại để sử dụng tính năng này.</p>
             </div>
           </div>
@@ -187,7 +300,7 @@ const handleAddPatientFromAppointment = async (appointment) => {
 
       {/* Appointments List */}
       <div className="max-w-7xl mx-auto">
-        {loading ? (
+        {loading ?  (
           <div className="bg-white rounded-2xl shadow-xl p-20 text-center">
             <Loader2 className="w-16 h-16 animate-spin text-blue-500 mx-auto mb-4" />
             <p className="text-gray-600 text-lg">Đang tải dữ liệu...</p>
@@ -237,7 +350,7 @@ const handleAddPatientFromAppointment = async (appointment) => {
                                 Đã thêm vào hàng chờ
                               </span>
                             )}
-                            {!appointment.hasCheckedIn && isUpcoming(appointment.appointmentTime) && (
+                            {! appointment.hasCheckedIn && isUpcoming(appointment.appointmentTime) && (
                               <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full font-semibold flex items-center gap-1 animate-pulse">
                                 <Clock className="w-4 h-4" />
                                 Sắp tới
@@ -267,7 +380,7 @@ const handleAddPatientFromAppointment = async (appointment) => {
                       {appointment.notes && (
                         <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
                           <p className="text-sm text-gray-700">
-                            <span className="font-semibold">Ghi chú:</span> {appointment.notes}
+                            <span className="font-semibold">Ghi chú:</span> {appointment. notes}
                           </p>
                         </div>
                       )}
@@ -275,7 +388,7 @@ const handleAddPatientFromAppointment = async (appointment) => {
 
                     {/* Right: Action Button */}
                     <div className="ml-6">
-                      {!appointment.hasCheckedIn ? (
+                      {! appointment.hasCheckedIn ?  (
                         <button
                           onClick={() => handleAddPatientFromAppointment(appointment)}
                           className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold text-lg hover:from-blue-700 hover:to-indigo-700 transition transform hover:scale-105 shadow-lg flex items-center gap-3"
@@ -293,7 +406,7 @@ const handleAddPatientFromAppointment = async (appointment) => {
                   </div>
 
                   {/* Warning for past appointments */}
-                  {!appointment.hasCheckedIn && isPast(appointment.appointmentTime) && (
+                  {! appointment.hasCheckedIn && isPast(appointment.appointmentTime) && (
                     <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
                       <AlertCircle className="w-5 h-5 text-red-600" />
                       <span className="text-sm text-red-700 font-medium">
@@ -307,6 +420,18 @@ const handleAddPatientFromAppointment = async (appointment) => {
           </div>
         )}
       </div>
+
+      {/* ✅ Hiển thị PatientForm */}
+      {showForm && (
+        <PatientForm
+          patientForm={patientForm}
+          isEdit={false}
+          onChange={handleFormChange}
+          onSubmit={handleSubmitForm}
+          onCancel={handleCancelForm}
+          selectedAppointment={selectedAppointment}
+        />
+      )}
     </div>
   );
 }
