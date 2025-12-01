@@ -244,10 +244,10 @@ const StatisticsPage = () => {
         const isGood = isReverse ? !isPositive : isPositive;
         
         return (
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-between">
                 <div>
-                    <p className="text-gray-500 text-sm font-medium mb-1">{title}</p>
-                    <h3 className="text-2xl font-bold text-gray-800">{value}</h3>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">{title}</p>
+                    <h3 className="text-2xl font-bold text-gray-800 dark:text-white">{value}</h3>
                     <div className="flex items-center mt-2">
                         <span className={`flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${isGood ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                             {isPositive ? <FaArrowUp size={10} className="mr-1"/> : <FaArrowDown size={10} className="mr-1"/>}
@@ -266,19 +266,19 @@ const StatisticsPage = () => {
     return (
     <div className="space-y-6 animate-fade-in pb-10">
         {/* Header - Giống DoctorStatsDashboard */}
-        <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+        <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
             <div className="flex items-center gap-3">
-                <div className="rounded-full bg-blue-50 p-3 text-blue-600">
+                <div className="rounded-full bg-blue-50 dark:bg-blue-900/20 p-3 text-blue-600 dark:text-blue-400">
                     <FaChartBar className="h-6 w-6" />
                 </div>
                 <div>
-                    <p className="text-sm font-medium text-gray-500">Báo cáo tổng hợp</p>
-                    <h2 className="text-xl font-semibold text-gray-900">Thống kê tổng quan</h2>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Báo cáo tổng hợp</p>
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Thống kê tổng quan</h2>
                 </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
-                <div className="flex rounded-full bg-gray-100 p-1">
+                <div className="flex rounded-full bg-gray-100 dark:bg-gray-700 p-1">
                     {RANGE_OPTIONS.map((option) => (
                         <button
                             key={option.value}
@@ -286,8 +286,8 @@ const StatisticsPage = () => {
                             onClick={() => setRangeType(option.value)}
                             className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${
                                 option.value === rangeType
-                                    ? 'bg-white text-blue-600 shadow'
-                                    : 'text-gray-500 hover:text-gray-700'
+                                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-300 shadow'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                             }`}
                         >
                             {option.label}
@@ -295,14 +295,14 @@ const StatisticsPage = () => {
                     ))}
                 </div>
 
-                <div className="flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 shadow-sm">
+                <div className="flex items-center gap-2 rounded-full border border-gray-200 dark:border-gray-600 px-4 py-2 shadow-sm bg-white dark:bg-gray-800">
                     <CalendarDays className="h-5 w-5 text-blue-600" />
                     {rangeType === 'custom' ? (
                         <div className="flex items-center gap-2">
                             <DatePicker
                                 selected={customStartDate}
                                 onChange={(date) => date && setCustomStartDate(date)}
-                                className="w-24 bg-transparent text-sm font-semibold text-gray-800 focus:outline-none text-center"
+                                className="w-24 bg-transparent text-sm font-semibold text-gray-800 dark:text-gray-200 focus:outline-none text-center"
                                 dateFormat="dd/MM/yyyy"
                                 placeholderText="Từ ngày"
                             />
@@ -310,7 +310,7 @@ const StatisticsPage = () => {
                             <DatePicker
                                 selected={customEndDate}
                                 onChange={(date) => date && setCustomEndDate(date)}
-                                className="w-24 bg-transparent text-sm font-semibold text-gray-800 focus:outline-none text-center"
+                                className="w-24 bg-transparent text-sm font-semibold text-gray-800 dark:text-gray-200 focus:outline-none text-center"
                                 dateFormat="dd/MM/yyyy"
                                 placeholderText="Đến ngày"
                                 minDate={customStartDate}
@@ -320,8 +320,8 @@ const StatisticsPage = () => {
                         <DatePicker
                             selected={selectedDate}
                             onChange={(date) => date && setSelectedDate(date)}
-                            className="w-32 bg-transparent text-sm font-semibold text-gray-800 focus:outline-none"
-                            calendarClassName="rounded-xl border border-gray-200 shadow-lg"
+                            className="w-32 bg-transparent text-sm font-semibold text-gray-800 dark:text-gray-200 focus:outline-none"
+                            calendarClassName="rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg dark:bg-gray-800 dark:text-white"
                             {...datePickerConfig}
                         />
                     )}
@@ -369,8 +369,8 @@ const StatisticsPage = () => {
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
             {/* Appointment Trend */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h2 className="text-lg font-semibold text-gray-700 mb-6">Xu Hướng Lịch Hẹn (7 Ngày)</h2>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-6">Xu Hướng Lịch Hẹn (7 Ngày)</h2>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={appointmentTrend}>
@@ -387,8 +387,8 @@ const StatisticsPage = () => {
             </div>
 
             {/* Revenue Trend */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h2 className="text-lg font-semibold text-gray-700 mb-6">Xu Hướng Doanh Thu (7 Ngày)</h2>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-6">Xu Hướng Doanh Thu (7 Ngày)</h2>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={revenueTrend}>
@@ -407,23 +407,23 @@ const StatisticsPage = () => {
         </div>
 
         {/* Top Services Section */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mt-6">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mt-6">
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold text-gray-700">Top 5 Dịch Vụ Phổ Biến</h2>
+                <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200">Top 5 Dịch Vụ Phổ Biến</h2>
                 
                 {/* Selector for Stat Type */}
-                <div className="flex bg-gray-100 p-1 rounded-lg">
+                <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
                     <button
                         onClick={() => setStatType('appointment')}
                         className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
-                            ${statType === 'appointment' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            ${statType === 'appointment' ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-300 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                     >
                         <FaCalendarCheck /> Đặt lịch
                     </button>
                     <button
                         onClick={() => setStatType('medical_record')}
                         className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
-                            ${statType === 'medical_record' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            ${statType === 'medical_record' ? 'bg-white dark:bg-gray-600 text-green-600 dark:text-green-300 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                     >
                         <FaStethoscope /> Khám thực tế
                     </button>

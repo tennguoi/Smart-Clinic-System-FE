@@ -79,7 +79,7 @@ const CustomDateInput = forwardRef(({ value, onClick, placeholder, required }, r
     placeholder={placeholder}
     required={required}
     style={{ width: '190%' }}
-    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 transition cursor-pointer"
+    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition cursor-pointer"
     readOnly
   />
 ));
@@ -325,14 +325,14 @@ export default function AccountManagement() {
     }
   };
   return (
-    <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50 font-sans">
+    <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50 dark:bg-gray-900 font-sans transition-colors duration-300">
       <Toaster {...toastConfig} />
 
       {/* HEADER */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-4">
-            <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
+            <h1 className="text-4xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
               <UserCog className="w-9 h-9 text-blue-600" />
               <span>Quản Lý Tài Khoản</span>
             </h1>
@@ -353,12 +353,12 @@ export default function AccountManagement() {
       </div>
 
 {/* SEARCH & FILTER BAR */}
-<div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+<div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-6 transition-colors duration-300">
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
 
     {/* Tìm kiếm */}
     <div className="lg:col-span-5">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
         <Search className="inline w-4 h-4 mr-1" /> Tìm kiếm
       </label>
       <input
@@ -366,19 +366,19 @@ export default function AccountManagement() {
         value={searchKeyword}
         onChange={(e) => setSearchKeyword(e.target.value)}
         placeholder="Tên, SĐT, Email..."
-        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500"
       />
     </div>
 
     {/* Vai trò */}
     <div className="lg:col-span-3">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
         Vai trò
       </label>
       <select
         value={filterRole}
         onChange={(e) => setFilterRole(e.target.value)}
-        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500"
       >
         <option value="">Tất cả</option>
         <option value="admin">Quản trị viên</option>
@@ -389,13 +389,13 @@ export default function AccountManagement() {
 
     {/* Trạng thái */}
     <div className="lg:col-span-3">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
         Trạng thái
       </label>
       <select
         value={filterStatus}
         onChange={(e) => setFilterStatus(e.target.value)}
-        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500"
       >
         <option value="">Tất cả</option>
         <option value="true">Hoạt động</option>
@@ -407,7 +407,7 @@ export default function AccountManagement() {
     <div className="flex md:block lg:col-span-1">
       <button
         onClick={resetFilters}
-        className="w-full px-4 py-3 bg-gray-300 text-gray-700 rounded-xl hover:bg-gray-400 transition font-medium"
+        className="w-full px-4 py-3 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-400 dark:hover:bg-gray-500 transition font-medium"
       >
         Xóa lọc
       </button>
@@ -419,54 +419,54 @@ export default function AccountManagement() {
 
       {/* TABLE */}
       {loading ? (
-        <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
+        <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">Đang tải danh sách...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải danh sách...</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden transition-colors duration-300">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-blue-50">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-blue-50 dark:bg-blue-900/20">
                 <tr>
-                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase">
+                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
                     STT
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
                     Ảnh
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
                     Họ tên
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
                     Giới tính
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
                     SĐT
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
                     Email
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
                     Vai trò
                   </th>
-                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase">
+                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
                     Trạng thái
                   </th>
-                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase">
+                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
                     Thao tác
                   </th>
                 </tr>
               </thead>
 
-              <tbody className="bg-white divide-y divide-gray-100">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
                 {users.map((user, idx) => (
-                  <tr key={user.userId} className="hover:bg-blue-50 transition">
+                  <tr key={user.userId} className="hover:bg-blue-50 dark:hover:bg-blue-900/10 transition text-gray-700 dark:text-gray-300">
                     <td className="px-6 py-4 text-center">
                       {currentPage * pageSize + idx + 1}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden border flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden border dark:border-gray-600 flex items-center justify-center">
                         {getAvatarUrl(user.photoUrl) ? (
                           <img
                             src={getAvatarUrl(user.photoUrl)}
@@ -507,7 +507,7 @@ export default function AccountManagement() {
                             );
                           })
                         ) : (
-                          <span className="text-gray-400 text-xs italic">Chưa có vai trò</span>
+                          <span className="text-gray-400 dark:text-gray-500 text-xs italic">Chưa có vai trò</span>
                         )}
                       </div>
                     </td>
@@ -530,7 +530,7 @@ export default function AccountManagement() {
 
                         <button
                           onClick={() => handleOpenModal('view', user)}
-                          className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-100"
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/30"
                         >
                           <Eye className="w-5 h-5" />
                         </button>
@@ -541,8 +541,8 @@ export default function AccountManagement() {
                           onClick={() => openToggleConfirmation(user.userId, user.isVerified)}
                           className={`p-2 rounded-full transition ${
                             user.isVerified
-                              ? 'text-green-600 hover:bg-green-100'
-                              : 'text-red-600 hover:bg-red-100'
+                              ? 'text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30'
+                              : 'text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30'
                           }`}
                         >
                           <Power className="w-5 h-5" />
@@ -557,7 +557,7 @@ export default function AccountManagement() {
             </table>
 
             {users.length === 0 && (
-              <div className="text-center py-16 text-gray-500">
+              <div className="text-center py-16 text-gray-500 dark:text-gray-400">
                 <UserPlus className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                 <p className="text-xl font-medium">Không tìm thấy tài khoản nào</p>
               </div>
@@ -571,11 +571,11 @@ export default function AccountManagement() {
             {/* ====================== MODAL ====================== */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
 
             {/* Header */}
-            <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-blue-50/80 backdrop-blur">
-              <h2 className="text-2xl font-bold text-blue-700">
+            <div className="flex justify-between items-center p-6 border-b dark:border-gray-700 sticky top-0 bg-blue-50/80 dark:bg-gray-800/90 backdrop-blur">
+              <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-400">
                 {isCreateMode
                   ? 'Tạo tài khoản mới'
                   : isViewMode
@@ -591,7 +591,7 @@ export default function AccountManagement() {
                     <Edit className="w-4 h-4" /> Chỉnh sửa
                   </button>
                 )}
-                <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-white/50">
+                <button onClick={handleCloseModal} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-2 rounded-full hover:bg-white/50 dark:hover:bg-gray-700">
                   <X className="w-7 h-7" />
                 </button>
               </div>
@@ -604,10 +604,10 @@ export default function AccountManagement() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                   {/* Avatar */}
-                  <div className="md:col-span-2 flex flex-col items-center border border-dashed border-gray-300 p-6 rounded-xl bg-gray-50/50">
-                    <label className="block text-sm font-medium text-gray-700 mb-3">Ảnh đại diện</label>
+                  <div className="md:col-span-2 flex flex-col items-center border border-dashed border-gray-300 dark:border-gray-600 p-6 rounded-xl bg-gray-50/50 dark:bg-gray-700/50">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Ảnh đại diện</label>
 
-                    <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg ring-4 ring-blue-200">
+                    <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-gray-600 shadow-lg ring-4 ring-blue-200 dark:ring-blue-900">
                       {photoPreview ? (
                         <img src={photoPreview} className="w-full h-full object-cover" />
                       ) : (
@@ -617,7 +617,7 @@ export default function AccountManagement() {
 
                     {(isCreateMode || isEditMode) && (
                       <div className="mt-4">
-                        <label className="flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full cursor-pointer">
+                        <label className="flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-4 py-2 rounded-full cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition">
                           <Upload className="w-4 h-4" />
                           {photoFile ? 'Thay đổi ảnh' : 'Chọn ảnh'}
                           <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
@@ -628,7 +628,7 @@ export default function AccountManagement() {
 
                   {/* Email */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Email <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -639,13 +639,13 @@ export default function AccountManagement() {
                       value={formData.email}
                       onChange={handleInputChange}
                       placeholder="example@clinic.com"
-                      className="w-full px-3 py-2 border rounded-lg"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
                   {/* Password */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Mật khẩu {isCreateMode && <span className="text-red-500">*</span>}
                     </label>
                     <div className="relative">
@@ -657,13 +657,13 @@ export default function AccountManagement() {
                         value={formData.password}
                         onChange={handleInputChange}
                         placeholder={isEditMode ? 'Nhập mật khẩu mới (tuỳ chọn)' : 'Nhập mật khẩu'}
-                        className="w-full px-3 py-2 border rounded-lg pr-12"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg pr-12 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                       />
                       {(isCreateMode || isEditMode) && (
                         <button
                           type="button"
                           onClick={() => setShowPassword(prev => !prev)}
-                          className="absolute right-3 top-2.5 text-gray-500"
+                          className="absolute right-3 top-2.5 text-gray-500 dark:text-gray-400"
                         >
                           {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                         </button>
@@ -673,7 +673,7 @@ export default function AccountManagement() {
 
                   {/* Full Name */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Họ và tên <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -683,13 +683,13 @@ export default function AccountManagement() {
                       disabled={isViewMode}
                       value={formData.fullName}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border rounded-lg"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
                   {/* Phone */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Số điện thoại <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -702,13 +702,13 @@ export default function AccountManagement() {
                       value={formData.phone}
                       onChange={handleInputChange}
                       placeholder="0912345678"
-                      className="w-full px-3 py-2 border rounded-lg"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
                   {/* DOB */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Ngày sinh <span className="text-red-500">*</span>
                     </label>
 
@@ -716,7 +716,7 @@ export default function AccountManagement() {
                       <input
                         value={formData.dob ? formData.dob.split('-').reverse().join('/') : ''}
                         disabled
-                        className="w-full px-3 py-2 border rounded-lg bg-gray-100"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-white"
                       />
                     ) : (
                       <DatePicker
@@ -736,7 +736,7 @@ export default function AccountManagement() {
 
                   {/* Gender */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Giới tính <span className="text-red-500">*</span>
                     </label>
                     <select
@@ -745,7 +745,7 @@ export default function AccountManagement() {
                       disabled={isViewMode}
                       value={formData.gender}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border rounded-lg"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     >
                       {genderOptions.map(o => (
                         <option key={o.value} value={o.value}>
@@ -757,7 +757,7 @@ export default function AccountManagement() {
 
                   {/* Experience */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Số năm kinh nghiệm
                     </label>
                     <input
@@ -767,13 +767,13 @@ export default function AccountManagement() {
                       min="0"
                       value={formData.experienceYears}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border rounded-lg"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
                   {/* Role */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Vai trò <span className="text-red-500">*</span>
                     </label>
                     <select
@@ -781,7 +781,7 @@ export default function AccountManagement() {
                       disabled={isViewMode}
                       value={formData.roles[0] || ''}
                       onChange={handleRoleChange}
-                      className="w-full px-3 py-2 border rounded-lg"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     >
                       {roleOptions.map(o => (
                         <option key={o.value} value={o.value}>
@@ -793,7 +793,7 @@ export default function AccountManagement() {
 
                   {/* Address */}
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Địa chỉ <span className="text-red-500">*</span>
                     </label>
                     <textarea
@@ -803,13 +803,13 @@ export default function AccountManagement() {
                       value={formData.address}
                       onChange={handleInputChange}
                       rows={3}
-                      className="w-full px-3 py-2 border rounded-lg"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
                   {/* Bio */}
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Mô tả / Giới thiệu
                     </label>
                     <textarea
@@ -819,10 +819,10 @@ export default function AccountManagement() {
                       onChange={handleInputChange}
                       rows={5}
                       maxLength={1000}
-                      className="w-full px-3 py-2 border rounded-lg"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     />
                     {!isViewMode && (
-                      <p className="text-xs text-gray-500 text-right mt-1">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 text-right mt-1">
                         {formData.bio.length}/1000
                       </p>
                     )}

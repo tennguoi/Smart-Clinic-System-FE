@@ -1,4 +1,4 @@
-// src/components/ServicesSection.jsx  ← CHỈ SỬA FILE NÀY
+// src/components/ServicesSection.jsx
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -8,7 +8,7 @@ import ServiceCard from './ServiceCard';
 export default function ServicesSection() {
   const [services, setServices] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [loading, setLoading] = useState(true); // ← PHẢI LÀ TRUE!
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
@@ -17,7 +17,7 @@ export default function ServicesSection() {
 
   const fetchServices = async (category = selectedCategory) => {
     try {
-      setLoading(true);        // ← BẬT LOADING MỖI LẦN GỌI
+      setLoading(true);
       setError(null);
 
       const data = category === 'all'
@@ -74,13 +74,13 @@ export default function ServicesSection() {
   ];
 
   return (
-    <section id="services" className="py-12 bg-gradient-to-b from-cyan-50/50 via-white to-white">
+    <section id="services" className="py-12 bg-gradient-to-b from-cyan-50/50 via-white to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">
             Bảng Giá Dịch Vụ Tai Mũi Họng
           </h2>
-          <p className="mt-4 text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="mt-4 text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
             Cập nhật mới nhất • Minh bạch • Chuyên sâu
           </p>
         </div>
@@ -93,7 +93,7 @@ export default function ServicesSection() {
               className={`px-6 py-3 rounded-full font-medium transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-xl ${
                 selectedCategory === cat.id
                   ? 'bg-cyan-600 text-white shadow-cyan-500/30'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:border-cyan-400'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:border-cyan-400 dark:hover:border-cyan-500'
               }`}
             >
               {cat.label}
@@ -105,12 +105,12 @@ export default function ServicesSection() {
         {loading ? (
           <div className="text-center py-20">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-cyan-500 border-t-transparent"></div>
-            <p className="mt-4 text-gray-600">Đang tải dịch vụ...</p>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">Đang tải dịch vụ...</p>
           </div>
         ) : error ? (
           <div className="text-center text-red-600 py-12 text-lg font-medium">{error}</div>
         ) : services.length === 0 ? (
-          <p className="text-center text-gray-500 py-12 text-lg">
+          <p className="text-center text-gray-500 dark:text-gray-400 py-12 text-lg">
             Không có dịch vụ nào trong danh mục này.
           </p>
         ) : (

@@ -14,7 +14,7 @@ export default function Footer() {
   const clinicLogoUrl = baseLogoUrl ? `${baseLogoUrl}?v=${cacheBuster}` : '';
 
   return (
-    <footer id="contact" className="bg-gray-900 text-gray-300">
+    <footer id="contact" className="bg-gray-900 dark:bg-gray-950 text-gray-300 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div>
@@ -167,7 +167,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 pt-8">
+        <div className="border-t border-gray-800 dark:border-gray-900 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-sm">
               © {currentYear} {clinicName || 'Chưa cập nhật tên phòng khám'}.

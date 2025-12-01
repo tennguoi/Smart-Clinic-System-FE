@@ -77,11 +77,11 @@ export default function FullServicesPage() {
   const pageNumbers = getPageNumbers();
 
   return (
-    <section className="bg-gradient-to-b from-cyan-50 via-white to-cyan-50/30 min-h-screen pt-0 pb-16">
+    <section className="bg-gradient-to-b from-cyan-50 via-white to-cyan-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 min-h-screen pt-0 pb-16 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 -mt-8">
         <div>
-          <h2 className="text-4xl font-bold text-gray-900">Danh mục dịch vụ Tai - Mũi - Họng</h2>
-          <p className="text-lg text-gray-600 mt-3">
+          <h2 className="text-4xl font-bold text-gray-900 dark:text-white">Danh mục dịch vụ Tai - Mũi - Họng</h2>
+          <p className="text-lg text-gray-600 dark:text-gray-300 mt-3">
             Lựa chọn phù hợp cho từng nhu cầu khám – từ tư vấn, chẩn đoán đến thủ thuật chuyên sâu.
           </p>
         </div>
@@ -100,7 +100,7 @@ export default function FullServicesPage() {
               ${
                 selectedCategory === cat.id
                   ? 'bg-cyan-600 text-white border-transparent shadow-lg shadow-cyan-500/30'
-                  : 'bg-white hover:bg-cyan-50 border-gray-300 text-gray-700 hover:border-cyan-400 shadow-md hover:shadow-lg'
+                  : 'bg-white dark:bg-gray-800 hover:bg-cyan-50 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-cyan-400 dark:hover:border-cyan-500 shadow-md hover:shadow-lg'
               }`}
             >
               {cat.label}
@@ -111,7 +111,7 @@ export default function FullServicesPage() {
         {error && <p className="text-red-500 mb-4">{error}</p>}
 
         {loading ? (
-          <p className="text-gray-600">Đang tải dịch vụ...</p>
+          <p className="text-gray-600 dark:text-gray-300">Đang tải dịch vụ...</p>
         ) : (
           <>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -121,7 +121,7 @@ export default function FullServicesPage() {
             </div>
 
             {services.length === 0 && (
-              <p className="text-gray-500 mt-6">Không có dịch vụ nào trong danh mục này.</p>
+              <p className="text-gray-500 dark:text-gray-400 mt-6">Không có dịch vụ nào trong danh mục này.</p>
             )}
 
             {/* Pagination */}
@@ -130,14 +130,14 @@ export default function FullServicesPage() {
                 <button 
                   onClick={() => handlePageChange(0)} 
                   disabled={pagination.isFirst}
-                  className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  className="w-11 h-11 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
                   {'<<'}
                 </button>
                 <button 
                   onClick={() => handlePageChange(pagination.currentPage - 1)} 
                   disabled={pagination.isFirst}
-                  className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  className="w-11 h-11 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
                   {'<'}
                 </button>
@@ -147,8 +147,8 @@ export default function FullServicesPage() {
                     onClick={() => handlePageChange(p)}
                     className={`w-11 h-11 rounded-lg font-medium transition-all ${
                       p === pagination.currentPage
-                        ? 'bg-gray-800 text-white border-gray-800 shadow-md'
-                        : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+                        ? 'bg-gray-800 dark:bg-cyan-600 text-white border-gray-800 dark:border-cyan-600 shadow-md'
+                        : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
                   >
                     {p + 1}
@@ -157,14 +157,14 @@ export default function FullServicesPage() {
                 <button 
                   onClick={() => handlePageChange(pagination.currentPage + 1)} 
                   disabled={pagination.isLast}
-                  className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  className="w-11 h-11 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
                   {'>'}
                 </button>
                 <button 
                   onClick={() => handlePageChange(pagination.totalPages - 1)} 
                   disabled={pagination.isLast}
-                  className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  className="w-11 h-11 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
                   {'>>'}
                 </button>

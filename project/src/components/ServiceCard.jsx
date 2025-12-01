@@ -11,22 +11,22 @@ export default function ServiceCard({ service, index }) {
 
   const getCategoryColor = (category) => {
     const colors = {
-      Consultation: 'bg-blue-100 text-blue-700',
-      Test: 'bg-purple-100 text-purple-700',
-      Procedure: 'bg-green-100 text-green-700',
+      Consultation: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100',
+      Test: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-100',
+      Procedure: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100',
     };
-    return colors[category] || 'bg-gray-100 text-gray-700';
+    return colors[category] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
   };
 
   return (
-    <div className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 hover:border-cyan-200 flex flex-col h-full hover:-translate-y-1 cursor-pointer">
+    <div className="group bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-cyan-200 dark:hover:border-cyan-500 flex flex-col h-full hover:-translate-y-1 cursor-pointer">
       {/* Image Section */}
-      <div className="relative h-48 overflow-hidden bg-cyan-50">
+      <div className="relative h-48 overflow-hidden bg-cyan-50 dark:bg-gray-700">
         {!imageError ? (
           <>
             {/* Loading Spinner */}
             {imageLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
                 <div className="w-8 h-8 border-3 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
@@ -45,7 +45,7 @@ export default function ServiceCard({ service, index }) {
           </>
         ) : (
           // Fallback UI when image fails to load
-          <div className="w-full h-full flex items-center justify-center bg-cyan-100">
+          <div className="w-full h-full flex items-center justify-center bg-cyan-100 dark:bg-gray-700">
             <svg className="w-20 h-20 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
@@ -73,20 +73,20 @@ export default function ServiceCard({ service, index }) {
         </div>
 
         {/* Title */}
-        <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 leading-tight group-hover:text-cyan-600 transition-colors duration-300">
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 leading-tight group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors duration-300">
           {service.name}
         </h3>
 
         {/* Description */}
-        <p className="text-gray-600 text-base line-clamp-2 mb-4 flex-1">
+        <p className="text-gray-600 dark:text-gray-400 text-base line-clamp-2 mb-4 flex-1">
           {service.description || 'Dịch vụ chuyên nghiệp với đội ngũ bác sĩ giàu kinh nghiệm.'}
         </p>
 
         {/* Price */}
-        <div className="pt-3 border-t border-gray-100">
+        <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
           <div className="flex items-baseline justify-between">
-            <span className="text-xs text-gray-500">Giá khám</span>
-            <span className="text-xl font-bold text-cyan-600">
+            <span className="text-xs text-gray-500 dark:text-gray-400">Giá khám</span>
+            <span className="text-xl font-bold text-cyan-600 dark:text-cyan-400">
               {formatPrice(service.price)}
             </span>
           </div>

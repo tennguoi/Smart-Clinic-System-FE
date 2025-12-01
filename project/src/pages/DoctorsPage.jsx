@@ -49,7 +49,7 @@ export default function DoctorsPage() {
   const pageNumbers = getPageNumbers();
 
   if (loading) {
-    return <div className="py-20 text-center">Đang tải bác sĩ...</div>;
+    return <div className="py-20 text-center text-gray-900 dark:text-white">Đang tải bác sĩ...</div>;
   }
 
   if (err) {
@@ -57,11 +57,11 @@ export default function DoctorsPage() {
   }
 
   return (
-    <div className="bg-gradient-to-b from-white via-cyan-50/30 to-white">
-      <section className="bg-gradient-to-br from-cyan-50 via-white to-emerald-50 -mt-4 sm:-mt-6 lg:-mt-8 pt-10 sm:pt-12 lg:pt-14 pb-10 shadow-[0_25px_50px_-25px_rgba(15,118,110,0.15)]">
+    <div className="bg-gradient-to-b from-white via-cyan-50/30 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
+      <section className="bg-gradient-to-br from-cyan-50 via-white to-emerald-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 -mt-4 sm:-mt-6 lg:-mt-8 pt-10 sm:pt-12 lg:pt-14 pb-10 shadow-[0_25px_50px_-25px_rgba(15,118,110,0.15)] transition-colors duration-300">
         <div className="max-w-5xl mx-auto px-4 text-center space-y-4">
-          <h1 className="text-4xl font-bold text-gray-900">Gặp gỡ các bác sĩ thông minh</h1>
-          <p className="text-gray-600 text-lg">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white">Gặp gỡ các bác sĩ thông minh</h1>
+          <p className="text-gray-600 dark:text-gray-300 text-lg">
             Danh sách được cập nhật theo thời gian thực, giúp bạn đặt lịch đúng bác sĩ chỉ với một cú click.
           </p>
         </div>
@@ -75,14 +75,14 @@ export default function DoctorsPage() {
           <button 
             onClick={() => setPage(0)} 
             disabled={page === 0}
-            className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="w-11 h-11 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             {'<<'}
           </button>
           <button 
             onClick={() => setPage(page - 1)} 
             disabled={page === 0}
-            className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="w-11 h-11 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             {'<'}
           </button>
@@ -92,8 +92,8 @@ export default function DoctorsPage() {
               onClick={() => setPage(p)}
               className={`w-11 h-11 rounded-lg font-medium transition-all ${
                 p === page
-                  ? 'bg-gray-800 text-white border-gray-800 shadow-md'
-                  : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+                  ? 'bg-gray-800 dark:bg-cyan-600 text-white border-gray-800 dark:border-cyan-600 shadow-md'
+                  : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
               {p + 1}
@@ -102,14 +102,14 @@ export default function DoctorsPage() {
           <button 
             onClick={() => setPage(page + 1)} 
             disabled={page >= totalPages - 1}
-            className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="w-11 h-11 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             {'>'}
           </button>
           <button 
             onClick={() => setPage(totalPages - 1)} 
             disabled={page >= totalPages - 1}
-            className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="w-11 h-11 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             {'>>'}
           </button>
@@ -120,4 +120,3 @@ export default function DoctorsPage() {
     </div>
   );
 }
-// src/pages/DoctorsPage.jsx

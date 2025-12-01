@@ -16,7 +16,7 @@ export default function ReceptionPage() {
   }, [location.pathname, navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex transition-colors duration-300">
       <ReceptionSidebar />
       
       <div className="flex-1 flex flex-col">

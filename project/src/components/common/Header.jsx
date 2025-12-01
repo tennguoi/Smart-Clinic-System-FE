@@ -45,7 +45,7 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
+    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 shadow-sm transition-colors duration-300">
       <div className="flex items-center justify-between">
         {/* Thanh tìm kiếm */}
         <div className="flex-1 max-w-xl">
@@ -56,8 +56,8 @@ export default function Header() {
 
         {/* Thông báo + Avatar */}
         <div className="flex items-center gap-6 ml-8">
-          <button className="relative p-2 hover:bg-gray-100 rounded-lg transition">
-            <Bell className="w-6 h-6 text-gray-600" />
+          <button className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
+            <Bell className="w-6 h-6 text-gray-600 dark:text-gray-300" />
             <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
           </button>
 
@@ -65,7 +65,7 @@ export default function Header() {
           <div className="relative user-dropdown">
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-3 hover:bg-gray-50 px-3 py-2 rounded-lg transition"
+              className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-2 rounded-lg transition"
             >
               <div className="w-10 h-10 rounded-full shadow-md overflow-hidden">
                 {photoUrl ? (
@@ -81,17 +81,17 @@ export default function Header() {
                 )}
               </div>
               <div className="text-left">
-                <p className="font-semibold text-gray-800">{fullName}</p>
-                <p className="text-xs text-gray-500">{email}</p>
+                <p className="font-semibold text-gray-800 dark:text-white">{fullName}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{email}</p>
               </div>
             </button>
 
             {/* Dropdown */}
             {isDropdownOpen && (
-              <div className="absolute right-0 top-14 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
-                <div className="p-4 border-b border-gray-100 bg-gray-50">
-                  <p className="font-medium text-gray-800">{fullName}</p>
-                  <p className="text-sm text-gray-500">{email}</p>
+              <div className="absolute right-0 top-14 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden">
+                <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                  <p className="font-medium text-gray-800 dark:text-white">{fullName}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{email}</p>
                 </div>
 
                 <div className="py-2">
@@ -100,17 +100,17 @@ export default function Header() {
                       navigate('/profile');
                       setIsDropdownOpen(false);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition"
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-gray-700 dark:text-gray-200"
                   >
-                    <Settings className="w-5 h-5 text-gray-600" />
+                    <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                     <span className="font-medium">Cài Đặt</span>
                   </button>
 
-                  <div className="border-t border-gray-200 my-2 mx-4"></div>
+                  <div className="border-t border-gray-200 dark:border-gray-700 my-2 mx-4"></div>
 
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition text-red-600 font-medium"
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 dark:hover:bg-red-900/20 transition text-red-600 dark:text-red-400 font-medium"
                   >
                     <LogOut className="w-5 h-5" />
                     <span>Đăng Xuất</span>
