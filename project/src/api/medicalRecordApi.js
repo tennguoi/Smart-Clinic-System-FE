@@ -13,6 +13,9 @@ export const medicalRecordApi = {
 		return data;
 	},
 
+	// Backend tự động xử lý role:
+	// - Admin: Trả về TẤT CẢ records
+	// - Doctor: Trả về records của mình
 	listMine: async () => {
 		const { data } = await axiosInstance.get('/api/doctor/medical-records/mine');
 		return Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
@@ -163,6 +166,17 @@ export const medicalRecordApi = {
 			return [];
 		}
 	},
+	getAllForAdmin: async (keyword = '', startDate = null, endDate = null) => {
+        const params = new URLSearchParams();
+        if (keyword) params.append('keyword', keyword);
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+
+        const { data } = await axiosInstance.get(
+            `/api/admin/medical-records/all?${params.toString()}`
+        );
+        return Array.isArray(data) ? data : [];
+    },
 
 	// C. Top dịch vụ theo doanh thu (Invoice) - Đo hiệu quả tài chính
 	getTopServicesByRevenue: async (startDate, endDate) => {

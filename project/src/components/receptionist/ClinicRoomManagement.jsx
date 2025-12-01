@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, X, Building2, DoorOpen } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Plus, Edit, Trash2, X, Building2, DoorOpen, Eye } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import { roomApi } from '../../api/roomApi';
 import CountBadge from '../common/CountBadge';
+import Pagination from '../common/Pagination';
 
 export default function ClinicRoomManagement() {
   const [rooms, setRooms] = useState([]);
@@ -25,6 +26,10 @@ export default function ClinicRoomManagement() {
   const [filterStatus, setFilterStatus] = useState('');
   const [filterActive, setFilterActive] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(0);
+  const pageSize = 8;
 
   const statusOptions = [
     { value: 'Available', label: 'Sẵn sàng' },
@@ -80,7 +85,7 @@ export default function ClinicRoomManagement() {
     try {
       const params = {};
       if (filterStatus) params.status = filterStatus;
-      if (searchKeyword) params.keyword = searchKeyword;
+      // Không gửi keyword lên backend, sẽ filter client-side để tìm cả tên phòng và tên bác sĩ
 
       const data = await roomApi.getAllRooms(params);
       let roomsArray = Array.isArray(data) ? data : [];
@@ -92,10 +97,35 @@ export default function ClinicRoomManagement() {
         roomsArray = roomsArray.filter(room => room.isActive === false);
       }
       
+      // Client-side filter by room name and doctor name
+      if (searchKeyword && searchKeyword.trim()) {
+        const keyword = searchKeyword.trim().toLowerCase();
+        roomsArray = roomsArray.filter(room => {
+          // Tìm theo tên phòng
+          const matchesRoomName = room.roomName?.toLowerCase().includes(keyword);
+          
+          // Tìm theo tên bác sĩ
+          let matchesDoctorName = false;
+          if (room.doctorId) {
+            const doctor = doctors.find(d => 
+              (d.doctorId === room.doctorId || d.userId === room.doctorId) &&
+              d.fullName?.toLowerCase().includes(keyword)
+            );
+            matchesDoctorName = !!doctor;
+          }
+          // Nếu room có doctorName trực tiếp
+          if (!matchesDoctorName && room.doctorName) {
+            matchesDoctorName = room.doctorName.toLowerCase().includes(keyword);
+          }
+          
+          return matchesRoomName || matchesDoctorName;
+        });
+      }
+      
       setRooms(roomsArray);
 
       if (roomsArray.length === 0 && !filterStatus && !filterActive && !searchKeyword) {
-        toast.error('Chưa có phòng khám nào trong hệ thống. Vui lòng tạo phòng mới.');
+        // toast.error('Chưa có phòng khám nào trong hệ thống. Vui lòng tạo phòng mới.');
       }
     } catch (err) {
       console.error('Error fetching rooms:', err);
@@ -129,7 +159,7 @@ export default function ClinicRoomManagement() {
         status: 'Available',
         isActive: true,
       });
-    } else if (mode === 'edit' && room) {
+    } else if ((mode === 'edit' || mode === 'view') && room) {
       setFormData({
         roomName: room.roomName || '',
         doctorId: room.doctorId || null,
@@ -140,6 +170,10 @@ export default function ClinicRoomManagement() {
     }
 
     setShowModal(true);
+  };
+
+  const handleSwitchToEdit = () => {
+    setModalMode('edit');
   };
 
   const handleCloseModal = () => {
@@ -213,6 +247,29 @@ export default function ClinicRoomManagement() {
     return 'Không xác định';
   };
 
+  const getDoctorName = (doctorId) => {
+    if (!doctorId) return null;
+    // Ưu tiên lấy từ selectedRoom nếu có
+    if (selectedRoom?.doctorName) {
+      return selectedRoom.doctorName;
+    }
+    // Tìm trong danh sách doctors
+    const doctor = doctors.find(d => d.doctorId === doctorId || d.userId === doctorId);
+    return doctor ? doctor.fullName : null;
+  };
+
+  // Tính toán phân trang
+  const totalPages = Math.ceil(rooms.length / pageSize);
+  const currentPageRooms = useMemo(() => {
+    const startIndex = currentPage * pageSize;
+    return rooms.slice(startIndex, startIndex + pageSize);
+  }, [rooms, currentPage, pageSize]);
+
+  // Reset page khi filter thay đổi
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [filterStatus, filterActive, searchKeyword]);
+
   return (
     <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
       <Toaster {...toastConfig} />
@@ -222,18 +279,18 @@ export default function ClinicRoomManagement() {
           <DoorOpen className="w-9 h-9 text-blue-600" />
           <span>Quản Lý Phòng Khám</span>
           <CountBadge 
-            currentCount={rooms.length} 
+            currentCount={currentPageRooms.length} 
             totalCount={rooms.length} 
             label="phòng" 
           />
         </h1>
-        <button
+        {/* <button
           onClick={() => handleOpenModal('create')}
           className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2"
         >
           <Plus className="w-5 h-5" />
           Thêm phòng mới
-        </button>
+        </button> */}
       </div>
 
       {/* Filter và Search */}
@@ -243,9 +300,12 @@ export default function ClinicRoomManagement() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Tìm kiếm</label>
             <input
               type="text"
-              placeholder="Nhập tên phòng..."
+              placeholder="Tên phòng hoặc tên bác sĩ..."
               value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
+              onChange={(e) => {
+                setSearchKeyword(e.target.value);
+                setCurrentPage(0);
+              }}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -329,21 +389,21 @@ export default function ClinicRoomManagement() {
                   <td colSpan="6" className="px-6 py-16 text-center text-gray-500">
                     <div>
                       <p className="mb-4 text-lg">Chưa có phòng khám nào</p>
-                      <button
+                      {/* <button
                         onClick={() => handleOpenModal('create')}
                         className="px-5 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
                       >
                         Tạo phòng đầu tiên
-                      </button>
+                      </button> */}
                     </div>
                   </td>
                 </tr>
               ) : (
-                rooms.map((room, index) => (
+                currentPageRooms.map((room, index) => (
                   <tr key={room.roomId} className="hover:bg-gray-50 transition-colors">
                     {/* STT - Đã thêm */}
                     <td className="px-4 py-4 text-center font-semibold text-gray-700">
-                      {index + 1}
+                      {currentPage * pageSize + index + 1}
                     </td>
 
                     <td className="px-4 py-4">
@@ -390,19 +450,13 @@ export default function ClinicRoomManagement() {
                     <td className="px-4 py-4 text-center">
                       <div className="flex items-center justify-center gap-4">
                         <button
-                          onClick={() => handleOpenModal('edit', room)}
+                          onClick={() => handleOpenModal('view', room)}
                           className="text-blue-600 hover:text-blue-800 transition-colors"
-                          title="Chỉnh sửa"
+                          title="Xem chi tiết"
                         >
-                          <Edit className="w-5 h-5" />
+                          <Eye className="w-5 h-5" />
                         </button>
-                        <button
-                          onClick={() => handleDelete(room.roomId)}
-                          className="text-red-600 hover:text-red-800 transition-colors"
-                          title="Xóa phòng"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
+                       
                       </div>
                     </td>
                   </tr>
@@ -410,6 +464,15 @@ export default function ClinicRoomManagement() {
               )}
             </tbody>
           </table>
+          
+          {/* Pagination */}
+          {rooms.length > 0 && (
+            <Pagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={setCurrentPage} 
+            />
+          )}
         </div>
       )}
 
@@ -417,16 +480,26 @@ export default function ClinicRoomManagement() {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center p-6 border-b">
-              <h2 className="text-2xl font-bold text-gray-800">
-                {modalMode === 'create' ? 'Thêm phòng khám mới' : 'Chỉnh sửa phòng khám'}
+            <div className="flex justify-between items-center p-6 border-b bg-blue-50/80 backdrop-blur">
+              <h2 className="text-2xl font-bold text-blue-700">
+                {modalMode === 'create' ? 'Thêm phòng khám mới' : modalMode === 'view' ? 'Chi tiết phòng khám' : 'Chỉnh sửa phòng khám'}
               </h2>
-              <button
-                onClick={handleCloseModal}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
+              <div className="flex items-center gap-3">
+                {modalMode === 'view' && (
+                  <button
+                    onClick={handleSwitchToEdit}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                  >
+                    <Edit className="w-5 h-5" /> Chỉnh sửa
+                  </button>
+                )}
+                <button
+                  onClick={handleCloseModal}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
@@ -440,7 +513,8 @@ export default function ClinicRoomManagement() {
                   name="roomName"
                   value={formData.roomName}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={modalMode === 'view'}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
                   placeholder="VD: Phòng khám Tai-Mũi-Họng số 1"
                   required
                 />
@@ -454,7 +528,8 @@ export default function ClinicRoomManagement() {
                   name="status"
                   value={formData.status}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none:2 focus:ring-blue-500"
+                  disabled={modalMode === 'view'}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
                   required
                 >
                   {statusOptions.map((option) => (
@@ -469,7 +544,11 @@ export default function ClinicRoomManagement() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Bác sĩ phụ trách (Tùy chọn)
                 </label>
-                {loadingDoctors ? (
+                {modalMode === 'view' ? (
+                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
+                    {getDoctorName(formData.doctorId) || 'Chưa gán bác sĩ'}
+                  </div>
+                ) : loadingDoctors ? (
                   <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 text-sm">
                     Đang tải danh sách bác sĩ...
                   </div>
@@ -503,35 +582,45 @@ export default function ClinicRoomManagement() {
                 )}
               </div>
 
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="isActive"
-                  checked={formData.isActive}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label className="ml-2 block text-sm text-gray-700">
-                  Phòng đang hoạt động
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Trạng thái hoạt động
                 </label>
+                <div className={`w-full px-3 py-2 border border-gray-300 rounded-md ${modalMode === 'view' ? 'bg-gray-50' : ''}`}>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="isActive"
+                      checked={formData.isActive}
+                      onChange={handleInputChange}
+                      disabled={modalMode === 'view'}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:cursor-not-allowed"
+                    />
+                    <label className="ml-2 block text-sm text-gray-700">
+                      Phòng đang hoạt động
+                    </label>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 bg-blue-600 text-white py-2.5 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 font-medium"
-                >
-                  {loading ? 'Đang xử lý...' : modalMode === 'create' ? 'Tạo phòng' : 'Cập nhật'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2.5 px-4 rounded-md hover:bg-gray-400 transition-colors font-medium"
-                >
-                  Hủy
-                </button>
-              </div>
+              {modalMode !== 'view' && (
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 bg-blue-600 text-white py-2.5 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 font-medium"
+                  >
+                    {loading ? 'Đang xử lý...' : modalMode === 'create' ? 'Tạo phòng' : 'Cập nhật'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="flex-1 bg-gray-300 text-gray-700 py-2.5 px-4 rounded-md hover:bg-gray-400 transition-colors font-medium"
+                  >
+                    Hủy
+                  </button>
+                </div>
+              )}
             </form>
           </div>
         </div>

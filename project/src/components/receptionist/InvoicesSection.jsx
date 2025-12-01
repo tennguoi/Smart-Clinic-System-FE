@@ -1,5 +1,5 @@
 // src/components/receptionist/InvoicesSection.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { billingApi } from '../../api/billingApi';
 import { format } from 'date-fns';
@@ -11,6 +11,9 @@ import { FileText, Search, Plus, Eye, CreditCard, Receipt } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import CountBadge from '../common/CountBadge';
+import Pagination from '../common/Pagination';
+
+const ITEMS_PER_PAGE = 10;
 
 export default function InvoicesSection({ isDoctorView = false }) {
   const navigate = useNavigate();
@@ -23,30 +26,52 @@ export default function InvoicesSection({ isDoctorView = false }) {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
 
+  // DÙNG API MỚI: /my-bills → TỰ ĐỘNG PHÂN QUYỀN
   const fetchInvoices = async () => {
     setLoading(true);
     try {
-      const res = await billingApi.getAll(0, 100, search);
-      let data = res.content || res.data || [];
+      // API MỚI: Bác sĩ chỉ thấy của mình, lễ tân & admin thấy tất cả
+      const res = await billingApi.getMyBills(0, 1000, search.trim());
+      let data = res.content || res || [];
 
-      if (statusFilter === 'paid') data = data.filter(i => i.paymentStatus === 'Paid');
-      if (statusFilter === 'pending') data = data.filter(i => i.paymentStatus === 'Pending' || i.paymentStatus === 'PartiallyPaid');
-      if (showUnpaidOnly) data = data.filter(i => i.paymentStatus !== 'Paid');
+      // Lọc trạng thái client-side
+      if (statusFilter === 'paid') {
+        data = data.filter(i => i.paymentStatus === 'Paid');
+      }
+      if (statusFilter === 'pending') {
+        data = data.filter(i => i.paymentStatus === 'Pending' || i.paymentStatus === 'PartiallyPaid');
+      }
+      if (showUnpaidOnly) {
+        data = data.filter(i => i.paymentStatus !== 'Paid');
+      }
 
       setInvoices(data);
+      setCurrentPage(0); // Reset về trang đầu khi filter
     } catch (err) {
-      toast.error('Không tải được danh sách hóa đơn');
-      console.error(err);
+      console.error('Lỗi tải hóa đơn:', err);
+      toast.error('Không thể tải danh sách hóa đơn');
     } finally {
       setLoading(false);
     }
   };
 
+  // Gọi lại khi search, filter thay đổi
   useEffect(() => {
-    const timer = setTimeout(fetchInvoices, 300);
+    const timer = setTimeout(() => {
+      fetchInvoices();
+    }, 300);
     return () => clearTimeout(timer);
   }, [search, statusFilter, showUnpaidOnly]);
+
+  // Phân trang
+  const paginatedInvoices = useMemo(() => {
+    const start = currentPage * ITEMS_PER_PAGE;
+    return invoices.slice(start, start + ITEMS_PER_PAGE);
+  }, [invoices, currentPage]);
+
+  const totalPages = Math.max(1, Math.ceil(invoices.length / ITEMS_PER_PAGE));
 
   const hasFilter = search || statusFilter !== 'all' || showUnpaidOnly;
 
@@ -79,20 +104,19 @@ export default function InvoicesSection({ isDoctorView = false }) {
 
   return (
     <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
-      <Toaster {...toastConfig} />
-
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
           <Receipt className="w-9 h-9 text-blue-600" />
           <span>Quản Lý Hóa Đơn</span>
           <CountBadge 
-            currentCount={invoices.length} 
+            currentCount={paginatedInvoices.length} 
             totalCount={invoices.length} 
             label="hóa đơn" 
           />
         </h1>
 
+        {/* Chỉ lễ tân mới được tạo hóa đơn */}
         {!isDoctorView && (
           <button
             onClick={() => setCreateModalOpen(true)}
@@ -103,6 +127,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
           </button>
         )}
       </div>
+
       {/* Bộ lọc */}
       <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -162,32 +187,31 @@ export default function InvoicesSection({ isDoctorView = false }) {
         </div>
       </div>
 
-      {/* Bảng hóa đơn */}
+      {/* Bảng hóa đơn + Phân trang */}
       <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
-          {loading ? (
-            <div className="p-16 text-center text-gray-500">
-              <div className="inline-flex items-center gap-3">
-                <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-                <span>Đang tải danh sách hóa đơn...</span>
-              </div>
+        {loading ? (
+          <div className="p-16 text-center text-gray-500">
+            <div className="inline-flex items-center gap-3">
+              <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+              <span>Đang tải danh sách hóa đơn...</span>
             </div>
-          ) : invoices.length === 0 ? (
-            <div className="p-16 text-center">
-              <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-red-600 font-semibold">
-                {hasFilter ? 'Không tìm thấy hóa đơn nào phù hợp' : 'Chưa có hóa đơn nào trong hệ thống'}
-              </p>
-              <p className="text-gray-500 text-sm mt-2">
-                {hasFilter ? 'Thử thay đổi bộ lọc' : 'Vui lòng tạo hóa đơn mới'}
-              </p>
-            </div>
-          ) : (
+          </div>
+        ) : invoices.length === 0 ? (
+          <div className="p-16 text-center">
+            <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-red-600 font-semibold">
+              {hasFilter ? 'Không tìm thấy hóa đơn nào phù hợp' : 'Chưa có hóa đơn nào'}
+            </p>
+            <p className="text-gray-500 text-sm mt-2">
+              {hasFilter ? 'Thử thay đổi bộ lọc' : 'Vui lòng tạo hóa đơn mới'}
+            </p>
+          </div>
+        ) : (
+          <>
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-center px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-20">
-                    STT
-                  </th>
+                  <th className="text-center px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-20">STT</th>
                   <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Mã hóa đơn</th>
                   <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Bệnh nhân</th>
                   <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Ngày lập</th>
@@ -197,43 +221,29 @@ export default function InvoicesSection({ isDoctorView = false }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {invoices.map((inv, index) => (
+                {paginatedInvoices.map((inv, index) => (
                   <tr key={inv.billId} className="hover:bg-gray-50 transition">
-                    {/* STT - Đã thêm */}
                     <td className="px-4 py-4 text-center font-semibold text-gray-700">
-                      {index + 1}
+                      {currentPage * ITEMS_PER_PAGE + index + 1}
                     </td>
-
-                    {/* Mã hóa đơn */}
                     <td className="px-6 py-4 font-mono text-blue-600 font-medium">
                       #{inv.billId?.slice(0, 8).toUpperCase()}
                     </td>
-
-                    {/* Bệnh nhân */}
                     <td className="px-6 py-4">
                       <div className="font-medium text-gray-900">{inv.patientName}</div>
                       <div className="text-sm text-gray-500">{inv.patientPhone}</div>
                     </td>
-
-                    {/* Ngày lập */}
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {format(new Date(inv.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
                     </td>
-
-                    {/* Tổng tiền */}
                     <td className="px-6 py-4 text-right font-bold text-lg text-gray-900">
                       {formatPrice(inv.totalAmount)}
                     </td>
-
-                    {/* Trạng thái */}
                     <td className="px-6 py-4 text-center">
                       {getStatusBadge(inv.paymentStatus)}
                     </td>
-
-                    {/* Thao tác */}
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-3">
-                        {/* Xem chi tiết */}
                         <button
                           onClick={() => handleViewDetail(inv)}
                           className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-full transition group relative"
@@ -245,7 +255,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
                           </span>
                         </button>
 
-                        {/* Thu tiền - chỉ hiện khi chưa thanh toán và không phải doctor */}
+                        {/* Chỉ lễ tân mới thấy nút thu tiền */}
                         {!isDoctorView && inv.paymentStatus !== 'Paid' && (
                           <button
                             onClick={() => handlePayInvoice(inv)}
@@ -264,10 +274,20 @@ export default function InvoicesSection({ isDoctorView = false }) {
                 ))}
               </tbody>
             </table>
-          )}
-        </div>
 
-      {/* Modal Chi tiết hóa đơn */}
+            {/* PAGINATION NẰM TRONG BẢNG */}
+            <div className="border-t border-gray-200 bg-gray-50">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Modal chi tiết */}
       {showDetailModal && selectedInvoice && (
         <InvoiceDetailModal
           invoice={selectedInvoice}
@@ -280,7 +300,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
         />
       )}
 
-      {/* Modal Tạo hóa đơn */}
+      {/* Modal tạo hóa đơn */}
       {!isDoctorView && createModalOpen && (
         <CreateInvoiceModal
           isOpen={createModalOpen}
@@ -291,6 +311,13 @@ export default function InvoicesSection({ isDoctorView = false }) {
           }}
         />
       )}
+
+      {/* TOASTER ĐÃ ĐỒNG BỘ 100% VỚI toastConfig.js */}
+      <Toaster
+        position={toastConfig.position}
+        containerStyle={toastConfig.containerStyle}
+        toastOptions={toastConfig.toastOptions}
+      />
     </div>
   );
 }

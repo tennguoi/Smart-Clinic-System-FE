@@ -16,7 +16,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import axiosInstance from '../../utils/axiosConfig';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 const PAYMENT_METHODS = {
   Cash: 'Tiền mặt',
@@ -97,7 +97,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
 
   const handleAddService = (service) => {
     if (editedItems.some(i => i.serviceId === service.serviceId)) {
-      toast.warning('Dịch vụ đã tồn tại trong hóa đơn');
+      toast.error('Dịch vụ đã tồn tại trong hóa đơn', { duration: 3000 });
       return;
     }
     setEditedItems(prev => [...prev, {
@@ -155,12 +155,10 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
         }))
       });
 
-      toast.success(
-        <div className="flex items-center gap-2">
-          <CheckCircle className="w-5 h-5" />
-          Cập nhật hóa đơn thành công!
-        </div>
-      );
+      toast.success('Cập nhật hóa đơn thành công!', {
+        icon: '✅',
+        duration: 3000,
+      });
 
       setIsEditing(false);
       setShowAddService(false);

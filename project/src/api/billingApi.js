@@ -43,6 +43,12 @@ export const billingApi = {
     const { data } = await axiosInstance.get(`/api/billing/${billId}/payment-status`);
     return data;
   },
+  getMyBills: async (page = 0, size = 20, search = '') => {
+  const params = { page, size };
+  if (search) params.search = search;
+  const { data } = await axiosInstance.get('/api/billing/my-bills', { params });
+  return data;
+},
 };
 
 export default billingApi;
