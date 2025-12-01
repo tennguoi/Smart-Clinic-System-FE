@@ -4,7 +4,7 @@ import { X, Search, User, Phone, FileText, Plus, Trash2, Loader } from 'lucide-r
 import { billingApi } from '../../api/billingApi';
 import { patientApi } from '../../api/patientApi';
 import { serviceApi, formatPrice } from '../../api/serviceApi';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 const PAYMENT_METHODS = [
   { value: 'Cash', label: 'Tiền mặt' },
@@ -113,7 +113,7 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-  <FileText className="w-7 h-7 text-purple-600" />
+              <FileText className="w-7 h-7 text-purple-600" />
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Tạo hóa đơn mới</h2>
