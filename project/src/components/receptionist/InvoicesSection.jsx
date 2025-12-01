@@ -7,7 +7,7 @@ import { vi } from 'date-fns/locale';
 import CreateInvoiceModal from './CreateInvoiceModal';
 import InvoiceDetailModal from './InvoiceDetailModal';
 import { formatPrice } from '../../utils/formatPrice';
-import { FileText, Search, Plus, Eye, CreditCard, Receipt } from 'lucide-react';
+import { FileText, Search, Plus, Eye, CreditCard, Receipt, Download } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import CountBadge from '../common/CountBadge';
@@ -100,6 +100,36 @@ export default function InvoicesSection({ isDoctorView = false }) {
   const handlePayFromDetail = (invoice) => {
     setShowDetailModal(false);
     navigate(`/reception/payment/${invoice.billId}`);
+  };
+
+  const handleDownloadPdf = async (billId, patientName) => {
+    try {
+      const response = await fetch(`http://localhost:8082/api/billing/${billId}/pdf`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Không thể tải xuống hóa đơn');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `hoa-don-${patientName}-${new Date().getTime()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success('Xuất hóa đơn thành công!');
+    } catch (err) {
+      console.error('Lỗi tải PDF:', err);
+      toast.error('Không thể xuất hóa đơn. Vui lòng thử lại.');
+    }
   };
 
   return (
@@ -252,6 +282,17 @@ export default function InvoicesSection({ isDoctorView = false }) {
                           <Eye className="w-5 h-5" />
                           <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
                             Xem chi tiết
+                          </span>
+                        </button>
+
+                        <button
+                          onClick={() => handleDownloadPdf(inv.billId, inv.patientName)}
+                          className="p-2.5 text-purple-600 hover:bg-purple-50 rounded-full transition group relative"
+                          title="Xuất PDF"
+                        >
+                          <Download className="w-5 h-5" />
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+                            Xuất PDF
                           </span>
                         </button>
 

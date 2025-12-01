@@ -13,7 +13,8 @@ import {
   Calendar,
   DollarSign,
   CreditCard,
-  CheckCircle
+  CheckCircle,
+  Download
 } from 'lucide-react';
 import axiosInstance from '../../utils/axiosConfig';
 import toast from 'react-hot-toast';
@@ -174,6 +175,36 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
       );
     } finally {
       setSaving(false); // Luôn tắt loading
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    try {
+      const response = await fetch(`http://localhost:8082/api/billing/${invoice.billId}/pdf`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Không thể tải xuống hóa đơn');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `hoa-don-${invoice.patientName}-${new Date().getTime()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success('Xuất hóa đơn thành công!');
+    } catch (err) {
+      console.error('Lỗi tải PDF:', err);
+      toast.error('Không thể xuất hóa đơn. Vui lòng thử lại.');
     }
   };
 
@@ -406,26 +437,37 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-4 pt-4">
+          <div className="flex justify-between items-center gap-4 pt-4">
             <button 
-              onClick={onClose} 
-              className="px-8 py-4 bg-gray-200 hover:bg-gray-300 rounded-xl font-bold text-lg transition"
+              onClick={handleDownloadPdf}
+              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold transition flex items-center gap-2"
               disabled={saving}
             >
-              Đóng
+              <Download className="w-5 h-5" />
+              Xuất PDF
             </button>
-            {invoice.paymentStatus === 'Pending' && !isEditing && (
-              <button
-                onClick={() => onPay?.(invoice)}
-                className="px-12 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold text-xl shadow-2xl flex items-center gap-3 hover:shadow-green-500/50 transition"
+
+            <div className="flex justify-end gap-4">
+              <button 
+                onClick={onClose} 
+                className="px-8 py-4 bg-gray-200 hover:bg-gray-300 rounded-xl font-bold text-lg transition"
+                disabled={saving}
               >
-                <CreditCard className="w-7 h-7" />
-                Thanh toán ngay
+                Đóng
               </button>
-            )}
+              {invoice.paymentStatus === 'Pending' && !isEditing && (
+                <button
+                  onClick={() => onPay?.(invoice)}
+                  className="px-12 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold text-xl shadow-2xl flex items-center gap-3 hover:shadow-green-500/50 transition"
+                >
+                  <CreditCard className="w-7 h-7" />
+                  Thanh toán ngay
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
     </div>
-  );
+  ); 
 }
