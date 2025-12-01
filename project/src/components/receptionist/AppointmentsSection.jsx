@@ -28,6 +28,16 @@ const formatPrice = (price) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 };
 
+// QUAN TRỌNG: Gửi đúng giờ Việt Nam +07:00 để backend hiểu chính xác
+const toLocalDateTimeString = (localDate) => {
+  const d = new Date(localDate);
+  return d.getFullYear() + '-' +
+         String(d.getMonth() + 1).padStart(2, '0') + '-' +
+         String(d.getDate()).padStart(2, '0') + 'T' +
+         String(d.getHours()).padStart(2, '0') + ':' +
+         String(d.getMinutes()).padStart(2, '0') + ':00';
+};
+
 export default function AppointmentsSection() {
   const [appointments, setAppointments] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState('Pending');
@@ -37,11 +47,9 @@ export default function AppointmentsSection() {
   const [filterEndDate, setFilterEndDate] = useState('');
 
   const [showForm, setShowForm] = useState(false);
-  const [modalMode, setModalMode] = useState('create'); // 'create', 'view', 'edit'
+  const [modalMode, setModalMode] = useState('create');
   const [editingAppointment, setEditingAppointment] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-
-  // THÊM STATE LOADING CHO NÚT XÁC NHẬN
   const [confirmLoading, setConfirmLoading] = useState(false);
 
   const isViewMode = modalMode === 'view';
@@ -59,9 +67,8 @@ export default function AppointmentsSection() {
     selectedServices: [],
   });
 
-  // NEW: Tách ngày và giờ riêng
-  const [appointmentDate, setAppointmentDate] = useState(null);     // Date object
-  const [appointmentTime, setAppointmentTime] = useState('');       // "HH:mm"
+  const [appointmentDate, setAppointmentDate] = useState(null);
+  const [appointmentTime, setAppointmentTime] = useState('');
 
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -69,16 +76,13 @@ export default function AppointmentsSection() {
   const [searchQueryAppointments, setSearchQueryAppointments] = useState('');
   const pageSize = 10;
 
-  // Modal xác nhận hủy
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [cancelTargetId, setCancelTargetId] = useState(null);
   const [cancelLoading, setCancelLoading] = useState(false);
 
-  // Giới hạn 3 ngày tới
   const now = new Date();
   const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
 
-  // Kiểm tra giờ hợp lệ: 08:00–12:00 hoặc 14:00–18:00
   const isValidTime = (timeStr) => {
     if (!timeStr) return false;
     const [hour, minute] = timeStr.split(':').map(Number);
@@ -93,7 +97,6 @@ export default function AppointmentsSection() {
     );
   };
 
-  // Load danh sách lịch hẹn
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
@@ -131,7 +134,6 @@ export default function AppointmentsSection() {
     fetch();
   }, [selectedStatus, currentPage, searchQueryAppointments, filterStartDate, filterEndDate]);
 
-  // Load dịch vụ khi mở form
   useEffect(() => {
     if (!showForm) return;
     const fetchServices = async () => {
@@ -206,6 +208,7 @@ export default function AppointmentsSection() {
 
   const handleSwitchToEdit = () => setModalMode('edit');
 
+  // ĐÃ SỬA HOÀN CHỈNH: Gửi đúng giờ Việt Nam +07:00
   const handleSubmit = async () => {
     if (!form.patientName.trim()) return toast.error('Vui lòng nhập họ tên');
     if (!form.phone.trim()) return toast.error('Vui lòng nhập số điện thoại');
@@ -213,17 +216,25 @@ export default function AppointmentsSection() {
     if (!appointmentDate) return toast.error('Vui lòng chọn ngày hẹn');
     if (!appointmentTime || !isValidTime(appointmentTime)) return toast.error('Giờ hẹn phải từ 08:00–12:00 hoặc 14:00–18:00');
 
+    const [hour, minute] = appointmentTime.split(':');
+    const selectedDateTime = new Date(appointmentDate);
+    selectedDateTime.setHours(parseInt(hour, 10));
+    selectedDateTime.setMinutes(parseInt(minute, 10));
+    selectedDateTime.setSeconds(0);
+    selectedDateTime.setMilliseconds(0);
+
+    if (selectedDateTime <= new Date()) {
+      toast.error('Không thể đặt lịch vào thời gian đã qua. Vui lòng chọn giờ trong tương lai.');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const [hour, minute] = appointmentTime.split(':');
-      const combinedDateTime = new Date(appointmentDate);
-      combinedDateTime.setHours(parseInt(hour, 10), parseInt(minute, 10), 0, 0);
-
       const payload = {
         patientName: form.patientName.trim(),
         phone: form.phone.trim(),
         email: form.email.trim() || null,
-        appointmentTime: combinedDateTime.toISOString(),
+        appointmentTime: toLocalDateTimeString(selectedDateTime), // ĐÚNG RỒI ĐÂY!
         notes: form.notes.trim() || null,
         serviceIds: form.selectedServices.map(s => s.id),
       };
@@ -266,20 +277,8 @@ export default function AppointmentsSection() {
     }
   };
 
-  const handleConfirm = async (id) => {
-    try {
-      await axiosInstance.patch(`/api/appointments/${id}/status`, null, { params: { status: 'Confirmed' } });
-      setAppointments(prev => prev.map(a => a.appointmentId === id ? { ...a, status: 'Confirmed' } : a));
-      toast.success('Đã xác nhận lịch hẹn');
-    } catch {
-      toast.error('Xác nhận thất bại');
-    }
-  };
-
-  // CẬP NHẬT: Thêm loading cho nút Xác nhận trong modal
   const handleConfirmFromModal = async () => {
     if (!editingAppointment || confirmLoading) return;
-
     setConfirmLoading(true);
     try {
       await axiosInstance.patch(
@@ -287,10 +286,7 @@ export default function AppointmentsSection() {
         null,
         { params: { status: 'Confirmed' } }
       );
-
       toast.success('Đã xác nhận lịch hẹn thành công!');
-
-      // Cập nhật danh sách + modal ngay lập tức
       setAppointments(prev =>
         prev.map(a =>
           a.appointmentId === editingAppointment.appointmentId
@@ -299,12 +295,10 @@ export default function AppointmentsSection() {
         )
       );
       setEditingAppointment(prev => ({ ...prev, status: 'Confirmed' }));
-
     } catch (err) {
       toast.error(err.response?.data?.message || 'Xác nhận thất bại');
     } finally {
       setConfirmLoading(false);
-      
     }
   };
 
@@ -315,15 +309,12 @@ export default function AppointmentsSection() {
       await axiosInstance.patch(`/api/appointments/${cancelTargetId}/status`, null, {
         params: { status: 'Cancelled' }
       });
-
       setAppointments(prev => prev.map(a => 
         a.appointmentId === cancelTargetId ? { ...a, status: 'Cancelled' } : a
       ));
-
       if (showForm && editingAppointment?.appointmentId === cancelTargetId) {
         setShowForm(false);
       }
-
       toast.success('Đã hủy lịch hẹn');
     } catch {
       toast.error('Hủy thất bại');
@@ -356,7 +347,6 @@ export default function AppointmentsSection() {
     <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
       <Toaster {...toastConfig} />
 
-      {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
           <Calendar className="w-9 h-9 text-blue-600" />
@@ -370,7 +360,6 @@ export default function AppointmentsSection() {
         </button>
       </div>
 
-      {/* FILTER BAR */}
       <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-4">
@@ -443,7 +432,6 @@ export default function AppointmentsSection() {
         </div>
       </div>
 
-      {/* BẢNG */}
       {loading && !showForm ? (
         <div className="bg-white rounded-lg shadow border border-gray-200 p-12 text-center">
           <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-blue-600" />
@@ -543,7 +531,6 @@ export default function AppointmentsSection() {
         </div>
       )}
 
-      {/* MODAL FORM */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -712,7 +699,6 @@ export default function AppointmentsSection() {
               </div>
             </div>
 
-            {/* FOOTER MODAL - ĐÃ CẬP NHẬT NÚT XÁC NHẬN CÓ LOADING */}
             <div className="flex gap-3 p-6 border-t bg-gray-50">
               {isViewMode ? (
                 <>
@@ -735,18 +721,13 @@ export default function AppointmentsSection() {
                           </>
                         )}
                       </button>
-                      <button
-                        onClick={() => {
-                          openCancelConfirmation(editingAppointment.appointmentId);
-                          setShowForm(false);
-                        }}
+                      <button onClick={() => { openCancelConfirmation(editingAppointment.appointmentId); setShowForm(false); }}
                         className="flex-1 bg-red-600 text-white py-3 px-4 rounded-xl hover:bg-red-700 transition font-medium flex items-center justify-center gap-2">
-                        <Trash2 className="w-5 h 5" />
+                        <Trash2 className="w-5 h-5" />
                         Hủy lịch
                       </button>
                     </>
                   )}
-                  
                 </>
               ) : (
                 <>
@@ -766,38 +747,22 @@ export default function AppointmentsSection() {
         </div>
       )}
 
-      {/* MODAL XÁC NHẬN HỦY */}
       {showCancelConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
             <XCircle className="w-16 mx-auto mb-4 text-red-500" />
-
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">
-              Hủy lịch hẹn này?
-            </h3>
-
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">Hủy lịch hẹn này?</h3>
             <p className="text-gray-600 mb-8 leading-relaxed">
               Lịch hẹn sẽ được chuyển sang trạng thái <span className="font-bold text-red-600">Đã hủy</span>.<br />
               Bạn có chắc chắn muốn tiếp tục?
             </p>
-
             <div className="flex gap-4">
-              <button
-                onClick={handleCancelAppointment}
-                disabled={cancelLoading}
-                className="flex-1 bg-red-600 text-white py-3 rounded-lg font-bold hover:bg-red-700 transition disabled:opacity-70"
-              >
+              <button onClick={handleCancelAppointment} disabled={cancelLoading}
+                className="flex-1 bg-red-600 text-white py-3 rounded-lg font-bold hover:bg-red-700 transition disabled:opacity-70">
                 {cancelLoading ? 'Đang xử lý...' : 'Xác nhận hủy'}
               </button>
-
-              <button
-                onClick={() => {
-                  setShowCancelConfirmation(false);
-                  setCancelTargetId(null);
-                }}
-                disabled={cancelLoading}
-                className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-400 transition"
-              >
+              <button onClick={() => { setShowCancelConfirmation(false); setCancelTargetId(null); }} disabled={cancelLoading}
+                className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-400 transition">
                 Giữ lại
               </button>
             </div>
