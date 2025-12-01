@@ -125,7 +125,7 @@ export default function ClinicRoomManagement() {
       setRooms(roomsArray);
 
       if (roomsArray.length === 0 && !filterStatus && !filterActive && !searchKeyword) {
-        toast.error('Chưa có phòng khám nào trong hệ thống. Vui lòng tạo phòng mới.');
+        // toast.error('Chưa có phòng khám nào trong hệ thống. Vui lòng tạo phòng mới.');
       }
     } catch (err) {
       console.error('Error fetching rooms:', err);
@@ -284,13 +284,13 @@ export default function ClinicRoomManagement() {
             label="phòng" 
           />
         </h1>
-        <button
+        {/* <button
           onClick={() => handleOpenModal('create')}
           className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2"
         >
           <Plus className="w-5 h-5" />
           Thêm phòng mới
-        </button>
+        </button> */}
       </div>
 
       {/* Filter và Search */}
@@ -389,12 +389,12 @@ export default function ClinicRoomManagement() {
                   <td colSpan="6" className="px-6 py-16 text-center text-gray-500">
                     <div>
                       <p className="mb-4 text-lg">Chưa có phòng khám nào</p>
-                      <button
+                      {/* <button
                         onClick={() => handleOpenModal('create')}
                         className="px-5 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
                       >
                         Tạo phòng đầu tiên
-                      </button>
+                      </button> */}
                     </div>
                   </td>
                 </tr>
@@ -456,13 +456,7 @@ export default function ClinicRoomManagement() {
                         >
                           <Eye className="w-5 h-5" />
                         </button>
-                        <button
-                          onClick={() => handleDelete(room.roomId)}
-                          className="text-red-600 hover:text-red-800 transition-colors"
-                          title="Xóa phòng"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
+                       
                       </div>
                     </td>
                   </tr>

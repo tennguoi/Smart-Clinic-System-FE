@@ -1,7 +1,7 @@
 // src/components/receptionist/AppointmentsSection.jsx
 import { useEffect, useState } from 'react';
 import {
-  Plus, X, Calendar, User, Phone, Mail, FileText,
+  Plus, X, Calendar, User, Phone, Mail,
   Loader2, Search, CheckCircle2, XCircle,
   Edit2, Check, Trash2, Clock, Eye
 } from 'lucide-react';
@@ -10,6 +10,8 @@ import { toastConfig } from '../../config/toastConfig';
 import axiosInstance from '../../utils/axiosConfig';
 import CountBadge from '../common/CountBadge';
 import Pagination from '../common/Pagination';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const formatDateTime = (date) => {
   if (!date) return '—';
@@ -30,8 +32,7 @@ export default function AppointmentsSection() {
   const [appointments, setAppointments] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState('Pending');
   const [loading, setLoading] = useState(false);
-  
-  // Date filters
+
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
 
@@ -39,10 +40,12 @@ export default function AppointmentsSection() {
   const [modalMode, setModalMode] = useState('create'); // 'create', 'view', 'edit'
   const [editingAppointment, setEditingAppointment] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  
+
+  // THÊM STATE LOADING CHO NÚT XÁC NHẬN
+  const [confirmLoading, setConfirmLoading] = useState(false);
+
   const isViewMode = modalMode === 'view';
   const isCreateMode = modalMode === 'create';
-  const isEditMode = modalMode === 'edit';
 
   const [services, setServices] = useState([]);
   const [loadingServices, setLoadingServices] = useState(false);
@@ -52,19 +55,45 @@ export default function AppointmentsSection() {
     patientName: '',
     phone: '',
     email: '',
-    appointmentTime: '',
     notes: '',
     selectedServices: [],
   });
 
-  // Pagination + search
+  // NEW: Tách ngày và giờ riêng
+  const [appointmentDate, setAppointmentDate] = useState(null);     // Date object
+  const [appointmentTime, setAppointmentTime] = useState('');       // "HH:mm"
+
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [searchQueryAppointments, setSearchQueryAppointments] = useState('');
-  const pageSize = 8;
+  const pageSize = 10;
 
-  // Load appointments
+  // Modal xác nhận hủy
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
+  const [cancelTargetId, setCancelTargetId] = useState(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
+
+  // Giới hạn 3 ngày tới
+  const now = new Date();
+  const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+  // Kiểm tra giờ hợp lệ: 08:00–12:00 hoặc 14:00–18:00
+  const isValidTime = (timeStr) => {
+    if (!timeStr) return false;
+    const [hour, minute] = timeStr.split(':').map(Number);
+    const totalMinutes = hour * 60 + minute;
+    const morningStart = 8 * 60;
+    const morningEnd = 12 * 60;
+    const afternoonStart = 14 * 60;
+    const afternoonEnd = 18 * 60;
+    return (
+      (totalMinutes >= morningStart && totalMinutes <= morningEnd) ||
+      (totalMinutes >= afternoonStart && totalMinutes <= afternoonEnd)
+    );
+  };
+
+  // Load danh sách lịch hẹn
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
@@ -77,31 +106,24 @@ export default function AppointmentsSection() {
             keyword: searchQueryAppointments.trim() || null,
           },
         });
-        
+
         let data = res.data.content || [];
-        
-        // Client-side date filtering
-        if (filterStartDate) {
+
+        if (filterStartDate || filterEndDate) {
           data = data.filter(appt => {
             if (!appt.appointmentTime) return false;
             const apptDate = new Date(appt.appointmentTime).toISOString().split('T')[0];
-            return apptDate >= filterStartDate;
+            if (filterStartDate && apptDate < filterStartDate) return false;
+            if (filterEndDate && apptDate > filterEndDate) return false;
+            return true;
           });
         }
-        
-        if (filterEndDate) {
-          data = data.filter(appt => {
-            if (!appt.appointmentTime) return false;
-            const apptDate = new Date(appt.appointmentTime).toISOString().split('T')[0];
-            return apptDate <= filterEndDate;
-          });
-        }
-        
+
         setAppointments(data);
         setTotalPages(res.data.totalPages || 0);
         setTotalElements(res.data.totalElements || 0);
       } catch (err) {
-        toast.error('Không thể tải lịch hẹn');
+        toast.error('Không thể tải danh sách lịch hẹn');
       } finally {
         setLoading(false);
       }
@@ -109,14 +131,14 @@ export default function AppointmentsSection() {
     fetch();
   }, [selectedStatus, currentPage, searchQueryAppointments, filterStartDate, filterEndDate]);
 
-  // Load services khi mở form
+  // Load dịch vụ khi mở form
   useEffect(() => {
     if (!showForm) return;
     const fetchServices = async () => {
       setLoadingServices(true);
       try {
         const res = await axiosInstance.get('/api/public/services?page=0&size=100');
-        const normalized = (res.data.content || []).map((s) => ({ ...s, id: s.serviceId }));
+        const normalized = (res.data.content || []).map(s => ({ ...s, id: s.serviceId }));
         setServices(normalized);
       } catch {
         toast.error('Không thể tải danh sách dịch vụ');
@@ -127,17 +149,17 @@ export default function AppointmentsSection() {
     fetchServices();
   }, [showForm]);
 
-  const filteredServices = services.filter((s) =>
+  const filteredServices = services.filter(s =>
     s.name.toLowerCase().includes(searchQueryServices.toLowerCase())
   );
 
   const toggleService = (service) => {
-    setForm((prev) => {
-      const exists = prev.selectedServices.some((s) => s.id === service.id);
+    setForm(prev => {
+      const exists = prev.selectedServices.some(s => s.id === service.id);
       return {
         ...prev,
         selectedServices: exists
-          ? prev.selectedServices.filter((s) => s.id !== service.id)
+          ? prev.selectedServices.filter(s => s.id !== service.id)
           : [...prev.selectedServices, service],
       };
     });
@@ -150,10 +172,11 @@ export default function AppointmentsSection() {
       patientName: '',
       phone: '',
       email: '',
-      appointmentTime: '',
       notes: '',
       selectedServices: [],
     });
+    setAppointmentDate(null);
+    setAppointmentTime('');
     setSearchQueryServices('');
     setShowForm(true);
   };
@@ -161,14 +184,19 @@ export default function AppointmentsSection() {
   const handleOpenView = (appt) => {
     setModalMode('view');
     setEditingAppointment(appt);
-    const normalized = (appt.services || []).map((s) => ({ ...s, id: s.serviceId }));
+    const normalized = (appt.services || []).map(s => ({ ...s, id: s.serviceId }));
+
+    const apptDateTime = appt.appointmentTime ? new Date(appt.appointmentTime) : null;
+    setAppointmentDate(apptDateTime);
+    setAppointmentTime(apptDateTime
+      ? `${apptDateTime.getHours().toString().padStart(2, '0')}:${apptDateTime.getMinutes().toString().padStart(2, '0')}`
+      : ''
+    );
+
     setForm({
       patientName: appt.patientName,
       phone: appt.phone,
       email: appt.email || '',
-      appointmentTime: appt.appointmentTime
-        ? new Date(appt.appointmentTime).toISOString().slice(0, 16)
-        : '',
       notes: appt.notes || '',
       selectedServices: normalized,
     });
@@ -176,25 +204,28 @@ export default function AppointmentsSection() {
     setShowForm(true);
   };
 
-  const handleSwitchToEdit = () => {
-    setModalMode('edit');
-  };
+  const handleSwitchToEdit = () => setModalMode('edit');
 
   const handleSubmit = async () => {
     if (!form.patientName.trim()) return toast.error('Vui lòng nhập họ tên');
     if (!form.phone.trim()) return toast.error('Vui lòng nhập số điện thoại');
     if (form.phone.length !== 10) return toast.error('Số điện thoại phải đúng 10 chữ số');
-    if (!form.appointmentTime) return toast.error('Vui lòng chọn thời gian hẹn');
+    if (!appointmentDate) return toast.error('Vui lòng chọn ngày hẹn');
+    if (!appointmentTime || !isValidTime(appointmentTime)) return toast.error('Giờ hẹn phải từ 08:00–12:00 hoặc 14:00–18:00');
 
     setSubmitting(true);
     try {
+      const [hour, minute] = appointmentTime.split(':');
+      const combinedDateTime = new Date(appointmentDate);
+      combinedDateTime.setHours(parseInt(hour, 10), parseInt(minute, 10), 0, 0);
+
       const payload = {
         patientName: form.patientName.trim(),
         phone: form.phone.trim(),
         email: form.email.trim() || null,
-        appointmentTime: form.appointmentTime,
+        appointmentTime: combinedDateTime.toISOString(),
         notes: form.notes.trim() || null,
-        serviceIds: form.selectedServices.map((s) => s.id),
+        serviceIds: form.selectedServices.map(s => s.id),
       };
 
       if (editingAppointment) {
@@ -215,26 +246,17 @@ export default function AppointmentsSection() {
           keyword: searchQueryAppointments.trim() || null,
         },
       });
-      
+
       let data = refreshed.data.content || [];
-      
-      // Apply date filters
-      if (filterStartDate) {
+      if (filterStartDate || filterEndDate) {
         data = data.filter(appt => {
           if (!appt.appointmentTime) return false;
-          const apptDate = new Date(appt.appointmentTime).toISOString().split('T')[0];
-          return apptDate >= filterStartDate;
+          const d = new Date(appt.appointmentTime).toISOString().split('T')[0];
+          if (filterStartDate && d < filterStartDate) return false;
+          if (filterEndDate && d > filterEndDate) return false;
+          return true;
         });
       }
-      
-      if (filterEndDate) {
-        data = data.filter(appt => {
-          if (!appt.appointmentTime) return false;
-          const apptDate = new Date(appt.appointmentTime).toISOString().split('T')[0];
-          return apptDate <= filterEndDate;
-        });
-      }
-      
       setAppointments(data);
       setTotalPages(refreshed.data.totalPages || 0);
     } catch (err) {
@@ -247,115 +269,75 @@ export default function AppointmentsSection() {
   const handleConfirm = async (id) => {
     try {
       await axiosInstance.patch(`/api/appointments/${id}/status`, null, { params: { status: 'Confirmed' } });
-      setAppointments((prev) => prev.map((a) => a.appointmentId === id ? { ...a, status: 'Confirmed' } : a));
+      setAppointments(prev => prev.map(a => a.appointmentId === id ? { ...a, status: 'Confirmed' } : a));
       toast.success('Đã xác nhận lịch hẹn');
     } catch {
       toast.error('Xác nhận thất bại');
     }
   };
 
+  // CẬP NHẬT: Thêm loading cho nút Xác nhận trong modal
   const handleConfirmFromModal = async () => {
-    if (!editingAppointment) return;
+    if (!editingAppointment || confirmLoading) return;
+
+    setConfirmLoading(true);
     try {
-      await axiosInstance.patch(`/api/appointments/${editingAppointment.appointmentId}/status`, null, { params: { status: 'Confirmed' } });
-      toast.success('Đã xác nhận lịch hẹn');
-      setShowForm(false);
+      await axiosInstance.patch(
+        `/api/appointments/${editingAppointment.appointmentId}/status`,
+        null,
+        { params: { status: 'Confirmed' } }
+      );
+
+      toast.success('Đã xác nhận lịch hẹn thành công!');
+
+      // Cập nhật danh sách + modal ngay lập tức
+      setAppointments(prev =>
+        prev.map(a =>
+          a.appointmentId === editingAppointment.appointmentId
+            ? { ...a, status: 'Confirmed' }
+            : a
+        )
+      );
+      setEditingAppointment(prev => ({ ...prev, status: 'Confirmed' }));
+
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Xác nhận thất bại');
+    } finally {
+      setConfirmLoading(false);
       
-      // Refresh data
-      const refreshed = await axiosInstance.get('/api/appointments', {
-        params: {
-          status: selectedStatus,
-          page: currentPage,
-          size: pageSize,
-          keyword: searchQueryAppointments.trim() || null,
-        },
-      });
-      
-      let data = refreshed.data.content || [];
-      
-      // Apply date filters
-      if (filterStartDate) {
-        data = data.filter(appt => {
-          if (!appt.appointmentTime) return false;
-          const apptDate = new Date(appt.appointmentTime).toISOString().split('T')[0];
-          return apptDate >= filterStartDate;
-        });
-      }
-      
-      if (filterEndDate) {
-        data = data.filter(appt => {
-          if (!appt.appointmentTime) return false;
-          const apptDate = new Date(appt.appointmentTime).toISOString().split('T')[0];
-          return apptDate <= filterEndDate;
-        });
-      }
-      
-      setAppointments(data);
-      setTotalPages(refreshed.data.totalPages || 0);
-    } catch {
-      toast.error('Xác nhận thất bại');
     }
   };
 
-  const handleCancelFromModal = async () => {
-    if (!editingAppointment) return;
-    if (!window.confirm('Bạn có chắc chắn muốn hủy lịch hẹn này?')) return;
-    
+  const handleCancelAppointment = async () => {
+    if (!cancelTargetId) return;
+    setCancelLoading(true);
     try {
-      await axiosInstance.patch(`/api/appointments/${editingAppointment.appointmentId}/status`, null, { params: { status: 'Cancelled' } });
-      toast.success('Đã hủy lịch hẹn');
-      setShowForm(false);
-      
-      // Refresh data
-      const refreshed = await axiosInstance.get('/api/appointments', {
-        params: {
-          status: selectedStatus,
-          page: currentPage,
-          size: pageSize,
-          keyword: searchQueryAppointments.trim() || null,
-        },
+      await axiosInstance.patch(`/api/appointments/${cancelTargetId}/status`, null, {
+        params: { status: 'Cancelled' }
       });
-      
-      let data = refreshed.data.content || [];
-      
-      // Apply date filters
-      if (filterStartDate) {
-        data = data.filter(appt => {
-          if (!appt.appointmentTime) return false;
-          const apptDate = new Date(appt.appointmentTime).toISOString().split('T')[0];
-          return apptDate >= filterStartDate;
-        });
-      }
-      
-      if (filterEndDate) {
-        data = data.filter(appt => {
-          if (!appt.appointmentTime) return false;
-          const apptDate = new Date(appt.appointmentTime).toISOString().split('T')[0];
-          return apptDate <= filterEndDate;
-        });
-      }
-      
-      setAppointments(data);
-      setTotalPages(refreshed.data.totalPages || 0);
-    } catch {
-      toast.error('Hủy lịch hẹn thất bại');
-    }
-  };
 
-  const handleCancel = async (id) => {
-    try {
-      await axiosInstance.patch(`/api/appointments/${id}/status`, null, { params: { status: 'Cancelled' } });
-      setAppointments((prev) => prev.map((a) => a.appointmentId === id ? { ...a, status: 'Cancelled' } : a));
+      setAppointments(prev => prev.map(a => 
+        a.appointmentId === cancelTargetId ? { ...a, status: 'Cancelled' } : a
+      ));
+
+      if (showForm && editingAppointment?.appointmentId === cancelTargetId) {
+        setShowForm(false);
+      }
+
       toast.success('Đã hủy lịch hẹn');
     } catch {
       toast.error('Hủy thất bại');
+    } finally {
+      setCancelLoading(false);
+      setShowCancelConfirmation(false);
+      setCancelTargetId(null);
     }
   };
 
-  const now = new Date();
-  const minDateTime = now.toISOString().slice(0, 16);
-  const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-  const maxDateTime = threeDaysLater.toISOString().slice(0, 16);
+  const openCancelConfirmation = (id) => {
+    setCancelTargetId(id);
+    setShowCancelConfirmation(true);
+  };
 
   const handleClearSearch = () => {
     setSearchQueryAppointments('');
@@ -379,11 +361,7 @@ export default function AppointmentsSection() {
         <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
           <Calendar className="w-9 h-9 text-blue-600" />
           <span>Quản Lý Lịch Hẹn</span>
-          <CountBadge 
-            currentCount={appointments.length} 
-            totalCount={totalElements} 
-            label="lịch hẹn" 
-          />
+          <CountBadge currentCount={appointments.length} totalCount={totalElements} label="lịch hẹn" />
         </h1>
         <button onClick={handleOpenAdd}
           className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2">
@@ -399,10 +377,13 @@ export default function AppointmentsSection() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Tìm kiếm</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input type="text" placeholder="Tên bệnh nhân hoặc số điện thoại..."
+              <input
+                type="text"
+                placeholder="Tên bệnh nhân hoặc số điện thoại..."
                 value={searchQueryAppointments}
                 onChange={(e) => { setSearchQueryAppointments(e.target.value); setCurrentPage(0); }}
-                className="w-full pl-9 pr-10 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                className="w-full pl-9 pr-10 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+              />
               {searchQueryAppointments && (
                 <button onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   <X className="w-4 h-4" />
@@ -414,7 +395,7 @@ export default function AppointmentsSection() {
           <div className="lg:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
             <select value={selectedStatus} onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(0); }}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
               <option value="Pending">Chờ xác nhận</option>
               <option value="Confirmed">Đã xác nhận</option>
               <option value="Cancelled">Đã hủy</option>
@@ -423,54 +404,48 @@ export default function AppointmentsSection() {
 
           <div className="lg:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">Từ ngày</label>
-            <input 
-              type="date" 
-              value={filterStartDate}
+            <input type="date" value={filterStartDate}
               onChange={(e) => {
-                const newStartDate = e.target.value;
-                if (filterEndDate && newStartDate > filterEndDate) {
+                const val = e.target.value;
+                if (filterEndDate && val > filterEndDate) {
                   toast.error('Từ ngày phải nhỏ hơn hoặc bằng Đến ngày');
                   return;
                 }
-                setFilterStartDate(newStartDate);
+                setFilterStartDate(val);
                 setCurrentPage(0);
               }}
               max={filterEndDate || undefined}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" />
           </div>
 
           <div className="lg:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">Đến ngày</label>
-            <input 
-              type="date" 
-              value={filterEndDate}
+            <input type="date" value={filterEndDate}
               onChange={(e) => {
-                const newEndDate = e.target.value;
-                if (filterStartDate && newEndDate < filterStartDate) {
+                const val = e.target.value;
+                if (filterStartDate && val < filterStartDate) {
                   toast.error('Đến ngày phải lớn hơn hoặc bằng Từ ngày');
                   return;
                 }
-                setFilterEndDate(newEndDate);
+                setFilterEndDate(val);
                 setCurrentPage(0);
               }}
               min={filterStartDate || undefined}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" />
           </div>
 
           <div className="lg:col-span-2 flex items-end">
             <button onClick={handleClearFilters}
-              className="w-full px-4 py-3 bg-gray-300 text-gray-700 rounded-xl hover:bg-gray-400 transition font-medium whitespace-nowrap">
+              className="w-full px-4 py-3 bg-gray-300 text-gray-700 rounded-xl hover:bg-gray-400 transition font-medium">
               Xóa lọc
             </button>
           </div>
         </div>
       </div>
 
-      {/* TABLE */}
+      {/* BẢNG */}
       {loading && !showForm ? (
-        <div className="bg-white rounded-lg shadow border border-gray-200 p-12 text-center text-gray-500">
+        <div className="bg-white rounded-lg shadow border border-gray-200 p-12 text-center">
           <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-blue-600" />
           <p>Đang tải danh sách lịch hẹn...</p>
         </div>
@@ -479,14 +454,14 @@ export default function AppointmentsSection() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-20">STT</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Mã lịch</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Bệnh nhân</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Số điện thoại</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Thời gian</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Dịch vụ</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Trạng thái</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Thao tác</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase w-20">STT</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Mã lịch</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Bệnh nhân</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Số điện thoại</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Thời gian</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Dịch vụ</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Trạng thái</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Thao tác</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -496,11 +471,11 @@ export default function AppointmentsSection() {
                 </tr>
               ) : (
                 appointments.map((a, index) => {
-                  const rowNumber = currentPage * pageSize + index + 1;
+                  const stt = currentPage * pageSize + index + 1;
                   return (
                     <tr key={a.appointmentId} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-4 text-sm font-medium text-gray-700 text-center">{rowNumber}</td>
-                      <td className="px-4 py-4 text-sm">
+                      <td className="px-4 py-4 text-center text-sm font-medium text-gray-700">{stt}</td>
+                      <td className="px-4 py-4">
                         <span className="inline-flex px-3 py-1.5 rounded-md text-xs font-mono bg-blue-50 text-blue-700 border border-blue-200">
                           {a.appointmentCode}
                         </span>
@@ -552,7 +527,7 @@ export default function AppointmentsSection() {
                           {a.status === 'Pending' ? 'Chờ xác nhận' : a.status === 'Confirmed' ? 'Đã xác nhận' : 'Đã hủy'}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-center">
+                      <td className="px-4 py-4 text-center space-x-2">
                         <button onClick={() => handleOpenView(a)} title="Xem chi tiết"
                           className="text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors">
                           <Eye className="w-5 h-5" />
@@ -593,10 +568,7 @@ export default function AppointmentsSection() {
               </h2>
               <div className="flex items-center gap-2">
                 {isViewMode && editingAppointment?.status === 'Pending' && (
-                  <button
-                    onClick={handleSwitchToEdit}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
-                  >
+                  <button onClick={handleSwitchToEdit} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
                     Chỉnh sửa
                   </button>
                 )}
@@ -607,13 +579,12 @@ export default function AppointmentsSection() {
             </div>
 
             <div className="p-6 space-y-6">
-              {/* Họ tên + SĐT */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Họ tên <span className="text-red-500">*</span></label>
                   <input value={form.patientName} onChange={(e) => setForm({ ...form, patientName: e.target.value })}
                     disabled={isViewMode}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
                     placeholder="Nguyễn Văn A" />
                 </div>
                 <div>
@@ -621,7 +592,7 @@ export default function AppointmentsSection() {
                   <input type="tel" maxLength={10} value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                     disabled={isViewMode}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
                     placeholder="0901234567" />
                   {form.phone && form.phone.length !== 10 && !isViewMode && (
                     <p className="text-xs text-red-600 mt-1">Số điện thoại phải đúng 10 chữ số</p>
@@ -629,30 +600,57 @@ export default function AppointmentsSection() {
                 </div>
               </div>
 
-              {/* Email + Thời gian */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email (tùy chọn)</label>
                   <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
                     disabled={isViewMode}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
                     placeholder="example@gmail.com" />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Thời gian hẹn <span className="text-red-500">*</span></label>
-                  <input type="datetime-local" value={form.appointmentTime}
-                    onChange={(e) => setForm({ ...form, appointmentTime: e.target.value })}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ngày hẹn <span className="text-red-500">*</span></label>
+                  <DatePicker
+                    selected={appointmentDate}
+                    onChange={(date) => setAppointmentDate(date)}
+                    dateFormat="dd/MM/yyyy"
+                    minDate={new Date()}
+                    maxDate={threeDaysLater}
                     disabled={isViewMode}
-                    min={minDateTime} max={maxDateTime}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed" />
-                  {!isViewMode && <p className="text-xs text-gray-500 mt-1">Chỉ đặt được trong vòng 3 ngày tới</p>}
+                    placeholderText="Chọn ngày"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                    wrapperClassName="w-full"
+                  />
                 </div>
               </div>
 
-              {/* Dịch vụ */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Giờ hẹn <span className="text-red-500">*</span></label>
+                  <input
+                    type="time"
+                    value={appointmentTime}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || isValidTime(val)) {
+                        setAppointmentTime(val);
+                      } else {
+                        toast.error('Chỉ được chọn giờ từ 08:00–12:00 hoặc 14:00–18:00');
+                      }
+                    }}
+                    disabled={isViewMode}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                  />
+                  {appointmentTime && !isValidTime(appointmentTime) && !isViewMode && (
+                    <p className="text-xs text-red-600 mt-1">Giờ không hợp lệ</p>
+                  )}
+                </div>
+                <div />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Dịch vụ (tùy chọn)</label>
-                
                 {!isViewMode && (
                   <div className="relative mb-3">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -705,16 +703,16 @@ export default function AppointmentsSection() {
                 )}
               </div>
 
-              {/* Ghi chú */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Ghi chú (tùy chọn)</label>
                 <textarea rows={4} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })}
                   disabled={isViewMode}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-50 disabled:cursor-not-allowed"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-50"
                   placeholder="Triệu chứng, yêu cầu đặc biệt..." />
               </div>
             </div>
 
+            {/* FOOTER MODAL - ĐÃ CẬP NHẬT NÚT XÁC NHẬN CÓ LOADING */}
             <div className="flex gap-3 p-6 border-t bg-gray-50">
               {isViewMode ? (
                 <>
@@ -722,24 +720,33 @@ export default function AppointmentsSection() {
                     <>
                       <button
                         onClick={handleConfirmFromModal}
-                        className="flex-1 bg-green-600 text-white py-3 px-4 rounded-xl hover:bg-green-700 transition font-medium inline-flex items-center justify-center gap-2"
+                        disabled={confirmLoading}
+                        className="flex-1 bg-green-600 text-white py-3 px-4 rounded-xl hover:bg-green-700 transition font-medium flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                       >
-                        <Check className="w-5 h-5" />
-                        Xác nhận
+                        {confirmLoading ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            Đang xác nhận...
+                          </>
+                        ) : (
+                          <>
+                            <Check className="w-5 h-5" />
+                            Xác nhận
+                          </>
+                        )}
                       </button>
                       <button
-                        onClick={handleCancelFromModal}
-                        className="flex-1 bg-red-600 text-white py-3 px-4 rounded-xl hover:bg-red-700 transition font-medium inline-flex items-center justify-center gap-2"
-                      >
-                        <Trash2 className="w-5 h-5" />
+                        onClick={() => {
+                          openCancelConfirmation(editingAppointment.appointmentId);
+                          setShowForm(false);
+                        }}
+                        className="flex-1 bg-red-600 text-white py-3 px-4 rounded-xl hover:bg-red-700 transition font-medium flex items-center justify-center gap-2">
+                        <Trash2 className="w-5 h 5" />
                         Hủy lịch
                       </button>
                     </>
                   )}
-                  <button onClick={() => setShowForm(false)}
-                    className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-xl hover:bg-gray-400 transition font-medium">
-                    Đóng
-                  </button>
+                  
                 </>
               ) : (
                 <>
@@ -748,12 +755,51 @@ export default function AppointmentsSection() {
                     Hủy
                   </button>
                   <button onClick={handleSubmit} disabled={submitting}
-                    className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-xl hover:bg-blue-700 transition disabled:bg-blue-400 disabled:cursor-not-allowed font-medium inline-flex items-center justify-center gap-2">
+                    className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-xl hover:bg-blue-700 transition disabled:bg-blue-400 font-medium flex items-center justify-center gap-2">
                     {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                     {submitting ? 'Đang xử lý...' : isCreateMode ? 'Tạo lịch hẹn' : 'Lưu thay đổi'}
                   </button>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL XÁC NHẬN HỦY */}
+      {showCancelConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
+            <XCircle className="w-16 mx-auto mb-4 text-red-500" />
+
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">
+              Hủy lịch hẹn này?
+            </h3>
+
+            <p className="text-gray-600 mb-8 leading-relaxed">
+              Lịch hẹn sẽ được chuyển sang trạng thái <span className="font-bold text-red-600">Đã hủy</span>.<br />
+              Bạn có chắc chắn muốn tiếp tục?
+            </p>
+
+            <div className="flex gap-4">
+              <button
+                onClick={handleCancelAppointment}
+                disabled={cancelLoading}
+                className="flex-1 bg-red-600 text-white py-3 rounded-lg font-bold hover:bg-red-700 transition disabled:opacity-70"
+              >
+                {cancelLoading ? 'Đang xử lý...' : 'Xác nhận hủy'}
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowCancelConfirmation(false);
+                  setCancelTargetId(null);
+                }}
+                disabled={cancelLoading}
+                className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-400 transition"
+              >
+                Giữ lại
+              </button>
             </div>
           </div>
         </div>

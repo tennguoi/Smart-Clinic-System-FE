@@ -37,13 +37,20 @@ export default function PatientForm({
     }
   }, [selectedAppointment, isEdit, onChange]);
 
+  const handleSwitchToEdit = () => {
+    setIsEditMode(true);
+  };
+
+  // Nếu đang ở chế độ "xem chi tiết", disable tất cả input
+  const isDisabled = isEdit && !isEditMode;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white">
           <h2 className="text-2xl font-bold text-gray-800">
-            {isEdit ? 'Chỉnh sửa thông tin bệnh nhân' : 'Thêm bệnh nhân mới'}
+            {isEdit ? (isEditMode ? 'Chỉnh sửa thông tin bệnh nhân' : 'Xem chi tiết bệnh nhân') : 'Thêm bệnh nhân mới'}
           </h2>
           <button
             onClick={onCancel}
