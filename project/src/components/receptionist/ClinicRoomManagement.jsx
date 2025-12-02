@@ -284,13 +284,13 @@ export default function ClinicRoomManagement() {
             label="phòng" 
           />
         </h1>
-        {<button
+        <button
           onClick={() => handleOpenModal('create')}
           className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2"
         >
           <Plus className="w-5 h-5" />
           Thêm phòng mới
-        </button>}
+        </button>
       </div>
 
       {/* Filter và Search */}
