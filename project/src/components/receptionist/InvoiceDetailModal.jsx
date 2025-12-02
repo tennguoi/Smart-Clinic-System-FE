@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import axiosInstance from '../../utils/axiosConfig';
 import toast from 'react-hot-toast';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const PAYMENT_METHODS = {
   Cash: 'Tiền mặt',
@@ -26,9 +27,9 @@ const PAYMENT_METHODS = {
 };
 
 const PAYMENT_STATUS = {
-  Pending: { label: 'Chờ thanh toán', color: 'bg-yellow-100 text-yellow-800' },
-  Paid: { label: 'Đã thanh toán', color: 'bg-green-100 text-green-800' },
-  PartiallyPaid: { label: 'Thanh toán 1 phần', color: 'bg-blue-100 text-blue-800' }
+  Pending: { label: 'Chờ thanh toán', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' },
+  Paid: { label: 'Đã thanh toán', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
+  PartiallyPaid: { label: 'Thanh toán 1 phần', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' }
 };
 
 const formatPrice = (price) => {
@@ -36,6 +37,7 @@ const formatPrice = (price) => {
 };
 
 export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }) {
+  const { theme } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [editedItems, setEditedItems] = useState([]);
   const [availableServices, setAvailableServices] = useState([]);
@@ -210,23 +212,23 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transition-colors duration-300`}>
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center z-10">
+        <div className={`sticky top-0 p-6 flex justify-between items-center z-10 border-b ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <FileText className="w-7 h-7 text-blue-600" />
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${theme === 'dark' ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
+              <FileText className={`w-7 h-7 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Chi tiết hóa đơn</h2>
-              <p className="text-sm text-gray-500">
+              <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Chi tiết hóa đơn</h2>
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                 Mã: {invoice.billId?.slice(0, 8).toUpperCase() || 'N/A'}
               </p>
             </div>
           </div>
           <button 
             onClick={onClose} 
-            className="p-3 hover:bg-gray-100 rounded-xl transition"
+            className={`p-3 rounded-xl transition ${theme === 'dark' ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-400'}`}
             disabled={saving}
           >
             <X className="w-6 h-6" />
@@ -236,21 +238,21 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
         <div className="p-6 space-y-6">
           {/* Thông tin bệnh nhân & hóa đơn */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+            <div className={`rounded-xl p-6 border ${theme === 'dark' ? 'bg-blue-900/20 border-blue-800' : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200'}`}>
               <div className="flex items-center gap-3 mb-4">
-                <User className="w-5 h-5 text-blue-600" />
-                <span className="font-bold">Bệnh nhân</span>
+                <User className={`w-5 h-5 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                <span className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Bệnh nhân</span>
               </div>
-              <p className="text-lg font-semibold">{invoice.patientName || 'Chưa có tên'}</p>
-              <p className="text-gray-600">{invoice.patientPhone || 'Không có SĐT'}</p>
+              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{invoice.patientName || 'Chưa có tên'}</p>
+              <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>{invoice.patientPhone || 'Không có SĐT'}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200">
+            <div className={`rounded-xl p-6 border ${theme === 'dark' ? 'bg-purple-900/20 border-purple-800' : 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200'}`}>
               <div className="flex items-center gap-3 mb-4">
-                <Calendar className="w-5 h-5 text-purple-600" />
-                <span className="font-bold">Thông tin hóa đơn</span>
+                <Calendar className={`w-5 h-5 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
+                <span className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Thông tin hóa đơn</span>
               </div>
-              <p>Ngày tạo: {new Date(invoice.createdAt).toLocaleDateString('vi-VN')}</p>
+              <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}>Ngày tạo: {new Date(invoice.createdAt).toLocaleDateString('vi-VN')}</p>
               <p className="mt-2">
                 Trạng thái: <span className={`ml-2 px-3 py-1 rounded-full text-xs font-bold ${status.color}`}>{status.label}</span>
               </p>
@@ -258,9 +260,9 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
           </div>
 
           {/* Danh sách dịch vụ */}
-          <div className="bg-gray-50 rounded-xl p-6">
+          <div className={`rounded-xl p-6 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold flex items-center gap-2">
+              <h3 className={`text-xl font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 <DollarSign className="w-6 h-6 text-green-600" />
                 Dịch vụ & Chi phí
               </h3>
@@ -324,7 +326,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                         description: item.description || ''
                       })));
                     }}
-                    className="px-5 py-3 bg-gray-500 text-white rounded-xl font-semibold hover:bg-gray-600 transition"
+                    className={`px-5 py-3 rounded-xl font-semibold transition ${theme === 'dark' ? 'bg-gray-600 hover:bg-gray-500 text-white' : 'bg-gray-500 hover:bg-gray-600 text-white'}`}
                     disabled={saving}
                   >
                     Hủy
@@ -335,36 +337,36 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
 
             {/* Panel thêm dịch vụ */}
             {showAddService && (
-              <div className="mb-6 p-6 bg-white rounded-xl border-2 border-dashed border-green-300">
+              <div className={`mb-6 p-6 rounded-xl border-2 border-dashed ${theme === 'dark' ? 'bg-gray-800 border-green-800' : 'bg-white border-green-300'}`}>
                 <div className="relative mb-4">
                   <Search className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
                   <input
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder="Tìm kiếm dịch vụ..."
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-green-100 focus:outline-none"
+                    className={`w-full pl-12 pr-4 py-3 border rounded-xl focus:ring-4 focus:outline-none ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:ring-green-900/30' : 'bg-white border-gray-300 focus:ring-green-100'}`}
                     autoFocus
                   />
                 </div>
 
-                <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-xl">
+                <div className={`max-h-64 overflow-y-auto border rounded-xl ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
                   {loadingServices ? (
                     <div className="p-10 text-center">
                       <Loader2 className="w-10 h-10 animate-spin mx-auto text-blue-600" />
-                      <p className="mt-3 text-gray-600">Đang tải dịch vụ...</p>
+                      <p className={`mt-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Đang tải dịch vụ...</p>
                     </div>
                   ) : filteredServices.length === 0 ? (
-                    <p className="p-10 text-center text-gray-500">Không tìm thấy dịch vụ nào</p>
+                    <p className={`p-10 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Không tìm thấy dịch vụ nào</p>
                   ) : (
                     filteredServices.map(s => (
                       <button
                         key={s.serviceId}
                         onClick={() => handleAddService(s)}
-                        className="w-full text-left p-4 hover:bg-green-50 border-b last:border-0 flex justify-between items-center transition"
+                        className={`w-full text-left p-4 border-b last:border-0 flex justify-between items-center transition ${theme === 'dark' ? 'hover:bg-green-900/30 border-gray-700 text-white' : 'hover:bg-green-50 border-gray-200 text-gray-900'}`}
                       >
                         <div>
-                          <div className="font-medium text-gray-900">{s.name}</div>
-                          <div className="text-sm text-gray-600">{formatPrice(s.price)}</div>
+                          <div className="font-medium">{s.name}</div>
+                          <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{formatPrice(s.price)}</div>
                         </div>
                         <Plus className="w-6 h-6 text-green-600" />
                       </button>
@@ -383,13 +385,13 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
             {/* Danh sách dịch vụ hiện tại */}
             <div className="space-y-4">
               {editedItems.length === 0 ? (
-                <p className="text-center text-gray-500 py-10">Chưa có dịch vụ nào</p>
+                <p className={`text-center py-10 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Chưa có dịch vụ nào</p>
               ) : (
                 editedItems.map((item, idx) => (
-                  <div key={idx} className="bg-white p-5 rounded-xl border shadow-sm flex items-center justify-between">
+                  <div key={idx} className={`p-5 rounded-xl border shadow-sm flex items-center justify-between ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                     <div>
-                      <div className="font-bold text-lg">{item.serviceName}</div>
-                      <div className="text-gray-600">{formatPrice(item.unitPrice)} × {item.quantity}</div>
+                      <div className={`font-bold text-lg ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{item.serviceName}</div>
+                      <div className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>{formatPrice(item.unitPrice)} × {item.quantity}</div>
                     </div>
                     <div className="flex items-center gap-6">
                       {isEditing && (
@@ -397,13 +399,13 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                           <div className="flex items-center gap-2">
                             <button 
                               onClick={() => handleUpdateQuantity(idx, -1)} 
-                              className="w-10 h-10 bg-gray-200 rounded-lg hover:bg-gray-300 text-xl font-bold"
+                              className={`w-10 h-10 rounded-lg text-xl font-bold ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-900'}`}
                               disabled={saving}
                             >-</button>
-                            <span className="w-16 text-center font-bold text-xl">{item.quantity}</span>
+                            <span className={`w-16 text-center font-bold text-xl ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{item.quantity}</span>
                             <button 
                               onClick={() => handleUpdateQuantity(idx, 1)} 
-                              className="w-10 h-10 bg-gray-200 rounded-lg hover:bg-gray-300 text-xl font-bold"
+                              className={`w-10 h-10 rounded-lg text-xl font-bold ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-900'}`}
                               disabled={saving}
                             >+</button>
                           </div>
@@ -416,7 +418,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                           </button>
                         </>
                       )}
-                      <div className="text-2xl font-bold text-blue-600 w-40 text-right">
+                      <div className={`text-2xl font-bold w-40 text-right ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
                         {formatPrice(item.subTotal)}
                       </div>
                     </div>
@@ -450,7 +452,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
             <div className="flex justify-end gap-4">
               <button 
                 onClick={onClose} 
-                className="px-8 py-4 bg-gray-200 hover:bg-gray-300 rounded-xl font-bold text-lg transition"
+                className={`px-8 py-4 rounded-xl font-bold text-lg transition ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-900'}`}
                 disabled={saving}
               >
                 Đóng

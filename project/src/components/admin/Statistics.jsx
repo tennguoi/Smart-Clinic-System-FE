@@ -233,7 +233,7 @@ const StatisticsPage = () => {
     );
 
     if (error) return (
-        <div className="p-6 text-center text-red-500 bg-red-50 rounded-lg border border-red-200 mt-10 mx-10">
+        <div className="p-6 text-center text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800 mt-10 mx-10">
             <p className="font-bold text-lg mb-2">⚠️ Đã xảy ra lỗi</p>
             <p>{error}</p>
         </div>

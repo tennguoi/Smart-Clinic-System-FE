@@ -4,6 +4,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import { clinicApi } from '../../api/clinicApi';
 import { useClinic } from '../../contexts/ClinicContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8082';
 
@@ -30,6 +31,7 @@ const toRelativeLogoUrl = (url) => {
 };
 
 export default function ClinicManagement() {
+  const { theme } = useTheme();
   const [clinicInfo, setClinicInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -309,10 +311,10 @@ export default function ClinicManagement() {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className={`p-8 ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'} transition-colors duration-300`}>
         <div className="text-center py-12">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600 mb-4" />
-          <p className="text-gray-600">Đang tải thông tin phòng khám...</p>
+          <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>Đang tải thông tin phòng khám...</p>
         </div>
       </div>
     );
@@ -321,27 +323,27 @@ export default function ClinicManagement() {
   // Hiển thị loading khi đang lưu để tránh hiển thị dữ liệu cũ
   if (saving) {
     return (
-      <div className="p-8">
+      <div className={`p-8 ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'} transition-colors duration-300`}>
         <div className="text-center py-12">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600 mb-4" />
-          <p className="text-gray-600">Đang cập nhật thông tin...</p>
+          <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>Đang cập nhật thông tin...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="px-8 pt-4 pb-8">
+    <div className={`px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
       <Toaster {...toastConfig} />
       
-      <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3 mb-6">
+      <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 mb-6 transition-colors duration-300`}>
         <Building2 className="w-9 h-9 text-blue-600" />
         <span>Quản Lý Thông Tin Phòng Khám</span>
       </h1>
 
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className={`${theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'} rounded-lg shadow-lg p-6 transition-colors duration-300`}>
         {!clinicInfo && (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg mb-6">
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800 px-4 py-3 rounded-lg mb-6">
             <p className="font-medium">Chưa có thông tin phòng khám</p>
             <p className="text-sm mt-1">Vui lòng điền thông tin bên dưới để tạo mới.</p>
           </div>
@@ -350,14 +352,14 @@ export default function ClinicManagement() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Logo Upload */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>
               Logo Phòng Khám
             </label>
             
             {/* File Input */}
             <div className="flex items-center gap-3 mb-3">
-              <label className={`flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-300 rounded-lg transition-colors ${
-                isEditing ? 'cursor-pointer hover:bg-blue-100' : 'cursor-not-allowed opacity-50'
+              <label className={`flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-300 dark:bg-blue-900/30 dark:border-blue-700 rounded-lg transition-colors ${
+                isEditing ? 'cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50' : 'cursor-not-allowed opacity-50'
               }`}>
                 <Upload className="w-5 h-5 text-blue-600" />
                 <span className="text-sm font-medium text-blue-600">
@@ -376,7 +378,7 @@ export default function ClinicManagement() {
                 <button
                   type="button"
                   onClick={handleRemoveLogo}
-                  className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                   title="Xóa logo"
                 >
                   <X className="w-5 h-5" />
@@ -392,7 +394,7 @@ export default function ClinicManagement() {
                   <img
                     src={logoPreview}
                     alt="Logo preview"
-                    className="max-w-xs h-32 object-contain border border-gray-200 rounded-lg p-2 bg-gray-50"
+                    className="max-w-xs h-32 object-contain border border-gray-200 rounded-lg p-2 bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
                     onError={(e) => {
                       e.target.style.display = 'none';
                     }}
@@ -418,7 +420,7 @@ export default function ClinicManagement() {
                 <img
                   src={formData.logoUrl}
                   alt="Current logo"
-                  className="max-w-xs h-32 object-contain border border-gray-200 rounded-lg p-2 bg-gray-50"
+                  className="max-w-xs h-32 object-contain border border-gray-200 rounded-lg p-2 bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
                   onError={(e) => {
                     e.target.style.display = 'none';
                   }}
@@ -435,7 +437,7 @@ export default function ClinicManagement() {
 
           {/* Tên phòng khám */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>
               Tên phòng khám <span className="text-red-500">*</span>
             </label>
             <input
@@ -444,8 +446,10 @@ export default function ClinicManagement() {
               value={formData.name}
               onChange={handleInputChange}
               disabled={!isEditing}
-              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${
+                theme === 'dark' 
+                  ? `bg-gray-700 border-gray-600 text-white ${!isEditing ? 'cursor-not-allowed' : ''}` 
+                  : `border-gray-300 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`
               }`}
               placeholder="Nhập tên phòng khám"
               required
@@ -454,7 +458,7 @@ export default function ClinicManagement() {
 
           {/* Địa chỉ */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>
               Địa chỉ
             </label>
             <textarea
@@ -463,8 +467,10 @@ export default function ClinicManagement() {
               onChange={handleInputChange}
               disabled={!isEditing}
               rows="3"
-              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${
+                theme === 'dark' 
+                  ? `bg-gray-700 border-gray-600 text-white ${!isEditing ? 'cursor-not-allowed' : ''}` 
+                  : `border-gray-300 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`
               }`}
               placeholder="Nhập địa chỉ phòng khám"
             />
@@ -472,7 +478,7 @@ export default function ClinicManagement() {
 
           {/* Số điện thoại */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>
               Số điện thoại
             </label>
             <input
@@ -481,8 +487,10 @@ export default function ClinicManagement() {
               value={formData.phone}
               onChange={handleInputChange}
               disabled={!isEditing}
-              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${
+                theme === 'dark' 
+                  ? `bg-gray-700 border-gray-600 text-white ${!isEditing ? 'cursor-not-allowed' : ''}` 
+                  : `border-gray-300 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`
               }`}
               placeholder="Nhập số điện thoại"
             />
@@ -490,7 +498,7 @@ export default function ClinicManagement() {
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>
               Email
             </label>
             <input
@@ -499,8 +507,10 @@ export default function ClinicManagement() {
               value={formData.email}
               onChange={handleInputChange}
               disabled={!isEditing}
-              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${
+                theme === 'dark' 
+                  ? `bg-gray-700 border-gray-600 text-white ${!isEditing ? 'cursor-not-allowed' : ''}` 
+                  : `border-gray-300 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`
               }`}
               placeholder="Nhập email phòng khám"
             />
@@ -508,7 +518,7 @@ export default function ClinicManagement() {
 
           {/* Website */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>
               Website
             </label>
             <input
@@ -517,45 +527,51 @@ export default function ClinicManagement() {
               value={formData.website}
               onChange={handleInputChange}
               disabled={!isEditing}
-              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${
+                theme === 'dark' 
+                  ? `bg-gray-700 border-gray-600 text-white ${!isEditing ? 'cursor-not-allowed' : ''}` 
+                  : `border-gray-300 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`
               }`}
               placeholder="www.example.com hoặc https://example.com"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Có thể nhập domain (www.example.com) hoặc URL đầy đủ (https://example.com)
             </p>
           </div>
 
           {/* Giờ làm việc buổi sáng */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>
               Giờ làm việc buổi sáng
             </label>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-gray-600 mb-1">Giờ bắt đầu</label>
+                <label className={`block text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-1 transition-colors duration-300`}>Giờ bắt đầu</label>
                 <input
                   type="time"
                   name="morningStartTime"
                   value={formData.morningStartTime}
                   onChange={handleInputChange}
                   disabled={!isEditing}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${
+                    theme === 'dark' 
+                      ? `bg-gray-700 border-gray-600 text-white ${!isEditing ? 'cursor-not-allowed' : ''}` 
+                      : `border-gray-300 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`
                   }`}
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-600 mb-1">Giờ kết thúc</label>
+                <label className={`block text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-1 transition-colors duration-300`}>Giờ kết thúc</label>
                 <input
                   type="time"
                   name="morningEndTime"
                   value={formData.morningEndTime}
                   onChange={handleInputChange}
                   disabled={!isEditing}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${
+                    theme === 'dark' 
+                      ? `bg-gray-700 border-gray-600 text-white ${!isEditing ? 'cursor-not-allowed' : ''}` 
+                      : `border-gray-300 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`
                   }`}
                 />
               </div>
@@ -564,46 +580,50 @@ export default function ClinicManagement() {
 
           {/* Giờ làm việc buổi chiều */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>
               Giờ làm việc buổi chiều
             </label>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-gray-600 mb-1">Giờ bắt đầu</label>
+                <label className={`block text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-1 transition-colors duration-300`}>Giờ bắt đầu</label>
                 <input
                   type="time"
                   name="afternoonStartTime"
                   value={formData.afternoonStartTime}
                   onChange={handleInputChange}
                   disabled={!isEditing}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${
+                    theme === 'dark' 
+                      ? `bg-gray-700 border-gray-600 text-white ${!isEditing ? 'cursor-not-allowed' : ''}` 
+                      : `border-gray-300 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`
                   }`}
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-600 mb-1">Giờ kết thúc</label>
+                <label className={`block text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-1 transition-colors duration-300`}>Giờ kết thúc</label>
                 <input
                   type="time"
                   name="afternoonEndTime"
                   value={formData.afternoonEndTime}
                   onChange={handleInputChange}
                   disabled={!isEditing}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${
+                    theme === 'dark' 
+                      ? `bg-gray-700 border-gray-600 text-white ${!isEditing ? 'cursor-not-allowed' : ''}` 
+                      : `border-gray-300 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`
                   }`}
                 />
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Để trống nếu phòng khám không làm việc buổi đó
             </p>
           </div>
 
           {/* Thông tin bổ sung (nếu có) */}
           {clinicInfo && (
-            <div className="pt-4 border-t border-gray-200">
-              <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+            <div className={`pt-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} transition-colors duration-300`}>
+              <div className={`grid grid-cols-2 gap-4 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} transition-colors duration-300`}>
                 <div>
                   <span className="font-medium">Ngày tạo:</span>{' '}
                   {clinicInfo.createdAt
@@ -656,7 +676,7 @@ export default function ClinicManagement() {
                       setLogoPreview(normalizedLogoUrl || null);
                     }
                   }}
-                  className="flex items-center gap-2 bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition"
+                  className={`flex items-center gap-2 px-6 py-2 rounded-lg transition ${theme === 'dark' ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
                 >
                   Hủy
                 </button>

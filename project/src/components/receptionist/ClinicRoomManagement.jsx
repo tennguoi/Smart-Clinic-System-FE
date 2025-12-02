@@ -5,8 +5,10 @@ import { toastConfig } from '../../config/toastConfig';
 import { roomApi } from '../../api/roomApi';
 import CountBadge from '../common/CountBadge';
 import Pagination from '../common/Pagination';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function ClinicRoomManagement() {
+  const { theme } = useTheme();
   const [rooms, setRooms] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -271,11 +273,11 @@ export default function ClinicRoomManagement() {
   }, [filterStatus, filterActive, searchKeyword]);
 
   return (
-    <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
+    <div className={`px-4 sm:px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
       <Toaster {...toastConfig} />
       
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
+        <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 transition-colors duration-300`}>
           <DoorOpen className="w-9 h-9 text-blue-600" />
           <span>Quản Lý Phòng Khám</span>
           <CountBadge 
@@ -294,10 +296,10 @@ export default function ClinicRoomManagement() {
       </div>
 
       {/* Filter và Search */}
-      <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-6">
+      <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-md border p-6 mb-6 transition-colors duration-300`}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-5">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tìm kiếm</label>
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Tìm kiếm</label>
             <input
               type="text"
               placeholder="Tên phòng hoặc tên bác sĩ..."
@@ -306,15 +308,15 @@ export default function ClinicRoomManagement() {
                 setSearchKeyword(e.target.value);
                 setCurrentPage(0);
               }}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'}`}
             />
           </div>
           <div className="lg:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Trạng thái</label>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
             >
               <option value="">Tất cả</option>
               {statusOptions.map((option) => (
@@ -325,11 +327,11 @@ export default function ClinicRoomManagement() {
             </select>
           </div>
           <div className="lg:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Hoạt động</label>
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Hoạt động</label>
             <select
               value={filterActive}
               onChange={(e) => setFilterActive(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
             >
               <option value="">Tất cả</option>
               <option value="active">Hoạt động</option>
@@ -344,7 +346,7 @@ export default function ClinicRoomManagement() {
                 setFilterActive('');
                 setSearchKeyword('');
               }}
-              className="w-full px-4 py-3 bg-gray-300 text-gray-700 rounded-xl hover:bg-gray-400 transition font-medium whitespace-nowrap"
+              className={`w-full px-4 py-3 rounded-xl transition font-medium whitespace-nowrap ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
             >
               Xóa lọc
             </button>
@@ -354,66 +356,60 @@ export default function ClinicRoomManagement() {
 
       {/* Bảng danh sách phòng */}
       {loading && !showModal ? (
-        <div className="bg-white rounded-lg shadow border border-gray-200 p-12 text-center text-gray-500">
+        <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow border p-12 text-center text-gray-500 transition-colors duration-300`}>
           <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
-          <p>Đang tải danh sách phòng khám...</p>
+          <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>Đang tải danh sách phòng khám...</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow border overflow-hidden transition-colors duration-300`}>
+          <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+            <thead className={theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}>
               <tr>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-20">
+                <th className={`px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider w-20 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                   STT
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                   Tên phòng
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                   Bác sĩ
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                   Trạng thái
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                   Hoạt động
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className={`px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                   Thao tác
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className={`${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
               {rooms.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-16 text-center text-gray-500">
+                  <td colSpan="6" className={`px-6 py-16 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                     <div>
                       <p className="mb-4 text-lg">Chưa có phòng khám nào</p>
-                      {/* <button
-                        onClick={() => handleOpenModal('create')}
-                        className="px-5 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
-                      >
-                        Tạo phòng đầu tiên
-                      </button> */}
                     </div>
                   </td>
                 </tr>
               ) : (
                 currentPageRooms.map((room, index) => (
-                  <tr key={room.roomId} className="hover:bg-gray-50 transition-colors">
+                  <tr key={room.roomId} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}>
                     {/* STT - Đã thêm */}
-                    <td className="px-4 py-4 text-center font-semibold text-gray-700">
+                    <td className={`px-4 py-4 text-center font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                       {currentPage * pageSize + index + 1}
                     </td>
 
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
                         <Building2 className="w-5 h-5 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-900">{room.roomName || 'N/A'}</span>
+                        <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{room.roomName || 'N/A'}</span>
                       </div>
                     </td>
 
-                    <td className="px-4 py-4 text-sm text-gray-700">
+                    <td className={`px-4 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                       {room.doctorName ? (
                         <span className="font-medium">{room.doctorName}</span>
                       ) : (
@@ -425,10 +421,10 @@ export default function ClinicRoomManagement() {
                       <span
                         className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
                           room.status === 'Available'
-                            ? 'bg-green-100 text-green-700'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
                             : room.status === 'Occupied'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-gray-100 text-gray-600'
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
                         }`}
                       >
                         {getStatusLabel(room.status)}
@@ -439,8 +435,8 @@ export default function ClinicRoomManagement() {
                       <span
                         className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
                           room.isActive
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-gray-100 text-gray-600'
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
                         }`}
                       >
                         {room.isActive ? 'Hoạt động' : 'Ngưng hoạt động'}
@@ -451,7 +447,7 @@ export default function ClinicRoomManagement() {
                       <div className="flex items-center justify-center gap-4">
                         <button
                           onClick={() => handleOpenModal('view', room)}
-                          className="text-blue-600 hover:text-blue-800 transition-colors"
+                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                           title="Xem chi tiết"
                         >
                           <Eye className="w-5 h-5" />
@@ -479,9 +475,9 @@ export default function ClinicRoomManagement() {
       {/* Modal tạo/sửa phòng */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center p-6 border-b bg-blue-50/80 backdrop-blur">
-              <h2 className="text-2xl font-bold text-blue-700">
+          <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transition-colors duration-300`}>
+            <div className={`flex justify-between items-center p-6 border-b sticky top-0 backdrop-blur z-10 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-blue-50/80 border-gray-200'}`}>
+              <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-blue-700'}`}>
                 {modalMode === 'create' ? 'Thêm phòng khám mới' : modalMode === 'view' ? 'Chi tiết phòng khám' : 'Chỉnh sửa phòng khám'}
               </h2>
               <div className="flex items-center gap-3">
@@ -495,7 +491,7 @@ export default function ClinicRoomManagement() {
                 )}
                 <button
                   onClick={handleCloseModal}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -505,7 +501,7 @@ export default function ClinicRoomManagement() {
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
               {/* Form fields giữ nguyên như cũ */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                   Tên phòng <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -514,14 +510,14 @@ export default function ClinicRoomManagement() {
                   value={formData.roomName}
                   onChange={handleInputChange}
                   disabled={modalMode === 'view'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   placeholder="VD: Phòng khám Tai-Mũi-Họng số 1"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                   Trạng thái <span className="text-red-500">*</span>
                 </label>
                 <select
@@ -529,7 +525,7 @@ export default function ClinicRoomManagement() {
                   value={formData.status}
                   onChange={handleInputChange}
                   disabled={modalMode === 'view'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   required
                 >
                   {statusOptions.map((option) => (
@@ -541,15 +537,15 @@ export default function ClinicRoomManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                   Bác sĩ phụ trách (Tùy chọn)
                 </label>
                 {modalMode === 'view' ? (
-                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
+                  <div className={`w-full px-3 py-2 border rounded-md ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-300' : 'bg-gray-50 border-gray-300 text-gray-700'}`}>
                     {getDoctorName(formData.doctorId) || 'Chưa gán bác sĩ'}
                   </div>
                 ) : loadingDoctors ? (
-                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 text-sm">
+                  <div className={`w-full px-3 py-2 border rounded-md text-sm ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-400' : 'bg-gray-50 border-gray-300 text-gray-500'}`}>
                     Đang tải danh sách bác sĩ...
                   </div>
                 ) : (
@@ -563,7 +559,7 @@ export default function ClinicRoomManagement() {
                         doctorId: value ? value : null,
                       }));
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   >
                     <option value="">-- Chưa gán bác sĩ --</option>
                     {doctors.map((doctor) => {
@@ -583,10 +579,10 @@ export default function ClinicRoomManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                   Trạng thái hoạt động
                 </label>
-                <div className={`w-full px-3 py-2 border border-gray-300 rounded-md ${modalMode === 'view' ? 'bg-gray-50' : ''}`}>
+                <div className={`w-full px-3 py-2 border rounded-md ${modalMode === 'view' ? (theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-300') : (theme === 'dark' ? 'border-gray-600' : 'border-gray-300')}`}>
                   <div className="flex items-center">
                     <input
                       type="checkbox"
@@ -596,7 +592,7 @@ export default function ClinicRoomManagement() {
                       disabled={modalMode === 'view'}
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:cursor-not-allowed"
                     />
-                    <label className="ml-2 block text-sm text-gray-700">
+                    <label className={`ml-2 block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                       Phòng đang hoạt động
                     </label>
                   </div>
@@ -615,7 +611,7 @@ export default function ClinicRoomManagement() {
                   <button
                     type="button"
                     onClick={handleCloseModal}
-                    className="flex-1 bg-gray-300 text-gray-700 py-2.5 px-4 rounded-md hover:bg-gray-400 transition-colors font-medium"
+                    className={`flex-1 py-2.5 px-4 rounded-md transition-colors font-medium ${theme === 'dark' ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
                   >
                     Hủy
                   </button>

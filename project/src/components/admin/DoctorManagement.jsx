@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Stethoscope, Mail, Phone, User } from 'lucide-react';
-import axiosInstance from '../../utils/axiosConfig';
+import {
+  Plus, Edit, Trash2, X, Upload, Image as ImageIcon, AlertTriangle, Eye, Users
+} from 'lucide-react';
+// import toast, { Toaster } from 'react-hot-toast';
+// import { toastConfig } from '../../config/toastConfig';
+// import AdminDoctorApi from '../../api/AdminDoctorApi';
 import CountBadge from '../common/CountBadge';
+import { useTheme } from '../../contexts/ThemeContext';
+import axiosInstance from '../../utils/axiosConfig';
+import { Stethoscope, Mail, Phone, User } from 'lucide-react';
 
 export default function DoctorManagement() {
+  const { theme } = useTheme();
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -43,10 +51,10 @@ export default function DoctorManagement() {
   };
 
   return (
-    <div className="px-8 pt-4 pb-8">
+    <div className={`px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-4">
-          <h1 className="text-4xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
+          <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 transition-colors duration-300`}>
             <Stethoscope className="w-9 h-9 text-blue-600" />
             <span>Quản Lý Bác Sĩ</span>
           </h1>
@@ -59,7 +67,7 @@ export default function DoctorManagement() {
       </div>
 
       {error && (
-        <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-4">
+        <div className={`${theme === 'dark' ? 'bg-red-900 text-red-200' : 'bg-red-100 text-red-700'} p-4 rounded-lg mb-4 transition-colors duration-300`}>
           {error}
         </div>
       )}
@@ -67,12 +75,12 @@ export default function DoctorManagement() {
       {loading ? (
         <div className="text-center py-8">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="mt-2 text-gray-600 dark:text-gray-300">Đang tải...</p>
+          <p className={`mt-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} transition-colors duration-300`}>Đang tải...</p>
         </div>
       ) : doctors.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center transition-colors duration-300">
+        <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-8 text-center transition-colors duration-300`}>
           <Stethoscope className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-gray-400 text-lg">Chưa có bác sĩ nào trong hệ thống</p>
+          <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} text-lg transition-colors duration-300`}>Chưa có bác sĩ nào trong hệ thống</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -140,8 +148,8 @@ export default function DoctorManagement() {
                     <span className="text-gray-500 dark:text-gray-400 text-xs">Trạng thái:</span>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       doctor.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' 
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                     }`}>
                       {doctor.isActive ? 'Đang hoạt động' : 'Ngưng hoạt động'}
                     </span>

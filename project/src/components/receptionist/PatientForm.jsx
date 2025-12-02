@@ -3,6 +3,7 @@ import DatePicker from 'react-datepicker';
 import { vi } from 'date-fns/locale';
 import { X, Edit } from 'lucide-react';
 import 'react-datepicker/dist/react-datepicker.css';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const priorityOptions = [
   { value: 'Normal', label: 'Thường' },
@@ -17,6 +18,7 @@ const genderOptions = [
 ];
 
 export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, onCancel }) {
+  const { theme } = useTheme();
   // State để quản lý chế độ xem/sửa (chỉ áp dụng khi isEdit = true)
   const [isEditMode, setIsEditMode] = useState(!isEdit);
 
@@ -33,10 +35,10 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto transition-colors duration-300`}>
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-800">
+        <div className={`flex justify-between items-center p-6 border-b sticky top-0 backdrop-blur z-10 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}>
+          <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
             {isEdit ? (isEditMode ? 'Chỉnh sửa thông tin bệnh nhân' : 'Xem chi tiết bệnh nhân') : 'Thêm bệnh nhân mới'}
           </h2>
           <div className="flex items-center gap-2">
@@ -52,7 +54,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
             )}
             <button
               onClick={onCancel}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className={`text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors`}
             >
               <X className="w-6 h-6" />
             </button>
@@ -64,7 +66,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Patient Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                 Tên bệnh nhân <span className="text-red-500">*</span>
               </label>
               <input
@@ -72,14 +74,14 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 value={patientForm.patientName}
                 onChange={(e) => onChange('patientName', e.target.value)}
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'}`}
                 placeholder="Nhập tên đầy đủ"
               />
             </div>
 
             {/* Phone */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                 Số điện thoại <span className="text-red-500">*</span>
               </label>
               <input
@@ -91,14 +93,14 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                   onChange('phone', value);
                 }}
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'}`}
                 placeholder="VD: 0912345678"
               />
             </div>
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                 Email
               </label>
               <input
@@ -106,14 +108,14 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 value={patientForm.email}
                 onChange={(e) => onChange('email', e.target.value)}
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'}`}
                 placeholder="example@email.com"
               />
             </div>
 
             {/* Date of Birth */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                 Ngày sinh <span className="text-red-500">*</span>
               </label>
               <DatePicker
@@ -128,7 +130,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 maxDate={new Date()}
                 isClearable
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'}`}
                 wrapperClassName="w-full"
                 required
               />
@@ -136,14 +138,14 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
 
             {/* Gender */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                 Giới tính
               </label>
               <select
                 value={patientForm.gender}
                 onChange={(e) => onChange('gender', e.target.value)}
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
               >
                 {genderOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -155,14 +157,14 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
 
             {/* Priority */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                 Mức độ ưu tiên <span className="text-red-500">*</span>
               </label>
               <select
                 value={patientForm.priority}
                 onChange={(e) => onChange('priority', e.target.value)}
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
               >
                 {priorityOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -174,7 +176,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
 
             {/* ID Number - Số căn cước */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                 Số căn cước / CMND
               </label>
               <input
@@ -186,7 +188,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                   onChange('idNumber', value);
                 }}
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'}`}
                 placeholder="VD: 001234567890"
                 maxLength="12"
               />
@@ -194,7 +196,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
 
             {/* Insurance Number - Số thẻ BHYT */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                 Số thẻ BHYT
               </label>
               <input
@@ -206,7 +208,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                   onChange('insuranceNumber', value);
                 }}
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'}`}
                 placeholder="VD: HS4010012345678"
                 maxLength="15"
               />
@@ -214,14 +216,14 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
 
             {/* Address */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                 Địa chỉ
               </label>
               <textarea
                 value={patientForm.address}
                 onChange={(e) => onChange('address', e.target.value)}
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'}`}
                 placeholder="Nhập địa chỉ đầy đủ"
                 rows="2"
               />
@@ -229,21 +231,19 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
 
             {/* Notes - Triệu chứng */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                 Triệu chứng / Ghi chú
               </label>
               <textarea
                 value={patientForm.notes || ''}
                 onChange={(e) => onChange('notes', e.target.value)}
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'}`}
                 placeholder="Mô tả triệu chứng hoặc lý do khám bệnh..."
                 rows="3"
               />
             </div>
           </div>
-
-         
 
           {/* Action Buttons */}
           {/* Chỉ hiện nút khi KHÔNG phải chế độ xem (isEdit && !isEditMode) */}
@@ -257,7 +257,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
               </button>
               <button
                 onClick={onCancel}
-                className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition-colors font-medium"
+                className={`flex-1 py-2 px-4 rounded-md transition-colors font-medium ${theme === 'dark' ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
               >
                 Hủy
               </button>

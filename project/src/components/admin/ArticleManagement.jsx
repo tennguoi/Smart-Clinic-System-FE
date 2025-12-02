@@ -1,4 +1,3 @@
-// src/components/admin/ArticleManagement.jsx
 import { useState, useEffect, useMemo } from "react";
 import {
   Plus, Edit, Trash2, X, FileText, Upload, Image as ImageIcon,
@@ -9,8 +8,10 @@ import { toastConfig } from '../../config/toastConfig';
 import axiosInstance from "../../utils/axiosConfig";
 import CountBadge from '../common/CountBadge';
 import Pagination from '../common/Pagination';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function ArticleManagement() {
+  const { theme } = useTheme();
   const [articles, setArticles] = useState([]);
   const [filteredArticles, setFilteredArticles] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -55,31 +56,31 @@ export default function ArticleManagement() {
 
   // Mapping cố định cho các danh mục phổ biến (chỉ cần 1 variant, normalize sẽ xử lý)
   const fixedCategoryColors = {
-    "sức khỏe": "bg-green-100 text-green-700 border-green-200",
-    "tư vấn": "bg-blue-100 text-blue-700 border-blue-200",
-    "điều trị": "bg-purple-100 text-purple-700 border-purple-200",
-    "cảnh báo": "bg-red-100 text-red-700 border-red-200",
-    "công nghệ": "bg-orange-100 text-orange-700 border-orange-200",
-    "tin tức": "bg-cyan-100 text-cyan-700 border-cyan-200",
-    "nghiên cứu": "bg-indigo-100 text-indigo-700 border-indigo-200",
-    "phòng bệnh": "bg-teal-100 text-teal-700 border-teal-200",
+    "sức khỏe": "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
+    "tư vấn": "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
+    "điều trị": "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
+    "cảnh báo": "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
+    "công nghệ": "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800",
+    "tin tức": "bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:border-cyan-800",
+    "nghiên cứu": "bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800",
+    "phòng bệnh": "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-800",
   };
 
   // Palette màu dự phòng cho danh mục khác
   const colorPalette = [
-    "bg-pink-100 text-pink-700 border-pink-200",
-    "bg-amber-100 text-amber-700 border-amber-200",
-    "bg-lime-100 text-lime-700 border-lime-200",
-    "bg-rose-100 text-rose-700 border-rose-200",
-    "bg-violet-100 text-violet-700 border-violet-200",
-    "bg-sky-100 text-sky-700 border-sky-200",
-    "bg-emerald-100 text-emerald-700 border-emerald-200",
-    "bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200",
+    "bg-pink-100 text-pink-700 border-pink-200 dark:bg-pink-900/30 dark:text-pink-300 dark:border-pink-800",
+    "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
+    "bg-lime-100 text-lime-700 border-lime-200 dark:bg-lime-900/30 dark:text-lime-300 dark:border-lime-800",
+    "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800",
+    "bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:border-violet-800",
+    "bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-300 dark:border-sky-800",
+    "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800",
+    "bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200 dark:bg-fuchsia-900/30 dark:text-fuchsia-300 dark:border-fuchsia-800",
   ];
 
   // Hàm tự động gán màu cho danh mục
   const getCategoryColor = (category) => {
-    if (!category) return "bg-gray-100 text-gray-700 border-gray-200";
+    if (!category) return "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600";
     
     // Normalize: trim + lowercase để đảm bảo nhất quán
     const normalized = category.trim().toLowerCase();
@@ -340,12 +341,12 @@ export default function ArticleManagement() {
   };
 
   return (
-    <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
+    <div className={`px-4 sm:px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
       <Toaster {...toastConfig} />
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-4">
-          <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
+          <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 transition-colors duration-300`}>
             <FileText className="w-9 h-9 text-blue-600" />
             <span>Quản Lý Tin Tức</span>
           </h1>
@@ -363,31 +364,31 @@ export default function ArticleManagement() {
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+      <div className={`${theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'} rounded-2xl shadow-lg p-6 mb-6 transition-colors duration-300`}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
           <div className="lg:col-span-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tìm kiếm</label>
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>Tìm kiếm</label>
             <input
               type="text"
               placeholder="Tìm kiếm tin tức..."
               value={filterTitle}
               onChange={(e) => { setFilterTitle(e.target.value); setPage(0); }}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300 bg-white text-gray-900'}`}
             />
           </div>
           <div className="lg:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Danh mục</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Danh mục</label>
             <select
               value={filterCategory}
               onChange={(e) => { setFilterCategory(e.target.value); setPage(0); }}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
             >
               <option value="">Tất cả</option>
               {categories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div className="lg:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Từ ngày</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Từ ngày</label>
             <input 
               type="date" 
               value={filterStartDate}
@@ -402,11 +403,11 @@ export default function ArticleManagement() {
                 setFilterStartDate(newStartDate);
                 setPage(0);
               }} 
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" 
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 bg-white text-gray-900'}`} 
             />
           </div>
           <div className="lg:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Đến ngày</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Đến ngày</label>
             <input 
               type="date" 
               value={filterEndDate} 
@@ -421,37 +422,37 @@ export default function ArticleManagement() {
                 setFilterEndDate(newEndDate); 
                 setPage(0); 
               }} 
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" 
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 bg-white text-gray-900'}`} 
             />
           </div>
           <div className="lg:col-span-1">
-            <button onClick={resetFilter} className="w-full px-4 py-3 bg-gray-300 text-gray-700 rounded-xl hover:bg-gray-400 transition font-medium">
+            <button onClick={resetFilter} className={`w-full px-4 py-3 rounded-xl transition font-medium ${theme === 'dark' ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}>
               Xóa lọc
             </button>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div className={`${theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden transition-colors duration-300`}>
         {loading ? (
           <div className="text-center py-16">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-600"></div>
-            <p className="mt-4 text-gray-600 font-medium">Đang tải danh sách...</p>
+            <p className={`mt-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} font-medium transition-colors duration-300`}>Đang tải danh sách...</p>
           </div>
         ) : (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-blue-50">
+          <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'} transition-colors duration-300`}>
+            <thead className={theme === 'dark' ? 'bg-gray-900' : 'bg-blue-50'}>
               <tr>
-                <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase">STT</th>
-                <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase">Ảnh</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Tiêu đề</th>
-                <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase">Danh mục</th>
-                <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase">Tác giả</th>
-                <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase">Ngày đăng</th>
-                <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase">Thao tác</th>
+                <th className={`px-6 py-4 text-center text-xs font-bold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} uppercase transition-colors duration-300`}>STT</th>
+                <th className={`px-6 py-4 text-center text-xs font-bold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} uppercase transition-colors duration-300`}>Ảnh</th>
+                <th className={`px-6 py-4 text-left text-xs font-bold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} uppercase transition-colors duration-300`}>Tiêu đề</th>
+                <th className={`px-6 py-4 text-center text-xs font-bold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} uppercase transition-colors duration-300`}>Danh mục</th>
+                <th className={`px-6 py-4 text-center text-xs font-bold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} uppercase transition-colors duration-300`}>Tác giả</th>
+                <th className={`px-6 py-4 text-center text-xs font-bold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} uppercase transition-colors duration-300`}>Ngày đăng</th>
+                <th className={`px-6 py-4 text-center text-xs font-bold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} uppercase transition-colors duration-300`}>Thao tác</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
+            <tbody className={`${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-100'} divide-y transition-colors duration-300`}>
               {currentPageArticles.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-16 text-gray-500">
@@ -461,31 +462,31 @@ export default function ArticleManagement() {
                 </tr>
               ) : (
                 currentPageArticles.map((a, i) => (
-                  <tr key={a.id} className="hover:bg-blue-50 transition">
-                    <td className="px-6 py-4 text-center text-sm font-medium text-gray-600">{page * size + i + 1}</td>
+                  <tr key={a.id} className="hover:bg-blue-50 dark:hover:bg-blue-900/10 transition">
+                    <td className="px-6 py-4 text-center text-sm font-medium text-gray-600 dark:text-gray-300">{page * size + i + 1}</td>
                     <td className="px-6 py-4 text-center">
                       {a.image ? (
-                        <img src={getImageUrl(a.image)} alt={a.title} className="w-16 h-16 rounded-lg object-cover border shadow-sm" />
+                        <img src={getImageUrl(a.image)} alt={a.title} className="w-16 h-16 rounded-lg object-cover border shadow-sm dark:border-gray-700" />
                       ) : (
-                        <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                          <FileText className="w-8 h-8 text-gray-500" />
+                        <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                          <FileText className="w-8 h-8 text-gray-500 dark:text-gray-400" />
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-gray-900 max-w-xs truncate">{a.title}</td>
+                    <td className="px-6 py-4 text-gray-900 dark:text-white max-w-xs truncate">{a.title}</td>
                     <td className="px-6 py-4 text-center">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getCategoryColor(a.category)}`}>
                         {a.category || "—"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center text-gray-700">{a.author || "—"}</td>
-                    <td className="px-6 py-4 text-center text-sm text-gray-600">{formatDate(a.publishedAt)}</td>
+                    <td className="px-6 py-4 text-center text-gray-700 dark:text-gray-300">{a.author || "—"}</td>
+                    <td className="px-6 py-4 text-center text-sm text-gray-600 dark:text-gray-400">{formatDate(a.publishedAt)}</td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex justify-center gap-3">
-                        <button onClick={() => handleOpenModal("view", a)} className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-100 transition" title="Xem chi tiết">
+                        <button onClick={() => handleOpenModal("view", a)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/30 transition" title="Xem chi tiết">
                           <Eye className="w-5 h-5" />
                         </button>
-                        <button onClick={() => handleDeleteClick(a)} className="text-red-600 hover:text-red-800 p-2 rounded-full hover:bg-red-100 transition" title="Xóa tin tức">
+                        <button onClick={() => handleDeleteClick(a)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition" title="Xóa tin tức">
                           <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
@@ -502,9 +503,9 @@ export default function ArticleManagement() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
-            <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-blue-50/80 backdrop-blur">
-              <h2 className="text-2xl font-bold text-blue-700">
+          <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto transition-colors duration-300`}>
+            <div className={`flex justify-between items-center p-6 border-b sticky top-0 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-blue-50/80 border-gray-200'} backdrop-blur transition-colors duration-300`}>
+              <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-blue-700'} transition-colors duration-300`}>
                 {isCreateMode ? "Tạo tin tức mới" : isViewMode ? "Chi tiết tin tức" : "Chỉnh sửa tin tức"}
               </h2>
               <div className="flex items-center gap-3">
@@ -516,7 +517,7 @@ export default function ArticleManagement() {
                     <Edit className="w-4 h-4" /> Chỉnh sửa
                   </button>
                 )}
-                <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-white/50">
+                <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2 rounded-full hover:bg-white/50 dark:hover:bg-gray-600">
                   <X className="w-7 h-7" />
                 </button>
               </div>
@@ -526,10 +527,10 @@ export default function ArticleManagement() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Ảnh bìa - Lên đầu */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Ảnh bìa</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ảnh bìa</label>
                   {previewImage && (
                     <div className="mb-4 relative">
-                      <img src={previewImage} alt="Preview" className="w-full h-64 object-cover rounded-xl border-2 border-gray-300" />
+                      <img src={previewImage} alt="Preview" className="w-full h-64 object-cover rounded-xl border-2 border-gray-300 dark:border-gray-600" />
                       {!isViewMode && (
                         <button type="button" onClick={() => { setPreviewImage(""); setSelectedFile(null); setFormData(p => ({ ...p, image: "" })); }} className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition">
                           <X className="w-5 h-5" />
@@ -540,53 +541,53 @@ export default function ArticleManagement() {
                   {!isViewMode && (
                     <>
                       <div className="flex items-center gap-4">
-                        <label className="flex items-center gap-2 px-5 py-3 bg-blue-50 text-blue-700 rounded-xl cursor-pointer hover:bg-blue-100 transition border-2 border-dashed border-blue-300">
+                        <label className="flex items-center gap-2 px-5 py-3 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-xl cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50 transition border-2 border-dashed border-blue-300 dark:border-blue-700">
                           <Upload className="w-5 h-5" />
                           <span className="font-medium">{selectedFile ? "Thay đổi ảnh" : "Chọn ảnh"}</span>
                           <input type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
                         </label>
-                        {selectedFile && <span className="text-sm text-gray-600 flex items-center gap-2"><ImageIcon className="w-4 h-4" />{selectedFile.name}</span>}
+                        {selectedFile && <span className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2"><ImageIcon className="w-4 h-4" />{selectedFile.name}</span>}
                       </div>
-                      <p className="text-xs text-gray-500 mt-2">JPG, PNG, GIF – Tối đa 10MB</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">JPG, PNG, GIF – Tối đa 10MB</p>
                     </>
                   )}
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tiêu đề *</label>
-                  <input type="text" name="title" required disabled={isViewMode} value={formData.title} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed" placeholder="Nhập tiêu đề tin tức" />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tiêu đề *</label>
+                  <input type="text" name="title" required disabled={isViewMode} value={formData.title} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="Nhập tiêu đề tin tức" />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Nội dung *</label>
-                  <textarea name="content" rows={8} required disabled={isViewMode} value={formData.content} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-50 disabled:cursor-not-allowed" placeholder="Nhập nội dung tin tức" />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nội dung *</label>
+                  <textarea name="content" rows={8} required disabled={isViewMode} value={formData.content} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="Nhập nội dung tin tức" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Danh mục *</label>
-                  <select name="category" required disabled={isViewMode} value={formData.category} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Danh mục *</label>
+                  <select name="category" required disabled={isViewMode} value={formData.category} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                     <option value="">-- Chọn danh mục --</option>
                     {categories.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tác giả *</label>
-                  <input type="text" name="author" required disabled={isViewMode} value={formData.author} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed" placeholder="Tên tác giả" />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tác giả *</label>
+                  <input type="text" name="author" required disabled={isViewMode} value={formData.author} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="Tên tác giả" />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Nguồn (tùy chọn)</label>
-                  <input type="text" name="source" disabled={isViewMode} value={formData.source} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed" placeholder="https://..." />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nguồn (tùy chọn)</label>
+                  <input type="text" name="source" disabled={isViewMode} value={formData.source} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="https://..." />
                 </div>
               </div>
 
               {!isViewMode && (
-                <div className="flex gap-4 pt-6 border-t">
+                <div className="flex gap-4 pt-6 border-t dark:border-gray-700">
                   <button type="submit" disabled={loading || uploading} className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-70 transition">
                     {loading || uploading ? "Đang xử lý..." : isCreateMode ? "Tạo tin tức" : "Cập nhật"}
                   </button>
-                  <button type="button" onClick={handleCloseModal} className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-400 transition">
+                  <button type="button" onClick={handleCloseModal} className="flex-1 bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-200 py-3 rounded-xl font-semibold hover:bg-gray-400 dark:hover:bg-gray-500 transition">
                     Hủy
                   </button>
                 </div>
@@ -599,10 +600,10 @@ export default function ArticleManagement() {
       {/* Modal Xác nhận XÓA */}
       {showDeleteConfirmation && articleToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
+          <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl max-w-sm w-full p-6 text-center transition-colors duration-300`}>
             <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">Xác nhận xóa</h3>
-            <p className="text-gray-600 mb-6">
+            <h3 className={`text-xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>Xác nhận xóa</h3>
+            <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-6 transition-colors duration-300`}>
               Xóa tin tức <strong>{articleToDelete.title}</strong>?<br />
               Thao tác này <span className="text-red-600 font-semibold">không thể hoàn tác</span>.
             </p>
@@ -618,7 +619,7 @@ export default function ArticleManagement() {
                   setShowDeleteConfirmation(false);
                   setArticleToDelete(null);
                 }}
-                className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-400 transition"
+                className="flex-1 bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-200 py-3 rounded-xl font-semibold hover:bg-gray-400 dark:hover:bg-gray-500 transition"
               >
                 Hủy
               </button>

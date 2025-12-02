@@ -25,6 +25,7 @@ import {
 import { getDoctorStats } from '../../api/doctorApi';
 import { authService } from '../../services/authService';
 import toast from 'react-hot-toast';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const RANGE_OPTIONS = [
   { label: 'Ngày', value: 'day' },
@@ -38,6 +39,7 @@ const formatPercentage = (value) => {
 };
 
 export default function DoctorStatsDashboard() {
+  const { theme } = useTheme();
   const [rangeType, setRangeType] = useState('day');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentPage, setCurrentPage] = useState(1);
@@ -127,7 +129,7 @@ export default function DoctorStatsDashboard() {
       <section className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-cyan-600 mx-auto mb-4" />
-          <p className="text-gray-600">Đang tải dữ liệu thống kê...</p>
+          <p className={`text-gray-600 ${theme === 'dark' ? 'text-gray-400' : ''}`}>Đang tải dữ liệu thống kê...</p>
         </div>
       </section>
     );
@@ -138,8 +140,8 @@ export default function DoctorStatsDashboard() {
       <section className="flex items-center justify-center min-h-[400px]">
         <div className="text-center max-w-md">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <p className="text-lg font-semibold text-gray-900 mb-2">Lỗi tải dữ liệu</p>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <p className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Lỗi tải dữ liệu</p>
+          <p className={`mb-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{error}</p>
 
           <button
             onClick={() => {
@@ -159,19 +161,19 @@ export default function DoctorStatsDashboard() {
     <section className="space-y-8">
 
       {/* ALWAYS SHOW HEADER  */}
-      <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+      <header className={`flex flex-wrap items-center justify-between gap-4 rounded-2xl border p-4 shadow-sm transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
         <div className="flex items-center gap-3">
-          <div className="rounded-full bg-cyan-50 p-3 text-cyan-600">
+          <div className={`rounded-full p-3 ${theme === 'dark' ? 'bg-cyan-900/30 text-cyan-400' : 'bg-cyan-50 text-cyan-600'}`}>
             <LineChartIcon className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Thống kê hiệu suất</p>
-            <h2 className="text-xl font-semibold text-gray-900">Bác sĩ – Báo cáo ca khám</h2>
+            <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Thống kê hiệu suất</p>
+            <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Bác sĩ – Báo cáo ca khám</h2>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex rounded-full bg-gray-100 p-1">
+          <div className={`flex rounded-full p-1 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
             {RANGE_OPTIONS.map((option) => (
               <button
                 key={option.value}
@@ -179,8 +181,8 @@ export default function DoctorStatsDashboard() {
                 onClick={() => setRangeType(option.value)}
                 className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${
                   option.value === rangeType
-                    ? 'bg-white text-cyan-600 shadow'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? (theme === 'dark' ? 'bg-gray-600 text-cyan-400 shadow' : 'bg-white text-cyan-600 shadow')
+                    : (theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')
                 }`}
               >
                 {option.label}
@@ -188,13 +190,13 @@ export default function DoctorStatsDashboard() {
             ))}
           </div>
 
-          <div className="flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 shadow-sm">
-            <CalendarDays className="h-5 w-5 text-cyan-600" />
+          <div className={`flex items-center gap-2 rounded-full border px-4 py-2 shadow-sm ${theme === 'dark' ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-white'}`}>
+            <CalendarDays className={`h-5 w-5 ${theme === 'dark' ? 'text-cyan-400' : 'text-cyan-600'}`} />
             <DatePicker
               selected={selectedDate}
               onChange={(date) => date && setSelectedDate(date)}
-              className="w-32 bg-transparent text-sm font-semibold text-gray-800 focus:outline-none"
-              calendarClassName="rounded-xl border border-gray-200 shadow-lg"
+              className={`w-32 bg-transparent text-sm font-semibold focus:outline-none ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}
+              calendarClassName={`rounded-xl border shadow-lg ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'}`}
               {...datePickerConfig}
             />
           </div>
@@ -227,13 +229,13 @@ export default function DoctorStatsDashboard() {
             return (
               <article
                 key={card.title}
-                className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm"
+                className={`rounded-2xl border p-5 shadow-sm transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">{card.title}</p>
-                    <p className="mt-2 text-2xl font-bold text-gray-900">{card.value}</p>
-                    <p className="text-sm text-gray-500">{card.subtitle}</p>
+                    <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{card.title}</p>
+                    <p className={`mt-2 text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{card.value}</p>
+                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>{card.subtitle}</p>
                   </div>
                   <div className={`rounded-full bg-gradient-to-br ${card.accent} p-3 text-white`}>
                     <Icon className="h-6 w-6" />
@@ -250,23 +252,29 @@ export default function DoctorStatsDashboard() {
         {isEmpty ? (
           <div className="col-span-2 flex flex-col items-center justify-center min-h-[300px] py-10 text-center">
             <Activity className="h-16 w-16 text-gray-300 mb-4" />
-            <p className="text-lg font-semibold text-gray-900">Không có dữ liệu</p>
-            <p className="text-gray-600">Không có thống kê cho khoảng thời gian đã chọn.</p>
+            <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Không có dữ liệu</p>
+            <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>Không có thống kê cho khoảng thời gian đã chọn.</p>
           </div>
         ) : (
           <>
             {/* BAR CHART */}
-            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className={`rounded-2xl border p-6 shadow-sm transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+              <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 Số ca khám theo {rangeType === 'day' ? 'giờ' : 'ngày'}
               </h3>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="label" tick={{ fill: '#6b7280' }} />
-                    <YAxis tick={{ fill: '#6b7280' }} allowDecimals={false} />
-                    <Tooltip />
+                    <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
+                    <XAxis dataKey="label" tick={{ fill: theme === 'dark' ? '#9ca3af' : '#6b7280' }} />
+                    <YAxis tick={{ fill: theme === 'dark' ? '#9ca3af' : '#6b7280' }} allowDecimals={false} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: theme === 'dark' ? '#1f2937' : '#fff', 
+                        borderColor: theme === 'dark' ? '#374151' : '#e5e7eb',
+                        color: theme === 'dark' ? '#fff' : '#000'
+                      }} 
+                    />
                     <Bar dataKey="visits" fill="#06b6d4" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -274,17 +282,23 @@ export default function DoctorStatsDashboard() {
             </div>
 
             {/* LINE CHART */}
-            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className={`rounded-2xl border p-6 shadow-sm transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+              <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 Xu hướng số ca khám
               </h3>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="label" tick={{ fill: '#6b7280' }} />
-                    <YAxis tick={{ fill: '#6b7280' }} allowDecimals={false} />
-                    <Tooltip />
+                    <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
+                    <XAxis dataKey="label" tick={{ fill: theme === 'dark' ? '#9ca3af' : '#6b7280' }} />
+                    <YAxis tick={{ fill: theme === 'dark' ? '#9ca3af' : '#6b7280' }} allowDecimals={false} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: theme === 'dark' ? '#1f2937' : '#fff', 
+                        borderColor: theme === 'dark' ? '#374151' : '#e5e7eb',
+                        color: theme === 'dark' ? '#fff' : '#000'
+                      }}
+                    />
                     <Line type="monotone" dataKey="visits" stroke="#0ea5e9" strokeWidth={3} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -296,30 +310,32 @@ export default function DoctorStatsDashboard() {
 
       {/* TABLE */}
       {!isEmpty && (
-        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className={`rounded-2xl border p-6 shadow-sm transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+          <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
             Bảng thống kê theo khung giờ
           </h3>
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-2 text-left">Thời gian</th>
-                <th className="px-4 py-2 text-left">Số ca</th>
-                <th className="px-4 py-2 text-left">% thay đổi</th>
-                <th className="px-4 py-2 text-left">Ghi chú</th>
-              </tr>
-            </thead>
-            <tbody>
-              {chartData.map((row) => (
-                <tr key={row.label} className="border-b">
-                  <td className="px-4 py-2">{row.label}</td>
-                  <td className="px-4 py-2">{row.visits}</td>
-                  <td className="px-4 py-2">—</td>
-                  <td className="px-4 py-2">{row.note || '—'}</td>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className={theme === 'dark' ? 'bg-gray-700 text-gray-200' : 'bg-gray-50 text-gray-700'}>
+                <tr>
+                  <th className="px-4 py-2 text-left">Thời gian</th>
+                  <th className="px-4 py-2 text-left">Số ca</th>
+                  <th className="px-4 py-2 text-left">% thay đổi</th>
+                  <th className="px-4 py-2 text-left">Ghi chú</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
+                {chartData.map((row) => (
+                  <tr key={row.label} className={`border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                    <td className="px-4 py-2">{row.label}</td>
+                    <td className="px-4 py-2">{row.visits}</td>
+                    <td className="px-4 py-2">—</td>
+                    <td className="px-4 py-2">{row.note || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

@@ -5,6 +5,7 @@ import { billingApi } from '../../api/billingApi';
 import { patientApi } from '../../api/patientApi';
 import { serviceApi, formatPrice } from '../../api/serviceApi';
 import toast from 'react-hot-toast';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const PAYMENT_METHODS = [
   { value: 'Cash', label: 'Tiền mặt' },
@@ -13,6 +14,7 @@ const PAYMENT_METHODS = [
 ];
 
 export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
+  const { theme } = useTheme();
   const [searchPatient, setSearchPatient] = useState('');
   const [patients, setPatients] = useState([]);
   const [services, setServices] = useState([]);
@@ -108,19 +110,19 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto transition-colors duration-300`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className={`flex items-center justify-between p-6 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-              <FileText className="w-7 h-7 text-purple-600" />
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${theme === 'dark' ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
+              <FileText className={`w-7 h-7 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Tạo hóa đơn mới</h2>
-              <p className="text-sm text-gray-600">Nhanh chóng lập hóa đơn cho bệnh nhân</p>
+              <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Tạo hóa đơn mới</h2>
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Nhanh chóng lập hóa đơn cho bệnh nhân</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className={`text-gray-400 hover:text-gray-600 dark:hover:text-gray-200`}>
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -129,7 +131,7 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
         <div className="p-6 space-y-6">
           {/* 1. Chọn bệnh nhân */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className={`block text-sm font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
               Tìm & chọn bệnh nhân <span className="text-red-500">*</span>
             </label>
             <div className="relative">
@@ -139,15 +141,15 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
                 placeholder="Nhập tên hoặc số điện thoại..."
                 value={searchPatient}
                 onChange={(e) => setSearchPatient(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'}`}
               />
             </div>
 
             {/* Danh sách bệnh nhân */}
             {searchPatient && (
-              <div className="mt-3 max-h-64 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-lg">
+              <div className={`mt-3 max-h-64 overflow-y-auto border rounded-xl shadow-lg ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                 {filteredPatients.length === 0 ? (
-                  <p className="p-4 text-center text-gray-500">Không tìm thấy bệnh nhân</p>
+                  <p className={`p-4 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Không tìm thấy bệnh nhân</p>
                 ) : (
                   filteredPatients.slice(0, 8).map(patient => (
                     <div
@@ -156,12 +158,12 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
                         setSelectedPatient(patient);
                         setSearchPatient('');
                       }}
-                      className="p-4 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0 flex items-center gap-3"
+                      className={`p-4 cursor-pointer border-b last:border-0 flex items-center gap-3 ${theme === 'dark' ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-blue-50 border-gray-100'}`}
                     >
                       <User className="w-5 h-5 text-gray-400" />
                       <div>
-                        <div className="font-medium text-gray-900">{patient.fullName}</div>
-                        <div className="text-sm text-gray-500 flex items-center gap-1">
+                        <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{patient.fullName}</div>
+                        <div className={`text-sm flex items-center gap-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                           <Phone className="w-3 h-3" /> {patient.phone}
                         </div>
                       </div>
@@ -174,12 +176,12 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
 
           {/* Bệnh nhân đã chọn */}
           {selectedPatient && (
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
+            <div className={`border rounded-xl p-5 ${theme === 'dark' ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200'}`}>
               <div className="flex items-center gap-3">
-                <User className="w-6 h-6 text-blue-600" />
+                <User className={`w-6 h-6 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
                 <div>
-                  <span className="font-semibold text-blue-900">{selectedPatient.fullName}</span>
-                  <span className="text-blue-700 ml-3">• {selectedPatient.phone}</span>
+                  <span className={`font-semibold ${theme === 'dark' ? 'text-blue-300' : 'text-blue-900'}`}>{selectedPatient.fullName}</span>
+                  <span className={`ml-3 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-700'}`}>• {selectedPatient.phone}</span>
                 </div>
               </div>
             </div>
@@ -187,7 +189,7 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
 
           {/* 2. Chọn dịch vụ */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
+            <label className={`block text-sm font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-3`}>
               Chọn dịch vụ <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto">
@@ -197,14 +199,14 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
                   onClick={() => addService(service)}
                   className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
                     selectedServices.find(s => s.serviceId === service.serviceId)
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                      ? (theme === 'dark' ? 'border-blue-500 bg-blue-900/30' : 'border-blue-500 bg-blue-50')
+                      : (theme === 'dark' ? 'border-gray-600 hover:border-blue-500 hover:bg-gray-700' : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50')
                   }`}
                 >
-                  <div className="font-medium text-gray-900">{service.name}</div>
-                  <div className="text-sm text-gray-600 mt-1">{formatPrice(service.price)}</div>
+                  <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{service.name}</div>
+                  <div className={`text-sm mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{formatPrice(service.price)}</div>
                   {selectedServices.find(s => s.serviceId === service.serviceId) && (
-                    <div className="mt-2 text-xs font-semibold text-blue-600">Đã thêm</div>
+                    <div className={`mt-2 text-xs font-semibold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>Đã thêm</div>
                   )}
                 </div>
               ))}
@@ -212,16 +214,16 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
           </div>
 
           {selectedServices.length > 0 && (
-            <div className="bg-gray-50 rounded-xl p-5 space-y-3">
-              <h4 className="font-semibold text-gray-900">Dịch vụ đã chọn ({selectedServices.length})</h4>
+            <div className={`rounded-xl p-5 space-y-3 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
+              <h4 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Dịch vụ đã chọn ({selectedServices.length})</h4>
               {selectedServices.map(s => (
-                <div key={s.serviceId} className="flex items-center justify-between bg-white rounded-lg p-3">
+                <div key={s.serviceId} className={`flex items-center justify-between rounded-lg p-3 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
                   <div className="flex-1">
-                    <span className="font-medium">{s.name}</span>
-                    <span className="text-sm text-gray-500 ml-3">× {s.quantity}</span>
+                    <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{s.name}</span>
+                    <span className={`text-sm ml-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>× {s.quantity}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-semibold">{formatPrice(s.price * s.quantity)}</span>
+                    <span className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{formatPrice(s.price * s.quantity)}</span>
                     <button onClick={() => removeService(s.serviceId)} className="text-red-500 hover:text-red-700">
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -234,11 +236,11 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
           {/* Tổng tiền + Phương thức thanh toán */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Phương thức thanh toán</label>
+              <label className={`block text-sm font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Phương thức thanh toán</label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
               >
                 {PAYMENT_METHODS.map(m => (
                   <option key={m.value} value={m.value}>{m.label}</option>
@@ -253,10 +255,10 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+        <div className={`flex justify-end gap-3 p-6 border-t ${theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`}>
           <button
             onClick={onClose}
-            className="px-6 py-3 text-gray-700 bg-white border border-gray-300 rounded-xl font-medium hover:bg-gray-50"
+            className={`px-6 py-3 border rounded-xl font-medium transition ${theme === 'dark' ? 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
           >
             Hủy
           </button>

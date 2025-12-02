@@ -1,4 +1,8 @@
-import { Download } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { AdminBillingApi } from '../../api/AdminBillingApi';
+import toast from 'react-hot-toast';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const tableData = [
   { stt: 1, date: '01/12/2024', revenue: '18,500,000', patients: 45, tests: 12, prescriptions: 32 },
@@ -12,6 +16,7 @@ const tableData = [
 ];
 
 export default function RevenueTable() {
+  const { theme } = useTheme();
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors duration-300">
       <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
@@ -44,17 +49,17 @@ export default function RevenueTable() {
                 <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{row.date}</td>
                 <td className="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white text-right">{row.revenue}</td>
                 <td className="px-6 py-4 text-sm text-gray-700 text-center">
-                  <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-medium">
+                  <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium">
                     {row.patients}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-700 text-center">
-                  <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-purple-50 text-purple-700 font-medium">
+                  <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 font-medium">
                     {row.tests}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-700 text-center">
-                  <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-green-50 text-green-700 font-medium">
+                  <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 font-medium">
                     {row.prescriptions}
                   </span>
                 </td>

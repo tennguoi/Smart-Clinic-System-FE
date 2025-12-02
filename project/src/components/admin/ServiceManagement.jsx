@@ -7,8 +7,10 @@ import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import AdminServiceApi from '../../api/AdminServiceApi';
 import CountBadge from '../common/CountBadge';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function ServiceManagement() {
+  const { theme } = useTheme();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -238,21 +240,21 @@ export default function ServiceManagement() {
 
   const getCategoryStyle = (category) => {
     switch (category) {
-      case 'Consultation': return 'bg-indigo-100 text-indigo-800 border border-indigo-200';
-      case 'Test': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
-      case 'Procedure': return 'bg-amber-100 text-amber-800 border border-amber-200';
-      default: return 'bg-blue-100 text-blue-800';
+      case 'Consultation': return 'bg-indigo-100 text-indigo-800 border border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800';
+      case 'Test': return 'bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800';
+      case 'Procedure': return 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800';
+      default: return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
     }
   };
 
   return (
     <>
       <Toaster {...toastConfig} />
-      <div className="px-4 md:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
+      <div className={`px-4 md:px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="flex items-center gap-4">
-            <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
+            <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 transition-colors duration-300`}>
               <Briefcase className="w-9 h-9 text-blue-600" />
               <span>Quản Lý Dịch Vụ</span>
             </h1>
@@ -268,17 +270,17 @@ export default function ServiceManagement() {
         </div>
 
         {/* Bộ lọc */}
-        <div className="bg-white border border-gray-300 rounded-lg p-5 mb-6 shadow-md">
+        <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'} border rounded-lg p-5 mb-6 shadow-md transition-colors duration-300`}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
             <div className="lg:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Tìm theo tên</label>
+              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>Tìm theo tên</label>
               <div className="relative">
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Nhập tên dịch vụ..."
-                  className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full pl-10 pr-10 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300 bg-white text-gray-900'}`}
                 />
                 <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 {searchTerm && (
@@ -289,28 +291,28 @@ export default function ServiceManagement() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Danh mục</label>
-              <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Danh mục</label>
+              <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 bg-white text-gray-900'}`}>
                 <option value="">Tất cả</option>
                 {categoryOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
-              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Trạng thái</label>
+              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 bg-white text-gray-900'}`}>
                 <option value="">Tất cả</option>
                 <option value="true">Hoạt động</option>
                 <option value="false">Ngưng hoạt động</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Khoảng giá</label>
-              <select value={filterPriceRange} onChange={(e) => setFilterPriceRange(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Khoảng giá</label>
+              <select value={filterPriceRange} onChange={(e) => setFilterPriceRange(e.target.value)} className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 bg-white text-gray-900'}`}>
                 {priceRanges.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
               </select>
             </div>
             <div>
-              <button onClick={handleClearFilters} className="w-full px-4 py-3 bg-gray-300 text-gray-700 rounded-xl hover:bg-gray-400 transition font-medium">
+              <button onClick={handleClearFilters} className={`w-full px-4 py-3 rounded-xl transition font-medium ${theme === 'dark' ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}>
                 Xóa lọc
               </button>
             </div>
@@ -321,27 +323,27 @@ export default function ServiceManagement() {
         {loading && !showModal ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-            <p className="mt-3 text-gray-600">Đang tải dữ liệu...</p>
+            <p className={`mt-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} transition-colors duration-300`}>Đang tải dữ liệu...</p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className={`${theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'} rounded-lg shadow overflow-x-auto transition-colors duration-300`}>
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">STT</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Ảnh</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Mô tả</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Danh mục</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giá</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Thao tác</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-16">STT</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">Ảnh</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tên</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Mô tả</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Danh mục</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Giá</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Trạng thái</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">Thao tác</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {services.map((service, index) => (
-                  <tr key={service.serviceId} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <tr key={service.serviceId} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                       {currentPage * pageSize + index + 1}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -353,41 +355,41 @@ export default function ServiceManagement() {
                           onError={(e) => { e.target.src = 'https://via.placeholder.com/64?text=No+Image'; }}
                         />
                       ) : (
-                        <div className="h-12 w-12 md:h-16 md:w-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                        <div className="h-12 w-12 md:h-16 md:w-16 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
                           <ImageIcon className="w-8 h-8 text-gray-400" />
                         </div>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-gray-900">{service.name}</div>
+                      <div className="text-gray-900 dark:text-white">{service.name}</div>
                     </td>
                     <td className="px-6 py-4 hidden md:table-cell">
-                      <div className="text-gray-900 max-w-xs truncate">{service.description}</div>
+                      <div className="text-gray-900 dark:text-gray-300 max-w-xs truncate">{service.description}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getCategoryStyle(service.category)}`}>
                         {getCategoryLabel(service.category)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
                       {formatPrice(service.price)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${service.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${service.isActive ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'}`}>
                         {service.isActive ? 'Hoạt động' : 'Ngưng hoạt động'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
-                        <button onClick={() => handleOpenModal('view', service)} className="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50" title="Xem chi tiết">
+                        <button onClick={() => handleOpenModal('view', service)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/30" title="Xem chi tiết">
                           <Eye className="w-5 h-5" />
                         </button>
-                        <button onClick={() => handleDeleteClick(service)} className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50" title="Xóa">
+                        <button onClick={() => handleDeleteClick(service)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30" title="Xóa">
                           <Trash2 className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => handleToggleStatusClick(service)}
-                          className={`p-2 rounded-full transition-all ${service.isActive ? 'text-green-600 hover:bg-green-50' : 'text-red-600 hover:bg-red-50'}`}
+                          className={`p-2 rounded-full transition-all ${service.isActive ? 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30' : 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30'}`}
                           title={service.isActive ? 'Ngưng hoạt động' : 'Kích hoạt'}
                         >
                           <Power className="w-5 h-5" />
@@ -399,7 +401,7 @@ export default function ServiceManagement() {
               </tbody>
             </table>
             {services.length === 0 && (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                 Không tìm thấy dịch vụ nào phù hợp.
               </div>
             )}
@@ -413,14 +415,14 @@ export default function ServiceManagement() {
     <button
       onClick={() => handlePageChange(0)}
       disabled={currentPage === 0}
-      className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+      className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
     >
       <ChevronsLeft className="w-5 h-5" />
     </button>
     <button
       onClick={() => handlePageChange(currentPage - 1)}
       disabled={currentPage === 0}
-      className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+      className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
     >
       <ChevronLeft className="w-5 h-5" />
     </button>
@@ -441,7 +443,7 @@ export default function ServiceManagement() {
               className={`px-4 py-2.5 rounded-lg border font-medium transition ${
                 currentPage === 0
                   ? 'bg-blue-600 text-white border-blue-600'
-                  : 'border-gray-300 hover:bg-gray-100'
+                  : 'border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700'
               }`}
             >
               1
@@ -459,7 +461,7 @@ export default function ServiceManagement() {
               className={`px-4 py-2.5 rounded-lg border font-medium transition ${
                 currentPage === i
                   ? 'bg-blue-600 text-white border-blue-600'
-                  : 'border-gray-300 hover:bg-gray-100'
+                  : 'border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700'
               }`}
             >
               {i + 1}
@@ -477,7 +479,7 @@ export default function ServiceManagement() {
               className={`px-4 py-2.5 rounded-lg border font-medium transition ${
                 currentPage === totalPages - 1
                   ? 'bg-blue-600 text-white border-blue-600'
-                  : 'border-gray-300 hover:bg-gray-100'
+                  : 'border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700'
               }`}
             >
               {totalPages}
@@ -493,14 +495,14 @@ export default function ServiceManagement() {
     <button
       onClick={() => handlePageChange(currentPage + 1)}
       disabled={currentPage === totalPages - 1}
-      className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+      className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
     >
       <ChevronRight className="w-5 h-5" />
     </button>
     <button
       onClick={() => handlePageChange(totalPages - 1)}
       disabled={currentPage === totalPages - 1}
-      className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+      className="p-2.5 rounded-lg border border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
     >
       <ChevronsRight className="w-5 h-5" />
     </button>
@@ -509,9 +511,9 @@ export default function ServiceManagement() {
         {/* Modal Tạo / Sửa */}
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-blue-50/80 backdrop-blur">
-                <h2 className="text-2xl font-bold text-blue-700">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-blue-50/80 dark:bg-gray-700 backdrop-blur">
+                <h2 className="text-2xl font-bold text-blue-700 dark:text-white">
                   {modalMode === 'create' ? 'Tạo dịch vụ mới' : modalMode === 'view' ? 'Chi tiết dịch vụ' : 'Chỉnh sửa dịch vụ'}
                 </h2>
                 <div className="flex items-center gap-3">
@@ -523,54 +525,54 @@ export default function ServiceManagement() {
                       <Edit className="w-5 h-5" /> Chỉnh sửa
                     </button>
                   )}
-                  <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-white/50">
+                  <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2 rounded-full hover:bg-white/50 dark:hover:bg-gray-600">
                     <X className="w-7 h-7" />
                   </button>
                 </div>
               </div>
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Ảnh dịch vụ</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ảnh dịch vụ</label>
                   <div className="flex items-center gap-4">
                     <div className="flex-shrink-0">
                       {imagePreview ? (
-                        <img src={imagePreview.startsWith('data:') ? imagePreview : getImageUrl(imagePreview)} alt="Preview" className="h-32 w-32 object-cover rounded-lg border-2 border-gray-300" />
+                        <img src={imagePreview.startsWith('data:') ? imagePreview : getImageUrl(imagePreview)} alt="Preview" className="h-32 w-32 object-cover rounded-lg border-2 border-gray-300 dark:border-gray-600" />
                       ) : (
-                        <div className="h-32 w-32 bg-gray-200 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
-                          <ImageIcon className="w-12 h-12 text-gray-400" />
+                        <div className="h-32 w-32 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600">
+                          <ImageIcon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
                         </div>
                       )}
                     </div>
                     {modalMode !== 'view' && (
                       <div>
                         <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="image-upload" />
-                        <label htmlFor="image-upload" className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 cursor-pointer transition border">
+                        <label htmlFor="image-upload" className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition border">
                           <Upload className="w-5 h-5" />
                           {imagePreview ? 'Thay đổi ảnh' : 'Chọn ảnh'}
                         </label>
-                        <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF tối đa 10MB</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">PNG, JPG, GIF tối đa 10MB</p>
                       </div>
                     )}
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tên dịch vụ <span className="text-red-500">*</span></label>
-                    <input type="text" name="name" value={formData.name} onChange={handleInputChange} required disabled={modalMode === 'view'} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed" />
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tên dịch vụ <span className="text-red-500">*</span></label>
+                    <input type="text" name="name" value={formData.name} onChange={handleInputChange} required disabled={modalMode === 'view'} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả <span className="text-red-500">*</span></label>
-                    <textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" required disabled={modalMode === 'view'} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed"></textarea>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mô tả <span className="text-red-500">*</span></label>
+                    <textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" required disabled={modalMode === 'view'} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></textarea>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Danh mục <span className="text-red-500">*</span></label>
-                    <select name="category" value={formData.category} onChange={handleInputChange} required disabled={modalMode === 'view'} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Danh mục <span className="text-red-500">*</span></label>
+                    <select name="category" value={formData.category} onChange={handleInputChange} required disabled={modalMode === 'view'} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                       {categoryOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Giá (VNĐ) <span className="text-red-500">*</span></label>
-                    <input type="number" name="price" value={formData.price} onChange={handleInputChange} min="0" step="1000" required disabled={modalMode === 'view'} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed" />
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Giá (VNĐ) <span className="text-red-500">*</span></label>
+                    <input type="number" name="price" value={formData.price} onChange={handleInputChange} min="0" step="1000" required disabled={modalMode === 'view'} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
                   </div>
                 </div>
                 {modalMode !== 'view' && (
@@ -578,7 +580,7 @@ export default function ServiceManagement() {
                     <button type="submit" disabled={loading || uploadingImage} className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-70">
                       {uploadingImage ? 'Đang tải ảnh...' : loading ? 'Đang xử lý...' : modalMode === 'create' ? 'Tạo dịch vụ' : 'Cập nhật'}
                     </button>
-                    <button type="button" onClick={handleCloseModal} disabled={loading || uploadingImage} className="flex-1 bg-gray-300 text-gray-700 py-2.5 rounded-lg hover:bg-gray-400 transition">
+                    <button type="button" onClick={handleCloseModal} disabled={loading || uploadingImage} className="flex-1 bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-200 py-2.5 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition">
                       Hủy
                     </button>
                   </div>
@@ -591,10 +593,10 @@ export default function ServiceManagement() {
         {/* Modal Xác nhận XÓA */}
         {showDeleteConfirmation && serviceToDelete && (
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
               <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-xl font-bold mb-2">Xác nhận xóa</h3>
-              <p className="text-gray-600 mb-6">
+              <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">Xác nhận xóa</h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
                 Xóa dịch vụ <strong>{serviceToDelete.name}</strong>?<br />
                 Thao tác này <span className="text-red-600 font-semibold">không thể hoàn tác</span>.
               </p>
@@ -602,7 +604,7 @@ export default function ServiceManagement() {
                 <button onClick={handleConfirmDelete} disabled={loading} className="flex-1 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 font-semibold transition disabled:opacity-70">
                   {loading ? 'Đang xóa...' : 'Xóa'}
                 </button>
-                <button onClick={() => { setShowDeleteConfirmation(false); setServiceToDelete(null); }} className="flex-1 bg-gray-300 text-gray-700 py-2.5 rounded-lg hover:bg-gray-400 font-semibold transition">
+                <button onClick={() => { setShowDeleteConfirmation(false); setServiceToDelete(null); }} className="flex-1 bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-200 py-2.5 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 font-semibold transition">
                   Hủy
                 </button>
               </div>
@@ -613,12 +615,12 @@ export default function ServiceManagement() {
         {/* Modal Xác nhận BẬT/TẮT trạng thái */}
         {showToggleConfirmation && toggleTarget && (
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
               <Power className={`w-12 h-12 mx-auto mb-4 ${toggleTarget.currentStatus ? 'text-red-500' : 'text-green-500'}`} />
-              <h3 className="text-xl font-bold mb-2">
+              <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">
                 {toggleTarget.currentStatus ? 'Ngưng hoạt động dịch vụ?' : 'Kích hoạt dịch vụ?'}
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
                 Dịch vụ: <strong>{toggleTarget.name}</strong><br />
                 {toggleTarget.currentStatus
                   ? 'Dịch vụ sẽ không hiển thị và không thể đặt lịch.'
@@ -634,7 +636,7 @@ export default function ServiceManagement() {
                 </button>
                 <button
                   onClick={() => { setShowToggleConfirmation(false); setToggleTarget(null); }}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2.5 rounded-lg hover:bg-gray-400 font-semibold transition"
+                  className="flex-1 bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-200 py-2.5 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 font-semibold transition"
                 >
                   Hủy
                 </button>

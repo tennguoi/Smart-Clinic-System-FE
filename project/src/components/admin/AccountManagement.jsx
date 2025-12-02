@@ -492,10 +492,10 @@ export default function AccountManagement() {
                             
                             const color =
                               normalizedRole === 'admin'
-                                ? 'bg-red-100 text-red-700 border-red-200'
+                                ? 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'
                                 : normalizedRole === 'bac_si' || normalizedRole === 'bacsi'
-                                ? 'bg-green-100 text-green-700 border-green-200'
-                                : 'bg-purple-100 text-purple-700 border-purple-200';
+                                ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800'
+                                : 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800';
 
                             return (
                               <span
@@ -516,8 +516,8 @@ export default function AccountManagement() {
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${
                           user.isVerified
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-red-100 text-red-700'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
                         }`}
                       >
                         <Power className="inline w-4 h-4 mr-1" />

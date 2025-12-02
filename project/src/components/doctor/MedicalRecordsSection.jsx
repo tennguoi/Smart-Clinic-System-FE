@@ -4,10 +4,12 @@ import { medicalRecordApi } from '../../api/medicalRecordApi';
 import CreateRecordForm from './CreateRecordForm';
 import RecordRow from './RecordRow';
 import { Plus, ClipboardList, Search, RotateCcw, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const ITEMS_PER_PAGE = 10;
 
 const MedicalRecordsSection = () => {
+  const { theme } = useTheme();
   const [records, setRecords] = useState([]);
   const [recordsLoading, setRecordsLoading] = useState(false);
   const [recordsError, setRecordsError] = useState('');
@@ -168,18 +170,18 @@ const MedicalRecordsSection = () => {
     return (
       <div className="flex items-center justify-center gap-2 mt-6 pb-6">
         <button onClick={() => fetchMyRecords(1)} disabled={currentPage === 1 || recordsLoading}
-          className="w-10 h-10 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+          className={`w-10 h-10 rounded border flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-100'}`}>
           <ChevronsLeft className="w-5 h-5" />
         </button>
 
         <button onClick={() => fetchMyRecords(currentPage - 1)} disabled={currentPage === 1 || recordsLoading}
-          className="w-10 h-10 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+          className={`w-10 h-10 rounded border flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-100'}`}>
           <ChevronLeft className="w-5 h-5" />
         </button>
 
         {start > 1 && (
           <>
-            <button onClick={() => fetchMyRecords(1)} className="w-10 h-10 rounded border border-gray-300 hover:bg-gray-100">1</button>
+            <button onClick={() => fetchMyRecords(1)} className={`w-10 h-10 rounded border ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-100'}`}>1</button>
             {start > 2 && <span className="text-gray-500">...</span>}
           </>
         )}
@@ -189,7 +191,11 @@ const MedicalRecordsSection = () => {
             key={p}
             onClick={() => fetchMyRecords(p)}
             disabled={recordsLoading}
-            className={`w-10 h-10 rounded font-medium transition-all ${p === currentPage ? 'bg-orange-500 text-white border border-orange-500' : 'border border-gray-300 hover:bg-gray-100'}`}
+            className={`w-10 h-10 rounded font-medium transition-all ${
+              p === currentPage 
+                ? 'bg-orange-500 text-white border border-orange-500' 
+                : (theme === 'dark' ? 'border border-gray-600 hover:bg-gray-700 text-gray-300' : 'border border-gray-300 hover:bg-gray-100')
+            }`}
           >
             {p}
           </button>
@@ -198,19 +204,19 @@ const MedicalRecordsSection = () => {
         {end < totalPages && (
           <>
             {end < totalPages - 1 && <span className="text-gray-500">...</span>}
-            <button onClick={() => fetchMyRecords(totalPages)} className="w-10 h-10 rounded border border-gray-300 hover:bg-gray-100">
+            <button onClick={() => fetchMyRecords(totalPages)} className={`w-10 h-10 rounded border ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-100'}`}>
               {totalPages}
             </button>
           </>
         )}
 
         <button onClick={() => fetchMyRecords(currentPage + 1)} disabled={currentPage === totalPages || recordsLoading}
-          className="w-10 h-10 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+          className={`w-10 h-10 rounded border flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-100'}`}>
           <ChevronRight className="w-5 h-5" />
         </button>
 
         <button onClick={() => fetchMyRecords(totalPages)} disabled={currentPage === totalPages || recordsLoading}
-          className="w-10 h-10 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+          className={`w-10 h-10 rounded border flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-100'}`}>
           <ChevronsRight className="w-5 h-5" />
         </button>
       </div>
@@ -220,12 +226,12 @@ const MedicalRecordsSection = () => {
   return (
     <div className="space-y-8">
       {/* KHỐI 1 */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <div className="px-6 py-4 border-b border-gray-100 relative">
+      <div className={`rounded-lg border shadow-sm ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+        <div className={`px-6 py-4 border-b relative ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ClipboardList className="w-6 h-6 text-blue-600"/>
-              <h2 className="text-lg font-semibold text-gray-800">Quản lý Hồ sơ & Hoàn thành khám</h2>
+              <ClipboardList className={`w-6 h-6 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}/>
+              <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Quản lý Hồ sơ & Hoàn thành khám</h2>
             </div>
             
           </div>
@@ -244,12 +250,12 @@ const MedicalRecordsSection = () => {
       </div>
 
       {/* KHỐI 2: BỘ LỌC ĐÃ ĐƯỢC CÂN LẠI */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+      <div className={`rounded-lg border shadow-sm p-5 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
           
           {/* Cột 1: Tìm kiếm từ khóa (Chiếm 5 phần) */}
           <div className="md:col-span-5">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               Từ khóa tìm kiếm
             </label>
             <div className="relative">
@@ -260,7 +266,7 @@ const MedicalRecordsSection = () => {
                 type="text"
                 name="keyword"
                 placeholder="Nhập tên bệnh nhân, SĐT..."
-                className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+                className={`w-full border rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300'}`}
                 value={searchParams.keyword}
                 onChange={handleSearchChange}
               />
@@ -270,13 +276,13 @@ const MedicalRecordsSection = () => {
           {/* Cột 2: Lọc theo ngày (Chiếm 5 phần) */}
           <div className="md:col-span-5 flex gap-2 items-end">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                 Từ ngày
               </label>
               <input 
                 type="date" 
                 name="startDate" 
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-all" 
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-all ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`} 
                 value={searchParams.startDate} 
                 onChange={handleSearchChange}
                 max={searchParams.endDate || today} // Không lớn hơn ngày tới (hoặc hôm nay)
@@ -284,13 +290,13 @@ const MedicalRecordsSection = () => {
             </div>
             <span className="text-gray-400 mb-2">-</span>
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                 Đến ngày
               </label>
               <input 
                 type="date" 
                 name="endDate" 
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-all" 
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-all ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`} 
                 value={searchParams.endDate} 
                 onChange={handleSearchChange}
                 min={searchParams.startDate} // Không nhỏ hơn ngày từ
@@ -304,7 +310,7 @@ const MedicalRecordsSection = () => {
           <div className="md:col-span-2 flex justify-end">
             <button
               onClick={handleResetSearch}
-              className="w-full bg-gray-100 text-gray-600 border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center justify-center gap-2 font-medium transition-colors"
+              className={`w-full border px-4 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-colors ${theme === 'dark' ? 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'}`}
               title="Đặt lại điều kiện lọc"
             >
               <RotateCcw className="w-4 h-4" />
@@ -316,9 +322,9 @@ const MedicalRecordsSection = () => {
       </div>
 
       {/* KHỐI 3 */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-800">
+      <div className={`rounded-lg border shadow-sm ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+        <div className={`px-6 py-4 border-b flex items-center justify-between ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
+          <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
             Danh sách hồ sơ đã tạo {totalRecords > 0 && `(Tổng: ${totalRecords})`}
           </h2>
           {recordsLoading && <span className="text-sm text-blue-500 font-medium animate-pulse">Đang tải dữ liệu...</span>}
@@ -326,17 +332,17 @@ const MedicalRecordsSection = () => {
 
         {/* Bảng dữ liệu - Để tự nhiên, không fix chiều cao */}
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+            <thead className={theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">STT</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tên bệnh nhân</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Chẩn đoán</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ghi chú</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Hành động</th>
+                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>STT</th>
+                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Tên bệnh nhân</th>
+                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Chẩn đoán</th>
+                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Ghi chú</th>
+                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Hành động</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className={`divide-y ${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
               {records.length === 0 ? (
                 <tr>
                   <td colSpan="5" className="px-6 py-10 text-center text-gray-500">
@@ -364,7 +370,7 @@ const MedicalRecordsSection = () => {
         </div>
 
         {/* PHÂN TRANG - luôn ở dưới cùng */}
-        <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
+        <div className={`border-t px-6 py-4 ${theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`}>
           <div className="flex justify-center">
             {renderPagination()}
           </div>

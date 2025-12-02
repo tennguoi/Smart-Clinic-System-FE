@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { X, DoorOpen, Loader, UserCheck } from "lucide-react";
 import { roomApi } from "../../api/roomApi";
 import { toast } from 'react-toastify';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function RoomAssignModal({ patient, onClose, onAssign }) {
+  const { theme } = useTheme();
   const [availableRooms, setAvailableRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRoomId, setSelectedRoomId] = useState("");
@@ -66,19 +68,19 @@ export default function RoomAssignModal({ patient, onClose, onAssign }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transition-colors duration-300`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className={`flex items-center justify-between p-6 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <DoorOpen className="w-5 h-5 text-blue-600" />
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${theme === 'dark' ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
+              <DoorOpen className={`w-5 h-5 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Phân phòng khám</h2>
-              <p className="text-sm text-gray-600">Bệnh nhân: {patient.patientName}</p>
+              <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Phân phòng khám</h2>
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Bệnh nhân: {patient.patientName}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className={`text-gray-400 hover:text-gray-600 dark:hover:text-gray-200`}>
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -86,25 +88,25 @@ export default function RoomAssignModal({ patient, onClose, onAssign }) {
         {/* Body */}
         <div className="p-6 space-y-4">
           {/* Patient Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className={`border rounded-lg p-4 ${theme === 'dark' ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200'}`}>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <span className="text-gray-600">Mã hàng đợi:</span>
-                <span className="ml-2 font-medium text-gray-900">{patient.queueNumber}</span>
+                <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>Mã hàng đợi:</span>
+                <span className={`ml-2 font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{patient.queueNumber}</span>
               </div>
               <div>
-                <span className="text-gray-600">Điện thoại:</span>
-                <span className="ml-2 font-medium text-gray-900">{patient.phone}</span>
+                <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>Điện thoại:</span>
+                <span className={`ml-2 font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{patient.phone}</span>
               </div>
               <div>
-                <span className="text-gray-600">Độ ưu tiên:</span>
+                <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>Độ ưu tiên:</span>
                 <span
                   className={`ml-2 px-2 py-1 rounded-full text-xs font-semibold ${
                     patient.priority === "Emergency"
-                      ? "bg-red-100 text-red-700"
+                      ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
                       : patient.priority === "Urgent"
-                      ? "bg-orange-100 text-orange-700"
-                      : "bg-blue-100 text-blue-700"
+                      ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
+                      : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                   }`}
                 >
                   {patient.priority === "Emergency" ? "Khẩn cấp" : 
@@ -116,7 +118,7 @@ export default function RoomAssignModal({ patient, onClose, onAssign }) {
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+            <div className={`border px-4 py-3 rounded-md text-sm ${theme === 'dark' ? 'bg-red-900/30 border-red-800 text-red-300' : 'bg-red-50 border-red-200 text-red-700'}`}>
               {error}
             </div>
           )}
@@ -125,16 +127,16 @@ export default function RoomAssignModal({ patient, onClose, onAssign }) {
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader className="w-8 h-8 text-blue-600 animate-spin" />
-              <span className="ml-3 text-gray-600">Đang tải danh sách phòng khám...</span>
+              <span className={`ml-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Đang tải danh sách phòng khám...</span>
             </div>
           ) : availableRooms.length === 0 ? (
             <div className="text-center py-12">
-              <DoorOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Không có phòng khám nào sẵn sàng</p>
+              <DoorOpen className={`w-16 h-16 mx-auto mb-4 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} />
+              <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Không có phòng khám nào sẵn sàng</p>
             </div>
           ) : (
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                 Chọn phòng khám (với bác sĩ sẵn sàng) <span className="text-red-500">*</span>
               </label>
               <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -144,21 +146,21 @@ export default function RoomAssignModal({ patient, onClose, onAssign }) {
                     onClick={() => setSelectedRoomId(room.roomId)}
                     className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                       selectedRoomId === room.roomId
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
+                        ? (theme === 'dark' ? "border-blue-500 bg-blue-900/30" : "border-blue-500 bg-blue-50")
+                        : (theme === 'dark' ? "border-gray-600 hover:border-blue-500 hover:bg-gray-700" : "border-gray-200 hover:border-blue-300 hover:bg-gray-50")
                     }`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <DoorOpen className={`w-5 h-5 ${selectedRoomId === room.roomId ? "text-blue-600" : "text-gray-400"}`} />
-                          <h3 className="font-semibold text-gray-900">{room.roomName}</h3>
-                          <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                          <DoorOpen className={`w-5 h-5 ${selectedRoomId === room.roomId ? "text-blue-600 dark:text-blue-400" : "text-gray-400"}`} />
+                          <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{room.roomName}</h3>
+                          <span className="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs rounded-full font-medium">
                             Sẵn sàng
                           </span>
                         </div>
                         {room.doctorName && (
-                          <div className="flex items-center gap-2 text-sm text-gray-600 ml-7">
+                          <div className={`flex items-center gap-2 text-sm ml-7 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                             <UserCheck className="w-4 h-4" />
                             <span>
                               Bác sĩ: <span className="font-medium">{room.doctorName}</span>
@@ -166,7 +168,7 @@ export default function RoomAssignModal({ patient, onClose, onAssign }) {
                           </div>
                         )}
                         {room.description && (
-                          <p className="text-sm text-gray-500 mt-1 ml-7">{room.description}</p>
+                          <p className={`text-sm mt-1 ml-7 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>{room.description}</p>
                         )}
                       </div>
                       {selectedRoomId === room.roomId && (
@@ -185,11 +187,11 @@ export default function RoomAssignModal({ patient, onClose, onAssign }) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+        <div className={`flex items-center justify-end gap-3 p-6 border-t ${theme === 'dark' ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-gray-50'}`}>
           <button
             onClick={onClose}
             disabled={assigning}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+            className={`px-4 py-2 text-sm font-medium border rounded-md disabled:opacity-50 ${theme === 'dark' ? 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
           >
             Hủy
           </button>

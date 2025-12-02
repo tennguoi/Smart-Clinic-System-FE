@@ -6,8 +6,10 @@ import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import CountBadge from '../common/CountBadge';
 import Pagination from '../common/Pagination';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const MedicalRecordHistory = () => {
+  const { theme } = useTheme();
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -120,12 +122,12 @@ const MedicalRecordHistory = () => {
   }, [filteredRecords, currentPage, pageSize]);
 
   return (
-    <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
+    <div className={`px-4 sm:px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <Toaster {...toastConfig} />
       
       <div className="mb-6">
-        <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
-          <ClipboardList className="w-9 h-9 text-blue-600" />
+        <h1 className={`text-4xl font-bold flex items-center gap-3 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+          <ClipboardList className={`w-9 h-9 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
           <span>Lịch Sử Khám Bệnh {isAdmin && '(Tất cả)'}</span>
           <CountBadge 
             currentCount={filteredRecords.length} 
@@ -136,10 +138,10 @@ const MedicalRecordHistory = () => {
       </div>
 
       {/* Bộ lọc */}
-      <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-6">
+      <div className={`rounded-xl shadow-md border p-6 mb-6 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-5">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tìm kiếm</label>
+            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Tìm kiếm</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
@@ -147,7 +149,7 @@ const MedicalRecordHistory = () => {
                 placeholder="Tên bệnh nhân hoặc chẩn đoán..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-10 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full pl-9 pr-10 px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300'}`}
               />
               {searchTerm && (
                 <button
@@ -161,7 +163,7 @@ const MedicalRecordHistory = () => {
           </div>
 
           <div className="lg:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Từ ngày</label>
+            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Từ ngày</label>
             <input
               type="date"
               value={filterStartDate}
@@ -174,12 +176,12 @@ const MedicalRecordHistory = () => {
                 setFilterStartDate(newStartDate);
               }}
               max={filterEndDate || undefined}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
             />
           </div>
 
           <div className="lg:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Đến ngày</label>
+            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Đến ngày</label>
             <input
               type="date"
               value={filterEndDate}
@@ -192,15 +194,15 @@ const MedicalRecordHistory = () => {
                 setFilterEndDate(newEndDate);
               }}
               min={filterStartDate || undefined}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
             />
           </div>
 
           <div className="lg:col-span-1">
-            <label className="block text-sm font-medium text-gray-700 mb-2">&nbsp;</label>
+            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>&nbsp;</label>
             <button
               onClick={handleClearFilters}
-              className="w-full px-4 py-3 bg-gray-300 text-gray-700 rounded-xl hover:bg-gray-400 transition font-medium whitespace-nowrap"
+              className={`w-full px-4 py-3 rounded-xl transition font-medium whitespace-nowrap ${theme === 'dark' ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
             >
               Xóa lọc
             </button>
@@ -209,9 +211,9 @@ const MedicalRecordHistory = () => {
       </div>
 
       {/* Bảng dữ liệu */}
-      <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+      <div className={`rounded-xl shadow-md border overflow-hidden ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         <table className="w-full">
-          <thead className="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0">
+          <thead className={`uppercase text-xs sticky top-0 ${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>
             <tr>
               <th className="px-4 py-3 text-center w-16">STT</th>
               <th className="px-4 py-3 text-left w-32">Ngày khám</th>
@@ -224,13 +226,13 @@ const MedicalRecordHistory = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="5" className="px-4 py-10 text-center text-gray-500">
+                <td colSpan="5" className={`px-4 py-10 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                   Đang tải dữ liệu...
                 </td>
               </tr>
             ) : currentPageRecords.length === 0 ? (
               <tr>
-                <td colSpan="5" className="px-4 py-10 text-center text-gray-500">
+                <td colSpan="5" className={`px-4 py-10 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                   {searchTerm || filterStartDate || filterEndDate
                     ? 'Không tìm thấy kết quả phù hợp.'
                     : 'Chưa có lịch sử khám bệnh nào.'}
@@ -238,22 +240,22 @@ const MedicalRecordHistory = () => {
               </tr>
             ) : (
               currentPageRecords.map((record, index) => (
-                <tr key={record.recordId || record.id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-3 text-center text-sm font-medium text-gray-600">
+                <tr key={record.recordId || record.id} className={`border-b transition-colors ${theme === 'dark' ? 'border-gray-700 hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
+                  <td className={`px-4 py-3 text-center text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                     {currentPage * pageSize + index + 1}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                  <td className={`px-4 py-3 text-sm whitespace-nowrap ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                     {record.createdAt
                       ? new Date(record.createdAt).toLocaleDateString('vi-VN')
                       : 'N/A'}
                   </td>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                  <td className={`px-4 py-3 text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                     {record.patientName || 'Khách vãng lai'}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-800">
+                  <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
                     {record.diagnosis || '-'}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">
+                  <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                     {record.treatmentNotes || '-'}
                   </td>
                 </tr>

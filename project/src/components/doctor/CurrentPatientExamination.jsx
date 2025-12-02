@@ -20,6 +20,7 @@ import {
 
 import medicalRecordApi from '../../api/medicalRecordApi';
 import axiosInstance from '../../utils/axiosConfig';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price || 0);
@@ -54,6 +55,7 @@ const formatTime = (dateString) => {
 };
 
 export default function CurrentPatientExamination() {
+  const { theme } = useTheme();
   const [currentPatient, setCurrentPatient] = useState(null);
   const [waitingQueue, setWaitingQueue] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -315,60 +317,60 @@ export default function CurrentPatientExamination() {
   // ==================== GIAO DIỆN KHI ĐANG KHÁM – XANH DƯƠNG + TRẮNG ====================
   if (currentPatient) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-50">
+      <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gradient-to-br from-blue-50 to-sky-50'}`}>
         <Toaster position="top-right" />
         <div className="flex h-screen">
           {/* Sidebar trái */}
-          <div className="w-96 bg-white shadow-xl border-r border-blue-100 flex flex-col">
-            <div className="p-8 border-b border-blue-100">
+          <div className={`w-96 shadow-xl border-r flex flex-col ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-blue-100'}`}>
+            <div className={`p-8 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-blue-100'}`}>
               <div className="text-center">
-                <div className="w-32 h-32 bg-blue-100 rounded-full mx-auto flex items-center justify-center mb-4">
-                  <User className="w-16 h-16 text-blue-600" />
+                <div className={`w-32 h-32 rounded-full mx-auto flex items-center justify-center mb-4 ${theme === 'dark' ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
+                  <User className={`w-16 h-16 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
                 </div>
-                <div className="text-5xl font-bold text-blue-600 mb-2">{currentPatient.queueNumber}</div>
-                <h2 className="text-2xl font-bold text-slate-800">{currentPatient.fullName}</h2>
-                <div className="mt-4 space-y-2 text-slate-600">
-  <div><Calendar className="inline w-5 h-5 mr-2" />{currentPatient.gender} • {currentPatient.age} tuổi</div>
-  <div><Clock className="inline w-5 h-5 mr-2" />Vào lúc: {currentPatient.checkInTime}</div>
-</div>
+                <div className={`text-5xl font-bold mb-2 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>{currentPatient.queueNumber}</div>
+                <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>{currentPatient.fullName}</h2>
+                <div className={`mt-4 space-y-2 ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600'}`}>
+                  <div><Calendar className="inline w-5 h-5 mr-2" />{currentPatient.gender} • {currentPatient.age} tuổi</div>
+                  <div><Clock className="inline w-5 h-5 mr-2" />Vào lúc: {currentPatient.checkInTime}</div>
+                </div>
 
-<div className="mt-6 p-5 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl shadow-sm">
-  <div className="flex items-start gap-3">
-    <div className="bg-amber-200 p-2.5 rounded-xl flex-shrink-0">
-      <FileText className="w-7 h-7 text-amber-800" />
-    </div>
-    <div className="flex-1">
-      <h3 className="font-bold text-amber-900 text-lg mb-2">
-        Triệu chứng / Lý do đến khám
-      </h3>
-      <div className="bg-white p-4 rounded-xl border border-amber-200 min-h-28 text-slate-800 leading-relaxed whitespace-pre-wrap text-base">
-        {currentPatient.notes?.trim() ? (
-          currentPatient.notes.trim()
-        ) : (
-          <span className="text-slate-400 italic">Chưa có ghi chú từ lễ tân</span>
-        )}
-      </div>
-    </div>
-  </div>
-</div>
+                <div className={`mt-6 p-5 border-2 rounded-2xl shadow-sm ${theme === 'dark' ? 'bg-amber-900/20 border-amber-800' : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-300'}`}>
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2.5 rounded-xl flex-shrink-0 ${theme === 'dark' ? 'bg-amber-900/50' : 'bg-amber-200'}`}>
+                      <FileText className={`w-7 h-7 ${theme === 'dark' ? 'text-amber-400' : 'text-amber-800'}`} />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className={`font-bold text-lg mb-2 ${theme === 'dark' ? 'text-amber-400' : 'text-amber-900'}`}>
+                        Triệu chứng / Lý do đến khám
+                      </h3>
+                      <div className={`p-4 rounded-xl border min-h-28 leading-relaxed whitespace-pre-wrap text-base text-left ${theme === 'dark' ? 'bg-gray-800 border-amber-800 text-gray-300' : 'bg-white border-amber-200 text-slate-800'}`}>
+                        {currentPatient.notes?.trim() ? (
+                          currentPatient.notes.trim()
+                        ) : (
+                          <span className="text-slate-400 italic">Chưa có ghi chú từ lễ tân</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6">
-              <h3 className="font-bold text-xl text-slate-700 mb-4 flex items-center gap-2">
-                <Clock className="w-6 h-6 text-blue-600" />
+              <h3 className={`font-bold text-xl mb-4 flex items-center gap-2 ${theme === 'dark' ? 'text-gray-300' : 'text-slate-700'}`}>
+                <Clock className={`w-6 h-6 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
                 Hàng đợi tiếp theo ({waitingQueue.length})
               </h3>
               {waitingQueue.length === 0 ? (
-                <p className="text-center text-slate-500 py-8">Không còn bệnh nhân nào</p>
+                <p className={`text-center py-8 ${theme === 'dark' ? 'text-gray-500' : 'text-slate-500'}`}>Không còn bệnh nhân nào</p>
               ) : (
                 <div className="space-y-3">
                   {waitingQueue.map((p, i) => (
-                    <div key={p.queueId} className="bg-blue-50 p-4 rounded-xl hover:bg-blue-100 transition-all">
+                    <div key={p.queueId} className={`p-4 rounded-xl transition-all ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : 'bg-blue-50 hover:bg-blue-100'}`}>
                       <div className="flex justify-between items-center">
                         <div>
-                          <div className="font-bold text-lg text-blue-600">{p.queueNumber}</div>
-                          <div className="text-sm text-slate-700">{p.patientName}</div>
+                          <div className={`font-bold text-lg ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>{p.queueNumber}</div>
+                          <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-slate-700'}`}>{p.patientName}</div>
                         </div>
                         {i === 0 && (
                           <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold">
@@ -385,7 +387,7 @@ export default function CurrentPatientExamination() {
 
           {/* Nội dung chính */}
           <div className="flex-1 flex flex-col">
-            <div className="bg-white border-b border-blue-100 px-8 py-4">
+            <div className={`border-b px-8 py-4 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-blue-100'}`}>
               <div className="flex gap-1">
                 {[
                   { id: 'examination', label: 'Khám & Kê đơn', icon: FileText },
@@ -398,8 +400,8 @@ export default function CurrentPatientExamination() {
                       onClick={() => setActiveTab(t.id)}
                       className={`flex items-center gap-3 px-8 py-4 font-semibold rounded-t-xl transition-all ${
                         activeTab === t.id
-                          ? 'bg-white text-blue-600 border-t-4 border-blue-600 shadow-sm'
-                          : 'text-slate-600 hover:bg-blue-50'
+                          ? (theme === 'dark' ? 'bg-gray-900 text-blue-400 border-t-4 border-blue-500' : 'bg-white text-blue-600 border-t-4 border-blue-600 shadow-sm')
+                          : (theme === 'dark' ? 'text-gray-400 hover:bg-gray-700' : 'text-slate-600 hover:bg-blue-50')
                       }`}
                     >
                       <Icon size={22} />
@@ -410,37 +412,37 @@ export default function CurrentPatientExamination() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-8 bg-gradient-to-b from-blue-50/50 to-white">
+            <div className={`flex-1 overflow-y-auto p-8 ${theme === 'dark' ? 'bg-gray-900' : 'bg-gradient-to-b from-blue-50/50 to-white'}`}>
               <div className="max-w-5xl mx-auto">
                 {activeTab === 'examination' && (
                   <div className="space-y-10">
                     <div>
-                      <label className="block text-lg font-bold mb-3">Chẩn đoán <span className="text-red-500">*</span></label>
+                      <label className={`block text-lg font-bold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Chẩn đoán <span className="text-red-500">*</span></label>
                       <textarea
                         value={diagnosis}
                         onChange={e => setDiagnosis(e.target.value)}
-                        className="w-full h-40 p-5 border border-blue-200 rounded-xl focus:ring-4 focus:ring-blue-100 resize-none"
+                        className={`w-full h-40 p-5 border rounded-xl focus:ring-4 resize-none ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-900/50' : 'bg-white border-blue-200 focus:ring-blue-100'}`}
                         placeholder="Nhập chẩn đoán chi tiết..."
                       />
                     </div>
 
                     <div>
-                      <label className="block text-lg font-bold mb-3">Ghi chú điều trị</label>
+                      <label className={`block text-lg font-bold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Ghi chú điều trị</label>
                       <textarea
                         value={treatmentNotes}
                         onChange={e => setTreatmentNotes(e.target.value)}
-                        className="w-full h-32 p-5 border border-blue-200 rounded-xl focus:ring-4 focus:ring-blue-100 resize-none"
+                        className={`w-full h-32 p-5 border rounded-xl focus:ring-4 resize-none ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-900/50' : 'bg-white border-blue-200 focus:ring-blue-100'}`}
                         placeholder="Ghi chú về quá trình điều trị, theo dõi..."
                       />
                     </div>
 
-                    <div className="border-t pt-8">
-                      <h3 className="text-xl font-bold mb-6 flex items-center gap-3">
+                    <div className={`border-t pt-8 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                      <h3 className={`text-xl font-bold mb-6 flex items-center gap-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                         <Pill size={28} /> Kê đơn thuốc
                       </h3>
 
                       <div className="space-y-4">
-                        <div className="grid grid-cols-12 gap-4 font-semibold text-sm text-slate-600 mb-2">
+                        <div className={`grid grid-cols-12 gap-4 font-semibold text-sm mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600'}`}>
                           <div className="col-span-1 text-center">STT</div>
                           <div className="col-span-5">TÊN THUỐC <span className="text-red-500">*</span></div>
                           <div className="col-span-5">HƯỚNG DẪN SỬ DỤNG <span className="text-red-500">*</span></div>
@@ -449,7 +451,7 @@ export default function CurrentPatientExamination() {
 
                         {prescriptionItems.map((item, index) => (
                           <div key={index} className="grid grid-cols-12 gap-4 items-start">
-                            <div className="col-span-1 flex items-center justify-center pt-3 font-semibold">
+                            <div className={`col-span-1 flex items-center justify-center pt-3 font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                               {index + 1}
                             </div>
                             <div className="col-span-5">
@@ -458,7 +460,7 @@ export default function CurrentPatientExamination() {
                                 placeholder="VD: Paracetamol 500mg (10 viên)"
                                 value={item.drugName}
                                 onChange={(e) => updatePrescriptionItem(index, 'drugName', e.target.value)}
-                                className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-400"
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-500' : 'bg-white border-blue-200 focus:ring-blue-400'}`}
                               />
                             </div>
                             <div className="col-span-5">
@@ -467,13 +469,13 @@ export default function CurrentPatientExamination() {
                                 placeholder="VD: Uống 1 viên/lần, 3 lần/ngày sau ăn"
                                 value={item.instructions}
                                 onChange={(e) => updatePrescriptionItem(index, 'instructions', e.target.value)}
-                                className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-400"
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-500' : 'bg-white border-blue-200 focus:ring-blue-400'}`}
                               />
                             </div>
                             <div className="col-span-1 flex items-center justify-center pt-2">
                               <button
                                 onClick={() => removePrescriptionItem(index)}
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-all"
+                                className={`p-2 rounded-lg transition-all ${theme === 'dark' ? 'text-red-400 hover:bg-red-900/30' : 'text-red-500 hover:text-red-700 hover:bg-red-50'}`}
                                 title="Xóa thuốc"
                               >
                                 <X size={20} />
@@ -484,7 +486,7 @@ export default function CurrentPatientExamination() {
 
                         <button
                           onClick={addPrescriptionItem}
-                          className="w-full py-3 border-2 border-dashed border-blue-300 rounded-xl text-blue-600 font-semibold hover:bg-blue-50 hover:border-blue-500 transition-all flex items-center justify-center gap-2"
+                          className={`w-full py-3 border-2 border-dashed rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${theme === 'dark' ? 'border-blue-800 text-blue-400 hover:bg-blue-900/30 hover:border-blue-600' : 'border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-500'}`}
                         >
                           <Plus size={20} />
                           Thêm thuốc mới
@@ -492,17 +494,17 @@ export default function CurrentPatientExamination() {
                       </div>
 
                       {prescriptionItems.some(item => item.drugName.trim() && item.instructions.trim()) && (
-                        <div className="mt-6 bg-gradient-to-r from-blue-50 to-sky-50 p-6 rounded-xl border border-blue-200">
-                          <h4 className="font-bold mb-4 text-lg">Đơn thuốc hiện tại:</h4>
+                        <div className={`mt-6 p-6 rounded-xl border ${theme === 'dark' ? 'bg-blue-900/20 border-blue-800' : 'bg-gradient-to-r from-blue-50 to-sky-50 border-blue-200'}`}>
+                          <h4 className={`font-bold mb-4 text-lg ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Đơn thuốc hiện tại:</h4>
                           <div className="space-y-3">
                             {prescriptionItems
                               .filter(item => item.drugName.trim() && item.instructions.trim())
                               .map((item, index) => (
-                                <div key={index} className="bg-white p-4 rounded-lg">
-                                  <div className="font-semibold text-slate-800 mb-1">
+                                <div key={index} className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+                                  <div className={`font-semibold mb-1 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
                                     {index + 1}. {item.drugName}
                                   </div>
-                                  <div className="text-sm text-slate-600 italic ml-4">
+                                  <div className={`text-sm italic ml-4 ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600'}`}>
                                     {item.instructions}
                                   </div>
                                 </div>
@@ -512,7 +514,7 @@ export default function CurrentPatientExamination() {
                       )}
                     </div>
 
-                    <div className="flex justify-center pt-8 border-t">
+                    <div className={`flex justify-center pt-8 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
                       <button
                         onClick={handleComplete}
                         disabled={!diagnosis.trim() || isLoading}
@@ -542,38 +544,38 @@ export default function CurrentPatientExamination() {
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         placeholder="Tìm kiếm dịch vụ..."
-                        className="w-full pl-12 pr-4 py-3.5 border border-blue-200 rounded-xl focus:ring-4 focus:ring-blue-100"
+                        className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-4 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-900/50' : 'bg-white border-blue-200 focus:ring-blue-100'}`}
                       />
                     </div>
 
                     {selectedServices.length > 0 && (
-                      <div className="bg-gradient-to-r from-blue-50 to-sky-50 p-6 rounded-xl border border-blue-200 mb-6">
-                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                      <div className={`p-6 rounded-xl border mb-6 ${theme === 'dark' ? 'bg-blue-900/20 border-blue-800' : 'bg-gradient-to-r from-blue-50 to-sky-50 border-blue-200'}`}>
+                        <h3 className={`font-bold text-lg mb-4 flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                           <CheckIcon className="text-blue-600" size={20} />
                           Dịch vụ đã chọn ({selectedServices.length})
                         </h3>
                         <div className="space-y-3">
                           {selectedServices.map((s, i) => (
-                            <div key={i} className="flex justify-between items-center bg-white p-4 rounded-lg shadow-sm">
+                            <div key={i} className={`flex justify-between items-center p-4 rounded-lg shadow-sm ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
                               <div>
-                                <div className="font-semibold text-slate-900">{s.name}</div>
-                                <div className="text-sm text-slate-600">Số lượng: {s.quantity}</div>
+                                <div className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{s.name}</div>
+                                <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600'}`}>Số lượng: {s.quantity}</div>
                               </div>
-                              <div className="text-lg font-bold text-blue-600">
+                              <div className={`text-lg font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
                                 {formatPrice(s.price * s.quantity)}
                               </div>
                             </div>
                           ))}
                         </div>
-                        <div className="mt-4 pt-4 border-t border-blue-200 text-right">
-                          <span className="text-2xl font-bold text-blue-700">
+                        <div className={`mt-4 pt-4 border-t text-right ${theme === 'dark' ? 'border-blue-800' : 'border-blue-200'}`}>
+                          <span className={`text-2xl font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-700'}`}>
                             Tổng: {formatPrice(totalAmount)}
                           </span>
                         </div>
                       </div>
                     )}
 
-                    <div className="max-h-96 overflow-y-auto border border-blue-200 rounded-xl bg-white">
+                    <div className={`max-h-96 overflow-y-auto border rounded-xl ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-blue-200'}`}>
                       {loadingServices ? (
                         <div className="p-16 text-center"><Loader2 className="w-12 h-12 animate-spin mx-auto" /></div>
                       ) : filteredServices.length === 0 ? (
@@ -585,14 +587,16 @@ export default function CurrentPatientExamination() {
                             <div
                               key={svc.id}
                               onClick={() => toggleService(svc)}
-                              className={`p-5 cursor-pointer hover:bg-blue-50 border-b border-blue-100 last:border-0 transition-all ${
-                                selected ? 'bg-blue-50 border-l-4 border-l-blue-600' : ''
+                              className={`p-5 cursor-pointer border-b last:border-0 transition-all ${
+                                selected 
+                                  ? (theme === 'dark' ? 'bg-blue-900/30 border-l-4 border-l-blue-500 border-b-gray-700' : 'bg-blue-50 border-l-4 border-l-blue-600 border-b-blue-100')
+                                  : (theme === 'dark' ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-blue-50 border-blue-100')
                               }`}
                             >
                               <div className="flex justify-between items-center">
                                 <div>
-                                  <div className="font-semibold text-slate-900">{svc.name}</div>
-                                  <div className="text-sm text-slate-600">{formatPrice(svc.price)}</div>
+                                  <div className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{svc.name}</div>
+                                  <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600'}`}>{formatPrice(svc.price)}</div>
                                 </div>
                                 {selected && <CheckIcon className="w-7 h-7 text-blue-600" />}
                               </div>
@@ -613,13 +617,13 @@ export default function CurrentPatientExamination() {
 
   // ==================== MÀN HÌNH CHỜ – BẢNG DUY NHẤT, XANH DƯƠNG + TRẮNG ====================
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-50">
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gradient-to-br from-blue-50 to-sky-50'}`}>
       <Toaster position="top-right" />
 
-      <div className="bg-white shadow-sm border-b border-blue-100">
+      <div className={`shadow-sm border-b ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-blue-100'}`}>
         <div className="max-w-6xl mx-auto px-6 py-8 text-center">
-          <h1 className="text-3xl font-bold text-blue-900">Phòng khám của tôi</h1>
-          <p className="text-xl text-blue-600 mt-2 font-medium">
+          <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-900'}`}>Phòng khám của tôi</h1>
+          <p className={`text-xl mt-2 font-medium ${theme === 'dark' ? 'text-blue-300' : 'text-blue-600'}`}>
             {waitingQueue.length} bệnh nhân đang chờ khám
           </p>
         </div>
@@ -627,15 +631,15 @@ export default function CurrentPatientExamination() {
 
       <div className="max-w-6xl mx-auto px-6 py-10">
         {waitingQueue.length === 0 ? (
-          <div className="text-center py-32 bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100">
-            <div className="text-8xl mb-6">Smile</div>
-            <h2 className="text-2xl font-semibold text-blue-800">
+          <div className={`text-center py-32 backdrop-blur-sm rounded-2xl shadow-lg border ${theme === 'dark' ? 'bg-gray-800/90 border-gray-700' : 'bg-white/90 border-blue-100'}`}>
+            <div className={`text-8xl mb-6 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`}>Smile</div>
+            <h2 className={`text-2xl font-semibold ${theme === 'dark' ? 'text-blue-300' : 'text-blue-800'}`}>
               Hiện chưa có bệnh nhân nào
             </h2>
-            <p className="text-lg text-blue-600 mt-3">Hệ thống đang chờ bệnh nhân tiếp theo...</p>
+            <p className={`text-lg mt-3 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>Hệ thống đang chờ bệnh nhân tiếp theo...</p>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl shadow-xl border border-blue-100 overflow-hidden">
+          <div className={`rounded-2xl shadow-xl border overflow-hidden ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-blue-100'}`}>
             <div className="bg-gradient-to-r from-blue-600 to-sky-600 text-white px-6 py-5">
               <h2 className="text-xl font-bold flex items-center gap-3">
                 <Clock className="w-6 h-6" />
@@ -645,7 +649,7 @@ export default function CurrentPatientExamination() {
 
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-blue-50 text-blue-800 text-sm font-semibold uppercase tracking-wider">
+                <thead className={`text-sm font-semibold uppercase tracking-wider ${theme === 'dark' ? 'bg-gray-700 text-blue-300' : 'bg-blue-50 text-blue-800'}`}>
                   <tr>
                     <th className="px-6 py-4 text-left">STT</th>
                     <th className="px-6 py-4 text-left">Họ và tên</th>
@@ -655,7 +659,7 @@ export default function CurrentPatientExamination() {
                     <th className="px-6 py-4 text-center">Thao tác</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-blue-100">
+                <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-blue-100'}`}>
                   {waitingQueue.map((patient, index) => {
                     const isNextPatient = index === 0;
 
@@ -664,13 +668,13 @@ export default function CurrentPatientExamination() {
                         key={patient.queueId}
                         className={`transition-all duration-200 ${
                           isNextPatient
-                            ? 'bg-blue-50/70 border-l-4 border-blue-600 font-medium'
-                            : 'hover:bg-blue-50/30'
+                            ? (theme === 'dark' ? 'bg-blue-900/20 border-l-4 border-blue-500' : 'bg-blue-50/70 border-l-4 border-blue-600 font-medium')
+                            : (theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-blue-50/30')
                         }`}
                       >
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-3">
-                            <span className={`font-bold text-2xl ${isNextPatient ? 'text-blue-700' : 'text-gray-800'}`}>
+                            <span className={`font-bold text-2xl ${isNextPatient ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-white'}`}>
                               {patient.queueNumber}
                             </span>
                             {isNextPatient && (
@@ -681,19 +685,19 @@ export default function CurrentPatientExamination() {
                           </div>
                         </td>
 
-                        <td className="px-6 py-5 text-gray-900 font-medium text-lg">
+                        <td className={`px-6 py-5 font-medium text-lg ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                           {patient.patientName}
                         </td>
 
-                        <td className="px-6 py-5 text-center text-gray-700">
+                        <td className={`px-6 py-5 text-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                           {patient.gender === 'Male' || patient.gender === 'Nam' ? 'Nam' : 'Nữ'}
                         </td>
 
-                        <td className="px-6 py-5 text-center text-gray-800 font-semibold">
+                        <td className={`px-6 py-5 text-center font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
                           {calculateAge(patient.dob)}
                         </td>
 
-                        <td className="px-6 py-5 text-center text-gray-600">
+                        <td className={`px-6 py-5 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                           {formatTime(patient.checkInTime)}
                         </td>
 

@@ -6,8 +6,10 @@ import toast from 'react-hot-toast';
 import RecordDetailModal from './RecordDetailModal';
 import PrescriptionFormModal from './PrescriptionFormModal';
 import { downloadPdf, getMedicalRecordFilename } from '../../utils/pdfDownload';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
+  const { theme } = useTheme();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [localDiagnosis, setLocalDiagnosis] = useState(record.diagnosis || '');
@@ -93,34 +95,34 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
 
   return (
     <>
-      <tr className="hover:bg-gray-50">
-        <td className="px-6 py-4 text-sm text-gray-600">{index}</td>
-        <td className="px-6 py-4 text-sm text-gray-800">{record.patientName || record.patientId || '—'}</td>
-        <td className="px-6 py-4 text-sm text-gray-800">
+      <tr className={`transition-colors ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
+        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{index}</td>
+        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>{record.patientName || record.patientId || '—'}</td>
+        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
           {editing ? (
             <input
               type="text"
               value={localDiagnosis}
               onChange={(e) => setLocalDiagnosis(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
             />
           ) : (
             record.diagnosis
           )}
         </td>
-        <td className="px-6 py-4 text-sm text-gray-600">
+        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
           {editing ? (
             <input
               type="text"
               value={localNotes}
               onChange={(e) => setLocalNotes(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
             />
           ) : (
             record.treatmentNotes || '—'
           )}
         </td>
-        <td className="px-6 py-4 text-sm text-gray-600">
+        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
           {editing ? (
             <div className="flex items-center gap-3">
               <button
@@ -136,7 +138,7 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
                   setLocalDiagnosis(record.diagnosis || '');
                   setLocalNotes(record.treatmentNotes || '');
                 }}
-                className="px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                className={`px-3 py-1 rounded hover:bg-opacity-80 ${theme === 'dark' ? 'bg-gray-600 text-white' : 'bg-gray-200 text-gray-800'}`}
               >
                 Hủy
               </button>
@@ -204,15 +206,6 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
               >
                 <Pencil className="w-4 h-4" />
               </button>
-              {/* <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 disabled:opacity-60"
-                aria-label="Xóa"
-                title={deleting ? 'Đang xóa...' : 'Xóa'}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button> */}
             </div>
           )}
         </td>
@@ -298,4 +291,3 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
 };
 
 export default RecordRow;
-
