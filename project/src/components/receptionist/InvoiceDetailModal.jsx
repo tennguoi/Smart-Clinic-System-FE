@@ -16,20 +16,15 @@ import {
   CheckCircle,
   Download
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../contexts/ThemeContext';
 import axiosInstance from '../../utils/axiosConfig';
 import toast from 'react-hot-toast';
-import { useTheme } from '../../contexts/ThemeContext';
-
-const PAYMENT_METHODS = {
-  Cash: 'Tiền mặt',
-  Card: 'Thẻ ngân hàng',
-  Transfer: 'Chuyển khoản'
-};
 
 const PAYMENT_STATUS = {
-  Pending: { label: 'Chờ thanh toán', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' },
-  Paid: { label: 'Đã thanh toán', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
-  PartiallyPaid: { label: 'Thanh toán 1 phần', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' }
+  Pending: { label: 'invoices.modal.statusMap.pending', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' },
+  Paid: { label: 'invoices.modal.statusMap.paid', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
+  PartiallyPaid: { label: 'invoices.modal.statusMap.partiallyPaid', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' }
 };
 
 const formatPrice = (price) => {
@@ -38,25 +33,25 @@ const formatPrice = (price) => {
 
 export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
+
   const [isEditing, setIsEditing] = useState(false);
   const [editedItems, setEditedItems] = useState([]);
   const [availableServices, setAvailableServices] = useState([]);
   const [loadingServices, setLoadingServices] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddService, setShowAddService] = useState(false);
-  
-  // Trạng thái loading khi lưu
   const [saving, setSaving] = useState(false);
 
-  // Khởi tạo items từ invoice
+  // Init editedItems from invoice safely
   useEffect(() => {
-    if (invoice?.items && Array.isArray(invoice.items)) {
+    if (invoice && Array.isArray(invoice.items)) {
       setEditedItems(invoice.items.map(item => ({
         serviceId: item.serviceId,
         serviceName: item.serviceName,
         quantity: item.quantity || 1,
         unitPrice: item.unitPrice || 0,
-        subTotal: item.subTotal || 0,
+        subTotal: item.subTotal || (item.unitPrice || 0) * (item.quantity || 1),
         description: item.description || ''
       })));
     } else {
@@ -64,7 +59,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
     }
   }, [invoice]);
 
-  // Tải danh sách dịch vụ khi bật chỉnh sửa
+  // Load services when entering edit mode
   useEffect(() => {
     if (isEditing && availableServices.length === 0) {
       const loadServices = async () => {
@@ -79,19 +74,21 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
           setAvailableServices(list);
         } catch (err) {
           console.error('Lỗi tải dịch vụ:', err);
-          toast.error('Không thể tải danh sách dịch vụ');
+          toast.error(t('common.error'));
         } finally {
           setLoadingServices(false);
         }
       };
       loadServices();
     }
-  }, [isEditing, availableServices.length]);
+  }, [isEditing, availableServices.length, t]);
 
   if (!invoice) return null;
 
   const canEdit = invoice.paymentStatus === 'Pending' && (!invoice.amountPaid || invoice.amountPaid === 0);
-  const totalAmount = editedItems.reduce((sum, item) => sum + (item.subTotal || 0), 0);
+  const totalAmountLocal = editedItems.reduce((sum, item) => sum + (item.subTotal || 0), 0);
+  // Choose which total to show depending on edit state:
+  const totalAmount = isEditing ? totalAmountLocal : (invoice.totalAmount ?? totalAmountLocal);
   const status = PAYMENT_STATUS[invoice.paymentStatus] || PAYMENT_STATUS.Pending;
 
   const filteredServices = availableServices.filter(s =>
@@ -100,7 +97,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
 
   const handleAddService = (service) => {
     if (editedItems.some(i => i.serviceId === service.serviceId)) {
-      toast.error('Dịch vụ đã tồn tại trong hóa đơn', { duration: 3000 });
+      toast.error(t('invoices.modal.serviceAlreadyExists'), { duration: 3000 });
       return;
     }
     setEditedItems(prev => [...prev, {
@@ -111,14 +108,15 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
       subTotal: service.price,
       description: ''
     }]);
-    toast.success(`Đã thêm: ${service.name}`);
-    setShowAddService(false); // Đóng panel sau khi thêm
-    setSearchQuery(''); // Xóa tìm kiếm
+    toast.success(`${t('invoices.modal.addedService')}: ${service.name}`);
+    setShowAddService(false);
+    setSearchQuery('');
+    // optional: scroll into view or focus last added item in UI (left to implementation)
   };
 
   const handleRemoveItem = (index) => {
     if (editedItems.length === 1) {
-      toast.error('Hóa đơn phải có ít nhất 1 dịch vụ');
+      toast.error(t('invoices.modal.atLeastOneService'));
       return;
     }
     setEditedItems(prev => prev.filter((_, i) => i !== index));
@@ -135,19 +133,18 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
     });
   };
 
-  // Hàm lưu có loading
   const handleSave = async () => {
     if (editedItems.length === 0) {
-      toast.error('Hóa đơn phải có ít nhất 1 dịch vụ');
+      toast.error(t('invoices.modal.atLeastOneService'));
       return;
     }
 
     if (editedItems.some(item => !item.serviceId)) {
-      toast.error('Có dịch vụ bị thiếu thông tin. Vui lòng kiểm tra lại.');
+      toast.error(t('invoices.modal.missingServiceInfo'));
       return;
     }
 
-    setSaving(true); // Bắt đầu loading
+    setSaving(true);
 
     try {
       await axiosInstance.put(`/api/billing/${invoice.billId}`, {
@@ -158,26 +155,44 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
         }))
       });
 
-      toast.success('Cập nhật hóa đơn thành công!', {
-        icon: '✅',
-        duration: 3000,
+      toast.success(t('invoices.modal.updateSuccess'), {
+        icon: <CheckCircle />
       });
 
       setIsEditing(false);
       setShowAddService(false);
       setSearchQuery('');
-      onUpdate?.(); // Cập nhật danh sách ở component cha
+      onUpdate?.();
 
     } catch (err) {
       console.error('Lỗi cập nhật hóa đơn:', err);
       toast.error(
-        err.response?.data?.message || 
-        err.response?.data?.error || 
-        'Cập nhật hóa đơn thất bại. Vui lòng thử lại.'
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        t('common.error')
       );
     } finally {
-      setSaving(false); // Luôn tắt loading
+      setSaving(false);
     }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setShowAddService(false);
+    setSearchQuery('');
+    // Reset edited items from current invoice safely
+    setEditedItems(
+      invoice && Array.isArray(invoice.items)
+        ? invoice.items.map(item => ({
+            serviceId: item.serviceId,
+            serviceName: item.serviceName,
+            quantity: item.quantity || 1,
+            unitPrice: item.unitPrice || 0,
+            subTotal: item.subTotal || (item.unitPrice || 0) * (item.quantity || 1),
+            description: item.description || ''
+          }))
+        : []
+    );
   };
 
   const handleDownloadPdf = async () => {
@@ -190,7 +205,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
       });
 
       if (!response.ok) {
-        throw new Error('Không thể tải xuống hóa đơn');
+        throw new Error(t('invoices.errors.pdfDownloadFailed'));
       }
 
       const blob = await response.blob();
@@ -203,10 +218,10 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      toast.success('Xuất hóa đơn thành công!');
+      toast.success(t('invoices.pdfDownloadSuccess'));
     } catch (err) {
       console.error('Lỗi tải PDF:', err);
-      toast.error('Không thể xuất hóa đơn. Vui lòng thử lại.');
+      toast.error(t('invoices.errors.pdfDownloadError'));
     }
   };
 
@@ -220,9 +235,9 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
               <FileText className={`w-7 h-7 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
             </div>
             <div>
-              <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Chi tiết hóa đơn</h2>
+              <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('invoices.modal.title')}</h2>
               <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                Mã: {invoice.billId?.slice(0, 8).toUpperCase() || 'N/A'}
+                {t('invoices.modal.code')}: {invoice.billId?.slice(0, 8).toUpperCase() || 'N/A'}
               </p>
             </div>
           </div>
@@ -236,25 +251,29 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
         </div>
 
         <div className="p-6 space-y-6">
-          {/* Thông tin bệnh nhân & hóa đơn */}
+          {/* Patient & invoice info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className={`rounded-xl p-6 border ${theme === 'dark' ? 'bg-blue-900/20 border-blue-800' : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200'}`}>
               <div className="flex items-center gap-3 mb-4">
                 <User className={`w-5 h-5 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-                <span className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Bệnh nhân</span>
+                <span className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('invoices.modal.patient')}</span>
               </div>
-              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{invoice.patientName || 'Chưa có tên'}</p>
-              <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>{invoice.patientPhone || 'Không có SĐT'}</p>
+              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{invoice.patientName || t('invoices.modal.noPatientName')}</p>
+              <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>{invoice.patientPhone || t('invoices.modal.noPhone')}</p>
             </div>
 
             <div className={`rounded-xl p-6 border ${theme === 'dark' ? 'bg-purple-900/20 border-purple-800' : 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200'}`}>
               <div className="flex items-center gap-3 mb-4">
                 <Calendar className={`w-5 h-5 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
-                <span className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Thông tin hóa đơn</span>
+                <span className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('invoices.modal.invoiceInfo')}</span>
               </div>
-              <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}>Ngày tạo: {new Date(invoice.createdAt).toLocaleDateString('vi-VN')}</p>
+              <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}>
+                {t('invoices.modal.createdDate')}: {invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
+              </p>
               <p className="mt-2">
-                Trạng thái: <span className={`ml-2 px-3 py-1 rounded-full text-xs font-bold ${status.color}`}>{status.label}</span>
+                {t('invoices.modal.status')}: <span className={`ml-2 px-3 py-1 rounded-full text-xs font-bold ${status.color}`}>
+                  {t(status.label)}
+                </span>
               </p>
             </div>
           </div>
@@ -264,7 +283,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
             <div className="flex justify-between items-center mb-6">
               <h3 className={`text-xl font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 <DollarSign className="w-6 h-6 text-green-600" />
-                Dịch vụ & Chi phí
+                {t('invoices.modal.servicesAndCosts')}
               </h3>
 
               {canEdit && !isEditing && (
@@ -273,7 +292,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                   className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition"
                 >
                   <Edit2 className="w-5 h-5" />
-                  Chỉnh sửa
+                  {t('invoices.common.edit')}
                 </button>
               )}
 
@@ -285,57 +304,39 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                     disabled={saving}
                   >
                     <Plus className="w-5 h-5" />
-                    Thêm dịch vụ
+                    {t('invoices.modal.addService')}
                   </button>
 
-                  {/* Nút Lưu với loading */}
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition ${
-                      saving 
-                        ? 'bg-blue-400 cursor-not-allowed' 
-                        : 'bg-blue-600 hover:bg-blue-700'
-                    } text-white`}
+                    className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition text-white ${saving ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                   >
                     {saving ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        Đang lưu...
+                        {t('invoices.modal.saving')}
                       </>
                     ) : (
                       <>
                         <Save className="w-5 h-5" />
-                        Lưu thay đổi
+                        {t('common.save')}
                       </>
                     )}
                   </button>
 
                   <button
-                    onClick={() => {
-                      setIsEditing(false);
-                      setShowAddService(false);
-                      setSearchQuery('');
-                      // Khôi phục dữ liệu gốc
-                      setEditedItems(invoice.items.map(item => ({
-                        serviceId: item.serviceId,
-                        serviceName: item.serviceName,
-                        quantity: item.quantity || 1,
-                        unitPrice: item.unitPrice || 0,
-                        subTotal: item.subTotal || 0,
-                        description: item.description || ''
-                      })));
-                    }}
+                    onClick={handleCancelEdit}
                     className={`px-5 py-3 rounded-xl font-semibold transition ${theme === 'dark' ? 'bg-gray-600 hover:bg-gray-500 text-white' : 'bg-gray-500 hover:bg-gray-600 text-white'}`}
                     disabled={saving}
                   >
-                    Hủy
+                    {t('common.cancel')}
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Panel thêm dịch vụ */}
+            {/* Add service panel */}
             {showAddService && (
               <div className={`mb-6 p-6 rounded-xl border-2 border-dashed ${theme === 'dark' ? 'bg-gray-800 border-green-800' : 'bg-white border-green-300'}`}>
                 <div className="relative mb-4">
@@ -343,7 +344,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                   <input
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Tìm kiếm dịch vụ..."
+                    placeholder={t('invoices.modal.searchServicePlaceholder')}
                     className={`w-full pl-12 pr-4 py-3 border rounded-xl focus:ring-4 focus:outline-none ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:ring-green-900/30' : 'bg-white border-gray-300 focus:ring-green-100'}`}
                     autoFocus
                   />
@@ -353,10 +354,10 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                   {loadingServices ? (
                     <div className="p-10 text-center">
                       <Loader2 className="w-10 h-10 animate-spin mx-auto text-blue-600" />
-                      <p className={`mt-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Đang tải dịch vụ...</p>
+                      <p className={`mt-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.modal.loadingServices')}</p>
                     </div>
                   ) : filteredServices.length === 0 ? (
-                    <p className={`p-10 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Không tìm thấy dịch vụ nào</p>
+                    <p className={`p-10 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{t('invoices.modal.noServiceFound')}</p>
                   ) : (
                     filteredServices.map(s => (
                       <button
@@ -377,15 +378,15 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                   onClick={() => setShowAddService(false)}
                   className="mt-4 text-sm text-blue-600 hover:underline"
                 >
-                  Đóng
+                  {t('invoices.common.close')}
                 </button>
               </div>
             )}
 
-            {/* Danh sách dịch vụ hiện tại */}
+            {/* Current services */}
             <div className="space-y-4">
               {editedItems.length === 0 ? (
-                <p className={`text-center py-10 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Chưa có dịch vụ nào</p>
+                <p className={`text-center py-10 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{t('invoices.modal.noServices')}</p>
               ) : (
                 editedItems.map((item, idx) => (
                   <div key={idx} className={`p-5 rounded-xl border shadow-sm flex items-center justify-between ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
@@ -409,9 +410,9 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                               disabled={saving}
                             >+</button>
                           </div>
-                          <button 
-                            onClick={() => handleRemoveItem(idx)} 
-                            className="text-red-600 hover:text-red-800"
+                          <button
+                            onClick={() => handleRemoveItem(idx)}
+                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                             disabled={saving}
                           >
                             <Trash2 className="w-6 h-6" />
@@ -428,13 +429,13 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
             </div>
           </div>
 
-          {/* Tổng kết */}
+          {/* Summary */}
           <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl p-8 text-center shadow-2xl">
             <div className="text-4xl font-bold">
-              Còn lại: {formatPrice(totalAmount - (invoice.amountPaid || 0))}
+              {t('invoices.modal.remaining')}: {formatPrice(totalAmount - (invoice.amountPaid || 0))}
             </div>
             <div className="mt-4 text-xl opacity-90">
-              Tổng tiền: {formatPrice(totalAmount)} • Đã thu: {formatPrice(invoice.amountPaid || 0)}
+              {t('invoices.modal.total')}: {formatPrice(totalAmount)} • {t('invoices.modal.paid')}: {formatPrice(invoice.amountPaid || 0)}
             </div>
           </div>
 
@@ -446,7 +447,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
               disabled={saving}
             >
               <Download className="w-5 h-5" />
-              Xuất PDF
+              {t('invoices.modal.exportPdf')}
             </button>
 
             <div className="flex justify-end gap-4">
@@ -455,7 +456,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                 className={`px-8 py-4 rounded-xl font-bold text-lg transition ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-900'}`}
                 disabled={saving}
               >
-                Đóng
+                {t('common.close')}
               </button>
               {invoice.paymentStatus === 'Pending' && !isEditing && (
                 <button
@@ -463,7 +464,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                   className="px-12 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold text-xl shadow-2xl flex items-center gap-3 hover:shadow-green-500/50 transition"
                 >
                   <CreditCard className="w-7 h-7" />
-                  Thanh toán ngay
+                  {t('invoices.modal.payNow')}
                 </button>
               )}
             </div>

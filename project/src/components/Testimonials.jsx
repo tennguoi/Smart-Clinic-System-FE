@@ -1,7 +1,10 @@
+// src/components/Testimonials.jsx
 import { Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function Testimonials() {
+  const { t } = useTranslation();
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(null);
   const [totalReviews, setTotalReviews] = useState(0);
@@ -9,17 +12,17 @@ export default function Testimonials() {
   const [error, setError] = useState(null);
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'Không rõ';
+    if (!dateString) return t('testimonials.noDate');
     const date = new Date(dateString);
     const now = new Date();
     const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
 
-    if (diffInDays === 0) return 'Hôm nay';
-    if (diffInDays === 1) return 'Hôm qua';
-    if (diffInDays < 7) return `${diffInDays} ngày trước`;
-    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} tuần trước`;
-    if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} tháng trước`;
-    return `${Math.floor(diffInDays / 365)} năm trước`;
+    if (diffInDays === 0) return t('testimonials.today');
+    if (diffInDays === 1) return t('testimonials.yesterday');
+    if (diffInDays < 7) return t('testimonials.daysAgo', { count: diffInDays });
+    if (diffInDays < 30) return t('testimonials.weeksAgo', { count: Math.floor(diffInDays / 7) });
+    if (diffInDays < 365) return t('testimonials.monthsAgo', { count: Math.floor(diffInDays / 30) });
+    return t('testimonials.yearsAgo', { count: Math.floor(diffInDays / 365) });
   };
 
   const fetchSummary = async () => {
@@ -27,7 +30,7 @@ export default function Testimonials() {
       setLoading(true);
       setError(null);
       const res = await fetch('http://localhost:8082/api/public/reviews/summary');
-      if (!res.ok) throw new Error('Không thể tải đánh giá');
+      if (!res.ok) throw new Error(t('testimonials.errorLoad'));
       const data = await res.json();
 
       setReviews(data.reviews || []);
@@ -48,7 +51,9 @@ export default function Testimonials() {
     return (
       <section className="py-6 md:py-10 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-gray-500 dark:text-gray-400">Đang tải đánh giá...</p>
+          <p className="text-gray-500 dark:text-gray-400">
+            {t('testimonials.loading')}
+          </p>
         </div>
       </section>
     );
@@ -58,29 +63,25 @@ export default function Testimonials() {
     return (
       <section className="py-16 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-red-600">{error}</p>
+          <p className="text-red-600 dark:text-red-400">{error}</p>
         </div>
       </section>
     );
   }
 
-  // Chỉ lấy 8 đánh giá đầu tiên
   const displayedReviews = reviews.slice(0, 8);
 
   return (
     <section className="py-12 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-        {/* Tiêu đề + Tóm tắt */}
+        {/* Tiêu đề chính */}
         <div className="text-center mb-8">
-       
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mt-2 mb-3">
-            Bệnh Nhân Nói Gì Về Chúng Tôi
+            {t('testimonials.title')}
           </h2>
-      
         </div>
 
-        {/* Tóm tắt rating - căn giữa */}
+        {/* Tóm tắt rating */}
         <div className="flex justify-center mb-12">
           <div className="inline-flex items-center bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-cyan-100 dark:border-gray-700 p-6 hover:shadow-xl transition-shadow">
             <div className="text-center mr-6">
@@ -101,15 +102,19 @@ export default function Testimonials() {
               <div className="text-3xl font-bold text-cyan-600 dark:text-cyan-400">
                 {averageRating ? Math.round((averageRating / 5) * 100) : 0}%
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Khuyến nghị</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                {t('testimonials.recommendation')}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Danh sách đánh giá - 4 cột */}
+        {/* Danh sách đánh giá */}
         {reviews.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">Chưa có đánh giá nào.</p>
+            <p className="text-gray-500 dark:text-gray-400">
+              {t('testimonials.noReviews')}
+            </p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -137,8 +142,12 @@ export default function Testimonials() {
                       {review.reviewerName.split(' ').pop()[0]?.toUpperCase() || '?'}
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors duration-300">{review.reviewerName}</p>
-                      <p className="text-gray-500 dark:text-gray-400">{formatDate(review.createdAt)}</p>
+                      <p className="font-semibold text-gray-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors duration-300">
+                        {review.reviewerName}
+                      </p>
+                      <p className="text-gray-500 dark:text-gray-400">
+                        {formatDate(review.createdAt)}
+                      </p>
                     </div>
                   </div>
                 </div>

@@ -4,19 +4,28 @@ import {
     LineChart, Line
 } from 'recharts';
 import axios from 'axios';
-import { FaCalendarCheck, FaUserInjured, FaMoneyBillWave, FaUserMd, FaArrowUp, FaArrowDown, FaCalendar, FaChartBar, FaStethoscope, FaCoins } from 'react-icons/fa';
+import { 
+    FaCalendarCheck, FaUserInjured, FaMoneyBillWave, FaUserMd, 
+    FaArrowUp, FaArrowDown, FaChartBar, FaStethoscope, FaCoins 
+} from 'react-icons/fa';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { CalendarDays } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const RANGE_OPTIONS = [
-    { label: 'Ngày', value: 'day' },
-    { label: 'Tuần', value: 'week' },
-    { label: 'Tháng', value: 'month' },
-    { label: 'Tùy chỉnh', value: 'custom' },
+    { label: 'Ngày', value: 'day', en: 'Day' },
+    { label: 'Tuần', value: 'week', en: 'Week' },
+    { label: 'Tháng', value: 'month', en: 'Month' },
+    { label: 'Tùy chỉnh', value: 'custom', en: 'Custom' },
 ];
 
 const StatisticsPage = () => {
+    const { t, i18n } = useTranslation();
+    const { theme } = useTheme();
+    const currentLang = i18n.language;
+
     const [topServices, setTopServices] = useState([]);
     const [statType, setStatType] = useState('appointment'); // 'appointment', 'medical_record', 'revenue'
     const [kpi, setKpi] = useState({
@@ -34,51 +43,39 @@ const StatisticsPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     
-    // Date filter states (New Logic to match DoctorStatsDashboard)
-    const [rangeType, setRangeType] = useState('month'); // Default to month for better overview
+    // Date filter states
+    const [rangeType, setRangeType] = useState('month');
     const [selectedDate, setSelectedDate] = useState(new Date());
-    
-    // Custom range state
     const [customStartDate, setCustomStartDate] = useState(new Date());
     const [customEndDate, setCustomEndDate] = useState(new Date());
 
-    // Derived startDate and endDate based on rangeType and selectedDate
+    // Derived startDate and endDate
     const { startDate, endDate } = useMemo(() => {
         let start = new Date(selectedDate);
         let end = new Date(selectedDate);
 
         if (rangeType === 'day') {
-            // Start and end are the same day
             start.setHours(0, 0, 0, 0);
             end.setHours(23, 59, 59, 999);
         } else if (rangeType === 'week') {
-            // Calculate start of week (Monday) and end of week (Sunday)
             const day = start.getDay();
-            const diff = start.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
-            start.setDate(diff);
+            const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+            start = new Date(start.setDate(diff));
             start.setHours(0, 0, 0, 0);
-            
             end = new Date(start);
             end.setDate(start.getDate() + 6);
             end.setHours(23, 59, 59, 999);
         } else if (rangeType === 'month') {
-            // Start of month and end of month
-            start.setDate(1);
-            start.setHours(0, 0, 0, 0);
-            
-            end = new Date(start);
-            end.setMonth(end.getMonth() + 1);
-            end.setDate(0); // Last day of previous month (which is current month since we added 1)
+            start = new Date(start.getFullYear(), start.getMonth(), 1);
+            end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
             end.setHours(23, 59, 59, 999);
         } else if (rangeType === 'custom') {
             start = new Date(customStartDate);
             start.setHours(0, 0, 0, 0);
-            
             end = new Date(customEndDate);
             end.setHours(23, 59, 59, 999);
         }
 
-        // Format to YYYY-MM-DD for API
         const formatDate = (date) => {
             const offset = date.getTimezoneOffset();
             const localDate = new Date(date.getTime() - (offset * 60 * 1000));
@@ -93,36 +90,27 @@ const StatisticsPage = () => {
 
     const datePickerConfig = useMemo(() => {
         if (rangeType === 'month')
-          return { showMonthYearPicker: true, dateFormat: 'MM/yyyy' };
+            return { showMonthYearPicker: true, dateFormat: currentLang === 'vi' ? 'MM/yyyy' : 'MM/yyyy' };
         if (rangeType === 'week')
-          return { showWeekNumbers: true, dateFormat: "'Tuần' ww, yyyy" };
+            return { showWeekNumbers: true, dateFormat: currentLang === 'vi' ? "'Tuần' ww, yyyy" : "'Week' ww, yyyy" };
         return { dateFormat: 'dd/MM/yyyy' };
-    }, [rangeType]);
+    }, [rangeType, currentLang]);
 
-    // Bảng màu cho biểu đồ
     const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Kiểm tra token
-                const token = localStorage.getItem('token') || localStorage.getItem('accessToken'); 
-
+                const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
                 if (!token) {
-                    console.warn("Không tìm thấy Token. Đang hiển thị dữ liệu mẫu (Demo Mode).");
+                    console.warn(t('common.noToken'));
                     setLoading(false);
                     return;
                 }
 
-                const headers = { 
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                };
-
-                // Gọi API song song với date filter
+                const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
                 const params = { startDate, endDate };
-                
-                // Determine which Top Services API to call
+
                 let topServicesUrl = 'http://localhost:8082/api/admin/dashboard/top-services-by-appointments';
                 if (statType === 'medical_record') {
                     topServicesUrl = 'http://localhost:8082/api/admin/dashboard/top-services-by-medical-records';
@@ -137,16 +125,18 @@ const StatisticsPage = () => {
                     axios.get('http://localhost:8082/api/admin/dashboard/trend/revenue', { headers, params })
                 ]);
 
-                // Map dữ liệu Top Services
                 const formattedTopServices = topServicesRes.data.map((item) => ({
-                    name: item.serviceName,       
-                    usage: statType === 'revenue' ? item.totalRevenue : item.quantity,        
-                    price: item.servicePrice,     
+                    name: item.serviceName,
+                    usage: statType === 'revenue' ? item.totalRevenue : item.quantity,
+                    price: item.servicePrice,
                     image: item.photoUrl,
                     category: item.serviceCategory,
-                    displayValue: statType === 'revenue' 
-                        ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.totalRevenue)
-                        : `${item.quantity} lượt`
+                    displayValue: statType === 'revenue'
+                        ? new Intl.NumberFormat(currentLang === 'vi' ? 'vi-VN' : 'en-US', {
+                            style: 'currency',
+                            currency: 'VND'
+                        }).format(item.totalRevenue)
+                        : `${item.quantity} ${t('common.times', { defaultValue: 'lượt' })}`
                 }));
 
                 setTopServices(formattedTopServices);
@@ -155,73 +145,25 @@ const StatisticsPage = () => {
                 setRevenueTrend(revTrendRes.data);
 
             } catch (err) {
-                console.error("Lỗi tải thống kê:", err);
-                if (err.response && err.response.status === 401) {
-                     setError("Phiên đăng nhập hết hạn hoặc không có quyền truy cập.");
-                } else {
-                    setError("Không thể tải dữ liệu thống kê.");
-                }
+                console.error(t('common.loadError'), err);
+                setError(err.response?.status === 401
+                    ? t('common.sessionExpired', { defaultValue: 'Phiên đăng nhập hết hạn' })
+                    : t('common.loadError', { defaultValue: 'Không thể tải dữ liệu thống kê' })
+                );
             } finally {
                 setLoading(false);
             }
         };
 
         fetchData();
-    }, [startDate, endDate, statType]);
+    }, [startDate, endDate, statType, currentLang, t]);
 
-    // Listen for payment completion events and refresh data
+    // Refresh khi có thanh toán thành công
     useEffect(() => {
-        const handlePaymentCompleted = (event) => {
-            console.log('Payment completed event received:', event.detail);
-            // Refresh the statistics data
+        const handlePaymentCompleted = () => {
             setLoading(true);
-            
-            // Trigger a re-fetch by updating the dependency
-            // This will cause the fetchData useEffect to run again
-            const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
-            if (token) {
-                const headers = { 
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                };
-                const params = { startDate, endDate };
-                
-                let topServicesUrl = 'http://localhost:8082/api/admin/dashboard/top-services-by-appointments';
-                if (statType === 'medical_record') {
-                    topServicesUrl = 'http://localhost:8082/api/admin/dashboard/top-services-by-medical-records';
-                } else if (statType === 'revenue') {
-                    topServicesUrl = 'http://localhost:8082/api/admin/dashboard/top-services-by-revenue';
-                }
-
-                Promise.all([
-                    axios.get(topServicesUrl, { headers, params }),
-                    axios.get('http://localhost:8082/api/admin/dashboard/kpi', { headers, params }),
-                    axios.get('http://localhost:8082/api/admin/dashboard/trend/appointments', { headers, params }),
-                    axios.get('http://localhost:8082/api/admin/dashboard/trend/revenue', { headers, params })
-                ]).then(([topServicesRes, kpiRes, apptTrendRes, revTrendRes]) => {
-                    const formattedTopServices = topServicesRes.data.map((item) => ({
-                        name: item.serviceName,       
-                        usage: statType === 'revenue' ? item.totalRevenue : item.quantity,        
-                        price: item.servicePrice,     
-                        image: item.photoUrl,
-                        category: item.serviceCategory,
-                        displayValue: statType === 'revenue' 
-                            ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.totalRevenue)
-                            : `${item.quantity} lượt`
-                    }));
-
-                    setTopServices(formattedTopServices);
-                    setKpi(kpiRes.data);
-                    setAppointmentTrend(apptTrendRes.data);
-                    setRevenueTrend(revTrendRes.data);
-                    setLoading(false);
-                }).catch(err => {
-                    console.error("Lỗi tải lại thống kê:", err);
-                    setLoading(false);
-                });
-            }
+            setTimeout(() => setLoading(false), 100);
         };
-
         window.addEventListener('paymentCompleted', handlePaymentCompleted);
         return () => window.removeEventListener('paymentCompleted', handlePaymentCompleted);
     }, [startDate, endDate, statType]);
@@ -233,8 +175,8 @@ const StatisticsPage = () => {
     );
 
     if (error) return (
-        <div className="p-6 text-center text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800 mt-10 mx-10">
-            <p className="font-bold text-lg mb-2">⚠️ Đã xảy ra lỗi</p>
+        <div className={`p-6 text-center ${theme === 'dark' ? 'text-red-400 bg-red-900/30 border-red-800' : 'text-red-500 bg-red-50 border-red-200'} rounded-lg border mt-10 mx-10`}>
+            <p className="font-bold text-lg mb-2">⚠️ {t('common.error')}</p>
             <p>{error}</p>
         </div>
     );
@@ -242,18 +184,20 @@ const StatisticsPage = () => {
     const StatCard = ({ title, value, subValue, growth, icon: Icon, color, bgColor, isReverse = false }) => {
         const isPositive = growth >= 0;
         const isGood = isReverse ? !isPositive : isPositive;
-        
+
         return (
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-6 rounded-xl shadow-sm border flex items-center justify-between transition-colors duration-300`}>
                 <div>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">{title}</p>
-                    <h3 className="text-2xl font-bold text-gray-800 dark:text-white">{value}</h3>
+                    <p className={`text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{title}</p>
+                    <h3 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{value}</h3>
                     <div className="flex items-center mt-2">
-                        <span className={`flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${isGood ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        <span className={`flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${isGood ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
                             {isPositive ? <FaArrowUp size={10} className="mr-1"/> : <FaArrowDown size={10} className="mr-1"/>}
                             {Math.abs(growth).toFixed(1)}%
                         </span>
-                        <span className="text-gray-400 text-xs ml-2">vs kỳ trước</span>
+                        <span className={`text-xs ml-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`}>
+                            {t('common.vsPrevious', { defaultValue: 'vs kỳ trước' })}
+                        </span>
                     </div>
                 </div>
                 <div className={`p-4 rounded-full ${bgColor} ${color}`}>
@@ -264,207 +208,227 @@ const StatisticsPage = () => {
     };
 
     return (
-    <div className="space-y-6 animate-fade-in pb-10">
-        {/* Header - Giống DoctorStatsDashboard */}
-        <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-                <div className="rounded-full bg-blue-50 dark:bg-blue-900/20 p-3 text-blue-600 dark:text-blue-400">
-                    <FaChartBar className="h-6 w-6" />
+        <div className="space-y-6 animate-fade-in pb-10">
+            {/* Header */}
+            <header className={`flex flex-wrap items-center justify-between gap-4 rounded-2xl border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-4 shadow-sm transition-colors duration-300`}>
+                <div className="flex items-center gap-3">
+                    <div className={`rounded-full p-3 ${theme === 'dark' ? 'bg-blue-900/20 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+                        <FaChartBar className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {t('adminSidebar.statistics', { defaultValue: 'Thống kê' })}
+                        </p>
+                        <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                            {t('statistics.overview', { defaultValue: 'Thống kê tổng quan' })}
+                        </h2>
+                    </div>
                 </div>
-                <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Báo cáo tổng hợp</p>
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Thống kê tổng quan</h2>
+
+                <div className="flex flex-wrap items-center gap-4">
+                    <div className={`flex rounded-full p-1 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                        {RANGE_OPTIONS.map((option) => (
+                            <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => setRangeType(option.value)}
+                                className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${
+                                    option.value === rangeType
+                                        ? `${theme === 'dark' ? 'bg-gray-600 text-blue-300' : 'bg-white text-blue-600'} shadow`
+                                        : `${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`
+                                }`}
+                            >
+                                {currentLang === 'vi' ? option.label : option.en}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className={`flex items-center gap-2 rounded-full border px-4 py-2 shadow-sm ${theme === 'dark' ? 'border-gray-600 bg-gray-800' : 'border-gray-200 bg-white'}`}>
+                        <CalendarDays className="h-5 w-5 text-blue-600" />
+                        {rangeType === 'custom' ? (
+                            <div className="flex items-center gap-2">
+                                <DatePicker
+                                    selected={customStartDate}
+                                    onChange={(date) => date && setCustomStartDate(date)}
+                                    className={`w-24 bg-transparent text-sm font-semibold focus:outline-none text-center ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}
+                                    dateFormat="dd/MM/yyyy"
+                                    placeholderText={t('common.fromDate', { defaultValue: 'Từ ngày' })}
+                                />
+                                <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}>-</span>
+                                <DatePicker
+                                    selected={customEndDate}
+                                    onChange={(date) => date && setCustomEndDate(date)}
+                                    className={`w-24 bg-transparent text-sm font-semibold focus:outline-none text-center ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}
+                                    dateFormat="dd/MM/yyyy"
+                                    placeholderText={t('common.toDate', { defaultValue: 'Đến ngày' })}
+                                    minDate={customStartDate}
+                                />
+                            </div>
+                        ) : (
+                            <DatePicker
+                                selected={selectedDate}
+                                onChange={(date) => date && setSelectedDate(date)}
+                                className={`w-32 bg-transparent text-sm font-semibold focus:outline-none ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}
+                                calendarClassName={`rounded-xl border shadow-lg ${theme === 'dark' ? 'border-gray-700 bg-gray-800 text-white' : 'border-gray-200 bg-white'}`}
+                                {...datePickerConfig}
+                            />
+                        )}
+                    </div>
+                </div>
+            </header>
+
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                <StatCard 
+                    title={t('statistics.todayAppointments', { defaultValue: 'Lịch Hẹn Hôm Nay' })} 
+                    value={kpi.totalAppointmentsToday} 
+                    growth={kpi.appointmentsGrowth}
+                    icon={FaCalendarCheck} 
+                    color="text-blue-600" 
+                    bgColor={theme === 'dark' ? 'bg-blue-900/20' : 'bg-blue-50'} 
+                />
+                <StatCard 
+                    title={t('statistics.newRecords', { defaultValue: 'Hồ Sơ Bệnh Án Mới' })} 
+                    value={kpi.totalPatientsToday} 
+                    growth={kpi.patientsGrowth}
+                    icon={FaUserInjured} 
+                    color="text-green-600" 
+                    bgColor={theme === 'dark' ? 'bg-green-900/20' : 'bg-green-50'} 
+                />
+                <StatCard 
+                    title={t('statistics.monthRevenue', { defaultValue: 'Doanh Thu Tháng' })} 
+                    value={new Intl.NumberFormat(currentLang === 'vi' ? 'vi-VN' : 'en-US', { style: 'currency', currency: 'VND' }).format(kpi.totalRevenueMonth)} 
+                    growth={kpi.revenueGrowth}
+                    icon={FaMoneyBillWave} 
+                    color="text-yellow-600" 
+                    bgColor={theme === 'dark' ? 'bg-yellow-900/20' : 'bg-yellow-50'} 
+                />
+                <StatCard 
+                    title={t('statistics.cancelRate', { defaultValue: 'Tỷ Lệ Hủy Lịch' })} 
+                    value={`${kpi.cancelRate.toFixed(1)}%`} 
+                    growth={kpi.cancelRateGrowth}
+                    icon={FaUserMd} 
+                    color="text-red-600" 
+                    bgColor={theme === 'dark' ? 'bg-red-900/20' : 'bg-red-50'}
+                    isReverse={true}
+                />
+            </div>
+
+            {/* Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                <div className={`p-6 rounded-xl shadow-sm border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} transition-colors duration-300`}>
+                    <h2 className={`text-lg font-semibold mb-6 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                        {t('statistics.appointmentTrend', { defaultValue: 'Xu Hướng Lịch Hẹn (7 Ngày)' })}
+                    </h2>
+                    <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={appointmentTrend}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
+                                <XAxis dataKey="date" tick={{fontSize: 12}} stroke={theme === 'dark' ? '#9ca3af' : '#4b5563'} />
+                                <YAxis tick={{fontSize: 12}} stroke={theme === 'dark' ? '#9ca3af' : '#4b5563'} />
+                                <Tooltip 
+                                    contentStyle={{ 
+                                        borderRadius: '8px', 
+                                        border: 'none', 
+                                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                                        backgroundColor: theme === 'dark' ? '#1f2937' : 'white',
+                                        color: theme === 'dark' ? 'white' : '#1f2937'
+                                    }} 
+                                />
+                                <Line type="monotone" dataKey="value" name={t('common.appointments', { defaultValue: 'Lịch hẹn' })} stroke="#3B82F6" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                <div className={`p-6 rounded-xl shadow-sm border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} transition-colors duration-300`}>
+                    <h2 className={`text-lg font-semibold mb-6 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                        {t('statistics.revenueTrend', { defaultValue: 'Xu Hướng Doanh Thu (7 Ngày)' })}
+                    </h2>
+                    <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={revenueTrend}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
+                                <XAxis dataKey="date" tick={{fontSize: 12}} stroke={theme === 'dark' ? '#9ca3af' : '#4b5563'} />
+                                <YAxis 
+                                    tick={{fontSize: 12}} 
+                                    stroke={theme === 'dark' ? '#9ca3af' : '#4b5563'}
+                                    tickFormatter={(v) => new Intl.NumberFormat(currentLang === 'vi' ? 'vi-VN' : 'en-US', { notation: "compact" }).format(v)} 
+                                />
+                                <Tooltip 
+                                    formatter={(v) => new Intl.NumberFormat(currentLang === 'vi' ? 'vi-VN' : 'en-US', { style: 'currency', currency: 'VND' }).format(v)}
+                                    contentStyle={{ 
+                                        borderRadius: '8px', 
+                                        border: 'none', 
+                                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                                        backgroundColor: theme === 'dark' ? '#1f2937' : 'white',
+                                        color: theme === 'dark' ? 'white' : '#1f2937'
+                                    }}
+                                />
+                                <Bar dataKey="value" name={t('common.revenue', { defaultValue: 'Doanh thu' })} fill="#F59E0B" radius={[4, 4, 0, 0]} barSize={40} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4">
-                <div className="flex rounded-full bg-gray-100 dark:bg-gray-700 p-1">
-                    {RANGE_OPTIONS.map((option) => (
-                        <button
-                            key={option.value}
-                            type="button"
-                            onClick={() => setRangeType(option.value)}
-                            className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${
-                                option.value === rangeType
-                                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-300 shadow'
-                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                            }`}
-                        >
-                            {option.label}
+            {/* Top Services */}
+            <div className={`p-6 rounded-xl shadow-sm border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} mt-6 transition-colors duration-300`}>
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                        {t('statistics.topServices', { defaultValue: 'Top 5 Dịch Vụ Phổ Biến' })}
+                    </h2>
+                    
+                    <div className={`flex p-1 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                        <button onClick={() => setStatType('appointment')} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${statType === 'appointment' ? `${theme === 'dark' ? 'bg-gray-600 text-blue-300' : 'bg-white text-blue-600'} shadow-sm` : `${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}`}>
+                            <FaCalendarCheck /> {t('statistics.byAppointment', { defaultValue: 'Đặt lịch' })}
                         </button>
-                    ))}
+                        <button onClick={() => setStatType('medical_record')} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${statType === 'medical_record' ? `${theme === 'dark' ? 'bg-gray-600 text-green-300' : 'bg-white text-green-600'} shadow-sm` : `${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}`}>
+                            <FaStethoscope /> {t('statistics.byExamination', { defaultValue: 'Khám thật' })}
+                        </button>
+                        <button onClick={() => setStatType('revenue')} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${statType === 'revenue' ? `${theme === 'dark' ? 'bg-gray-600 text-yellow-300' : 'bg-white text-yellow-600'} shadow-sm` : `${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}`}>
+                            <FaCoins /> {t('statistics.byRevenue', { defaultValue: 'Doanh thu' })}
+                        </button>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-2 rounded-full border border-gray-200 dark:border-gray-600 px-4 py-2 shadow-sm bg-white dark:bg-gray-800">
-                    <CalendarDays className="h-5 w-5 text-blue-600" />
-                    {rangeType === 'custom' ? (
-                        <div className="flex items-center gap-2">
-                            <DatePicker
-                                selected={customStartDate}
-                                onChange={(date) => date && setCustomStartDate(date)}
-                                className="w-24 bg-transparent text-sm font-semibold text-gray-800 dark:text-gray-200 focus:outline-none text-center"
-                                dateFormat="dd/MM/yyyy"
-                                placeholderText="Từ ngày"
-                            />
-                            <span className="text-gray-400">-</span>
-                            <DatePicker
-                                selected={customEndDate}
-                                onChange={(date) => date && setCustomEndDate(date)}
-                                className="w-24 bg-transparent text-sm font-semibold text-gray-800 dark:text-gray-200 focus:outline-none text-center"
-                                dateFormat="dd/MM/yyyy"
-                                placeholderText="Đến ngày"
-                                minDate={customStartDate}
-                            />
-                        </div>
-                    ) : (
-                        <DatePicker
-                            selected={selectedDate}
-                            onChange={(date) => date && setSelectedDate(date)}
-                            className="w-32 bg-transparent text-sm font-semibold text-gray-800 dark:text-gray-200 focus:outline-none"
-                            calendarClassName="rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg dark:bg-gray-800 dark:text-white"
-                            {...datePickerConfig}
-                        />
-                    )}
-                </div>
-            </div>
-        </header>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
-            <StatCard 
-                title="Lịch Hẹn Hôm Nay" 
-                value={kpi.totalAppointmentsToday} 
-                growth={kpi.appointmentsGrowth}
-                icon={FaCalendarCheck} 
-                color="text-blue-600" 
-                bgColor="bg-blue-50" 
-            />
-            <StatCard 
-                title="Hồ Sơ Bệnh Án Mới" 
-                value={kpi.totalPatientsToday} 
-                growth={kpi.patientsGrowth}
-                icon={FaUserInjured} 
-                color="text-green-600" 
-                bgColor="bg-green-50" 
-            />
-            <StatCard 
-                title="Doanh Thu Tháng" 
-                value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(kpi.totalRevenueMonth)} 
-                growth={kpi.revenueGrowth}
-                icon={FaMoneyBillWave} 
-                color="text-yellow-600" 
-                bgColor="bg-yellow-50" 
-            />
-            <StatCard 
-                title="Tỷ Lệ Hủy Lịch" 
-                value={`${kpi.cancelRate.toFixed(1)}%`} 
-                growth={kpi.cancelRateGrowth}
-                icon={FaUserMd} 
-                color="text-red-600" 
-                bgColor="bg-red-50"
-                isReverse={true}
-            />
-        </div>
-
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-            {/* Appointment Trend */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-6">Xu Hướng Lịch Hẹn (7 Ngày)</h2>
-                <div className="h-[300px] w-full">
+                <div className="h-[400px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={appointmentTrend}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="date" tick={{fontSize: 12}} />
-                            <YAxis tick={{fontSize: 12}} />
-                            <Tooltip 
-                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        <BarChart layout="vertical" data={topServices} margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
+                            <XAxis type="number" hide />
+                            <YAxis 
+                                dataKey="name" 
+                                type="category" 
+                                width={180} 
+                                tick={{
+                                    fontSize: 12, 
+                                    fill: theme === 'dark' ? '#d1d5db' : '#4B5563', 
+                                    fontWeight: 500
+                                }} 
                             />
-                            <Line type="monotone" dataKey="value" name="Lịch hẹn" stroke="#3B82F6" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </div>
-            </div>
-
-            {/* Revenue Trend */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-6">Xu Hướng Doanh Thu (7 Ngày)</h2>
-                <div className="h-[300px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={revenueTrend}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="date" tick={{fontSize: 12}} />
-                            <YAxis tick={{fontSize: 12}} tickFormatter={(value) => new Intl.NumberFormat('vi-VN', { notation: "compact" }).format(value)} />
                             <Tooltip 
-                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                formatter={(value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)}
+                                cursor={{fill: 'transparent'}}
+                                contentStyle={{ 
+                                    borderRadius: '8px', 
+                                    border: 'none', 
+                                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                                    backgroundColor: theme === 'dark' ? '#1f2937' : 'white',
+                                    color: theme === 'dark' ? 'white' : '#1f2937'
+                                }}
+                                formatter={(value, name, props) => [props.payload.displayValue, statType === 'revenue' ? t('common.revenue') : t('common.quantity')]}
                             />
-                            <Bar dataKey="value" name="Doanh thu" fill="#F59E0B" radius={[4, 4, 0, 0]} barSize={40} />
+                            <Bar dataKey="usage" radius={[0, 4, 4, 0]} barSize={32}>
+                                {topServices.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                            </Bar>
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
             </div>
         </div>
-
-        {/* Top Services Section */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mt-6">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200">Top 5 Dịch Vụ Phổ Biến</h2>
-                
-                {/* Selector for Stat Type */}
-                <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
-                    <button
-                        onClick={() => setStatType('appointment')}
-                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
-                            ${statType === 'appointment' ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-300 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-                    >
-                        <FaCalendarCheck /> Đặt lịch
-                    </button>
-                    <button
-                        onClick={() => setStatType('medical_record')}
-                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1
-                            ${statType === 'medical_record' ? 'bg-white dark:bg-gray-600 text-green-600 dark:text-green-300 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-                    >
-                        <FaStethoscope /> Khám thực tế
-                    </button>
-                    
-                </div>
-            </div>
-
-            <div className="h-[400px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                        layout="vertical"
-                        data={topServices}
-                        margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
-                    >
-                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                        <XAxis type="number" hide />
-                        <YAxis 
-                            dataKey="name" 
-                            type="category" 
-                            width={180} 
-                            tick={{fontSize: 12, fill: '#4B5563', fontWeight: 500}} 
-                        />
-                        <Tooltip 
-                            cursor={{fill: 'transparent'}}
-                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                            formatter={(value, name, props) => [
-                                props.payload.displayValue, 
-                                statType === 'revenue' ? 'Doanh thu' : 'Số lượng'
-                            ]}
-                        />
-                        <Bar dataKey="usage" name="Giá trị" radius={[0, 4, 4, 0]} barSize={32}>
-                            {topServices.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                        </Bar>
-                    </BarChart>
-                </ResponsiveContainer>
-            </div>
-        </div>
-    </div>
-);
+    );
 };
 
 export default StatisticsPage;

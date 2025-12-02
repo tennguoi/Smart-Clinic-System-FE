@@ -1,10 +1,9 @@
-// ===================== ACCOUNT MANAGEMENT (FULL FILE PART 1) =====================
+// src/pages/admin/AccountManagement.jsx (hoặc đường dẫn bạn đang dùng)
 
 import { useState, useEffect, useCallback } from 'react';
 import {
   UserPlus, Edit, X, Eye, EyeOff, User, Upload,
-  CheckCircle, AlertTriangle, Power, AlertCircle, Search,
-  UserCog
+  Power, AlertCircle, Search, UserCog
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
@@ -14,25 +13,13 @@ import adminAccountApi from '../../api/adminAccountApi';
 import React, { forwardRef } from 'react';
 import CountBadge from '../common/CountBadge';
 import Pagination from '../common/Pagination';
+import { useTranslation } from 'react-i18next';
 
-// ====================== HELPER ======================
 const dateStringToDate = (dateStr) => {
   if (!dateStr || dateStr.includes('/')) return null;
   const [year, month, day] = dateStr.split('-');
   return new Date(year, month - 1, day);
 };
-
-const genderOptions = [
-  { value: 'male', label: 'Nam' },
-  { value: 'female', label: 'Nữ' },
-  { value: 'other', label: 'Khác' },
-];
-
-const roleOptions = [
-  { value: 'admin', label: 'Quản trị viên' },
-  { value: 'bac_si', label: 'Bác sĩ' },
-  { value: 'tiep_tan', label: 'Tiếp tân' },
-];
 
 const dateToISOString = (date) => {
   if (!date || isNaN(date)) return '';
@@ -42,34 +29,11 @@ const dateToISOString = (date) => {
   return `${year}-${month}-${day}`;
 };
 
-const getRoleLabel = (role) => {
-  if (!role) return '';
-  
-  // Chuẩn hóa role về lowercase và loại bỏ "ROLE_" prefix
-  const normalizedRole = role.toLowerCase().replace('role_', '');
-  
-  const map = { 
-    admin: 'Quản trị viên', 
-    bac_si: 'Bác sĩ',
-    bacsi: 'Bác sĩ',
-    tiep_tan: 'Tiếp tân',
-    tieptan: 'Tiếp tân'
-  };
-  
-  return map[normalizedRole] || role;
-};
-
-const getGenderLabel = (gender) => {
-  const map = { male: 'Nam', female: 'Nữ', other: 'Khác' };
-  return map[gender] || 'Không rõ';
-};
-
 const getAvatarUrl = (photoUrl) => {
   if (!photoUrl) return null;
   return photoUrl.startsWith('http') ? photoUrl : `http://localhost:8082${photoUrl}`;
 };
 
-// ====================== CUSTOM INPUT ======================
 const CustomDateInput = forwardRef(({ value, onClick, placeholder, required }, ref) => (
   <input
     type="text"
@@ -78,19 +42,19 @@ const CustomDateInput = forwardRef(({ value, onClick, placeholder, required }, r
     ref={ref}
     placeholder={placeholder}
     required={required}
-    style={{ width: '190%' }}
+    style={{ width: '200%' }}
     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition cursor-pointer"
     readOnly
   />
 ));
 
-// ====================== MAIN COMPONENT ======================
 export default function AccountManagement() {
+  const { t } = useTranslation();
+
   const [users, setUsers] = useState([]);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
-
   const pageSize = 8;
   const [loading, setLoading] = useState(false);
 
@@ -126,8 +90,6 @@ export default function AccountManagement() {
   const isCreateMode = modalMode === 'create';
   const isEditMode = modalMode === 'edit';
 
-
-
   const resetFilters = () => {
     setSearchKeyword('');
     setFilterRole('');
@@ -142,34 +104,22 @@ export default function AccountManagement() {
         roleName: filterRole || undefined,
         isVerified: filterStatus === '' ? undefined : filterStatus === 'true',
       };
-
-      const response = await adminAccountApi.searchUsers(
-        filters,
-        currentPage,
-        pageSize
-      );
-
+      const response = await adminAccountApi.searchUsers(filters, currentPage, pageSize);
       setUsers(response.content || []);
       setTotalElements(response.totalElements || 0);
       setTotalPages(response.totalPages || 0);
     } catch (err) {
-      toast.error('Không thể tải danh sách người dùng');
+      toast.error(t('accountManagement.toast.loadError'));
       setUsers([]);
       setTotalElements(0);
       setTotalPages(0);
     } finally {
       setLoading(false);
     }
-  }, [searchKeyword, filterRole, filterStatus, currentPage]);
+  }, [searchKeyword, filterRole, filterStatus, currentPage, t]);
 
-
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
-  useEffect(() => {
-    setCurrentPage(0);
-  }, [searchKeyword, filterRole, filterStatus]);
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+  useEffect(() => { setCurrentPage(0); }, [searchKeyword, filterRole, filterStatus]);
 
   const goToPage = (page) => {
     if (page >= 0 && page < totalPages && page !== currentPage) {
@@ -189,17 +139,13 @@ export default function AccountManagement() {
     try {
       const newStatus = !toggleTarget.currentStatus;
       await adminAccountApi.toggleVerifyStatus(toggleTarget.userId, newStatus);
-      setUsers(prev =>
-        prev.map(u =>
-          u.userId === toggleTarget.userId ? { ...u, isVerified: newStatus } : u
-        )
-      );
-
-      toast.success(
-        newStatus ? 'Tài khoản đã được kích hoạt!' : 'Tài khoản đã bị vô hiệu hóa!'
+      setUsers(prev => prev.map(u => u.userId === toggleTarget.userId ? { ...u, isVerified: newStatus } : u));
+      toast.success(newStatus
+        ? t('accountManagement.toast.toggleSuccessActive')
+        : t('accountManagement.toast.toggleSuccessDisabled')
       );
     } catch (err) {
-      toast.error('Không thể thay đổi trạng thái tài khoản');
+      toast.error(t('accountManagement.toast.error'));
     } finally {
       setLoading(false);
       setToggleTarget(null);
@@ -260,10 +206,11 @@ export default function AccountManagement() {
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (!file.type.startsWith('image/'))
-      return toast.error('Chỉ chấp nhận file ảnh');
+    if (!file.type.startsWith('image/')) {
+      toast.error(t('accountManagement.toast.imageError'));
+      return;
+    }
     setPhotoFile(file);
-
     const reader = new FileReader();
     reader.onloadend = () => setPhotoPreview(reader.result);
     reader.readAsDataURL(file);
@@ -271,12 +218,10 @@ export default function AccountManagement() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
     if (name === 'phone') {
       if (value && !/^[0-9]+$/.test(value)) return;
       if (value.length > 10) return;
     }
-
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -295,35 +240,31 @@ export default function AccountManagement() {
           dob: formData.dob,
           gender: formData.gender,
           address: formData.address,
-          experienceYears:
-            formData.experienceYears === '' ? null : Number(formData.experienceYears),
+          experienceYears: formData.experienceYears === '' ? null : Number(formData.experienceYears),
           bio: formData.bio || null,
           roles: formData.roles,
           ...(formData.password && { password: formData.password }),
         };
-
         await adminAccountApi.updateUser(selectedUser.userId, updateData, photoFile);
-        toast.success('Cập nhật tài khoản thành công!');
+        toast.success(t('accountManagement.toast.updateSuccess'));
       } else if (isCreateMode) {
         const createData = {
           ...formData,
-          experienceYears:
-            formData.experienceYears === '' ? null : Number(formData.experienceYears),
+          experienceYears: formData.experienceYears === '' ? null : Number(formData.experienceYears),
           bio: formData.bio || null,
         };
-
         await adminAccountApi.createUser(createData, photoFile);
-        toast.success('Tạo tài khoản thành công!');
+        toast.success(t('accountManagement.toast.createSuccess'));
       }
-
       handleCloseModal();
       fetchUsers();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Có lỗi xảy ra');
+      toast.error(err.response?.data?.message || t('accountManagement.toast.error'));
     } finally {
       setLoading(false);
     }
   };
+
   return (
     <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50 dark:bg-gray-900 font-sans transition-colors duration-300">
       <Toaster {...toastConfig} />
@@ -334,12 +275,12 @@ export default function AccountManagement() {
           <div className="flex items-center gap-4">
             <h1 className="text-4xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
               <UserCog className="w-9 h-9 text-blue-600" />
-              <span>Quản Lý Tài Khoản</span>
+              <span>{t('accountManagement.title')}</span>
             </h1>
             <CountBadge 
               currentCount={users.length} 
               totalCount={totalElements} 
-              label="tài khoản" 
+              label={t('accountManagement.title').toLowerCase()} 
             />
           </div>
 
@@ -347,81 +288,78 @@ export default function AccountManagement() {
             onClick={() => handleOpenModal('create')}
             className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium"
           >
-            <UserPlus className="w-5 h-5" /> Tạo tài khoản
+            <UserPlus className="w-5 h-5" /> {t('accountManagement.createButton')}
           </button>
         </div>
       </div>
 
-{/* SEARCH & FILTER BAR */}
-<div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-6 transition-colors duration-300">
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+      {/* SEARCH & FILTER BAR */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-6 transition-colors duration-300">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+          {/* Tìm kiếm */}
+          <div className="lg:col-span-5">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <Search className="inline w-4 h-4 mr-1" /> {t('common.search')}
+            </label>
+            <input
+              type="text"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              placeholder={t('accountManagement.searchPlaceholder')}
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-    {/* Tìm kiếm */}
-    <div className="lg:col-span-5">
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-        <Search className="inline w-4 h-4 mr-1" /> Tìm kiếm
-      </label>
-      <input
-        type="text"
-        value={searchKeyword}
-        onChange={(e) => setSearchKeyword(e.target.value)}
-        placeholder="Tên, SĐT, Email..."
-        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
+          {/* Vai trò */}
+          <div className="lg:col-span-3">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('accountManagement.roleFilter')}
+            </label>
+            <select
+              value={filterRole}
+              onChange={(e) => setFilterRole(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">{t('accountManagement.allRoles')}</option>
+              <option value="admin">{t('accountManagement.roleLabels.admin')}</option>
+              <option value="bac_si">{t('accountManagement.roleLabels.bac_si')}</option>
+              <option value="tiep_tan">{t('accountManagement.roleLabels.tiep_tan')}</option>
+            </select>
+          </div>
 
-    {/* Vai trò */}
-    <div className="lg:col-span-3">
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-        Vai trò
-      </label>
-      <select
-        value={filterRole}
-        onChange={(e) => setFilterRole(e.target.value)}
-        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500"
-      >
-        <option value="">Tất cả</option>
-        <option value="admin">Quản trị viên</option>
-        <option value="bac_si">Bác sĩ</option>
-        <option value="tiep_tan">Tiếp tân</option>
-      </select>
-    </div>
+          {/* Trạng thái */}
+          <div className="lg:col-span-3">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('accountManagement.statusFilter')}
+            </label>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">{t('accountManagement.allStatuses')}</option>
+              <option value="true">{t('accountManagement.activeStatus')}</option>
+              <option value="false">{t('accountManagement.disabledStatus')}</option>
+            </select>
+          </div>
 
-    {/* Trạng thái */}
-    <div className="lg:col-span-3">
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-        Trạng thái
-      </label>
-      <select
-        value={filterStatus}
-        onChange={(e) => setFilterStatus(e.target.value)}
-        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500"
-      >
-        <option value="">Tất cả</option>
-        <option value="true">Hoạt động</option>
-        <option value="false">Vô hiệu hóa</option>
-      </select>
-    </div>
-
-    {/* Xóa lọc */}
-    <div className="flex md:block lg:col-span-1">
-      <button
-        onClick={resetFilters}
-        className="w-full px-4 py-3 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-400 dark:hover:bg-gray-500 transition font-medium"
-      >
-        Xóa lọc
-      </button>
-    </div>
-
-  </div>
-</div>
-
+          {/* Xóa lọc */}
+          <div className="flex md:block lg:col-span-1">
+            <button
+              onClick={resetFilters}
+              className="w-full px-4 py-3 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-400 dark:hover:bg-gray-500 transition font-medium"
+            >
+              {t('accountManagement.clearFilter')}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* TABLE */}
       {loading ? (
         <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-600"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải danh sách...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">{t('common.loading')}...</p>
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden transition-colors duration-300">
@@ -430,31 +368,31 @@ export default function AccountManagement() {
               <thead className="bg-blue-50 dark:bg-blue-900/20">
                 <tr>
                   <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
-                    STT
+                    {t('accountManagement.table.stt')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
-                    Ảnh
+                    {t('accountManagement.table.photo')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
-                    Họ tên
+                    {t('accountManagement.table.fullName')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
-                    Giới tính
+                    {t('accountManagement.table.gender')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
-                    SĐT
+                    {t('accountManagement.table.phone')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
-                    Email
+                    {t('accountManagement.table.email')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
-                    Vai trò
+                    {t('accountManagement.table.role')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
-                    Trạng thái
+                    {t('accountManagement.table.status')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
-                    Thao tác
+                    {t('accountManagement.table.actions')}
                   </th>
                 </tr>
               </thead>
@@ -468,26 +406,20 @@ export default function AccountManagement() {
                     <td className="px-6 py-4">
                       <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden border dark:border-gray-600 flex items-center justify-center">
                         {getAvatarUrl(user.photoUrl) ? (
-                          <img
-                            src={getAvatarUrl(user.photoUrl)}
-                            className="w-full h-full object-cover"
-                          />
+                          <img src={getAvatarUrl(user.photoUrl)} className="w-full h-full object-cover" alt="avatar" />
                         ) : (
                           <User className="w-5 h-5 text-gray-400" />
                         )}
                       </div>
                     </td>
-
                     <td className="px-6 py-4">{user.fullName}</td>
-                    <td className="px-6 py-4">{getGenderLabel(user.gender)}</td>
+                    <td className="px-6 py-4">{t(`accountManagement.gender.${user.gender}`) || t('accountManagement.gender.other')}</td>
                     <td className="px-6 py-4">{user.phone}</td>
                     <td className="px-6 py-4">{user.email}</td>
-
                     <td className="px-6 py-4">
                       <div className="flex gap-1 flex-wrap">
                         {Array.isArray(user.roles) && user.roles.length > 0 ? (
                           user.roles.map((r, i) => {
-                            // Chuẩn hóa role để so sánh
                             const normalizedRole = r ? r.toLowerCase().replace('role_', '') : '';
                             
                             const color =
@@ -498,20 +430,18 @@ export default function AccountManagement() {
                                 : 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800';
 
                             return (
-                              <span
-                                key={i}
-                                className={`px-2 py-1 rounded-full text-xs border ${color}`}
-                              >
-                                {getRoleLabel(r)}
+                              <span key={i} className={`px-2 py-1 rounded-full text-xs border ${color}`}>
+                                {t(`accountManagement.roleLabels.${normalizedRole}`) || r}
                               </span>
                             );
                           })
                         ) : (
-                          <span className="text-gray-400 dark:text-gray-500 text-xs italic">Chưa có vai trò</span>
+                          <span className="text-gray-400 dark:text-gray-500 text-xs italic">
+                            {t('accountManagement.noRole')}
+                          </span>
                         )}
                       </div>
                     </td>
-
                     <td className="px-6 py-4 text-center">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -521,22 +451,17 @@ export default function AccountManagement() {
                         }`}
                       >
                         <Power className="inline w-4 h-4 mr-1" />
-                        {user.isVerified ? 'Hoạt động' : 'Vô hiệu hóa'}
+                        {user.isVerified ? t('accountManagement.activeStatus') : t('accountManagement.disabledStatus')}
                       </span>
                     </td>
-
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-3">
-
                         <button
                           onClick={() => handleOpenModal('view', user)}
                           className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/30"
                         >
                           <Eye className="w-5 h-5" />
                         </button>
-
-                        {/* ❌ Delete button has been removed completely */}
-
                         <button
                           onClick={() => openToggleConfirmation(user.userId, user.isVerified)}
                           className={`p-2 rounded-full transition ${
@@ -547,10 +472,8 @@ export default function AccountManagement() {
                         >
                           <Power className="w-5 h-5" />
                         </button>
-
                       </div>
                     </td>
-
                   </tr>
                 ))}
               </tbody>
@@ -559,36 +482,30 @@ export default function AccountManagement() {
             {users.length === 0 && (
               <div className="text-center py-16 text-gray-500 dark:text-gray-400">
                 <UserPlus className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                <p className="text-xl font-medium">Không tìm thấy tài khoản nào</p>
+                <p className="text-xl font-medium">{t('accountManagement.noAccounts')}</p>
               </div>
             )}
-
           </div>
         </div>
       )}
 
       <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={goToPage} />
-            {/* ====================== MODAL ====================== */}
+
+      {/* MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
-
             {/* Header */}
             <div className="flex justify-between items-center p-6 border-b dark:border-gray-700 sticky top-0 bg-blue-50/80 dark:bg-gray-800/90 backdrop-blur">
               <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-400">
-                {isCreateMode
-                  ? 'Tạo tài khoản mới'
-                  : isViewMode
-                  ? 'Chi tiết tài khoản'
-                  : 'Chỉnh sửa tài khoản'}
+                {isCreateMode ? t('accountManagement.modal.createTitle')
+                  : isViewMode ? t('accountManagement.modal.viewTitle')
+                    : t('accountManagement.modal.editTitle')}
               </h2>
-
               <div className="flex items-center gap-3">
                 {isViewMode && (
-                  <button
-                    onClick={handleSwitchToEdit}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
-                    <Edit className="w-4 h-4" /> Chỉnh sửa
+                  <button onClick={handleSwitchToEdit} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
+                    <Edit className="w-4 h-4" /> {t('accountManagement.modal.editButton')}
                   </button>
                 )}
                 <button onClick={handleCloseModal} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-2 rounded-full hover:bg-white/50 dark:hover:bg-gray-700">
@@ -597,39 +514,37 @@ export default function AccountManagement() {
               </div>
             </div>
 
-            {/* Form */}
+            {/* Body */}
             <div className="p-6">
-
               <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
                   {/* Avatar */}
                   <div className="md:col-span-2 flex flex-col items-center border border-dashed border-gray-300 dark:border-gray-600 p-6 rounded-xl bg-gray-50/50 dark:bg-gray-700/50">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Ảnh đại diện</label>
-
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      {t('accountManagement.modal.avatarLabel')}
+                    </label>
                     <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-gray-600 shadow-lg ring-4 ring-blue-200 dark:ring-blue-900">
                       {photoPreview ? (
-                        <img src={photoPreview} className="w-full h-full object-cover" />
+                        <img src={photoPreview} className="w-full h-full object-cover" alt="preview" />
                       ) : (
                         <User className="w-16 h-16 text-gray-400 mx-auto" />
                       )}
                     </div>
-
                     {(isCreateMode || isEditMode) && (
                       <div className="mt-4">
                         <label className="flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-4 py-2 rounded-full cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition">
                           <Upload className="w-4 h-4" />
-                          {photoFile ? 'Thay đổi ảnh' : 'Chọn ảnh'}
+                          {photoFile ? t('accountManagement.modal.changePhoto') : t('accountManagement.modal.choosePhoto')}
                           <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
                         </label>
                       </div>
                     )}
                   </div>
 
-                  {/* Email */}
+                  {/* Các field */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Email <span className="text-red-500">*</span>
+                      {t('accountManagement.modal.email')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="email"
@@ -638,43 +553,34 @@ export default function AccountManagement() {
                       disabled={isViewMode}
                       value={formData.email}
                       onChange={handleInputChange}
-                      placeholder="example@clinic.com"
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
-                  {/* Password */}
-                  <div>
+                  <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Mật khẩu {isCreateMode && <span className="text-red-500">*</span>}
+                      {t('accountManagement.modal.password')} {isCreateMode && <span className="text-red-500">*</span>}
                     </label>
-                    <div className="relative">
-                      <input
-                        type={(isCreateMode || isEditMode) && showPassword ? 'text' : 'password'}
-                        name="password"
-                        required={isCreateMode}
-                        disabled={isViewMode}
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        placeholder={isEditMode ? 'Nhập mật khẩu mới (tuỳ chọn)' : 'Nhập mật khẩu'}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg pr-12 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                      />
-                      {(isCreateMode || isEditMode) && (
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(prev => !prev)}
-                          className="absolute right-3 top-2.5 text-gray-500 dark:text-gray-400"
-                        >
-                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                      )}
-                    </div>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      required={isCreateMode}
+                      disabled={isViewMode}
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      placeholder={isEditMode ? t('accountManagement.modal.passwordPlaceholderEdit') : t('accountManagement.modal.passwordPlaceholderCreate')}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg pr-12 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    />
+                    {(isCreateMode || isEditMode) && (
+                      <button type="button" onClick={() => setShowPassword(p => !p)} className="absolute right-3 top-9 text-gray-500 dark:text-gray-400">
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    )}
                   </div>
 
-                  {/* Full Name */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Họ và tên <span className="text-red-500">*</span>
+                      {t('accountManagement.modal.fullName')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -687,31 +593,26 @@ export default function AccountManagement() {
                     />
                   </div>
 
-                  {/* Phone */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Số điện thoại <span className="text-red-500">*</span>
+                      {t('accountManagement.modal.phone')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="tel"
                       name="phone"
                       required
                       disabled={isViewMode}
-                      maxLength={10}
-                      pattern="[0-9]{10}"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      placeholder="0912345678"
+                      maxLength={10}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
-                  {/* DOB */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Ngày sinh <span className="text-red-500">*</span>
+                      {t('accountManagement.modal.dob')} <span className="text-red-500">*</span>
                     </label>
-
                     {isViewMode ? (
                       <input
                         value={formData.dob ? formData.dob.split('-').reverse().join('/') : ''}
@@ -720,11 +621,8 @@ export default function AccountManagement() {
                       />
                     ) : (
                       <DatePicker
-                        required
                         selected={dateStringToDate(formData.dob)}
-                        onChange={(date) =>
-                          setFormData(prev => ({ ...prev, dob: dateToISOString(date) }))
-                        }
+                        onChange={(date) => setFormData(prev => ({ ...prev, dob: dateToISOString(date) }))}
                         customInput={<CustomDateInput placeholder="dd/mm/yyyy" required />}
                         dateFormat="dd/MM/yyyy"
                         maxDate={new Date()}
@@ -734,10 +632,9 @@ export default function AccountManagement() {
                     )}
                   </div>
 
-                  {/* Gender */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Giới tính <span className="text-red-500">*</span>
+                      {t('accountManagement.modal.gender')} <span className="text-red-500">*</span>
                     </label>
                     <select
                       name="gender"
@@ -747,34 +644,29 @@ export default function AccountManagement() {
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     >
-                      {genderOptions.map(o => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
+                      <option value="male">{t('accountManagement.gender.male')}</option>
+                      <option value="female">{t('accountManagement.gender.female')}</option>
+                      <option value="other">{t('accountManagement.gender.other')}</option>
                     </select>
                   </div>
 
-                  {/* Experience */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Số năm kinh nghiệm
+                      {t('accountManagement.modal.experienceYears')}
                     </label>
                     <input
                       type="number"
                       name="experienceYears"
                       disabled={isViewMode}
-                      min="0"
                       value={formData.experienceYears}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
-                  {/* Role */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Vai trò <span className="text-red-500">*</span>
+                      {t('accountManagement.modal.role')} <span className="text-red-500">*</span>
                     </label>
                     <select
                       required
@@ -783,18 +675,15 @@ export default function AccountManagement() {
                       onChange={handleRoleChange}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     >
-                      {roleOptions.map(o => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
+                      <option value="admin">{t('accountManagement.roleLabels.admin')}</option>
+                      <option value="bac_si">{t('accountManagement.roleLabels.bac_si')}</option>
+                      <option value="tiep_tan">{t('accountManagement.roleLabels.tiep_tan')}</option>
                     </select>
                   </div>
 
-                  {/* Address */}
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Địa chỉ <span className="text-red-500">*</span>
+                      {t('accountManagement.modal.address')} <span className="text-red-500">*</span>
                     </label>
                     <textarea
                       name="address"
@@ -807,10 +696,9 @@ export default function AccountManagement() {
                     />
                   </div>
 
-                  {/* Bio */}
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Mô tả / Giới thiệu
+                      {t('accountManagement.modal.bio')}
                     </label>
                     <textarea
                       name="bio"
@@ -827,85 +715,52 @@ export default function AccountManagement() {
                       </p>
                     )}
                   </div>
-
                 </div>
 
                 {(isCreateMode || isEditMode) && (
                   <div className="flex gap-4 mt-8">
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="flex-1 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700"
-                    >
-                      {loading ? 'Đang xử lý...' : isCreateMode ? 'Tạo tài khoản' : 'Lưu thay đổi'}
+                    <button type="submit" disabled={loading} className="flex-1 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700">
+                      {loading ? t('accountManagement.modal.processing') : isCreateMode ? t('accountManagement.modal.createAccountButton') : t('accountManagement.modal.saveButton')}
                     </button>
-
-                    <button
-                      type="button"
-                      onClick={handleCloseModal}
-                      className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl hover:bg-gray-400"
-                    >
-                      Hủy
+                    <button type="button" onClick={handleCloseModal} className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl hover:bg-gray-400">
+                      {t('common.cancel')}
                     </button>
                   </div>
                 )}
-
               </form>
             </div>
           </div>
         </div>
       )}
 
-      {/* ====================== TOGGLE STATUS CONFIRMATION ====================== */}
+      {/* CONFIRM TOGGLE */}
       {showToggleConfirmation && toggleTarget && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
-            <AlertCircle
-              className={`w-12 h-12 mx-auto mb-4 ${
-                toggleTarget.currentStatus ? 'text-red-500' : 'text-green-500'
-              }`}
-            />
-
+            <AlertCircle className={`w-12 h-12 mx-auto mb-4 ${toggleTarget.currentStatus ? 'text-red-500' : 'text-green-500'}`} />
             <h3 className="text-xl font-bold mb-2">
-              {toggleTarget.currentStatus ? 'Vô hiệu hóa tài khoản?' : 'Kích hoạt tài khoản?'}
+              {toggleTarget.currentStatus
+                ? t('accountManagement.confirmToggle.disableTitle')
+                : t('accountManagement.confirmToggle.enableTitle')}
             </h3>
-
             <p className="text-gray-600 mb-6">
               {toggleTarget.currentStatus
-                ? 'Tài khoản sẽ không thể đăng nhập nữa.'
-                : 'Tài khoản sẽ được phép đăng nhập lại.'}
+                ? t('accountManagement.confirmToggle.disableText')
+                : t('accountManagement.confirmToggle.enableText')}
             </p>
-
             <div className="flex gap-3">
-              <button
-                onClick={confirmToggleStatus}
-                disabled={loading}
-                className={`flex-1 py-2 rounded-lg font-semibold text-white ${
-                  toggleTarget.currentStatus
-                    ? 'bg-red-600 hover:bg-red-700'
-                    : 'bg-green-600 hover:bg-green-700'
-                }`}
-              >
-                {loading ? 'Đang xử lý...' : 'Xác nhận'}
+              <button onClick={confirmToggleStatus} disabled={loading}
+                className={`flex-1 py-2 rounded-lg font-semibold text-white ${toggleTarget.currentStatus ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}>
+                {loading ? t('accountManagement.modal.processing') : t('accountManagement.confirmToggle.confirm')}
               </button>
-
-              <button
-                onClick={() => {
-                  setShowToggleConfirmation(false);
-                  setToggleTarget(null);
-                }}
-                className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
-              >
-                Hủy
+              <button onClick={() => { setShowToggleConfirmation(false); setToggleTarget(null); }}
+                className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">
+                {t('accountManagement.confirmToggle.cancel')}
               </button>
             </div>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }
-
-

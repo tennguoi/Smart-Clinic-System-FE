@@ -1,5 +1,5 @@
-// src/components/doctor/MedicalRecordsSection.jsx
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import CreateRecordForm from './CreateRecordForm';
 import RecordRow from './RecordRow';
@@ -10,6 +10,8 @@ const ITEMS_PER_PAGE = 10;
 
 const MedicalRecordsSection = () => {
   const { theme } = useTheme();
+  const { t } = useTranslation();
+
   const [records, setRecords] = useState([]);
   const [recordsLoading, setRecordsLoading] = useState(false);
   const [recordsError, setRecordsError] = useState('');
@@ -19,12 +21,11 @@ const MedicalRecordsSection = () => {
     startDate: '',
     endDate: ''
   });
-  const patientNameMapRef = useRef(new Map());
 
-  // Lấy ngày hiện tại định dạng YYYY-MM-DD để làm mốc giới hạn
+  const patientNameMapRef = useRef(new Map());
   const today = new Date().toISOString().split('T')[0];
 
-  // PHẦN MỚI: Phân trang
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const totalPages = Math.ceil(totalRecords / ITEMS_PER_PAGE);
@@ -37,6 +38,7 @@ const MedicalRecordsSection = () => {
       let total = 0;
 
       const hasFilter = searchParams.keyword || searchParams.startDate || searchParams.endDate;
+
       if (hasFilter) {
         const result = await medicalRecordApi.search({ ...searchParams, page, limit: ITEMS_PER_PAGE });
         list = Array.isArray(result.data) ? result.data : result;
@@ -47,15 +49,11 @@ const MedicalRecordsSection = () => {
         total = result.total ?? list.length;
       }
 
-      const startIdx = (page - 1) * ITEMS_PER_PAGE;
-      const endIdx = startIdx + ITEMS_PER_PAGE;
-      const paginatedList = list.slice(startIdx, endIdx);
-
-      const recordsWithNames = paginatedList.map((record) => {
-        const storedPatientName = patientNameMapRef.current.get(record.recordId);
+      const recordsWithNames = list.map(record => {
+        const storedName = patientNameMapRef.current.get(record.recordId);
         return {
           ...record,
-          patientName: record.patientName || storedPatientName || null,
+          patientName: record.patientName || storedName || null,
         };
       });
 
@@ -63,14 +61,14 @@ const MedicalRecordsSection = () => {
       setTotalRecords(total);
       setCurrentPage(page);
     } catch (error) {
-      const msg = error.response?.data?.message || error.message || 'Không thể tải hồ sơ khám';
+      const msg = error.response?.data?.message || error.message || t('doctorRecords.errors.loadFailed');
       setRecordsError(msg);
       setRecords([]);
       setTotalRecords(0);
     } finally {
       setRecordsLoading(false);
     }
-  }, [searchParams]);
+  }, [searchParams, t]);
 
   useEffect(() => {
     fetchMyRecords(1);
@@ -80,11 +78,11 @@ const MedicalRecordsSection = () => {
   useEffect(() => {
     setCurrentPage(1);
     fetchMyRecords(1);
-  }, [searchParams]);
+  }, [searchParams, fetchMyRecords]);
 
   const [showCreateForm, setShowCreateForm] = useState(() => {
-    const savedPatientName = localStorage.getItem('create_record_patient_name');
-    if (savedPatientName) {
+    const saved = localStorage.getItem('create_record_patient_name');
+    if (saved) {
       localStorage.removeItem('create_record_patient_name');
       return true;
     }
@@ -97,17 +95,7 @@ const MedicalRecordsSection = () => {
 
   const handleSearchChange = (e) => {
     const { name, value } = e.target;
-    setSearchParams(prev => {
-      const newParams = { ...prev, [name]: value };
-      
-      // Logic tự động sửa nếu người dùng cố tình nhập tay sai (validation logic)
-      // Tuy nhiên với input type="date" có min/max thì UI đã chặn phần lớn rồi
-      if (name === 'startDate' && newParams.endDate && value > newParams.endDate) {
-         // Nếu chọn ngày bắt đầu lớn hơn ngày kết thúc -> Reset ngày kết thúc hoặc set bằng ngày bắt đầu
-         // Ở đây mình giữ nguyên để input min/max lo liệu việc hiển thị đỏ/cảnh báo
-      }
-      return newParams;
-    });
+    setSearchParams(prev => ({ ...prev, [name]: value }));
   };
 
   const handleResetSearch = () => {
@@ -118,13 +106,12 @@ const MedicalRecordsSection = () => {
     setFormError('');
     setFormSuccess('');
 
-    if (!formData.diagnosis || !formData.diagnosis.trim()) {
-      setFormError('Chẩn đoán là bắt buộc');
+    if (!formData.diagnosis?.trim()) {
+      setFormError(t('doctorRecords.create.diagnosisRequired'));
       return;
     }
-
-    if (!formData.treatmentNotes || !formData.treatmentNotes.trim()) {
-      setFormError('Ghi chú điều trị là bắt buộc');
+    if (!formData.treatmentNotes?.trim()) {
+      setFormError(t('doctorRecords.create.treatmentNotesRequired'));
       return;
     }
 
@@ -136,27 +123,28 @@ const MedicalRecordsSection = () => {
         diagnosis: formData.diagnosis.trim(),
         treatmentNotes: formData.treatmentNotes.trim(),
       });
-      setFormSuccess('Đã hoàn thành và lưu hồ sơ khám bệnh!');
 
-      const patientNameValue = created.patientName || (formData.patientName && formData.patientName.trim()) || null;
+      setFormSuccess(t('doctorRecords.create.success'));
+
+      const patientNameValue = created.patientName || formData.patientName?.trim() || null;
       if (patientNameValue && created.recordId && !created.patientName) {
         patientNameMapRef.current.set(created.recordId, patientNameValue);
       }
-      setShowCreateForm(false);
 
+      setShowCreateForm(false);
       setTimeout(() => {
         setFormSuccess('');
         fetchMyRecords(currentPage);
       }, 1500);
     } catch (error) {
-      const msg = error.response?.data?.message || error.message || 'Tạo hồ sơ khám thất bại';
+      const msg = error.response?.data?.message || error.message || t('doctorRecords.create.failed');
       setFormError(msg);
     } finally {
       setFormSubmitting(false);
     }
   };
 
-  // UI Phân trang
+  // Pagination UI
   const renderPagination = () => {
     if (totalPages <= 1) return null;
 
@@ -173,7 +161,6 @@ const MedicalRecordsSection = () => {
           className={`w-10 h-10 rounded border flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-100'}`}>
           <ChevronsLeft className="w-5 h-5" />
         </button>
-
         <button onClick={() => fetchMyRecords(currentPage - 1)} disabled={currentPage === 1 || recordsLoading}
           className={`w-10 h-10 rounded border flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-100'}`}>
           <ChevronLeft className="w-5 h-5" />
@@ -214,7 +201,6 @@ const MedicalRecordsSection = () => {
           className={`w-10 h-10 rounded border flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-100'}`}>
           <ChevronRight className="w-5 h-5" />
         </button>
-
         <button onClick={() => fetchMyRecords(totalPages)} disabled={currentPage === totalPages || recordsLoading}
           className={`w-10 h-10 rounded border flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-100'}`}>
           <ChevronsRight className="w-5 h-5" />
@@ -231,32 +217,39 @@ const MedicalRecordsSection = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ClipboardList className={`w-6 h-6 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}/>
-              <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Quản lý Hồ sơ & Hoàn thành khám</h2>
+              <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{t('doctorRecords.title')}</h2>
             </div>
             
+            <button
+              onClick={() => setShowCreateForm(!showCreateForm)}
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors ${theme === 'dark' ? 'bg-blue-700 text-white hover:bg-blue-600' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+            >
+              <Plus className="w-4 h-4" />
+              {t('doctorRecords.create.newRecord')}
+            </button>
           </div>
-          {showCreateForm && (
-            <div className="mt-4 animate-fadeIn">
-              <CreateRecordForm
-                onClose={() => setShowCreateForm(false)}
-                onSubmit={handleCreateRecord}
-                error={formError}
-                success={formSuccess}
-                submitting={formSubmitting}
-              />
-            </div>
-          )}
         </div>
+
+        {showCreateForm && (
+          <div className="p-6 border-t animate-fadeIn">
+            <CreateRecordForm
+              onClose={() => setShowCreateForm(false)}
+              onSubmit={handleCreateRecord}
+              error={formError}
+              success={formSuccess}
+              submitting={formSubmitting}
+            />
+          </div>
+        )}
       </div>
 
-      {/* KHỐI 2: BỘ LỌC ĐÃ ĐƯỢC CÂN LẠI */}
+      {/* KHỐI 2: BỘ LỌC */}
       <div className={`rounded-lg border shadow-sm p-5 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-          
-          {/* Cột 1: Tìm kiếm từ khóa (Chiếm 5 phần) */}
+          {/* Keyword */}
           <div className="md:col-span-5">
             <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-              Từ khóa tìm kiếm
+              {t('doctorRecords.filters.keyword')}
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -265,7 +258,7 @@ const MedicalRecordsSection = () => {
               <input
                 type="text"
                 name="keyword"
-                placeholder="Nhập tên bệnh nhân, SĐT..."
+                placeholder={t('doctorRecords.filters.keywordPlaceholder')}
                 className={`w-full border rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300'}`}
                 value={searchParams.keyword}
                 onChange={handleSearchChange}
@@ -273,11 +266,11 @@ const MedicalRecordsSection = () => {
             </div>
           </div>
 
-          {/* Cột 2: Lọc theo ngày (Chiếm 5 phần) */}
+          {/* Date range */}
           <div className="md:col-span-5 flex gap-2 items-end">
             <div className="flex-1">
               <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                Từ ngày
+                {t('doctorRecords.filters.fromDate')}
               </label>
               <input 
                 type="date" 
@@ -285,13 +278,13 @@ const MedicalRecordsSection = () => {
                 className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-all ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`} 
                 value={searchParams.startDate} 
                 onChange={handleSearchChange}
-                max={searchParams.endDate || today} // Không lớn hơn ngày tới (hoặc hôm nay)
+                max={searchParams.endDate || today}
               />
             </div>
             <span className="text-gray-400 mb-2">-</span>
             <div className="flex-1">
               <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                Đến ngày
+                {t('doctorRecords.filters.toDate')}
               </label>
               <input 
                 type="date" 
@@ -299,25 +292,23 @@ const MedicalRecordsSection = () => {
                 className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-all ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`} 
                 value={searchParams.endDate} 
                 onChange={handleSearchChange}
-                min={searchParams.startDate} // Không nhỏ hơn ngày từ
-                max={today} // Không được chọn tương lai
+                min={searchParams.startDate}
+                max={today}
               />
             </div>
           </div>
 
-          {/* Cột 3: Nút xóa bộ lọc (Chiếm 2 phần) - Căn phải hoặc fill */}
-          {/* ĐÃ SỬA: Nút màu xám */}
+          {/* Clear button */}
           <div className="md:col-span-2 flex justify-end">
             <button
               onClick={handleResetSearch}
               className={`w-full border px-4 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-colors ${theme === 'dark' ? 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'}`}
-              title="Đặt lại điều kiện lọc"
+              title={t('doctorRecords.filters.clear')}
             >
               <RotateCcw className="w-4 h-4" />
-              Xóa bộ lọc
+              {t('doctorRecords.filters.clear')}
             </button>
           </div>
-
         </div>
       </div>
 
@@ -325,21 +316,24 @@ const MedicalRecordsSection = () => {
       <div className={`rounded-lg border shadow-sm ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         <div className={`px-6 py-4 border-b flex items-center justify-between ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
           <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-            Danh sách hồ sơ đã tạo {totalRecords > 0 && `(Tổng: ${totalRecords})`}
+            {t('doctorRecords.listTitle')} {totalRecords > 0 && `(${t('common.total')}: ${totalRecords})`}
           </h2>
-          {recordsLoading && <span className="text-sm text-blue-500 font-medium animate-pulse">Đang tải dữ liệu...</span>}
+          {recordsLoading && (
+            <span className="text-sm text-blue-500 font-medium animate-pulse">
+              {t('common.loading')}
+            </span>
+          )}
         </div>
 
-        {/* Bảng dữ liệu - Để tự nhiên, không fix chiều cao */}
         <div className="overflow-x-auto">
           <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
             <thead className={theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}>
               <tr>
-                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>STT</th>
-                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Tên bệnh nhân</th>
-                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Chẩn đoán</th>
-                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Ghi chú</th>
-                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Hành động</th>
+                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{t('doctorRecords.common.stt')}</th>
+                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{t('doctorRecords.table.patient')}</th>
+                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{t('doctorRecords.table.diagnosis')}</th>
+                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{t('doctorRecords.table.treatmentNotes')}</th>
+                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{t('doctorRecords.common.actions')}</th>
               </tr>
             </thead>
             <tbody className={`divide-y ${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
@@ -347,10 +341,11 @@ const MedicalRecordsSection = () => {
                 <tr>
                   <td colSpan="5" className="px-6 py-10 text-center text-gray-500">
                     {recordsLoading
-                      ? 'Đang tìm kiếm...'
+                      ? t('common.loading')
                       : (searchParams.keyword || searchParams.startDate || searchParams.endDate
-                          ? 'Không tìm thấy hồ sơ nào phù hợp với bộ lọc.'
-                          : 'Chưa có hồ sơ nào. Hãy nhấn "Tạo hồ sơ mới" để hoàn thành ca khám.')}
+                          ? t('doctorRecords.noResults')
+                          : t('doctorRecords.noRecords')
+                      )}
                   </td>
                 </tr>
               ) : (

@@ -1,7 +1,14 @@
+// src/components/AppointmentForm.jsx
 import { useState, useEffect, useMemo } from 'react';
 import { Send, Calendar, Clock, ChevronDown, Search, X, Check } from 'lucide-react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function AppointmentForm() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -24,7 +31,6 @@ export default function AppointmentForm() {
   const { minDate, maxDate } = useMemo(() => {
     const today = new Date();
     const min = new Date(today);
-    min.setDate(today.getDate());
     const max = new Date(today);
     max.setDate(today.getDate() + 3);
     return {
@@ -33,10 +39,24 @@ export default function AppointmentForm() {
     };
   }, []);
 
+  // Default date = today
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchServices(serviceSearch);
-    }, 300);
+    if (!formData.date && minDate) {
+      setFormData(prev => ({ ...prev, date: minDate }));
+    }
+  }, [minDate]);
+
+  // Auto redirect after success
+  useEffect(() => {
+    if (submitStatus === 'success') {
+      const timer = setTimeout(() => navigate('/'), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [submitStatus]);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => fetchServices(serviceSearch), 300);
     return () => clearTimeout(timer);
   }, [serviceSearch]);
 
@@ -57,31 +77,10 @@ export default function AppointmentForm() {
 
   const isValidTime = (time) => {
     if (!time) return true;
-    const [hours, minutes] = time.split(':').map(Number);
-    const totalMinutes = hours * 60 + minutes;
-    const isMorning = totalMinutes >= 8 * 60 && totalMinutes <= 12 * 60;
-    const isAfternoon = totalMinutes >= 14 * 60 && totalMinutes <= 18 * 60;
-    return isMorning || isAfternoon;
+    const [h, m] = time.split(':').map(Number);
+    const total = h * 60 + m;
+    return (total >= 480 && total <= 720) || (total >= 840 && total <= 1080);
   };
-
-  const getTimeErrorMessage = () => {
-    return 'Vui lòng chọn thời gian trong khung giờ: 8:00-12:00 hoặc 14:00-18:00';
-  };
-
-  useEffect(() => {
-    if (!formData.date && minDate) {
-      setFormData((prev) => ({ ...prev, date: minDate }));
-    }
-  }, [minDate]);
-
-  useEffect(() => {
-    if (submitStatus === 'success') {
-      const timer = setTimeout(() => {
-        setSubmitStatus('idle');
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [submitStatus]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -91,36 +90,46 @@ export default function AppointmentForm() {
     setTimeError('');
 
     if (!isValidTime(formData.time)) {
-      setTimeError(getTimeErrorMessage());
+      setTimeError(t('appointment.timeError'));
       setIsSubmitting(false);
       return;
     }
 
-    if (phoneError || !formData.phone || formData.phone.length < 9) {
-      setErrorMessage('Vui lòng nhập số điện thoại hợp lệ (9–11 chữ số).');
+    if (!formData.phone || formData.phone.length < 9) {
+      setErrorMessage(t('appointment.phoneError'));
       setSubmitStatus('error');
       setIsSubmitting(false);
       return;
     }
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setSubmitStatus('success');
-      setIsSubmitting(false);
+      const payload = {
+        patientName: formData.fullName,
+        phone: formData.phone,
+        email: formData.email,
+        appointmentTime: `${formData.date}T${formData.time}:00`,
+        notes: formData.symptoms || '',
+        serviceIds: formData.serviceIds
+      };
 
+      await axios.post(
+        'http://localhost:8082/api/public/appointments/quick-book',
+        payload,
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      setSubmitStatus('success');
       setFormData({
-        fullName: '',
-        phone: '',
-        email: '',
-        date: minDate,
-        time: '',
-        symptoms: '',
-        serviceIds: []
+        fullName: '', phone: '', email: '', date: minDate, time: '', symptoms: '', serviceIds: []
       });
     } catch (error) {
-      setErrorMessage('Có lỗi xảy ra. Vui lòng thử lại.');
+      setErrorMessage(
+        error.response?.data?.message ||
+        error.message ||
+        t('common.error')
+      );
       setSubmitStatus('error');
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -129,52 +138,37 @@ export default function AppointmentForm() {
     const { name, value } = e.target;
 
     if (name === 'phone') {
-      const digitsOnly = value.replace(/\D/g, '');
-      const capped = digitsOnly.slice(0, 10);
-
-      let pErr = '';
-      if (digitsOnly.length > 10) pErr = 'Số điện thoại tối đa 10 chữ số.';
-
-      setFormData({ ...formData, phone: capped });
-      setPhoneError(pErr);
+      const digits = value.replace(/\D/g, '').slice(0, 10);
+      setFormData(prev => ({ ...prev, phone: digits }));
+      setPhoneError(digits.length > 10 ? t('appointment.phoneTooLong') : '');
       return;
     }
 
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-
+    setFormData(prev => ({ ...prev, [name]: value }));
     if (name === 'time') setTimeError('');
   };
 
   const handleTimeChange = (e) => {
-    const timeValue = e.target.value;
-    setFormData({ ...formData, time: timeValue });
-    if (timeValue && !isValidTime(timeValue)) {
-      setTimeError(getTimeErrorMessage());
-    } else {
-      setTimeError('');
-    }
+    const time = e.target.value;
+    setFormData(prev => ({ ...prev, time }));
+    setTimeError(time && !isValidTime(time) ? t('appointment.timeError') : '');
   };
 
-  const toggleService = (serviceId) => {
-    setFormData((prev) => {
-      const newServiceIds = prev.serviceIds.includes(serviceId)
-        ? prev.serviceIds.filter((id) => id !== serviceId)
-        : [...prev.serviceIds, serviceId];
-      return { ...prev, serviceIds: newServiceIds };
-    });
+  const toggleService = (id) => {
+    setFormData(prev => ({
+      ...prev,
+      serviceIds: prev.serviceIds.includes(id)
+        ? prev.serviceIds.filter(x => x !== id)
+        : [...prev.serviceIds, id]
+    }));
   };
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (!event.target.closest('.services-dropdown')) {
-        setIsServicesOpen(false);
-      }
+    const handler = (e) => {
+      if (!e.target.closest('.services-dropdown')) setIsServicesOpen(false);
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   return (
@@ -189,10 +183,10 @@ export default function AppointmentForm() {
             </div>
             <div className="flex-1">
               <p className="font-bold text-gray-900 dark:text-white text-base">
-                Đặt lịch thành công!
+                {t('appointment.successTitle')}
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                Chúng tôi đã ghi nhận yêu cầu của bạn. Vui lòng kiểm tra email để biết thêm chi tiết.
+                {t('appointment.successMessage')}
               </p>
             </div>
             <button 
@@ -214,7 +208,7 @@ export default function AppointmentForm() {
             </div>
             <div className="flex-1">
               <p className="font-bold text-gray-900 dark:text-white text-base">
-                Có lỗi xảy ra!
+                {t('appointment.errorTitle')}
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                 {errorMessage}
@@ -230,15 +224,12 @@ export default function AppointmentForm() {
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto px-4">
+      <div className="w-full max-w-[95%] mx-auto px-4">
         {/* HEADER - Đã sửa margin và padding */}
         <div className="text-center pt-8 pb-6 animate-[fadeInDown_0.6s_ease-out]">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent mb-2">
-            Đặt Lịch Khám Bệnh
+            {t('appointment.formTitle')}
           </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Vui lòng điền thông tin để đặt lịch hẹn với bác sĩ
-          </p>
         </div>
 
         {/* FORM CARD - Đã sửa padding */}
@@ -249,7 +240,7 @@ export default function AppointmentForm() {
             <div className="grid md:grid-cols-2 gap-6">
               <div className="group">
                 <label htmlFor="fullName" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Họ và Tên <span className="text-red-500">*</span>
+                  {t('appointment.fullName')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -259,13 +250,13 @@ export default function AppointmentForm() {
                   value={formData.fullName}
                   onChange={handleChange}
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:bg-white dark:focus:bg-gray-600 transition-all duration-300 text-sm outline-none text-gray-900 dark:text-white"
-                  placeholder="Nhập họ và tên"
+                  placeholder={t('appointment.fullNamePlaceholder')}
                 />
               </div>
 
               <div className="group">
                 <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Số Điện Thoại <span className="text-red-500">*</span>
+                  {t('appointment.phone')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="tel"
@@ -283,7 +274,7 @@ export default function AppointmentForm() {
                   placeholder="0123456789"
                 />
                 {phoneError && (
-                  <p className="mt-2 text-xs text-red-600 flex items-center gap-1 animate-[fadeIn_0.3s_ease-out]">
+                  <p className="mt-2 text-xs text-red-600 dark:text-red-400 flex items-center gap-1 animate-[fadeIn_0.3s_ease-out]">
                     <span className="w-1 h-1 bg-red-600 rounded-full"></span>
                     {phoneError}
                   </p>
@@ -294,7 +285,7 @@ export default function AppointmentForm() {
             {/* EMAIL */}
             <div className="group">
               <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Địa chỉ Email <span className="text-red-500">*</span>
+                {t('appointment.email')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
@@ -312,7 +303,7 @@ export default function AppointmentForm() {
             <div className="grid md:grid-cols-2 gap-6">
               <div className="group">
                 <label htmlFor="date" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Ngày Mong Muốn <span className="text-red-500">*</span>
+                  {t('appointment.date')} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Calendar className="absolute left-4 top-3.5 w-5 h-5 text-gray-400 pointer-events-none" />
@@ -332,7 +323,7 @@ export default function AppointmentForm() {
 
               <div className="group">
                 <label htmlFor="time" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Giờ Mong Muốn <span className="text-red-500">*</span>
+                  {t('appointment.time')} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Clock className="absolute left-4 top-3.5 w-5 h-5 text-gray-400 pointer-events-none" />
@@ -349,14 +340,14 @@ export default function AppointmentForm() {
                   />
                 </div>
                 {timeError && (
-                  <p className="mt-2 text-xs text-red-600 flex items-center gap-1 animate-[fadeIn_0.3s_ease-out]">
+                  <p className="mt-2 text-xs text-red-600 dark:text-red-400 flex items-center gap-1 animate-[fadeIn_0.3s_ease-out]">
                     <span className="w-1 h-1 bg-red-600 rounded-full"></span>
                     {timeError}
                   </p>
                 )}
                 <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
-                  Khung giờ làm việc: 8:00-12:00 và 14:00-18:00
+                  {t('appointment.workingHoursHint')}
                 </p>
               </div>
             </div>
@@ -364,7 +355,7 @@ export default function AppointmentForm() {
             {/* SYMPTOMS */}
             <div className="group">
               <label htmlFor="symptoms" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Mô tả Triệu chứng (không bắt buộc)
+                {t('appointment.symptomsLabel')}
               </label>
               <textarea
                 id="symptoms"
@@ -373,14 +364,14 @@ export default function AppointmentForm() {
                 value={formData.symptoms}
                 onChange={handleChange}
                 className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:bg-white dark:focus:bg-gray-600 transition-all duration-300 resize-none text-sm outline-none text-gray-900 dark:text-white"
-                placeholder="Bạn có thể mô tả tình trạng sức khỏe của mình (tuỳ chọn)"
+                placeholder={t('appointment.symptomsPlaceholder')}
               />
             </div>
 
             {/* SERVICES DROPDOWN */}
             <div className="services-dropdown group">
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Chọn dịch vụ (tùy chọn)
+                {t('appointment.servicesLabel')}
               </label>
               <div className="relative">
                 <button
@@ -390,8 +381,8 @@ export default function AppointmentForm() {
                 >
                   <span className={formData.serviceIds.length === 0 ? 'text-gray-400' : 'text-gray-900 dark:text-white font-medium'}>
                     {formData.serviceIds.length === 0
-                      ? 'Chọn dịch vụ khám...'
-                      : `✓ Đã chọn ${formData.serviceIds.length} dịch vụ`}
+                      ? t('appointment.selectServicePlaceholder')
+                      : t('appointment.selectedServices', { count: formData.serviceIds.length })}
                   </span>
                   <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isServicesOpen ? 'rotate-180' : ''}`} />
                 </button>
@@ -405,7 +396,7 @@ export default function AppointmentForm() {
                         <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
                         <input
                           type="text"
-                          placeholder="Tìm kiếm dịch vụ..."
+                          placeholder={t('appointment.searchPlaceholder')}
                           value={serviceSearch}
                           onChange={(e) => setServiceSearch(e.target.value)}
                           className="w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-sm outline-none bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
@@ -418,7 +409,7 @@ export default function AppointmentForm() {
                     <div className="max-h-64 overflow-y-auto">
                       {services.length === 0 ? (
                         <div className="px-4 py-8 text-sm text-gray-500 dark:text-gray-400 text-center">
-                          {serviceSearch ? 'Không tìm thấy dịch vụ phù hợp' : 'Đang tải...'}
+                          {serviceSearch ? t('appointment.noResults') : t('common.loading')}
                         </div>
                       ) : (
                         services.map((svc) => (
@@ -431,14 +422,14 @@ export default function AppointmentForm() {
                                 type="checkbox"
                                 checked={formData.serviceIds.includes(svc.serviceId)}
                                 onChange={() => toggleService(svc.serviceId)}
-                                className="w-5 h-5 rounded border-2 border-gray-300 text-cyan-600 focus:ring-2 focus:ring-cyan-500 focus:ring-offset-0 transition-all duration-200 cursor-pointer"
+                                className="w-5 h-5 rounded border-2 border-gray-300 text-cyan-600 focus:ring-2 focus:ring-cyan-500 focus:ring-offset-0 transition-all duration-200 cursor-pointer dark:border-gray-500"
                               />
                             </div>
                             <div className="flex-1">
                               <div className="font-semibold text-gray-900 dark:text-white">{svc.name}</div>
                               <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-2">
                                 <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded-full">{svc.category}</span>
-                                <span className="font-medium text-cyan-600">
+                                <span className="font-medium text-cyan-600 dark:text-cyan-400">
                                   {new Intl.NumberFormat('vi-VN', {
                                     style: 'currency',
                                     currency: 'VND'
@@ -450,14 +441,15 @@ export default function AppointmentForm() {
                         ))
                       )}
                     </div>
-
                   </div>
                 )}
               </div>
 
               {formData.serviceIds.length > 0 && (
                 <div className="mt-3 p-3 bg-cyan-50 dark:bg-cyan-900/20 rounded-xl border border-cyan-100 dark:border-cyan-800 animate-[fadeIn_0.3s_ease-out]">
-                  <p className="text-xs font-semibold text-cyan-800 dark:text-cyan-300 mb-2">Dịch vụ đã chọn:</p>
+                  <p className="text-xs font-semibold text-cyan-800 dark:text-cyan-300 mb-2">
+                    {t('appointment.selectedLabel')}:
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {services
                       .filter((svc) => formData.serviceIds.includes(svc.serviceId))
@@ -471,7 +463,7 @@ export default function AppointmentForm() {
                           <button
                             type="button"
                             onClick={() => toggleService(svc.serviceId)}
-                            className="ml-1 hover:text-cyan-900 hover:bg-cyan-100 rounded-full p-0.5 transition-colors"
+                            className="ml-1 hover:text-cyan-900 dark:hover:text-cyan-100 hover:bg-cyan-100 dark:hover:bg-cyan-800 rounded-full p-0.5 transition-colors"
                           >
                             <X className="w-3 h-3" />
                           </button>
@@ -492,19 +484,19 @@ export default function AppointmentForm() {
                 {isSubmitting ? (
                   <>
                     <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Đang gửi yêu cầu...</span>
+                    <span>{t('appointment.submitting')}</span>
                   </>
                 ) : (
                   <>
                     <Send className="w-5 h-5" />
-                    <span>GỬI YÊU CẦU ĐẶT LỊCH</span>
+                    <span>{t('appointment.submitButton')}</span>
                   </>
                 )}
               </button>
 
-              <p className="text-xs text-gray-500 text-center mt-4 flex items-center justify-center gap-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-4 flex items-center justify-center gap-2">
                 <Clock className="w-4 h-4" />
-                Chúng tôi sẽ xác nhận lịch khám trong vòng 30 phút
+                {t('appointment.confirmationNote')}
               </p>
             </div>
           </form>
@@ -512,7 +504,7 @@ export default function AppointmentForm() {
 
         {/* FOOTER INFO */}
         <div className="pb-8 text-center text-sm text-gray-600 dark:text-gray-300 animate-[fadeIn_0.8s_ease-out]">
-          <p>Cần hỗ trợ? Liên hệ hotline: <span className="font-bold text-cyan-600">1900 1234</span></p>
+          <p>{t('appointment.helpText')}: <span className="font-bold text-cyan-600 dark:text-cyan-400">1900 1234</span></p>
         </div>
       </div>
 

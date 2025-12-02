@@ -6,15 +6,18 @@ import { patientApi } from '../../api/patientApi';
 import { serviceApi, formatPrice } from '../../api/serviceApi';
 import toast from 'react-hot-toast';
 import { useTheme } from '../../contexts/ThemeContext';
-
-const PAYMENT_METHODS = [
-  { value: 'Cash', label: 'Tiền mặt' },
-  { value: 'Card', label: 'Thẻ tín dụng/ghi nợ' },
-  { value: 'Transfer', label: 'Chuyển khoản' },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
+  
+  const PAYMENT_METHODS = [
+    { value: 'Cash', label: t('createInvoice.paymentMethods.cash') },
+    { value: 'Card', label: t('createInvoice.paymentMethods.card') },
+    { value: 'Transfer', label: t('createInvoice.paymentMethods.transfer') },
+  ];
+
   const [searchPatient, setSearchPatient] = useState('');
   const [patients, setPatients] = useState([]);
   const [services, setServices] = useState([]);
@@ -39,13 +42,13 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
         setPatients(patientsRes.patients || []);
         setServices(servicesRes.services || servicesRes.data || []);
       } catch (err) {
-        toast.error('Không tải được dữ liệu');
+        toast.error(t('createInvoice.errors.loadFailed'));
       } finally {
         setLoading(false);
       }
     };
     loadData();
-  }, [isOpen]);
+  }, [isOpen, t]);
 
   const filteredPatients = patients.filter(p =>
     p.fullName?.toLowerCase().includes(searchPatient.toLowerCase()) ||
@@ -74,13 +77,13 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
     const res = await fetch(`http://localhost:8082/api/medical-records/patient/${patientId}/latest`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    if (!res.ok) throw new Error('Không tìm thấy hồ sơ khám');
+    if (!res.ok) throw new Error(t('createInvoice.errors.noRecord'));
     return (await res.json()).recordId;
   };
 
   const handleSubmit = async () => {
-    if (!selectedPatient) return toast.error('Vui lòng chọn bệnh nhân');
-    if (selectedServices.length === 0) return toast.error('Vui lòng chọn ít nhất 1 dịch vụ');
+    if (!selectedPatient) return toast.error(t('createInvoice.errors.selectPatient'));
+    if (selectedServices.length === 0) return toast.error(t('createInvoice.errors.selectService'));
 
     setSubmitting(true);
     try {
@@ -96,11 +99,11 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
         }))
       });
 
-      toast.success('Tạo hóa đơn thành công!');
+      toast.success(t('createInvoice.success'));
       onSuccess();
       onClose();
     } catch (err) {
-      toast.error(err.message || 'Tạo hóa đơn thất bại');
+      toast.error(err.message || t('createInvoice.errors.createFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -118,8 +121,8 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
               <FileText className={`w-7 h-7 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
             </div>
             <div>
-              <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Tạo hóa đơn mới</h2>
-              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Nhanh chóng lập hóa đơn cho bệnh nhân</p>
+              <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('createInvoice.title')}</h2>
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('createInvoice.subtitle')}</p>
             </div>
           </div>
           <button onClick={onClose} className={`text-gray-400 hover:text-gray-600 dark:hover:text-gray-200`}>
@@ -132,13 +135,13 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
           {/* 1. Chọn bệnh nhân */}
           <div>
             <label className={`block text-sm font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-              Tìm & chọn bệnh nhân <span className="text-red-500">*</span>
+              {t('createInvoice.selectPatient')} <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Nhập tên hoặc số điện thoại..."
+                placeholder={t('createInvoice.searchPlaceholder')}
                 value={searchPatient}
                 onChange={(e) => setSearchPatient(e.target.value)}
                 className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'}`}
@@ -149,7 +152,7 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
             {searchPatient && (
               <div className={`mt-3 max-h-64 overflow-y-auto border rounded-xl shadow-lg ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                 {filteredPatients.length === 0 ? (
-                  <p className={`p-4 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Không tìm thấy bệnh nhân</p>
+                  <p className={`p-4 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{t('createInvoice.noPatientFound')}</p>
                 ) : (
                   filteredPatients.slice(0, 8).map(patient => (
                     <div
@@ -190,7 +193,7 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
           {/* 2. Chọn dịch vụ */}
           <div>
             <label className={`block text-sm font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-3`}>
-              Chọn dịch vụ <span className="text-red-500">*</span>
+              {t('createInvoice.selectServices')} <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto">
               {services.map(service => (
@@ -206,7 +209,7 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
                   <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{service.name}</div>
                   <div className={`text-sm mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{formatPrice(service.price)}</div>
                   {selectedServices.find(s => s.serviceId === service.serviceId) && (
-                    <div className={`mt-2 text-xs font-semibold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>Đã thêm</div>
+                    <div className={`mt-2 text-xs font-semibold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>{t('createInvoice.added')}</div>
                   )}
                 </div>
               ))}
@@ -215,7 +218,9 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
 
           {selectedServices.length > 0 && (
             <div className={`rounded-xl p-5 space-y-3 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
-              <h4 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Dịch vụ đã chọn ({selectedServices.length})</h4>
+              <h4 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                {t('createInvoice.selectedServices', { count: selectedServices.length })}
+              </h4>
               {selectedServices.map(s => (
                 <div key={s.serviceId} className={`flex items-center justify-between rounded-lg p-3 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
                   <div className="flex-1">
@@ -236,7 +241,9 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
           {/* Tổng tiền + Phương thức thanh toán */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className={`block text-sm font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Phương thức thanh toán</label>
+              <label className={`block text-sm font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                {t('createInvoice.paymentMethod')}
+              </label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
@@ -248,7 +255,7 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
               </select>
             </div>
             <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl p-6 flex items-center justify-between">
-              <span className="text-lg font-semibold">Tổng tiền</span>
+              <span className="text-lg font-semibold">{t('createInvoice.totalAmount')}</span>
               <span className="text-2xl font-bold">{formatPrice(totalAmount)}</span>
             </div>
           </div>
@@ -260,7 +267,7 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
             onClick={onClose}
             className={`px-6 py-3 border rounded-xl font-medium transition ${theme === 'dark' ? 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
           >
-            Hủy
+            {t('createInvoice.common.cancel')}
           </button>
           <button
             onClick={handleSubmit}
@@ -270,10 +277,10 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
             {submitting ? (
               <>
                 <Loader className="w-5 h-5 animate-spin" />
-                Đang tạo...
+                {t('createInvoice.creating')}
               </>
             ) : (
-              'Tạo hóa đơn'
+              t('createInvoice.createButton')
             )}
           </button>
         </div>

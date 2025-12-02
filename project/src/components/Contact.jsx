@@ -1,7 +1,10 @@
+// src/components/Contact.jsx
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { useClinic } from '../contexts/ClinicContext';
+import { useTranslation } from 'react-i18next';
 
 export default function Contact() {
+  const { t } = useTranslation();
   const { clinicInfo } = useClinic();
 
   const clinicAddress = clinicInfo?.address?.trim() || '';
@@ -13,11 +16,11 @@ export default function Contact() {
     <section id="contact" className="py-10 md:py-12 bg-white dark:bg-gray-900 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mt-3 mb-4">
-            Thông Tin Liên Hệ
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mt-3 mb-4">
+            {t('contact.title')}
           </h2>
           <p className="text-lg text-gray-700 dark:text-gray-300">
-            Chúng tôi luôn sẵn sàng hỗ trợ và tư vấn cho bạn
+            {t('contact.subtitle')}
           </p>
         </div>
 
@@ -25,16 +28,19 @@ export default function Contact() {
           <div className="space-y-8">
             {!hasContactInfo && (
               <div className="p-4 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400">
-                Chưa có thông tin liên hệ. Vui lòng cập nhật tại trang quản trị.
+                {t('contact.noInfo')}
               </div>
             )}
+
             {clinicAddress && (
               <div className="flex items-start space-x-4 p-4 rounded-xl hover:bg-cyan-50/50 dark:hover:bg-gray-800 transition-all group">
                 <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                   <MapPin className="w-7 h-7 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900 dark:text-white mb-1">Địa Chỉ</h3>
+                  <h3 className="font-bold text-gray-900 dark:text-white mb-1">
+                    {t('contact.address')}
+                  </h3>
                   <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line">
                     {clinicAddress}
                   </p>
@@ -48,9 +54,11 @@ export default function Contact() {
                   <Phone className="w-7 h-7 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900 dark:text-white mb-1">Điện Thoại</h3>
+                  <h3 className="font-bold text-gray-900 dark:text-white mb-1">
+                    {t('contact.phone')}
+                  </h3>
                   <p className="text-gray-700 dark:text-gray-300">
-                    Hotline: <a href={`tel:${clinicPhone.replace(/\s/g, '')}`} className="text-cyan-600 dark:text-cyan-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline font-semibold">{clinicPhone}</a>
+                    {t('contact.hotline')}: <a href={`tel:${clinicPhone.replace(/\s/g, '')}`} className="text-cyan-600 dark:text-cyan-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline font-semibold">{clinicPhone}</a>
                   </p>
                 </div>
               </div>
@@ -62,7 +70,9 @@ export default function Contact() {
                   <Mail className="w-7 h-7 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900 dark:text-white mb-1">Email</h3>
+                  <h3 className="font-bold text-gray-900 dark:text-white mb-1">
+                    {t('contact.email')}
+                  </h3>
                   <p className="text-gray-700 dark:text-gray-300">
                     <a href={`mailto:${clinicEmail}`} className="text-cyan-600 dark:text-cyan-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline font-semibold">
                       {clinicEmail}
@@ -72,34 +82,29 @@ export default function Contact() {
               </div>
             )}
 
-            {(clinicInfo?.morningStartTime || clinicInfo?.afternoonStartTime) && (
-              <div className="flex items-start space-x-4 p-4 rounded-xl hover:bg-cyan-50/50 dark:hover:bg-gray-800 transition-all group">
-                <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                  <Clock className="w-7 h-7 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 dark:text-white mb-1">Giờ Làm Việc</h3>
-                  <div className="text-gray-600 dark:text-gray-300 space-y-1">
-                    {clinicInfo.morningStartTime && clinicInfo.morningEndTime && (
-                      <p>
-                        <span className="font-medium">Buổi sáng:</span> {clinicInfo.morningStartTime} - {clinicInfo.morningEndTime}
-                      </p>
-                    )}
-                    {clinicInfo.afternoonStartTime && clinicInfo.afternoonEndTime && (
-                      <p>
-                        <span className="font-medium">Buổi chiều:</span> {clinicInfo.afternoonStartTime} - {clinicInfo.afternoonEndTime}
-                      </p>
-                    )}
-                  </div>
-                </div>
+            {/* Giờ làm việc */}
+            <div className="flex items-start space-x-4 p-4 rounded-xl hover:bg-cyan-50/50 dark:hover:bg-gray-800 transition-all group">
+              <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                <Clock className="w-7 h-7 text-white" />
               </div>
-            )}
+              <div>
+                <h3 className="font-bold text-gray-900 dark:text-white mb-1">
+                  {t('contact.hours')}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300">
+                  {t('contact.weekdays')}<br />
+                  {t('contact.weekends')}
+                </p>
+              </div>
+            </div>
 
             {clinicPhone && (
               <div className="bg-gradient-to-br from-cyan-50 to-emerald-50 dark:from-gray-800 dark:to-gray-800 border-2 border-cyan-200 dark:border-gray-700 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow">
-                <h3 className="font-bold text-gray-900 dark:text-white mb-3">Hỗ Trợ Khẩn Cấp</h3>
+                <h3 className="font-bold text-gray-900 dark:text-white mb-3">
+                  {t('contact.emergencySupport')}
+                </h3>
                 <p className="text-gray-700 dark:text-gray-300 mb-4">
-                  Nếu bạn gặp tình trạng khẩn cấp, vui lòng gọi ngay:
+                  {t('contact.emergencyText')}
                 </p>
                 <a
                   href={`tel:${clinicPhone.replace(/\s/g, '')}`}
@@ -112,7 +117,8 @@ export default function Contact() {
             )}
           </div>
 
-          <div className="bg-gradient-to-br from-cyan-100/30 to-emerald-100/30 rounded-2xl overflow-hidden h-[500px] shadow-xl border-2 border-cyan-200 dark:border-gray-700">
+          {/* Bản đồ */}
+          <div className="bg-gradient-to-br from-cyan-100/30 to-emerald-100/30 dark:from-gray-800/30 dark:to-gray-800/30 rounded-2xl overflow-hidden h-[500px] shadow-xl border-2 border-cyan-200 dark:border-gray-700">
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.954387384135!2d106.69919631480082!3d10.732119192330907!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752fbea5fe3db1%3A0xfae94aca5709003f!2sNguyen%20Van%20Linh%2C%20District%207%2C%20Ho%20Chi%20Minh%20City%2C%20Vietnam!5e0!3m2!1sen!2s!4v1629789123456!5m2!1sen!2s"
               width="100%"
