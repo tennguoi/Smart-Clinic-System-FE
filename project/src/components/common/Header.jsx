@@ -1,16 +1,18 @@
 // src/components/common/Header.jsx
-import { Search, Bell, User2, LogOut } from 'lucide-react';
+import { Search, Bell, User2, LogOut, Sun, Moon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { authService } from '../../services/authService';
 import axiosInstance from '../../utils/axiosConfig';
 import LanguageSwitcher from '../LanguageSwitcher';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function Header() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { theme, toggleTheme } = useTheme();
 
   const user = authService.getUserInfo() || {};
   const fullName = user.fullName || t('header.defaultName', 'Người dùng');
@@ -54,6 +56,15 @@ export default function Header() {
 
           {/* Language Switcher */}
           <LanguageSwitcher />
+
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
 
           {/* Avatar Dropdown */}
           <div className="relative user-dropdown">
