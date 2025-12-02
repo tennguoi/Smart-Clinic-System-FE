@@ -385,11 +385,11 @@ export default function ArticleManagement() {
                     <td className="px-6 py-4 text-center text-sm text-gray-600">{formatDate(a.publishedAt)}</td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex justify-center gap-3">
-                        <button onClick={() => handleOpenModal("view", a)} title={t("common.view") || "View"}
+                        <button onClick={() => handleOpenModal("view", a)} title={t("articles.common.view") || "View"}
                           className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-100 transition">
                           <Eye className="w-5 h-5" />
                         </button>
-                        <button onClick={() => handleDeleteClick(a)} title={t("common.delete")}
+                        <button onClick={() => handleDeleteClick(a)} title={t("articles.common.delete")}
                           className="text-red-600 hover:text-red-800 p-2 rounded-full hover:bg-red-100 transition">
                           <Trash2 className="w-5 h-5" />
                         </button>
@@ -419,7 +419,7 @@ export default function ArticleManagement() {
                 {isViewMode && (
                   <button onClick={handleSwitchToEdit}
                     className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
-                    <Edit className="w-4 h-4" /> {t("common.edit")}
+                    <Edit className="w-4 h-4" /> {t("articles.common.edit")}
                   </button>
                 )}
                 <button onClick={handleCloseModal}
@@ -504,11 +504,11 @@ export default function ArticleManagement() {
                 <div className="flex gap-4 pt-6 border-t">
                   <button type="submit" disabled={loading || uploading}
                     className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-70 transition">
-                    {loading || uploading ? t("common.processing") : isCreateMode ? t("articles.createButton") : t("common.save")}
+                    {loading || uploading ? t("common.processing") : isCreateMode ? t("articles.createButton") : t("articles.common.save")}
                   </button>
                   <button type="button" onClick={handleCloseModal}
                     className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-400 transition">
-                    {t("common.cancel")}
+                    {t("articles.common.cancel")}
                   </button>
                 </div>
               )}
@@ -522,19 +522,19 @@ export default function ArticleManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
             <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">{t("common.confirm")}</h3>
+            <h3 className="text-xl font-bold mb-2">{t("articles.common.confirm")}</h3>
             <p className="text-gray-600 mb-6">
               {t("articles.toast.deleteSuccess", { title: "" }).replace(/^.*"/, '').replace(/".*$/, '')} <strong>{articleToDelete.title}</strong>?<br />
-              <span className="text-red-600 font-semibold">{t("common.delete")}</span>
+              {/* <span className="text-red-600 font-semibold">{t("common.delete")}</span> */}
             </p>
             <div className="flex gap-3">
               <button onClick={handleConfirmDelete}
                 className="flex-1 bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition">
-                {t("common.delete")}
+                {t("articles.common.delete")}
               </button>
               <button onClick={() => { setShowDeleteConfirmation(false); setArticleToDelete(null); }}
                 className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-400 transition">
-                {t("common.cancel")}
+                {t("articles.common.cancel")}
               </button>
             </div>
           </div>

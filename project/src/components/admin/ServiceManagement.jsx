@@ -523,7 +523,7 @@ export default function ServiceManagement() {
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
               <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-xl font-bold mb-2">{t('common.confirmDelete')}</h3>
+              <h3 className="text-xl font-bold mb-2">{t('servicesManagement.common.confirm')}</h3>
               <p className="text-gray-600 mb-6">
                 {t('servicesManagement.confirm.deleteText', { name: serviceToDelete.name })}
               </p>

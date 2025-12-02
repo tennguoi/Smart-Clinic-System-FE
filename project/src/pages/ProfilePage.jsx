@@ -4,8 +4,10 @@ import { ArrowLeft } from 'lucide-react';
 import ProfileManager from '../components/common/ProfileManager';
 import SecurityManager from '../components/common/SecurityManager';
 import { authService } from '../services/authService';
+import { useTranslation } from 'react-i18next';
 
 export default function ProfilePage() {
+  const { t } = useTranslation(); // không cần truyền namespace
   const [activeTab, setActiveTab] = useState('profile');
   const navigate = useNavigate();
   const user = authService.getUserInfo() || {};
@@ -16,9 +18,9 @@ export default function ProfilePage() {
         <div className="container mx-auto flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="flex items-center gap-2">
             <ArrowLeft className="w-5 h-5" />
-            <span>Quay lại</span>
+            <span>{t('profilepage.back')}</span>
           </button>
-          <h1 className="text-2xl font-bold">Cài Đặt</h1>
+          <h1 className="text-2xl font-bold">{t('profilepage.settings')}</h1>
           <div className="w-40"></div>
         </div>
       </div>
@@ -30,13 +32,13 @@ export default function ProfilePage() {
               onClick={() => setActiveTab('profile')}
               className={`px-4 py-2 font-medium ${activeTab === 'profile' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
             >
-              Thông Tin Cá Nhân
+              {t('profilepage.personal_info')}
             </button>
             <button
               onClick={() => setActiveTab('security')}
               className={`px-4 py-2 font-medium ${activeTab === 'security' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
             >
-              Bảo Mật
+              {t('profilepage.security')}
             </button>
           </div>
 

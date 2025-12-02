@@ -450,7 +450,7 @@ export default function ClinicRoomManagement() {
                   </button>
                   <button type="button" onClick={handleCloseModal}
                     className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl hover:bg-gray-400 font-medium">
-                    {t('common.cancel', 'Hủy')}
+                    {t('roomManagement.common.cancel', 'Hủy')}
                   </button>
                 </div>
               )}

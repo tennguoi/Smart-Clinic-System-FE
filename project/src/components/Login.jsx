@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next'; // ← Thêm
 import { authService } from '../services/authService';
 import { useClinic } from '../contexts/ClinicContext';
+import LanguageSwitcher from '../components/LanguageSwitcher'; // ← Thêm
 import logo from '../images/logo.png';
 import backgroundImage from '../images/background.png';
 
 const Login = () => {
+  const { t } = useTranslation(); // ← Hook i18n
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -14,9 +17,11 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { clinicInfo } = useClinic();
-  
+
   const baseLogoUrl = clinicInfo?.logoUrl?.trim() || '';
-  const cacheBuster = clinicInfo?.updatedAt ? new Date(clinicInfo.updatedAt).getTime() : Date.now();
+  const cacheBuster = clinicInfo?.updatedAt
+    ? new Date(clinicInfo.updatedAt).getTime()
+    : Date.now();
   const clinicLogoUrl = baseLogoUrl ? `${baseLogoUrl}?v=${cacheBuster}` : '';
   const showDefaultLogo = !clinicLogoUrl;
 
@@ -34,34 +39,34 @@ const Login = () => {
 
       const { token, roles, userId, fullName, message, requires2FA } = response.data;
 
-      // ✅ Kiểm tra nếu cần xác thực 2FA
+      // Xác thực 2FA
       if (requires2FA === true) {
-        setSuccess('OTP đã được gửi đến email của bạn!');
+        setSuccess(t('login.otpSent')); // ← Dùng i18n
         setTimeout(() => {
-          // Chuyển đến trang verify 2FA (không phải verify-otp)
           navigate('/verify-2fa', { state: { email } });
         }, 1000);
         return;
       }
 
-      // ✅ Đăng nhập bình thường (không có 2FA)
+      // Đăng nhập bình thường
       if (!token) {
-        setError('Đăng nhập thất bại! Không nhận được token.');
+        setError(t('login.noToken'));
         setLoading(false);
         return;
       }
 
       authService.login(token, { userId, email, fullName }, roles);
-      setSuccess('Đăng nhập thành công!');
+      setSuccess(t('login.success'));
 
       const defaultRoute = authService.getDefaultRoute();
       setTimeout(() => {
         navigate(defaultRoute, { replace: true });
       }, 800);
-
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.response?.data?.message || 'Đăng nhập thất bại! Vui lòng kiểm tra email và mật khẩu.');
+      setError(
+        err.response?.data?.message || t('login.failed')
+      );
     } finally {
       setLoading(false);
     }
@@ -77,16 +82,23 @@ const Login = () => {
         backgroundRepeat: 'no-repeat',
       }}
     >
+      {/* Background effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-teal-50/70 to-blue-100/70 animate-pulse"></div>
       <div className="absolute w-72 h-72 bg-teal-300 rounded-full opacity-30 blur-3xl animate-ping top-10 left-10"></div>
       <div className="absolute w-96 h-96 bg-blue-400 rounded-full opacity-20 blur-3xl animate-pulse bottom-10 right-10"></div>
 
+      {/* Language Switcher - góc trên bên phải */}
+      <div className="absolute top-6 right-6 z-20">
+        <LanguageSwitcher />
+      </div>
+
       <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl relative z-10 animate-fadeIn">
+        {/* Logo */}
         <div className="flex justify-center mb-6">
-          <img 
+          <img
             key={clinicLogoUrl || 'default'}
-            src={showDefaultLogo ? logo : clinicLogoUrl} 
-            alt={showDefaultLogo ? "Logo" : "Logo phòng khám"} 
+            src={showDefaultLogo ? logo : clinicLogoUrl}
+            alt={showDefaultLogo ? t('login.defaultLogo') : t('login.clinicLogo')}
             className="w-full max-w-[150px] h-auto object-contain"
             onError={(e) => {
               e.currentTarget.src = logo;
@@ -95,9 +107,10 @@ const Login = () => {
         </div>
 
         <h2 className="text-3xl font-bold text-center text-teal-700 mb-6">
-          Đăng nhập phòng khám
-          </h2>
+          {t('login.title')} {/* Đăng nhập phòng khám */}
+        </h2>
 
+        {/* Thông báo */}
         {error && (
           <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">
             {error}
@@ -112,7 +125,7 @@ const Login = () => {
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
+              {t('login.email')}
             </label>
             <input
               type="email"
@@ -120,14 +133,14 @@ const Login = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              placeholder="Nhập email của bạn"
+              placeholder={t('login.emailPlaceholder')}
               required
             />
           </div>
 
           <div className="mb-4">
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Mật khẩu
+              {t('login.password')}
             </label>
             <input
               type="password"
@@ -135,7 +148,7 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              placeholder="Nhập mật khẩu"
+              placeholder={t('login.passwordPlaceholder')}
               required
             />
           </div>
@@ -144,15 +157,15 @@ const Login = () => {
             type="submit"
             disabled={loading}
             className={`w-full bg-teal-600 text-white p-3 rounded-lg font-semibold transition-transform duration-300 
-              ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-teal-700 hover:scale-105'}`}
+              ${loading ? 'opacity-70 cursor-not-allowed' : '1hover:bg-teal-700 hover:scale-105'}`}
           >
-            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+            {loading ? t('login.loggingIn') : t('login.loginButton')}
           </button>
 
           <p className="mt-4 text-center text-sm text-gray-600">
-            Quên mật khẩu?{' '}
+            {t('login.forgotPassword')}{' '}
             <a href="/forgot-password" className="text-teal-600 hover:underline">
-              Nhấn vào đây
+              {t('login.clickHere')}
             </a>
           </p>
         </form>

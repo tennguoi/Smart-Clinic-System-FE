@@ -1,31 +1,28 @@
-// src/pages/PaymentPage.jsx
+// src/pages/reception/PaymentPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import BankQRCodeModal from '../../components/receptionist/BankQRCodeModal';
-import { 
-  CreditCard, Banknote, Building2, Smartphone, 
-  Printer, FileDown, Stethoscope, TestTube, Scan, Syringe,
-  User, Calendar, Check, AlertCircle, ArrowLeft, CheckCircle
+import {
+  CreditCard, Banknote, Smartphone, Stethoscope, TestTube,
+  Scan, Syringe, User, Calendar, Check, AlertCircle,
+  ArrowLeft, CheckCircle, Info
 } from 'lucide-react';
 import { billingApi } from '../../api/billingApi';
 import { formatPrice } from '../../utils/formatPrice';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast'; // ← react-hot-toast
 
 const API_BASE_URL = 'http://localhost:8082';
 
+// Phương thức thanh toán
 const paymentMethods = [
-  { value: 'Cash', label: 'Tiền mặt', icon: Banknote },
-  { value: 'Card', label: 'Thẻ tín dụng', icon: CreditCard },
-  { value: 'Transfer', label: 'Chuyển khoản / QR', icon: Smartphone }
+  { value: 'Cash', icon: Banknote },
+  { value: 'Card', icon: CreditCard },
+  { value: 'Transfer', icon: Smartphone }
 ];
 
-const categoryIcons = {
-  Exam: Stethoscope,
-  Test: TestTube,
-  Imaging: Scan,
-  Procedure: Syringe
-};
-
+// Icon theo loại dịch vụ
+const categoryIcons = { Exam: Stethoscope, Test: TestTube, Imaging: Scan, Procedure: Syringe };
 const categoryColors = {
   Exam: 'bg-blue-50 text-blue-600',
   Test: 'bg-purple-50 text-purple-600',
@@ -33,321 +30,247 @@ const categoryColors = {
   Procedure: 'bg-orange-50 text-orange-600'
 };
 
-const steps = [
-  { label: 'Khám bệnh', completed: true },
-  { label: 'Dịch vụ', completed: true },
-  { label: 'Thanh toán', completed: false }
-];
-
 export default function PaymentPage() {
-  const [showQRModal, setShowQRModal] = useState(false);
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { billId } = useParams();
-  
+
   const [invoice, setInvoice] = useState(null);
   const [patient, setPatient] = useState(null);
   const [selectedMethod, setSelectedMethod] = useState('Cash');
+  const [showQRModal, setShowQRModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  // Fetch invoice data khi component mount
+  // Fetch hóa đơn + bệnh nhân
   useEffect(() => {
-    const fetchInvoiceData = async () => {
+    const fetchData = async () => {
+      if (!billId) return;
+
       try {
         setIsFetching(true);
-        
-        // Gọi API lấy thông tin hóa đơn qua billingApi
+
         const invoiceData = await billingApi.getById(billId);
-        console.log('Invoice data:', invoiceData);
         setInvoice(invoiceData);
 
-        // Gọi API lấy thông tin bệnh nhân nếu có patientId
         if (invoiceData.patientId) {
           try {
-            const response = await fetch(`${API_BASE_URL}/api/public/patients/${invoiceData.patientId}`, {
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            });
-
-            if (response.ok) {
-              const patientData = await response.json();
-              console.log('Patient data:', patientData);
+            const res = await fetch(`${API_BASE_URL}/api/public/patients/${invoiceData.patientId}`);
+            if (res.ok) {
+              const patientData = await res.json();
               setPatient(patientData);
             }
           } catch (err) {
-            console.error('Error fetching patient:', err);
-            // Không throw error vì thông tin bệnh nhân không bắt buộc
+            console.warn('Không lấy được thông tin bệnh nhân:', err);
           }
         }
-
       } catch (err) {
-        console.error('Error fetching invoice:', err);
-        setError(err.message || 'Không thể tải dữ liệu hóa đơn');
-        toast.error('Không thể tải thông tin hóa đơn');
+        console.error(err);
+        setError(t('invoices.common.error'));
+        toast.error(t('invoices.common.error'));
       } finally {
         setIsFetching(false);
       }
     };
 
-    if (billId) {
-      fetchInvoiceData();
-    }
-  }, [billId]);
+    fetchData();
+  }, [billId, t]);
 
-  // Hàm xử lý thanh toán riêng
+  // Xử lý thanh toán
   const processPayment = async () => {
-    const totalAmount = invoice.totalAmount || 0;
-    const amountPaid = invoice.amountPaid || 0;
-    const remaining = totalAmount - amountPaid;
+    const remaining = (invoice?.finalAmount || invoice?.totalAmount || 0) - (invoice?.amountPaid || 0);
 
     setIsLoading(true);
     setError(null);
-    setSuccess(false);
 
     try {
-      // Gọi API thanh toán qua billingApi
       await billingApi.pay(invoice.billId, remaining, selectedMethod);
 
       setSuccess(true);
-      toast.success(
-        <div className="flex items-center gap-2">
-          <CheckCircle className="w-5 h-5" />
-          Thanh toán thành công!
-        </div>
-      );
-      
-      // Chuyển về trang hóa đơn sau 2 giây
+      toast.success(t('invoices.paySuccess'), {
+        icon: <CheckCircle className="w-6 h-6" />,
+      });
+
       setTimeout(() => {
         navigate('/reception/invoices');
       }, 2000);
-
     } catch (err) {
-      const errorMsg = err.response?.data?.message || err.message || 'Thanh toán thất bại. Vui lòng thử lại!';
-      setError(errorMsg);
-      toast.error(errorMsg);
+      const msg = err.response?.data?.message || err.message || t('common.error');
+      setError(msg);
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Hàm xử lý khi nhấn nút thanh toán
-  const handlePay = async () => {
-    // Tính toán số tiền còn lại
-    const totalAmount = invoice.totalAmount || 0;
-    const amountPaid = invoice.amountPaid || 0;
-    const remaining = totalAmount - amountPaid;
-    
+  const handlePay = () => {
+    const remaining = (invoice?.finalAmount || invoice?.totalAmount || 0) - (invoice?.amountPaid || 0);
+
     if (remaining <= 0) {
-      setError('Hóa đơn đã thanh toán đủ');
-      toast.warning('Hóa đơn đã thanh toán đủ');
+      toast(t('invoices.alreadyPaid'), {
+        icon: <Info className="w-6 h-6 text-blue-600" />,
+        style: { background: '#DBEAFE', color: '#1E40AF' },
+      });
       return;
     }
 
-    // Nếu chọn chuyển khoản, hiển thị modal QR code
     if (selectedMethod === 'Transfer') {
       setShowQRModal(true);
-      return;
+    } else {
+      processPayment();
     }
-
-    // Các phương thức khác (Cash, Card) thì thanh toán trực tiếp
-    await processPayment();
   };
 
-  const handleBack = () => {
-    navigate('/reception/invoices');
-  };
+  const handleBack = () => navigate('/reception/invoices');
 
-  // Loading state
+  // Loading
   if (isFetching) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-[#0ABAB5] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Đang tải thông tin hóa đơn...</p>
+          <p className="text-gray-600">{t('invoices.common.loading')}...</p>
         </div>
       </div>
     );
   }
 
-  // Error state
-  if (!invoice && !isFetching) {
+  // Không tìm thấy hóa đơn
+  if (!invoice) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <p className="text-xl text-gray-800 mb-4">Không tìm thấy hóa đơn</p>
-          <button
-            onClick={handleBack}
-            className="px-6 py-2 bg-[#0ABAB5] text-white rounded-lg hover:bg-[#099999] transition-colors"
-          >
-            Quay lại danh sách hóa đơn
+          <p className="text-xl font-semibold text-gray-800 mb-6">
+            {t('invoices.common.error')} - Không tìm thấy hóa đơn
+          </p>
+          <button onClick={handleBack} className="px-6 py-3 bg-[#0ABAB5] text-white rounded-lg hover:bg-[#099999] transition">
+            ← {t('invoices.common.cancel') || 'Quay lại'}
           </button>
         </div>
       </div>
     );
   }
 
-  // Tính toán tổng tiền
+  // Tính toán
   const totalAmount = invoice.totalAmount || 0;
   const amountPaid = invoice.amountPaid || 0;
   const discount = invoice.discount || 0;
   const vat = invoice.vat || 0;
   const finalAmount = invoice.finalAmount || totalAmount;
   const remaining = finalAmount - amountPaid;
-
-  // Lấy danh sách dịch vụ từ items
   const services = invoice.items || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
       <div className="max-w-7xl mx-auto">
+
         {/* Header */}
         <div className="mb-6">
-          <button 
-            onClick={handleBack}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
-          >
+          <button onClick={handleBack} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4">
             <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium">Quay lại danh sách hóa đơn</span>
+            <span className="font-medium">{t('common.backToList') || 'Quay lại danh sách hóa đơn'}</span>
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">Thanh toán hóa đơn</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('invoices.paymentTitle')}</h1>
         </div>
 
-        {/* Progress Indicator */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          {steps.map((step, index) => (
-            <div key={step.label} className="flex items-center">
-              <div className="flex items-center gap-2">
-                <div
-                  className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                    step.completed ? 'bg-[#0ABAB5] text-white' : 'bg-gray-200 text-gray-600'
-                  }`}
-                >
-                  {step.completed ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <span className="text-sm font-medium">{index + 1}</span>
-                  )}
-                </div>
-                <span
-                  className={`text-sm font-medium ${
-                    step.completed ? 'text-[#0ABAB5]' : 'text-gray-600'
-                  }`}
-                >
-                  {step.label}
-                </span>
+        {/* Progress */}
+        <div className="flex items-center justify-center gap-8 mb-8">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${i < 2 ? 'bg-[#0ABAB5]' : 'bg-gray-300'}`}>
+                {i < 2 ? <Check className="w-5 h-5" /> : i + 1}
               </div>
-              {index < steps.length - 1 && (
-                <div
-                  className={`w-16 h-0.5 mx-3 ${
-                    step.completed ? 'bg-[#0ABAB5]' : 'bg-gray-200'
-                  }`}
-                />
-              )}
+              <span className={`font-medium ${i < 2 ? 'text-[#0ABAB5]' : 'text-gray-500'}`}>
+                {t(`invoices.steps.${i}`)}
+              </span>
+              {i < 2 && <div className="w-24 h-0.5 bg-[#0ABAB5]" />}
             </div>
           ))}
         </div>
 
-        {/* Patient Header */}
+        {/* Thông tin bệnh nhân */}
         <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-          <div className="flex items-start justify-between">
+          <div className="flex justify-between items-start">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-gradient-to-br from-[#0ABAB5] to-[#0099FF] rounded-full flex items-center justify-center">
                 <User className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {patient?.fullName || invoice.patientName || 'Khách hàng'}
+                <h2 className="text-2xl font-bold">
+                  {patient?.fullName || invoice.patientName || t('common.walkInCustomer') || 'Khách lẻ'}
                 </h2>
-                <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
-                  <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
-                  <span>SĐT: <span className="font-medium text-[#0ABAB5]">{patient?.phone || invoice.patientPhone || 'N/A'}</span></span>
-                </div>
+                <p className="text-sm text-gray-600 mt-1">
+                  SĐT: <span className="font-medium text-[#0ABAB5]">
+                    {patient?.phone || invoice.patientPhone || 'N/A'}
+                  </span>
+                </p>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-sm text-gray-500 flex items-center gap-2 justify-end">
+            <div className="text-right text-sm text-gray-500">
+              <div className="flex items-center gap-2 justify-end">
                 <Calendar className="w-4 h-4" />
-                <span>{invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('vi-VN') : 'N/A'}</span>
+                {invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('vi-VN') : '—'}
               </div>
-              <div className="text-xs text-gray-400 mt-1">Mã hóa đơn: #{invoice.billId?.slice(0, 15).toUpperCase()}</div>
+              <div className="mt-1">Mã: #{invoice.billId?.slice(-8).toUpperCase()}</div>
             </div>
           </div>
         </div>
 
-        {/* Success Message */}
+        {/* Thành công */}
         {success && (
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 flex items-start gap-3 animate-pulse">
-            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+          <div className="bg-green-50 border border-green-200 rounded-xl p-5 mb-6 flex gap-4 items-center animate-pulse">
+            <CheckCircle className="w-12 h-12 text-green-600 flex-shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-green-900">Thanh toán thành công!</p>
-              <p className="text-xs text-green-700 mt-1">
-                Đã thanh toán {formatPrice(remaining)} bằng {paymentMethods.find(m => m.value === selectedMethod)?.label}
+              <p className="text-lg font-bold text-green-900">{t('invoices.common.success')}</p>
+              <p className="text-green-700">
+                Đã thu {formatPrice(remaining)} bằng {t(`createInvoice.paymentMethods.${selectedMethod.toLowerCase()}`)}
               </p>
-              <p className="text-xs text-green-600 mt-1">Đang chuyển về trang hóa đơn...</p>
             </div>
           </div>
         )}
 
-        {/* Error Message */}
+        {/* Lỗi */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="bg-red-50 border border-red-200 rounded-xl p-5 mb-6 flex gap-4">
+            <AlertCircle className="w-8 h-8 text-red-600 flex-shrink-0" />
+            <p className="text-red-800 font-medium">{error}</p>
           </div>
         )}
 
-        {/* Main Content */}
+        {/* Nội dung chính */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Service List */}
+          {/* Danh sách dịch vụ */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Danh sách dịch vụ đã sử dụng</h3>
+              <h3 className="text-xl font-bold mb-6">{t('invoices.servicesAndCosts')}</h3>
 
-              <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+              <div className="space-y-4 max-h-96 overflow-y-auto">
                 {services.length === 0 ? (
-                  <div className="text-center py-10 text-gray-500">
-                    <Stethoscope className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                    <p>Chưa có dịch vụ nào trong hóa đơn</p>
-                  </div>
+                  <p className="text-center text-gray-500 py-12 text-lg">
+                    {t('invoices.noServices') || 'Chưa có dịch vụ nào'}
+                  </p>
                 ) : (
-                  services.map((service, index) => {
-                    const Icon = categoryIcons[service.category] || Stethoscope;
-                    const colorClass = categoryColors[service.category] || 'bg-gray-50 text-gray-600';
+                  services.map((s, i) => {
+                    const Icon = categoryIcons[s.category] || Stethoscope;
+                    const color = categoryColors[s.category] || 'bg-gray-100 text-gray-600';
 
                     return (
-                      <div
-                        key={service.serviceId || index}
-                        className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all duration-200 hover:border-[#0ABAB5]"
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className={`w-12 h-12 rounded-xl ${colorClass} flex items-center justify-center flex-shrink-0`}>
-                            <Icon className="w-6 h-6" />
+                      <div key={i} className="border rounded-xl p-5 hover:border-[#0ABAB5] transition">
+                        <div className="flex gap-4">
+                          <div className={`w-12 h-12 ${color} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                            <Icon className="w-7 h-7" />
                           </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-gray-900 text-lg">{service.serviceName}</h4>
-                                {service.description && (
-                                  <p className="text-sm text-gray-600 mt-1">{service.description}</p>
-                                )}
-                                {service.doctorName && (
-                                  <p className="text-xs text-[#0ABAB5] mt-2 font-medium">{service.doctorName}</p>
-                                )}
-                              </div>
-
-                              <div className="text-right flex-shrink-0">
-                                <div className="text-lg font-bold text-gray-900">
-                                  {formatPrice(service.subTotal || 0)}
-                                </div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                  {service.quantity || 1} x {formatPrice(service.unitPrice || 0)}
-                                </div>
-                              </div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-lg">{s.serviceName}</h4>
+                            {s.doctorName && <p className="text-sm text-[#0ABAB5] mt-1">{s.doctorName}</p>}
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold text-xl">{formatPrice(s.subTotal || s.unitPrice * s.quantity)}</div>
+                            <div className="text-sm text-gray-500">
+                              {s.quantity || 1} × {formatPrice(s.unitPrice)}
                             </div>
                           </div>
                         </div>
@@ -357,83 +280,73 @@ export default function PaymentPage() {
                 )}
               </div>
 
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold text-gray-700">Tổng tạm tính</span>
-                  <span className="text-2xl font-bold text-[#0ABAB5]">{formatPrice(totalAmount)}</span>
+              <div className="mt-8 pt-6 border-t">
+                <div className="flex justify-between text-2xl font-bold">
+                  <span>{t('invoices.subtotal')}</span>
+                  <span className="text-[#0ABAB5]">{formatPrice(totalAmount)}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Payment Summary */}
-          <div className="lg:col-span-1">
+          {/* Tổng thanh toán */}
+          <div>
             <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-6">
-              <div className="mb-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Tổng thanh toán</h3>
-                <div className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium border bg-yellow-100 text-yellow-700 border-yellow-200">
-                  Chờ thanh toán
-                </div>
+              <h3 className="text-xl font-bold mb-4">{t('invoices.paymentSummary')}</h3>
+              <div className="bg-yellow-100 text-yellow-700 px-4 py-2 rounded-full text-sm font-bold inline-block mb-6">
+                {t('invoices.status.pending')}
               </div>
 
-              <div className="space-y-3 mb-6 pb-6 border-b border-gray-200">
-                <div className="flex justify-between text-gray-700">
-                  <span>Tạm tính</span>
-                  <span className="font-medium">{formatPrice(totalAmount)}</span>
+              <div className="space-y-4 pb-6 border-b">
+                <div className="flex justify-between text-lg">
+                  <span>{t('invoices.subtotal')}</span>
+                  <span>{formatPrice(totalAmount)}</span>
                 </div>
-
                 {discount > 0 && (
-                  <div className="flex justify-between text-gray-700">
-                    <span>Giảm giá</span>
-                    <span className="font-medium text-green-600">-{formatPrice(discount)}</span>
+                  <div className="flex justify-between text-green-600 font-medium">
+                    <span>{t('invoices.discount')}</span>
+                    <span>-{formatPrice(discount)}</span>
                   </div>
                 )}
-
                 {vat > 0 && (
-                  <div className="flex justify-between text-gray-700">
+                  <div className="flex justify-between">
                     <span>VAT</span>
-                    <span className="font-medium">{formatPrice(vat)}</span>
+                    <span>{formatPrice(vat)}</span>
                   </div>
                 )}
-
-                <div className="flex justify-between items-center pt-3 border-t border-gray-100">
-                  <span className="text-lg font-semibold text-gray-900">Tổng cộng phải trả</span>
-                  <span className="text-2xl font-bold text-[#0ABAB5]">{formatPrice(finalAmount)}</span>
+                <div className="pt-4 border-t flex justify-between text-2xl font-bold">
+                  <span>{t('invoices.total')}</span>
+                  <span className="text-[#0ABAB5]">{formatPrice(finalAmount)}</span>
                 </div>
-
-                <div className="flex justify-between text-gray-700">
-                  <span>Đã trả</span>
-                  <span className="font-medium">{formatPrice(amountPaid)}</span>
+                <div className="flex justify-between text-lg">
+                  <span>{t('invoices.paid')}</span>
+                  <span>{formatPrice(amountPaid)}</span>
                 </div>
-
-                <div className="flex justify-between items-center pt-2">
-                  <span className="font-semibold text-gray-900">Còn lại</span>
-                  <span className="text-xl font-bold text-orange-600">{formatPrice(remaining)}</span>
+                <div className="flex justify-between text-2xl font-bold pt-3">
+                  <span className="text-orange-600">{t('invoices.remaining')}</span>
+                  <span className="text-orange-600">{formatPrice(remaining)}</span>
                 </div>
               </div>
 
-              <div className="mb-6">
-                <h4 className="text-sm font-semibold text-gray-900 mb-3">Phương thức thanh toán</h4>
+              {/* Phương thức thanh toán */}
+              <div className="mt-6">
+                <h4 className="font-semibold text-lg mb-4">{t('createInvoice.paymentMethod')}</h4>
                 <div className="grid grid-cols-3 gap-3">
-                  {paymentMethods.map((method) => {
-                    const Icon = method.icon;
-                    const isSelected = selectedMethod === method.value;
-
+                  {paymentMethods.map(m => {
+                    const Icon = m.icon;
+                    const active = selectedMethod === m.value;
                     return (
                       <button
-                        key={method.value}
-                        type="button"
-                        onClick={() => setSelectedMethod(method.value)}
+                        key={m.value}
+                        onClick={() => setSelectedMethod(m.value)}
                         disabled={isLoading || success}
-                        className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${
-                          isSelected
-                            ? 'border-[#0ABAB5] bg-[#0ABAB5]/5 shadow-sm'
-                            : 'border-gray-200 hover:border-gray-300'
-                        } disabled:opacity-60 disabled:cursor-not-allowed`}
+                        className={`p-5 rounded-2xl border-2 transition-all flex flex-col items-center gap-2
+                          ${active ? 'border-[#0ABAB5] bg-[#0ABAB5]/5 shadow-md' : 'border-gray-200 hover:border-gray-400'}
+                          disabled:opacity-50`}
                       >
-                        <Icon className={`w-6 h-6 ${isSelected ? 'text-[#0ABAB5]' : 'text-gray-600'}`} />
-                        <span className={`text-xs font-medium ${isSelected ? 'text-[#0ABAB5]' : 'text-gray-700'}`}>
-                          {method.label}
+                        <Icon className={`w-8 h-8 ${active ? 'text-[#0ABAB5]' : 'text-gray-600'}`} />
+                        <span className={`text-sm font-medium ${active ? 'text-[#0ABAB5]' : ''}`}>
+                          {t(`createInvoice.paymentMethods.${m.value.toLowerCase()}`)}
                         </span>
                       </button>
                     );
@@ -441,39 +354,37 @@ export default function PaymentPage() {
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={handlePay}
-                  disabled={isLoading || remaining <= 0 || success}
-                  className="w-full bg-gradient-to-r from-[#0ABAB5] to-[#0099FF] text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Đang xử lý...
-                    </>
-                  ) : success ? (
-                    <>
-                      <CheckCircle className="w-5 h-5" />
-                      Đã thanh toán
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard className="w-5 h-5" />
-                      {selectedMethod === 'Transfer' 
-                        ? 'Hiển thị QR Code' 
-                        : 'Thanh toán ngay'}
-                    </>
-                  )}
-                </button>
-              </div>
+              {/* Nút thanh toán */}
+              <button
+                onClick={handlePay}
+                disabled={isLoading || remaining <= 0 || success}
+                className="mt-8 w-full bg-gradient-to-r from-[#0ABAB5] to-[#0099FF] text-white py-5 rounded-2xl font-bold text-xl
+                  hover:shadow-2xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed
+                  flex items-center justify-center gap-3"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                    {t('invoices.common.processing')}
+                  </>
+                ) : success ? (
+                  <>
+                    <CheckCircle className="w-7 h-7" />
+                    {t('invoices.common.success')}
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-7 h-7" />
+                    {selectedMethod === 'Transfer' ? t('invoices.showQR') : t('invoices.payNow')}
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* QR Code Modal */}
+      {/* Modal QR */}
       {showQRModal && (
         <BankQRCodeModal
           amount={remaining}

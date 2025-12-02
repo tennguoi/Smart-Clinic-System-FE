@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Copy, Download, CheckCircle, Smartphone, AlertCircle, Loader } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { X, Copy, Download, CheckCircle, Smartphone, AlertCircle } from 'lucide-react';
 import { billingApi } from '../../api/billingApi';
 
 const formatPrice = (price) => {
@@ -7,6 +8,7 @@ const formatPrice = (price) => {
 };
 
 export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPayment }) {
+  const { t } = useTranslation();
   const [qrUrl, setQrUrl] = useState('');
   const [copied, setCopied] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -15,21 +17,17 @@ export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPaym
   const [error, setError] = useState(null);
   const [pollInterval, setPollInterval] = useState(null);
 
-  // Thông tin ngân hàng của bạn - CẬP NHẬT THÔNG TIN NÀY
+  // CẬP NHẬT THÔNG TIN NGÂN HÀNG TẠI ĐÂY
   const bankInfo = {
-    bankCode: 'MB',        // Mã ngân hàng (VCB, TCB, MB, ACB, etc.)
-    accountNo: '0332763869094', // Số tài khoản
-    accountName: 'PHAM MINH DAN', // Tên chủ tài khoản
-    template: 'compact2'     // Template QR
+    bankCode: 'MB',
+    accountNo: '0332763869094',
+    accountName: 'PHAM MINH DAN',
+    template: 'compact2'
   };
 
   useEffect(() => {
-    // Tạo nội dung chuyển khoản
     const transferContent = `Thanh toan ${billId?.slice(0, 8).toUpperCase()}`;
-    
-    // Tạo URL QR code sử dụng API VietQR
     const qrApiUrl = `https://img.vietqr.io/image/${bankInfo.bankCode}-${bankInfo.accountNo}-${bankInfo.template}.png?amount=${amount}&addInfo=${encodeURIComponent(transferContent)}&accountName=${encodeURIComponent(bankInfo.accountName)}`;
-    
     setQrUrl(qrApiUrl);
   }, [amount, billId]);
 
@@ -48,7 +46,6 @@ export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPaym
     document.body.removeChild(link);
   };
 
-  // Check payment status from backend
   const checkPaymentStatusFromBackend = async () => {
     try {
       setIsCheckingPayment(true);
@@ -58,48 +55,34 @@ export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPaym
       return status.isPaid;
     } catch (err) {
       console.error('Error checking payment status:', err);
-      setError('Không thể kiểm tra trạng thái thanh toán');
+      setError(t('bankQRModal.checkError'));
       return false;
     } finally {
       setIsCheckingPayment(false);
     }
   };
 
-  // Start polling for payment status
   const startPaymentPolling = () => {
     let attempts = 0;
-    const maxAttempts = 30; // 5 minutes with 10-second intervals
+    const maxAttempts = 30;
 
     const interval = setInterval(async () => {
       attempts++;
-      console.log(`Checking payment status... (Attempt ${attempts}/${maxAttempts})`);
-      
       const isPaid = await checkPaymentStatusFromBackend();
-      
+
       if (isPaid) {
         clearInterval(interval);
         setPollInterval(null);
-        
-        // Payment confirmed, call onConfirmPayment
-        if (onConfirmPayment) {
-          await onConfirmPayment();
-        }
-        
-        // Dispatch event to notify other components about payment completion
+        if (onConfirmPayment) await onConfirmPayment();
         window.dispatchEvent(new CustomEvent('paymentCompleted', {
-          detail: {
-            billId: billId,
-            amount: amount,
-            paymentMethod: 'BankTransfer',
-            timestamp: new Date().toISOString()
-          }
+          detail: { billId, amount, paymentMethod: 'BankTransfer', timestamp: new Date().toISOString() }
         }));
       } else if (attempts >= maxAttempts) {
         clearInterval(interval);
         setPollInterval(null);
-        setError('Hết thời gian chờ. Vui lòng kiểm tra lại hoặc liên hệ hỗ trợ.');
+        setError(t('bankQRModal.timeoutError'));
       }
-    }, 10000); // Check every 10 seconds
+    }, 10000);
 
     setPollInterval(interval);
   };
@@ -107,95 +90,65 @@ export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPaym
   const handleConfirmPayment = async () => {
     setIsConfirming(true);
     setError(null);
-    
+
     try {
-      // First, check current payment status
       const currentStatus = await checkPaymentStatusFromBackend();
-      
       if (currentStatus.isPaid) {
-        // Already paid, process immediately
-        if (onConfirmPayment) {
-          await onConfirmPayment();
-        }
-        
+        if (onConfirmPayment) await onConfirmPayment();
         window.dispatchEvent(new CustomEvent('paymentCompleted', {
-          detail: {
-            billId: billId,
-            amount: amount,
-            paymentMethod: 'BankTransfer',
-            timestamp: new Date().toISOString()
-          }
+          detail: { billId, amount, paymentMethod: 'BankTransfer', timestamp: new Date().toISOString() }
         }));
       } else {
-        // Not paid yet, start polling
-        setError(null);
         startPaymentPolling();
       }
     } catch (err) {
-      setError('Lỗi khi xác nhận thanh toán. Vui lòng thử lại.');
-      console.error('Error confirming payment:', err);
+      setError(t('bankQRModal.confirmError'));
     } finally {
       setIsConfirming(false);
     }
   };
 
-  // Cleanup polling on unmount
   useEffect(() => {
-    return () => {
-      if (pollInterval) {
-        clearInterval(pollInterval);
-      }
-    };
+    return () => pollInterval && clearInterval(pollInterval);
   }, [pollInterval]);
+
+  const billCode = billId?.slice(0, 8).toUpperCase();
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        {/* Header - Compact */}
+        {/* Header */}
         <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Smartphone className="w-6 h-6" />
               <div>
-                <h2 className="text-lg font-bold">Quét mã QR thanh toán</h2>
-                <p className="text-blue-100 text-xs">Mã HĐ: #{billId?.slice(0, 8).toUpperCase()}</p>
+                <h2 className="text-lg font-bold">{t('bankQRModal.title')}</h2>
+                <p className="text-blue-100 text-xs">{t('bankQRModal.billId')}: #{billCode}</p>
               </div>
             </div>
-            <button 
-              onClick={onClose}
-              className="p-1.5 hover:bg-white/10 rounded-lg transition"
-            >
+            <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-lg transition">
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         <div className="p-6 space-y-5">
-          {/* Số tiền - Compact */}
+          {/* Amount */}
           <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 text-center border-2 border-emerald-200">
-            <div className="text-xs text-gray-600 mb-1">Số tiền thanh toán</div>
+            <div className="text-xs text-gray-600 mb-1">{t('bankQRModal.amountToPay')}</div>
             <div className="text-3xl font-bold text-emerald-600">{formatPrice(amount)}</div>
           </div>
 
-          {/* QR Code - Lớn hơn */}
+          {/* QR Code */}
           <div className="bg-white rounded-xl border-2 border-gray-200 p-4">
-            <div className="text-center mb-3">
-              <p className="text-sm font-semibold text-gray-700">
-                Mở app ngân hàng và quét mã QR
-              </p>
-            </div>
-            
+            <p className="text-center text-sm font-semibold text-gray-700 mb-3">
+              {t('bankQRModal.scanQR')}
+            </p>
             {qrUrl ? (
               <div className="flex justify-center">
                 <div className="bg-white p-3 rounded-xl border-4 border-blue-500 shadow-lg">
-                  <img 
-                    src={qrUrl} 
-                    alt="QR Code" 
-                    className="w-80 h-80 object-contain"
-                    onError={(e) => {
-                      e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Y2EzYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5RUiBDb2RlPC90ZXh0Pjwvc3ZnPg==';
-                    }}
-                  />
+                  <img src={qrUrl} alt="QR Code" className="w-80 h-80 object-contain" />
                 </div>
               </div>
             ) : (
@@ -203,141 +156,100 @@ export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPaym
                 <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
-
-            {/* Button tải QR - Nhỏ gọn */}
             <button
               onClick={handleDownloadQR}
-              className="w-full mt-3 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium hover:bg-blue-200 transition-colors text-sm"
+              className="w-full mt-3 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium hover:bg-blue-200 transition text-sm"
             >
               <Download className="w-4 h-4" />
-              Tải xuống
+              {t('bankQRModal.downloadQR')}
             </button>
           </div>
 
-          {/* Thông tin ngân hàng - Compact */}
+          {/* Bank Info */}
           <div className="bg-gray-50 rounded-xl p-4 space-y-3">
             <h3 className="font-bold text-gray-900 text-center text-sm mb-2">
-              Hoặc chuyển khoản thủ công
+              {t('bankQRModal.manualTransfer')}
             </h3>
-            
-            <div className="space-y-2.5">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-600">Ngân hàng:</span>
-                <span className="font-semibold text-gray-900">{bankInfo.bankCode}</span>
-              </div>
-
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-600">Chủ TK:</span>
-                <span className="font-semibold text-gray-900">{bankInfo.accountName}</span>
-              </div>
-
-              <div className="flex justify-between items-center gap-2 bg-white p-2.5 rounded-lg border border-gray-200">
-                <div className="flex-1">
-                  <div className="text-xs text-gray-500 mb-0.5">Số tài khoản</div>
-                  <div className="font-mono font-bold text-gray-900 text-sm">{bankInfo.accountNo}</div>
+            <div className="space-y-2.5 text-sm">
+              <div className="flex justify-between"><span className="text-gray-600">{t('bankQRModal.bank')}:</span> <strong>{bankInfo.bankCode}</strong></div>
+              <div className="flex justify-between"><span className="text-gray-600">{t('bankQRModal.accountHolder')}:</span> <strong>{bankInfo.accountName}</strong></div>
+              <div className="flex justify-between items-center gap-2 bg-white p-2.5 rounded-lg border">
+                <div>
+                  <div className="text-xs text-gray-500">{t('bankQRModal.accountNumber')}</div>
+                  <div className="font-mono font-bold">{bankInfo.accountNo}</div>
                 </div>
-                <button
-                  onClick={handleCopyAccountNumber}
-                  className="p-1.5 hover:bg-gray-100 rounded-lg transition"
-                  title="Sao chép"
-                >
-                  {copied ? (
-                    <CheckCircle className="w-4 h-4 text-green-600" />
-                  ) : (
-                    <Copy className="w-4 h-4 text-gray-600" />
-                  )}
+                <button onClick={handleCopyAccountNumber} className="p-1.5 hover:bg-gray-100 rounded-lg">
+                  {copied ? <CheckCircle className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-600" />}
                 </button>
               </div>
-
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-600">Số tiền:</span>
-                <span className="font-bold text-emerald-600">{formatPrice(amount)}</span>
-              </div>
-
+              <div className="flex justify-between"><span className="text-gray-600">{t('bankQRModal.amount')}:</span> <strong className="text-emerald-600">{formatPrice(amount)}</strong></div>
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
-                <div className="text-xs text-amber-800 mb-0.5 font-semibold">Nội dung CK:</div>
-                <div className="font-mono text-sm text-amber-900 font-bold">
-                  Thanh toan {billId?.slice(0, 8).toUpperCase()}
-                </div>
+                <div className="text-xs font-semibold text-amber-800">{t('bankQRModal.transferContent')}:</div>
+                <div className="font-mono text-sm font-bold text-amber-900">Thanh toan {billCode}</div>
               </div>
             </div>
           </div>
 
-          {/* Payment Status Display */}
+          {/* Payment Status */}
           {paymentStatus && (
-            <div className={`rounded-xl p-4 border-2 ${
-              paymentStatus.isPaid 
-                ? 'bg-green-50 border-green-300' 
-                : 'bg-yellow-50 border-yellow-300'
-            }`}>
+            <div className={`rounded-xl p-4 border-2 ${paymentStatus.isPaid ? 'bg-green-50 border-green-300' : 'bg-yellow-50 border-yellow-300'}`}>
               <div className="flex items-start gap-3">
-                {paymentStatus.isPaid ? (
-                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                ) : (
-                  <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                )}
-                <div className="flex-1">
-                  <p className={`font-semibold text-sm ${
-                    paymentStatus.isPaid ? 'text-green-900' : 'text-yellow-900'
-                  }`}>
-                    {paymentStatus.isPaid ? 'Thanh toán thành công!' : 'Đang chờ thanh toán...'}
+                {paymentStatus.isPaid ? <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" /> : <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />}
+                <div>
+                  <p className={`font-semibold text-sm ${paymentStatus.isPaid ? 'text-green-900' : 'text-yellow-900'}`}>
+                    {paymentStatus.isPaid ? t('bankQRModal.paymentSuccess') : t('bankQRModal.waitingPayment')}
                   </p>
-                  <div className={`text-xs mt-2 space-y-1 ${
-                    paymentStatus.isPaid ? 'text-green-700' : 'text-yellow-700'
-                  }`}>
-                    <p>Trạng thái: <strong>{paymentStatus.paymentStatus}</strong></p>
-                    <p>Đã thanh toán: <strong>{formatPrice(paymentStatus.amountPaid)}</strong></p>
-                    <p>Còn lại: <strong>{formatPrice(paymentStatus.remainingAmount)}</strong></p>
+                  <div className={`text-xs mt-2 space-y-1 ${paymentStatus.isPaid ? 'text-green-700' : 'text-yellow-700'}`}>
+                    <p>{t('bankQRModal.status')}: <strong>{paymentStatus.paymentStatus}</strong></p>
+                    <p>{t('bankQRModal.paidAmount')}: <strong>{formatPrice(paymentStatus.amountPaid)}</strong></p>
+                    <p>{t('bankQRModal.remainingAmount')}: <strong>{formatPrice(paymentStatus.remainingAmount)}</strong></p>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Error Message */}
+          {/* Error */}
           {error && (
             <div className="bg-red-50 border border-red-300 rounded-xl p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
               <p className="text-sm text-red-800">{error}</p>
             </div>
           )}
 
-          {/* Lưu ý - Compact */}
+          {/* Notes */}
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
             <h4 className="font-semibold text-blue-900 mb-1.5 flex items-center gap-1.5 text-sm">
-              <span className="text-base">💡</span>
-              Lưu ý quan trọng
+              
+              {t('bankQRModal.importantNote')}
             </h4>
             <ul className="text-xs text-blue-800 space-y-0.5 list-disc list-inside">
-              <li>Chuyển <strong>đúng số tiền</strong> và <strong>đúng nội dung</strong></li>
-              <li>Sau khi CK, nhấn "Xác nhận đã thanh toán"</li>
-              <li>Hệ thống sẽ tự động kiểm tra thanh toán mỗi 10 giây</li>
-              <li>Giao dịch được xác nhận trong vài phút</li>
+              <li>{t('bankQRModal.note1')}</li>
+              <li>{t('bankQRModal.note2')}</li>
+              <li>{t('bankQRModal.note3')}</li>
+              <li>{t('bankQRModal.note4')}</li>
             </ul>
           </div>
 
-          {/* Nút hành động - Nhỏ gọn */}
+          {/* Actions */}
           <div className="flex gap-2.5">
-            <button
-              onClick={onClose}
-              className="flex-1 px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-semibold transition text-sm"
-            >
-              Hủy
+            <button onClick={onClose} className="flex-1 px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-semibold text-sm">
+              {t('bankQRModal.cancel')}
             </button>
             <button
               onClick={handleConfirmPayment}
-              disabled={isConfirming}
-              className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-2.5 rounded-xl font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 text-sm"
+              disabled={isConfirming || isCheckingPayment}
+              className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-2.5 rounded-xl font-semibold flex items-center justify-center gap-1.5 text-sm disabled:opacity-50"
             >
-              {isConfirming ? (
+              {(isConfirming || isCheckingPayment) ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Đang xử lý...
+                  {t('bankQRModal.processing')}
                 </>
               ) : (
                 <>
                   <CheckCircle className="w-4 h-4" />
-                  Xác nhận đã thanh toán
+                  {t('bankQRModal.confirmPayment')}
                 </>
               )}
             </button>

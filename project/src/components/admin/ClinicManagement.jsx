@@ -628,7 +628,7 @@ export default function ClinicManagement() {
                   }}
                   className="flex items-center gap-2 bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition"
                 >
-                  {t('common.cancel')}
+                  {t('clinic.common.cancel')}
                 </button>
                 <button
                   type="submit"

@@ -300,7 +300,7 @@ export default function AccountManagement() {
           {/* Tìm kiếm */}
           <div className="lg:col-span-5">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Search className="inline w-4 h-4 mr-1" /> {t('common.search')}
+              <Search className="inline w-4 h-4 mr-1" /> {t('accountManagement.common.search')}
             </label>
             <input
               type="text"
@@ -620,7 +620,7 @@ export default function AccountManagement() {
                       {loading ? t('accountManagement.modal.processing') : isCreateMode ? t('accountManagement.modal.createAccountButton') : t('accountManagement.modal.saveButton')}
                     </button>
                     <button type="button" onClick={handleCloseModal} className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl hover:bg-gray-400">
-                      {t('common.cancel')}
+                      {t('accountManagement.common.cancel')}
                     </button>
                   </div>
                 )}

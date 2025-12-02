@@ -751,7 +751,7 @@ export default function AppointmentsSection() {
                 <>
                   <button onClick={() => setShowForm(false)}
                     className="flex-1 bg-gray-200 text-gray-700 py-3 px-4 rounded-xl hover:bg-gray-300 transition font-medium">
-                    {t('common.cancel', 'Hủy')}
+                    {t('appointmentManagement.common.cancel', 'Hủy')}
                   </button>
                   <button onClick={handleSubmit} disabled={submitting}
                     className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-xl hover:bg-blue-700 transition disabled:bg-blue-400 font-medium flex items-center justify-center gap-2">
