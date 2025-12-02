@@ -34,6 +34,7 @@ import DoctorManagement from "./components/admin/DoctorManagement";
 import ServiceManagement from "./components/admin/ServiceManagement";
 import ArticleManagement from "./components/admin/ArticleManagement";
 import AccountManagement from "./components/admin/AccountManagement";
+import Review from "./components/admin/Review";
 
 import ClinicManagement from "./components/admin/ClinicManagement";
 import PlaceholderSection from "./components/common/PlaceholderSection";
@@ -109,6 +110,7 @@ function App() {
           <Route path="medical-records" element={<MedicalRecordHistory />} />
           <Route path="invoices" element={<InvoicesSection isDoctorView={true} />} />
           <Route path="doctors" element={<DoctorManagement />} />
+          <Route path="reviews" element={<Review />} />
           
           <Route path="*" element={<PlaceholderSection title="Chức năng" message="Sắp ra mắt..." />} />
         </Route>

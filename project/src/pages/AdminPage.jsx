@@ -28,7 +28,8 @@ export default function AdminPage() {
     else if (path.includes('/appointments')) setActiveMenu('appointments');
     else if (path.includes('/rooms')) setActiveMenu('rooms');
     else if (path.includes('/medical-records')) setActiveMenu('medical-records');
-    else if (path.includes('/invoices')) setActiveMenu('invoices'); // QUAN TRỌNG
+    else if (path.includes('/invoices')) setActiveMenu('invoices');
+    else if (path.includes('/reviews')) setActiveMenu('reviews');
     else setActiveMenu('statistics');
   }, [location.pathname, navigate]);
 

@@ -25,6 +25,7 @@ export default function AdminSidebar({ activeMenu: propActiveMenu, onMenuChange 
     { id: 'rooms',           label: t('adminSidebar.rooms'),           icon: DoorOpen },
     { id: 'medical-records', label: t('adminSidebar.medicalRecords'),  icon: ClipboardList },
     { id: 'invoices',        label: t('adminSidebar.invoices'),        icon: Receipt },
+    { id: 'reviews',         label: t('adminSidebar.reviews'),         icon: Receipt },
   ];
 
   const currentPath = location.pathname;
@@ -39,6 +40,7 @@ export default function AdminSidebar({ activeMenu: propActiveMenu, onMenuChange 
      currentPath.includes('/admin/rooms')             ? 'rooms' :
      currentPath.includes('/admin/medical-records')   ? 'medical-records' :
      currentPath.includes('/admin/invoices')          ? 'invoices' :
+     currentPath.includes('/admin/reviews')           ? 'reviews' :
      currentPath === '/admin' || currentPath === '/admin/' ? 'statistics' : 'statistics');
 
   const handleMenuChange = (id) => {
@@ -54,6 +56,7 @@ export default function AdminSidebar({ activeMenu: propActiveMenu, onMenuChange 
       rooms:           '/admin/rooms',
       'medical-records': '/admin/medical-records',
       invoices:        '/admin/invoices',
+      reviews:         '/admin/reviews',
     };
 
     navigate(routes[id] || '/admin');
