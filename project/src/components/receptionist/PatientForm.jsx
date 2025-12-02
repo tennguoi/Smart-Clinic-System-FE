@@ -35,7 +35,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white">
+        <div className="flex justify-between items-center p-6 border-b">
           <h2 className="text-2xl font-bold text-gray-800">
             {isEdit ? (isEditMode ? 'Chỉnh sửa thông tin bệnh nhân' : 'Xem chi tiết bệnh nhân') : 'Thêm bệnh nhân mới'}
           </h2>
@@ -58,23 +58,6 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
             </button>
           </div>
         </div>
-
-        {/* Thông báo nếu đang điền từ lịch hẹn */}
-        {selectedAppointment && ! isEdit && (
-          <div className="p-6 bg-blue-50 border-b">
-            <div className="flex items-center gap-3">
-              <Calendar className="w-6 h-6 text-blue-600" />
-              <div>
-                <p className="font-semibold text-blue-900">
-                  ✓ Đang check-in từ lịch hẹn: {selectedAppointment.appointmentCode}
-                </p>
-                <p className="text-sm text-blue-700 mt-1">
-                  Bệnh nhân sẽ được tự động phân phòng khám sau khi thêm vào hàng chờ
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Form Content */}
         <div className="p-6">
@@ -103,8 +86,8 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 type="tel"
                 value={patientForm.phone}
                 onChange={(e) => {
-                  let value = e.target.value. replace(/\D/g, '');
-                  if (value. length >= 10) value = value.slice(0, 10);
+                  let value = e.target.value.replace(/\D/g, '');
+                  if (value.length >= 10) value = value.slice(0, 10);
                   onChange('phone', value);
                 }}
                 disabled={isDisabled}
@@ -154,7 +137,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
             {/* Gender */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Giới tính <span className="text-red-500">*</span>
+                Giới tính
               </label>
               <select
                 value={patientForm.gender}
@@ -187,11 +170,6 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                   </option>
                 ))}
               </select>
-              {selectedAppointment && (
-                <p className="text-xs text-blue-600 mt-1">
-                  ✓ Tự động ưu tiên cho bệnh nhân đặt lịch
-                </p>
-              )}
             </div>
 
             {/* ID Number - Số căn cước */}
@@ -240,7 +218,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 Địa chỉ
               </label>
               <textarea
-                value={patientForm. address}
+                value={patientForm.address}
                 onChange={(e) => onChange('address', e.target.value)}
                 disabled={isDisabled}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
