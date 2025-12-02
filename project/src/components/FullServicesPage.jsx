@@ -1,10 +1,10 @@
-// src/pages/FullServicesPage.jsx   (hoặc đường dẫn bạn đang dùng)
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { serviceApi } from '../api/serviceApi';
 import ServiceCard from '../components/ServiceCard';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+
 export default function FullServicesPage() {
   const { t } = useTranslation();
   const location = useLocation();
@@ -65,7 +65,7 @@ export default function FullServicesPage() {
     }
   };
 
-  // Tính toán các trang hiển thị (giữ nguyên logic đẹp của bạn)
+  // Tính toán các trang hiển thị
   const getPageNumbers = () => {
     const current = pagination.currentPage;
     const total = pagination.totalPages;
@@ -95,14 +95,14 @@ export default function FullServicesPage() {
   ];
 
   return (
-    <section className="bg-gradient-to-b from-cyan-50 via-white to-cyan-50/30 min-h-screen pt-0 pb-16">
+    <section className="bg-gradient-to-b from-cyan-50 via-white to-cyan-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 min-h-screen pt-0 pb-16 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 -mt-8">
         {/* Tiêu đề */}
         <div>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">
             {t('fullServices.title')}
           </h2>
-          <p className="text-lg text-gray-600 mt-3 max-w-4xl mx-auto">
+          <p className="text-lg text-gray-600 dark:text-gray-300 mt-3 max-w-4xl mx-auto">
             {t('fullServices.subtitle')}
           </p>
         </div>
@@ -116,7 +116,7 @@ export default function FullServicesPage() {
               className={`px-6 py-2.5 rounded-full border text-sm font-semibold transition-all duration-300 transform hover:scale-105
                 ${selectedCategory === cat.id
                   ? 'bg-cyan-600 text-white border-transparent shadow-lg shadow-cyan-500/30'
-                  : 'bg-white hover:bg-cyan-50 border-gray-300 text-gray-700 hover:border-cyan-400 shadow-md hover:shadow-lg'
+                  : 'bg-white dark:bg-gray-800 hover:bg-cyan-50 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-cyan-400 dark:hover:border-cyan-500 shadow-md hover:shadow-lg'
                 }`}
             >
               {cat.label}
@@ -131,7 +131,7 @@ export default function FullServicesPage() {
         {loading ? (
           <div className="py-20">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-cyan-500 border-t-transparent"></div>
-            <p className="mt-4 text-gray-600">{t('fullServices.loading')}</p>
+            <p className="mt-4 text-gray-600 dark:text-gray-300">{t('fullServices.loading')}</p>
           </div>
         ) : (
           <>
@@ -142,75 +142,73 @@ export default function FullServicesPage() {
                   <ServiceCard key={service.serviceId || index} service={service} index={index} />
                 ))
               ) : (
-                <p className="col-span-full text-gray-500 py-12 text-lg">
+                <p className="col-span-full text-gray-500 dark:text-gray-400 py-12 text-lg">
                   {t('fullServices.noServices')}
                 </p>
               )}
             </div>
 
-           {pagination.totalPages > 1 && (
-  <div className="flex justify-center items-center mt-16 gap-3 select-none">
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="flex justify-center items-center mt-16 gap-3 select-none">
+                {/* First Page */}
+                <button
+                  onClick={() => handlePageChange(0)}
+                  disabled={pagination.isFirst}
+                  className="w-11 h-11 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center 
+                           text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  title={t('fullServices.pagination.first')}
+                >
+                  <ChevronsLeft className="w-5 h-5" />
+                </button>
 
-    {/* First Page */}
-    <button
-      onClick={() => handlePageChange(0)}
-      disabled={pagination.isFirst}
-      className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center 
-                 text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-      title={t('fullServices.pagination.first')}
-    >
-      <ChevronsLeft className="w-5 h-5" />
-    </button>
+                {/* Previous */}
+                <button
+                  onClick={() => handlePageChange(pagination.currentPage - 1)}
+                  disabled={pagination.isFirst}
+                  className="w-11 h-11 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center 
+                           text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
 
-    {/* Previous */}
-    <button
-      onClick={() => handlePageChange(pagination.currentPage - 1)}
-      disabled={pagination.isFirst}
-      className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center 
-                 text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-    >
-      <ChevronLeft className="w-5 h-5" />
-    </button>
+                {/* Numbered Buttons */}
+                {pageNumbers.map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => handlePageChange(p)}
+                    className={`w-11 h-11 rounded-lg font-medium transition-all ${
+                      p === pagination.currentPage
+                        ? 'bg-cyan-600 dark:bg-cyan-700 text-white border-cyan-600 dark:border-cyan-700 shadow-md'
+                        : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {p + 1}
+                  </button>
+                ))}
 
-    {/* Numbered Buttons */}
-    {pageNumbers.map((p) => (
-      <button
-        key={p}
-        onClick={() => handlePageChange(p)}
-        className={`w-11 h-11 rounded-lg font-medium transition-all ${
-          p === pagination.currentPage
-            ? 'bg-cyan-600 text-white border-cyan-600 shadow-md'
-            : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
-        }`}
-      >
-        {p + 1}
-      </button>
-    ))}
+                {/* Next */}
+                <button
+                  onClick={() => handlePageChange(pagination.currentPage + 1)}
+                  disabled={pagination.isLast}
+                  className="w-11 h-11 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center 
+                           text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
 
-    {/* Next */}
-    <button
-      onClick={() => handlePageChange(pagination.currentPage + 1)}
-      disabled={pagination.isLast}
-      className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center 
-                 text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-    >
-      <ChevronRight className="w-5 h-5" />
-    </button>
-
-    {/* Last Page */}
-    <button
-      onClick={() => handlePageChange(pagination.totalPages - 1)}
-      disabled={pagination.isLast}
-      className="w-11 h-11 rounded-lg border border-gray-300 flex items-center justify-center 
-                 text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-      title={t('fullServices.pagination.last')}
-    >
-      <ChevronsRight className="w-5 h-5" />
-    </button>
-
-  </div>
-)}
-
+                {/* Last Page */}
+                <button
+                  onClick={() => handlePageChange(pagination.totalPages - 1)}
+                  disabled={pagination.isLast}
+                  className="w-11 h-11 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center 
+                           text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  title={t('fullServices.pagination.last')}
+                >
+                  <ChevronsRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>

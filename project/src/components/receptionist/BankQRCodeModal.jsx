@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Copy, Download, CheckCircle, Smartphone, AlertCircle } from 'lucide-react';
 import { billingApi } from '../../api/billingApi';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -9,6 +10,7 @@ const formatPrice = (price) => {
 
 export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPayment }) {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const [qrUrl, setQrUrl] = useState('');
   const [copied, setCopied] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -116,8 +118,8 @@ export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPaym
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        {/* Header */}
+      <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto transition-colors duration-300`}>
+        {/* Header - Compact */}
         <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -135,16 +137,19 @@ export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPaym
 
         <div className="p-6 space-y-5">
           {/* Amount */}
-          <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 text-center border-2 border-emerald-200">
-            <div className="text-xs text-gray-600 mb-1">{t('bankQRModal.amountToPay')}</div>
-            <div className="text-3xl font-bold text-emerald-600">{formatPrice(amount)}</div>
+          <div className={`bg-gradient-to-br ${theme === 'dark' ? 'from-emerald-900/30 to-teal-900/30 border-emerald-800' : 'from-emerald-50 to-teal-50 border-emerald-200'} rounded-xl p-4 text-center border-2`}>
+            <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-1`}>{t('bankQRModal.amountToPay')}</div>
+            <div className={`text-3xl font-bold ${theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'}`}>{formatPrice(amount)}</div>
           </div>
 
           {/* QR Code */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-4">
-            <p className="text-center text-sm font-semibold text-gray-700 mb-3">
-              {t('bankQRModal.scanQR')}
-            </p>
+          <div className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} rounded-xl border-2 p-4`}>
+            <div className="text-center mb-3">
+              <p className={`text-sm font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                {t('bankQRModal.scanQR')}
+              </p>
+            </div>
+            
             {qrUrl ? (
               <div className="flex justify-center">
                 <div className="bg-white p-3 rounded-xl border-4 border-blue-500 shadow-lg">
@@ -158,7 +163,7 @@ export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPaym
             )}
             <button
               onClick={handleDownloadQR}
-              className="w-full mt-3 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium hover:bg-blue-200 transition text-sm"
+              className={`w-full mt-3 flex items-center justify-center gap-1.5 px-3 py-2 ${theme === 'dark' ? 'bg-blue-900/30 text-blue-300 hover:bg-blue-900/50' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'} rounded-lg font-medium transition-colors text-sm`}
             >
               <Download className="w-4 h-4" />
               {t('bankQRModal.downloadQR')}
@@ -166,40 +171,80 @@ export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPaym
           </div>
 
           {/* Bank Info */}
-          <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-            <h3 className="font-bold text-gray-900 text-center text-sm mb-2">
+          <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} rounded-xl p-4 space-y-3`}>
+            <h3 className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-center text-sm mb-2`}>
               {t('bankQRModal.manualTransfer')}
             </h3>
-            <div className="space-y-2.5 text-sm">
-              <div className="flex justify-between"><span className="text-gray-600">{t('bankQRModal.bank')}:</span> <strong>{bankInfo.bankCode}</strong></div>
-              <div className="flex justify-between"><span className="text-gray-600">{t('bankQRModal.accountHolder')}:</span> <strong>{bankInfo.accountName}</strong></div>
-              <div className="flex justify-between items-center gap-2 bg-white p-2.5 rounded-lg border">
-                <div>
-                  <div className="text-xs text-gray-500">{t('bankQRModal.accountNumber')}</div>
-                  <div className="font-mono font-bold">{bankInfo.accountNo}</div>
+            
+            <div className="space-y-2.5">
+              <div className="flex justify-between items-center text-sm">
+                <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>{t('bankQRModal.bank')}:</span>
+                <span className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{bankInfo.bankCode}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-sm">
+                <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>{t('bankQRModal.accountHolder')}:</span>
+                <span className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{bankInfo.accountName}</span>
+              </div>
+
+              <div className={`flex justify-between items-center gap-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'} p-2.5 rounded-lg border`}>
+                <div className="flex-1">
+                  <div className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'} mb-0.5`}>{t('bankQRModal.accountNumber')}</div>
+                  <div className={`font-mono font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-sm`}>{bankInfo.accountNo}</div>
                 </div>
-                <button onClick={handleCopyAccountNumber} className="p-1.5 hover:bg-gray-100 rounded-lg">
-                  {copied ? <CheckCircle className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-600" />}
+                <button
+                  onClick={handleCopyAccountNumber}
+                  className={`p-1.5 ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded-lg transition`}
+                  title={t('bankQRModal.copy')}
+                >
+                  {copied ? (
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                  ) : (
+                    <Copy className={`w-4 h-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} />
+                  )}
                 </button>
               </div>
-              <div className="flex justify-between"><span className="text-gray-600">{t('bankQRModal.amount')}:</span> <strong className="text-emerald-600">{formatPrice(amount)}</strong></div>
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
-                <div className="text-xs font-semibold text-amber-800">{t('bankQRModal.transferContent')}:</div>
-                <div className="font-mono text-sm font-bold text-amber-900">Thanh toan {billCode}</div>
+
+              <div className="flex justify-between items-center text-sm">
+                <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>{t('bankQRModal.amount')}:</span>
+                <span className={`font-bold ${theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'}`}>{formatPrice(amount)}</span>
+              </div>
+
+              <div className={`${theme === 'dark' ? 'bg-amber-900/30 border-amber-800' : 'bg-amber-50 border-amber-200'} border rounded-lg p-2.5`}>
+                <div className={`text-xs ${theme === 'dark' ? 'text-amber-300' : 'text-amber-800'} mb-0.5 font-semibold`}>{t('bankQRModal.transferContent')}:</div>
+                <div className={`font-mono text-sm ${theme === 'dark' ? 'text-amber-200' : 'text-amber-900'} font-bold`}>
+                  {t('bankQRModal.paymentFor')} {billId?.slice(0, 8).toUpperCase()}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Payment Status */}
           {paymentStatus && (
-            <div className={`rounded-xl p-4 border-2 ${paymentStatus.isPaid ? 'bg-green-50 border-green-300' : 'bg-yellow-50 border-yellow-300'}`}>
+            <div className={`rounded-xl p-4 border-2 ${
+              paymentStatus.isPaid 
+                ? (theme === 'dark' ? 'bg-green-900/30 border-green-800' : 'bg-green-50 border-green-300') 
+                : (theme === 'dark' ? 'bg-yellow-900/30 border-yellow-800' : 'bg-yellow-50 border-yellow-300')
+            }`}>
               <div className="flex items-start gap-3">
-                {paymentStatus.isPaid ? <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" /> : <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />}
-                <div>
-                  <p className={`font-semibold text-sm ${paymentStatus.isPaid ? 'text-green-900' : 'text-yellow-900'}`}>
+                {paymentStatus.isPaid ? (
+                  <CheckCircle className={`w-5 h-5 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'} flex-shrink-0 mt-0.5`} />
+                ) : (
+                  <AlertCircle className={`w-5 h-5 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'} flex-shrink-0 mt-0.5`} />
+                )}
+                <div className="flex-1">
+                  <p className={`font-semibold text-sm ${
+                    paymentStatus.isPaid 
+                      ? (theme === 'dark' ? 'text-green-300' : 'text-green-900') 
+                      : (theme === 'dark' ? 'text-yellow-300' : 'text-yellow-900')
+                  }`}>
                     {paymentStatus.isPaid ? t('bankQRModal.paymentSuccess') : t('bankQRModal.waitingPayment')}
                   </p>
-                  <div className={`text-xs mt-2 space-y-1 ${paymentStatus.isPaid ? 'text-green-700' : 'text-yellow-700'}`}>
+                  <div className={`text-xs mt-2 space-y-1 ${
+                    paymentStatus.isPaid 
+                      ? (theme === 'dark' ? 'text-green-400' : 'text-green-700') 
+                      : (theme === 'dark' ? 'text-yellow-400' : 'text-yellow-700')
+                  }`}>
                     <p>{t('bankQRModal.status')}: <strong>{paymentStatus.paymentStatus}</strong></p>
                     <p>{t('bankQRModal.paidAmount')}: <strong>{formatPrice(paymentStatus.amountPaid)}</strong></p>
                     <p>{t('bankQRModal.remainingAmount')}: <strong>{formatPrice(paymentStatus.remainingAmount)}</strong></p>
@@ -211,19 +256,19 @@ export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPaym
 
           {/* Error */}
           {error && (
-            <div className="bg-red-50 border border-red-300 rounded-xl p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
-              <p className="text-sm text-red-800">{error}</p>
+            <div className={`${theme === 'dark' ? 'bg-red-900/30 border-red-800' : 'bg-red-50 border-red-300'} border rounded-xl p-4 flex items-start gap-3`}>
+              <AlertCircle className={`w-5 h-5 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'} flex-shrink-0 mt-0.5`} />
+              <p className={`text-sm ${theme === 'dark' ? 'text-red-300' : 'text-red-800'}`}>{error}</p>
             </div>
           )}
 
           {/* Notes */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-            <h4 className="font-semibold text-blue-900 mb-1.5 flex items-center gap-1.5 text-sm">
-              
+          <div className={`${theme === 'dark' ? 'bg-blue-900/30 border-blue-800' : 'bg-blue-50 border-blue-200'} border rounded-xl p-3`}>
+            <h4 className={`font-semibold ${theme === 'dark' ? 'text-blue-300' : 'text-blue-900'} mb-1.5 flex items-center gap-1.5 text-sm`}>
+              <span className="text-base">💡</span>
               {t('bankQRModal.importantNote')}
             </h4>
-            <ul className="text-xs text-blue-800 space-y-0.5 list-disc list-inside">
+            <ul className={`text-xs ${theme === 'dark' ? 'text-blue-200' : 'text-blue-800'} space-y-0.5 list-disc list-inside`}>
               <li>{t('bankQRModal.note1')}</li>
               <li>{t('bankQRModal.note2')}</li>
               <li>{t('bankQRModal.note3')}</li>
@@ -233,7 +278,10 @@ export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPaym
 
           {/* Actions */}
           <div className="flex gap-2.5">
-            <button onClick={onClose} className="flex-1 px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-semibold text-sm">
+            <button
+              onClick={onClose}
+              className={`flex-1 px-4 py-2.5 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'} rounded-xl font-semibold transition text-sm`}
+            >
               {t('bankQRModal.cancel')}
             </button>
             <button

@@ -1,4 +1,3 @@
-// src/components/reception/PatientRecordsSection.jsx
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast, { Toaster } from 'react-hot-toast';
@@ -11,6 +10,7 @@ import Pagination from '../common/Pagination';
 import CountBadge from '../common/CountBadge';
 import { queueApi } from '../../api/receptionApi';
 import { toastConfig } from '../../config/toastConfig';
+import { useTheme } from '../../contexts/ThemeContext';
 
 // ====================== HELPER FUNCTIONS ======================
 const normalizeStatus = (status) => {
@@ -59,6 +59,7 @@ const ITEMS_PER_PAGE = 10;
 
 // ====================== MAIN COMPONENT ======================
 export default function PatientRecordsSection() {
+  const { theme } = useTheme();
   const { t } = useTranslation();
   
   const [queueList, setQueueList] = useState([]);
@@ -269,12 +270,12 @@ export default function PatientRecordsSection() {
   };
 
   return (
-    <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
+    <div className={`px-4 sm:px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
       <Toaster {...toastConfig} />
 
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-        <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
+        <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 transition-colors duration-300`}>
           <Users className="w-9 h-9 text-blue-600" />
           <span>{t('patientRecords.title')}</span>
           <CountBadge 
@@ -285,7 +286,7 @@ export default function PatientRecordsSection() {
         </h1>
         <button 
           onClick={handleAddPatient}
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition font-medium flex items-center gap-2">
+          className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2">
           <Plus className="w-5 h-5" />
           {t('patientRecords.addButton')}
         </button>
@@ -317,17 +318,17 @@ export default function PatientRecordsSection() {
       </div>
 
       {queueError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+        <div className={`border px-4 py-3 rounded-lg mb-6 ${theme === 'dark' ? 'bg-red-900/30 border-red-800 text-red-300' : 'bg-red-50 border-red-200 text-red-700'}`}>
           {queueError}
         </div>
       )}
 
       {/* BẢNG + PHÂN TRANG */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border overflow-hidden transition-colors duration-300`}>
         {loadingQueue ? (
           <div className="text-center py-20">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600"></div>
-            <p className="mt-4 text-gray-600 text-lg">{t('patientRecords.loading')}</p>
+            <p className={`mt-4 text-lg ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('patientRecords.loading')}</p>
           </div>
         ) : (
           <>
@@ -340,7 +341,7 @@ export default function PatientRecordsSection() {
               onStatusChange={handleQuickUpdateStatus}
             />
 
-            <div className="border-t border-gray-200 bg-gray-50">
+            <div className={`border-t ${theme === 'dark' ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-gray-50'}`}>
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}

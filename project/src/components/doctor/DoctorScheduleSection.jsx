@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const fallbackAppointments = [
   {
@@ -18,6 +19,7 @@ const fallbackAppointments = [
 ];
 
 export default function DoctorScheduleSection() {
+  const { theme } = useTheme();
   const [appointments, setAppointments] = useState(fallbackAppointments);
   const [appointmentsLoading, setAppointmentsLoading] = useState(false);
   const [appointmentsError, setAppointmentsError] = useState('');
@@ -35,56 +37,56 @@ export default function DoctorScheduleSection() {
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-sm font-semibold text-blue-800 uppercase tracking-wide">Lịch hôm nay</h3>
-          <p className="text-3xl font-bold text-blue-600 mt-2">{derivedStats.todayAppointments}</p>
-          <p className="text-sm text-blue-700 mt-1">Cuộc hẹn đang chờ khám</p>
+        <div className={`border rounded-lg p-6 ${theme === 'dark' ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200'}`}>
+          <h3 className={`text-sm font-semibold uppercase tracking-wide ${theme === 'dark' ? 'text-blue-300' : 'text-blue-800'}`}>Lịch hôm nay</h3>
+          <p className={`text-3xl font-bold mt-2 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>{derivedStats.todayAppointments}</p>
+          <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}`}>Cuộc hẹn đang chờ khám</p>
         </div>
-        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6">
-          <h3 className="text-sm font-semibold text-emerald-800 uppercase tracking-wide">Bệnh nhân tuần này</h3>
-          <p className="text-3xl font-bold text-emerald-600 mt-2">{derivedStats.weekPatients}</p>
-          <p className="text-sm text-emerald-700 mt-1">Đã hoàn thành khám</p>
+        <div className={`border rounded-lg p-6 ${theme === 'dark' ? 'bg-emerald-900/20 border-emerald-800' : 'bg-emerald-50 border-emerald-200'}`}>
+          <h3 className={`text-sm font-semibold uppercase tracking-wide ${theme === 'dark' ? 'text-emerald-300' : 'text-emerald-800'}`}>Bệnh nhân tuần này</h3>
+          <p className={`text-3xl font-bold mt-2 ${theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'}`}>{derivedStats.weekPatients}</p>
+          <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-emerald-300' : 'text-emerald-700'}`}>Đã hoàn thành khám</p>
         </div>
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
-          <h3 className="text-sm font-semibold text-purple-800 uppercase tracking-wide">Lịch sắp tới</h3>
-          <p className="text-3xl font-bold text-purple-600 mt-2">{derivedStats.totalUpcoming}</p>
-          <p className="text-sm text-purple-700 mt-1">Cuộc hẹn trong danh sách</p>
+        <div className={`border rounded-lg p-6 ${theme === 'dark' ? 'bg-purple-900/20 border-purple-800' : 'bg-purple-50 border-purple-200'}`}>
+          <h3 className={`text-sm font-semibold uppercase tracking-wide ${theme === 'dark' ? 'text-purple-300' : 'text-purple-800'}`}>Lịch sắp tới</h3>
+          <p className={`text-3xl font-bold mt-2 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`}>{derivedStats.totalUpcoming}</p>
+          <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-purple-300' : 'text-purple-700'}`}>Cuộc hẹn trong danh sách</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-800">Lịch khám sắp tới</h2>
+      <div className={`rounded-lg border shadow-sm ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+        <div className={`px-6 py-4 border-b flex items-center justify-between ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
+          <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Lịch khám sắp tới</h2>
           {appointmentsError && <span className="text-sm text-red-600">{appointmentsError}</span>}
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className={theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Bệnh nhân</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ngày</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Giờ</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Lý do</th>
+                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Bệnh nhân</th>
+                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Ngày</th>
+                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Giờ</th>
+                <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Lý do</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className={`divide-y ${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
               {appointmentsLoading ? (
                 <tr>
-                  <td colSpan="4" className="px-6 py-8 text-center text-gray-500">Đang tải dữ liệu...</td>
+                  <td colSpan="4" className={`px-6 py-8 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Đang tải dữ liệu...</td>
                 </tr>
               ) : (
                 appointments.map((appt) => (
-                  <tr key={appt.id || `${appt.patientName}-${appt.time}`} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm text-gray-800">{appt.patientName}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                  <tr key={appt.id || `${appt.patientName}-${appt.time}`} className={theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
+                    <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{appt.patientName}</td>
+                    <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                       {new Date(appt.date).toLocaleDateString('vi-VN', {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
                       })}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{appt.time}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{appt.reason || '—'}</td>
+                    <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{appt.time}</td>
+                    <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{appt.reason || '—'}</td>
                   </tr>
                 ))
               )}
@@ -95,4 +97,3 @@ export default function DoctorScheduleSection() {
     </div>
   );
 }
-

@@ -12,6 +12,7 @@ import CountBadge from '../common/CountBadge';
 import Pagination from '../common/Pagination';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 
 const formatDateTime = (date) => {
@@ -39,6 +40,7 @@ const toLocalDateTimeString = (localDate) => {
 };
 
 export default function AppointmentsSection() {
+  const { theme } = useTheme();
   const { t } = useTranslation();
 
   const [appointments, setAppointments] = useState([]);
@@ -345,11 +347,11 @@ export default function AppointmentsSection() {
   };
 
   return (
-    <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
+    <div className={`px-4 sm:px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
       <Toaster {...toastConfig} />
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
+        <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 transition-colors duration-300`}>
           <Calendar className="w-9 h-9 text-blue-600" />
           <span>{t('appointmentManagement.title', 'Quản Lý Lịch Hẹn')}</span>
         <CountBadge 
@@ -368,10 +370,10 @@ export default function AppointmentsSection() {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-6">
+      <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-md border p-6 mb-6 transition-colors duration-300`}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t('appointmentManagement.searchLabel', 'Tìm kiếm')}</label>
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('appointmentManagement.searchLabel', 'Tìm kiếm')}</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
@@ -379,10 +381,10 @@ export default function AppointmentsSection() {
                 placeholder={t('appointmentManagement.searchPlaceholder', 'Tên bệnh nhân hoặc số điện thoại...')}
                 value={searchQueryAppointments}
                 onChange={(e) => { setSearchQueryAppointments(e.target.value); setCurrentPage(0); }}
-                className="w-full pl-9 pr-10 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                className={`w-full pl-9 pr-10 px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'}`}
               />
               {searchQueryAppointments && (
-                <button onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <button onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                   <X className="w-4 h-4" />
                 </button>
               )}
@@ -390,9 +392,9 @@ export default function AppointmentsSection() {
           </div>
 
           <div className="lg:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t('appointmentManagement.statusLabel', 'Trạng thái')}</label>
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('appointmentManagement.statusLabel', 'Trạng thái')}</label>
             <select value={selectedStatus} onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(0); }}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}>
               <option value="Pending">{t('appointmentManagement.statusPending', 'Chờ xác nhận')}</option>
               <option value="Confirmed">{t('appointmentManagement.statusConfirmed', 'Đã xác nhận')}</option>
               <option value="Cancelled">{t('appointmentManagement.statusCancelled', 'Đã hủy')}</option>
@@ -400,7 +402,7 @@ export default function AppointmentsSection() {
           </div>
 
           <div className="lg:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t('appointmentManagement.fromDate', 'Từ ngày')}</label>
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('appointmentManagement.fromDate', 'Từ ngày')}</label>
             <input type="date" value={filterStartDate}
               onChange={(e) => {
                 const val = e.target.value;
@@ -412,11 +414,11 @@ export default function AppointmentsSection() {
                 setCurrentPage(0);
               }}
               max={filterEndDate || undefined}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" />
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`} />
           </div>
 
           <div className="lg:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t('appointmentManagement.toDate', 'Đến ngày')}</label>
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('appointmentManagement.toDate', 'Đến ngày')}</label>
             <input type="date" value={filterEndDate}
               onChange={(e) => {
                 const val = e.target.value;
@@ -428,12 +430,12 @@ export default function AppointmentsSection() {
                 setCurrentPage(0);
               }}
               min={filterStartDate || undefined}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" />
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`} />
           </div>
 
           <div className="lg:col-span-2 flex items-end">
             <button onClick={handleClearFilters}
-              className="w-full px-4 py-3 bg-gray-300 text-gray-700 rounded-xl hover:bg-gray-400 transition font-medium">
+              className={`w-full px-4 py-3 rounded-xl transition font-medium ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}>
               {t('appointmentManagement.clearFilters', 'Xóa lọc')}
             </button>
           </div>
@@ -441,70 +443,70 @@ export default function AppointmentsSection() {
       </div>
 
       {loading && !showForm ? (
-        <div className="bg-white rounded-lg shadow border border-gray-200 p-12 text-center">
+        <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow border p-12 text-center transition-colors duration-300`}>
           <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-blue-600" />
-          <p>{t('appointmentManagement.loadingList', 'Đang tải danh sách lịch hẹn...')}</p>
+          <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>{t('appointmentManagement.loadingList', 'Đang tải danh sách lịch hẹn...')}</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow border overflow-hidden transition-colors duration-300`}>
+          <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+            <thead className={theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}>
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase w-20">{t('appointmentManagement.table.stt', 'STT')}</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">{t('appointmentManagement.table.code', 'Mã lịch')}</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">{t('appointmentManagement.table.patient', 'Bệnh nhân')}</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">{t('appointmentManagement.table.phone', 'Số điện thoại')}</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">{t('appointmentManagement.table.time', 'Thời gian')}</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">{t('appointmentManagement.table.services', 'Dịch vụ')}</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">{t('appointmentManagement.table.status', 'Trạng thái')}</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">{t('appointmentManagement.table.actions', 'Thao tác')}</th>
+                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase w-20 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.stt', 'STT')}</th>
+                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.code', 'Mã lịch')}</th>
+                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.patient', 'Bệnh nhân')}</th>
+                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.phone', 'Số điện thoại')}</th>
+                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.time', 'Thời gian')}</th>
+                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.services', 'Dịch vụ')}</th>
+                <th className={`px-4 py-3 text-center text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.status', 'Trạng thái')}</th>
+                <th className={`px-4 py-3 text-center text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.actions', 'Thao tác')}</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className={`${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
               {appointments.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-16 text-center text-gray-500">{t('appointmentManagement.noAppointments', 'Chưa có lịch hẹn nào')}</td>
+                  <td colSpan={8} className={`px-4 py-16 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{t('appointmentManagement.noAppointments', 'Chưa có lịch hẹn nào')}</td>
                 </tr>
               ) : (
                 appointments.map((a, index) => {
                   const stt = currentPage * pageSize + index + 1;
                   return (
-                    <tr key={a.appointmentId} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-4 text-center text-sm font-medium text-gray-700">{stt}</td>
+                    <tr key={a.appointmentId} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}>
+                      <td className={`px-4 py-4 text-center text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{stt}</td>
                       <td className="px-4 py-4">
-                        <span className="inline-flex px-3 py-1.5 rounded-md text-xs font-mono bg-blue-50 text-blue-700 border border-blue-200">
+                        <span className="inline-flex px-3 py-1.5 rounded-md text-xs font-mono bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">
                           {a.appointmentCode}
                         </span>
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
                           <User className="w-5 h-5 text-gray-400" />
-                          <div className="text-sm font-medium text-gray-900">{a.patientName}</div>
+                          <div className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{a.patientName}</div>
                         </div>
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
                           <Phone className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-700">{a.phone}</span>
+                          <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{a.phone}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-sm text-gray-700">
+                      <td className={`px-4 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4 text-gray-400" />
                           {formatDateTime(a.appointmentTime)}
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-sm text-gray-700">
+                      <td className={`px-4 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                         <div className="flex flex-wrap gap-1.5">
                           {a.services?.length > 0 ? (
                             <>
                               {a.services.slice(0, 3).map((svc, i) => (
-                                <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">
+                                <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800">
                                   {svc.name}
                                 </span>
                               ))}
                               {a.services.length > 3 && (
-                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300">
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
                                   +{a.services.length - 3} {t('appointmentManagement.moreServices', 'dịch vụ')}
                                 </span>
                               )}
@@ -516,9 +518,9 @@ export default function AppointmentsSection() {
                       </td>
                       <td className="px-4 py-4 text-center">
                         <span className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
-                          a.status === 'Confirmed' ? 'bg-green-100 text-green-700' :
-                          a.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
-                          'bg-yellow-100 text-yellow-700'
+                          a.status === 'Confirmed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
+                          a.status === 'Cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                          'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
                         }`}>
                           {a.status === 'Pending' ? t('appointmentManagement.statusPending', 'Chờ xác nhận') : 
                            a.status === 'Confirmed' ? t('appointmentManagement.statusConfirmed', 'Đã xác nhận') : 
@@ -527,7 +529,7 @@ export default function AppointmentsSection() {
                       </td>
                       <td className="px-4 py-4 text-center space-x-2">
                         <button onClick={() => handleOpenView(a)} title={t('appointmentManagement.viewDetail', 'Xem chi tiết')}
-                          className="text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors">
+                          className="text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 p-2 rounded-full transition-colors">
                           <Eye className="w-5 h-5" />
                         </button>
                       </td>
@@ -543,9 +545,9 @@ export default function AppointmentsSection() {
 
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center p-6 border-b bg-blue-50/80 backdrop-blur">
-              <h2 className="text-2xl font-bold text-blue-700 flex items-center gap-2">
+          <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transition-colors duration-300`}>
+            <div className={`flex justify-between items-center p-6 border-b sticky top-0 backdrop-blur z-10 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-blue-50/80 border-gray-200'}`}>
+              <h2 className={`text-2xl font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-blue-700'}`}>
                 {isCreateMode ? (
                   <>
                     <Plus className="w-5 h-5" />
@@ -569,7 +571,7 @@ export default function AppointmentsSection() {
                     {t('appointmentManagement.editButton', 'Chỉnh sửa')}
                   </button>
                 )}
-                <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
+                <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                   <X className="w-6 h-6" />
                 </button>
               </div>
@@ -578,22 +580,22 @@ export default function AppointmentsSection() {
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                     {t('appointmentManagement.patientName', 'Họ tên')} <span className="text-red-500">*</span>
                   </label>
                   <input value={form.patientName} onChange={(e) => setForm({ ...form, patientName: e.target.value })}
                     disabled={isViewMode}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                     placeholder={t('appointmentManagement.namePlaceholder', 'Nguyễn Văn A')} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                     {t('appointmentManagement.phone', 'Số điện thoại')} <span className="text-red-500">*</span>
                   </label>
                   <input type="tel" maxLength={10} value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                     disabled={isViewMode}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                     placeholder={t('appointmentManagement.phonePlaceholder', '0901234567')} />
                   {form.phone && form.phone.length !== 10 && !isViewMode && (
                     <p className="text-xs text-red-600 mt-1">{t('appointmentManagement.phoneLength', 'Số điện thoại phải đúng 10 chữ số')}</p>
@@ -603,15 +605,15 @@ export default function AppointmentsSection() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('appointmentManagement.email', 'Email (tùy chọn)')}</label>
+                  <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{t('appointmentManagement.email', 'Email (tùy chọn)')}</label>
                   <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
                     disabled={isViewMode}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                     placeholder={t('appointmentManagement.emailPlaceholder', 'example@gmail.com')} />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                     {t('appointmentManagement.date', 'Ngày hẹn')} <span className="text-red-500">*</span>
                   </label>
                   <DatePicker
@@ -622,7 +624,7 @@ export default function AppointmentsSection() {
                     maxDate={threeDaysLater}
                     disabled={isViewMode}
                     placeholderText={t('appointmentManagement.datePlaceholder', 'Chọn ngày')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                     wrapperClassName="w-full"
                   />
                 </div>
@@ -630,7 +632,7 @@ export default function AppointmentsSection() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                     {t('appointmentManagement.time', 'Giờ hẹn')} <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -645,7 +647,7 @@ export default function AppointmentsSection() {
                       }
                     }}
                     disabled={isViewMode}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                   {appointmentTime && !isValidTime(appointmentTime) && !isViewMode && (
                     <p className="text-xs text-red-600 mt-1">{t('appointmentManagement.timeInvalid', 'Giờ không hợp lệ')}</p>
@@ -655,17 +657,17 @@ export default function AppointmentsSection() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('appointmentManagement.servicesLabel', 'Dịch vụ (tùy chọn)')}</label>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{t('appointmentManagement.servicesLabel', 'Dịch vụ (tùy chọn)')}</label>
                 {!isViewMode && (
                   <div className="relative mb-3">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input value={searchQueryServices} onChange={(e) => setSearchQueryServices(e.target.value)}
                       placeholder={t('appointmentManagement.searchServices', 'Tìm kiếm dịch vụ...')}
-                      className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                      className={`w-full pl-9 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`} />
                   </div>
                 )}
 
-                <div className={`max-h-60 overflow-y-auto border border-gray-200 rounded-md ${isViewMode ? 'bg-gray-50' : 'bg-gray-50'}`}>
+                <div className={`max-h-60 overflow-y-auto border rounded-md ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
                   {loadingServices ? (
                     <div className="p-6 text-center text-gray-500">
                       <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
@@ -678,13 +680,13 @@ export default function AppointmentsSection() {
                       const isSelected = form.selectedServices.some(s => s.id === svc.id);
                       return (
                         <div key={svc.id} onClick={() => !isViewMode && toggleService(svc)}
-                          className={`p-4 ${!isViewMode ? 'cursor-pointer hover:bg-white' : 'cursor-not-allowed'} border-b border-gray-100 last:border-0 transition-colors ${isSelected ? 'bg-purple-50 border-l-4 border-l-purple-600' : ''}`}>
+                          className={`p-4 ${!isViewMode ? 'cursor-pointer hover:bg-white dark:hover:bg-gray-600' : 'cursor-not-allowed'} border-b last:border-0 transition-colors ${theme === 'dark' ? 'border-gray-600' : 'border-gray-100'} ${isSelected ? 'bg-purple-50 dark:bg-purple-900/20 border-l-4 border-l-purple-600' : ''}`}>
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="text-sm font-semibold text-gray-900">{svc.name}</div>
-                              <div className="text-xs text-gray-600 mt-1">{formatPrice(svc.price)}</div>
+                              <div className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{svc.name}</div>
+                              <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{formatPrice(svc.price)}</div>
                             </div>
-                            {isSelected && <Check className="w-6 h-6 text-purple-600" />}
+                            {isSelected && <Check className="w-6 h-6 text-purple-600 dark:text-purple-400" />}
                           </div>
                         </div>
                       );
@@ -695,10 +697,10 @@ export default function AppointmentsSection() {
                 {form.selectedServices.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {form.selectedServices.map((svc) => (
-                      <div key={svc.id} className="flex items-center gap-1 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-medium">
+                      <div key={svc.id} className="flex items-center gap-1 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 px-3 py-1 rounded-full text-xs font-medium">
                         {svc.name}
                         {!isViewMode && (
-                          <button onClick={() => toggleService(svc)} className="hover:bg-purple-200 rounded-full p-0.5 ml-1">
+                          <button onClick={() => toggleService(svc)} className="hover:bg-purple-200 dark:hover:bg-purple-800 rounded-full p-0.5 ml-1">
                             <X className="w-3 h-3" />
                           </button>
                         )}
@@ -709,15 +711,15 @@ export default function AppointmentsSection() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('appointmentManagement.notes', 'Ghi chú (tùy chọn)')}</label>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{t('appointmentManagement.notes', 'Ghi chú (tùy chọn)')}</label>
                 <textarea rows={4} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })}
                   disabled={isViewMode}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-50"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:opacity-60 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   placeholder={t('appointmentManagement.notesPlaceholder', 'Triệu chứng, yêu cầu đặc biệt...')} />
               </div>
             </div>
 
-            <div className="flex gap-3 p-6 border-t bg-gray-50">
+            <div className={`flex gap-3 p-6 border-t ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
               {isViewMode ? (
                 <>
                   {editingAppointment?.status === 'Pending' && (
@@ -750,8 +752,8 @@ export default function AppointmentsSection() {
               ) : (
                 <>
                   <button onClick={() => setShowForm(false)}
-                    className="flex-1 bg-gray-200 text-gray-700 py-3 px-4 rounded-xl hover:bg-gray-300 transition font-medium">
-                    {t('appointmentManagement.common.cancel', 'Hủy')}
+                    className={`flex-1 py-3 px-4 rounded-xl transition font-medium ${theme === 'dark' ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>
+                    {t('common.cancel', 'Hủy')}
                   </button>
                   <button onClick={handleSubmit} disabled={submitting}
                     className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-xl hover:bg-blue-700 transition disabled:bg-blue-400 font-medium flex items-center justify-center gap-2">
@@ -767,10 +769,10 @@ export default function AppointmentsSection() {
 
       {showCancelConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
+          <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl max-w-sm w-full p-6 text-center transition-colors duration-300`}>
             <XCircle className="w-16 mx-auto mb-4 text-red-500" />
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">{t('appointmentManagement.cancelConfirmTitle', 'Hủy lịch hẹn này?')}</h3>
-            <p className="text-gray-600 mb-8 leading-relaxed">
+            <h3 className={`text-2xl font-bold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('appointmentManagement.cancelConfirmTitle', 'Hủy lịch hẹn này?')}</h3>
+            <p className={`mb-8 leading-relaxed ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
               {t('appointmentManagement.cancelConfirmText', 'Lịch hẹn sẽ được chuyển sang trạng thái')} <span className="font-bold text-red-600">{t('appointmentManagement.statusCancelled', 'Đã hủy')}</span>.<br />
               {t('appointmentManagement.cancelConfirmQuestion', 'Bạn có chắc chắn muốn tiếp tục?')}
             </p>
@@ -780,7 +782,7 @@ export default function AppointmentsSection() {
                 {cancelLoading ? t('appointmentManagement.processing', 'Đang xử lý...') : t('appointmentManagement.confirmCancel', 'Xác nhận hủy')}
               </button>
               <button onClick={() => { setShowCancelConfirmation(false); setCancelTargetId(null); }} disabled={cancelLoading}
-                className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-400 transition">
+                className={`flex-1 py-3 rounded-lg font-bold transition ${theme === 'dark' ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}>
                 {t('appointmentManagement.keep', 'Giữ lại')}
               </button>
             </div>

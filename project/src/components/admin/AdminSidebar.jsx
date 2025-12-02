@@ -2,7 +2,7 @@
 import Sidebar from '../common/Sidebar';
 import {
   Briefcase, Newspaper, UserCircle, Building2, BarChart3,
-  ClipboardList, Receipt, Calendar, DoorOpen
+  ClipboardList, Receipt, Calendar, DoorOpen, Mail, MessageSquare
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useClinic } from '../../contexts/ClinicContext';
@@ -25,6 +25,8 @@ export default function AdminSidebar({ activeMenu: propActiveMenu, onMenuChange 
     { id: 'rooms',           label: t('adminSidebar.rooms'),           icon: DoorOpen },
     { id: 'medical-records', label: t('adminSidebar.medicalRecords'),  icon: ClipboardList },
     { id: 'invoices',        label: t('adminSidebar.invoices'),        icon: Receipt },
+    { id: 'reviews',         label: t('adminSidebar.reviews'),         icon: MessageSquare },
+    { id: 'email-templates', label: 'Email Templates',                 icon: Mail },
   ];
 
   const currentPath = location.pathname;
@@ -39,6 +41,8 @@ export default function AdminSidebar({ activeMenu: propActiveMenu, onMenuChange 
      currentPath.includes('/admin/rooms')             ? 'rooms' :
      currentPath.includes('/admin/medical-records')   ? 'medical-records' :
      currentPath.includes('/admin/invoices')          ? 'invoices' :
+     currentPath.includes('/admin/reviews')           ? 'reviews' :
+     currentPath.includes('/admin/email-templates')   ? 'email-templates' :
      currentPath === '/admin' || currentPath === '/admin/' ? 'statistics' : 'statistics');
 
   const handleMenuChange = (id) => {
@@ -54,6 +58,8 @@ export default function AdminSidebar({ activeMenu: propActiveMenu, onMenuChange 
       rooms:           '/admin/rooms',
       'medical-records': '/admin/medical-records',
       invoices:        '/admin/invoices',
+      reviews:         '/admin/reviews',
+      'email-templates': '/admin/email-templates',
     };
 
     navigate(routes[id] || '/admin');

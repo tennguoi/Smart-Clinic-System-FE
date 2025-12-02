@@ -4,6 +4,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import { clinicApi } from '../../api/clinicApi';
 import { useClinic } from '../../contexts/ClinicContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8082';
@@ -28,6 +29,7 @@ const toRelativeLogoUrl = (url) => {
 };
 
 export default function ClinicManagement() {
+  const { theme } = useTheme();
   const { t } = useTranslation();
   const [clinicInfo, setClinicInfo] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -134,7 +136,6 @@ export default function ClinicManagement() {
     
     const fileSizeKB = (file.size / 1024).toFixed(2);
     console.log(`📁 File logo đã chọn: ${file.name}, kích thước: ${fileSizeKB}KB`);
-    console.log(`ℹ️ Backend sẽ tự động resize nếu file > 2MB hoặc > 800x800px`);
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -284,10 +285,10 @@ export default function ClinicManagement() {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className={`p-8 ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'} transition-colors duration-300`}>
         <div className="text-center py-12">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600 mb-4" />
-          <p className="text-gray-600">{t('clinic.loading')}</p>
+          <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('clinic.loading')}</p>
         </div>
       </div>
     );
@@ -295,27 +296,27 @@ export default function ClinicManagement() {
 
   if (saving) {
     return (
-      <div className="p-8">
+      <div className={`p-8 ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'} transition-colors duration-300`}>
         <div className="text-center py-12">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600 mb-4" />
-          <p className="text-gray-600">{t('clinic.updating')}</p>
+          <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('clinic.updating')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="px-8 pt-4 pb-8">
+    <div className={`px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
       <Toaster {...toastConfig} />
       
-      <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3 mb-6">
+      <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 mb-6 transition-colors duration-300`}>
         <Building2 className="w-9 h-9 text-blue-600" />
         <span>{t('clinic.title')}</span>
       </h1>
 
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className={`${theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'} rounded-lg shadow-lg p-6 transition-colors duration-300`}>
         {!clinicInfo && (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg mb-6">
+          <div className={`${theme === 'dark' ? 'bg-yellow-900/30 border-yellow-800 text-yellow-300' : 'bg-yellow-50 border-yellow-200 text-yellow-800'} border px-4 py-3 rounded-lg mb-6`}>
             <p className="font-medium">{t('clinic.noData')}</p>
             <p className="text-sm mt-1">{t('clinic.noDataHint')}</p>
           </div>
@@ -324,13 +325,13 @@ export default function ClinicManagement() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Logo Upload */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>
               {t('clinic.form.logo')}
             </label>
             
             <div className="flex items-center gap-3 mb-3">
-              <label className={`flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-300 rounded-lg transition-colors ${
-                isEditing ? 'cursor-pointer hover:bg-blue-100' : 'cursor-not-allowed opacity-50'
+              <label className={`flex items-center gap-2 px-4 py-2 ${theme === 'dark' ? 'bg-blue-900/30 border-blue-700' : 'bg-blue-50 border-blue-300'} border rounded-lg transition-colors ${
+                isEditing ? 'cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50' : 'cursor-not-allowed opacity-50'
               }`}>
                 <Upload className="w-5 h-5 text-blue-600" />
                 <span className="text-sm font-medium text-blue-600">
@@ -349,7 +350,7 @@ export default function ClinicManagement() {
                 <button
                   type="button"
                   onClick={handleRemoveLogo}
-                  className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className={`px-3 py-2 text-red-600 ${theme === 'dark' ? 'hover:bg-red-900/30' : 'hover:bg-red-50'} rounded-lg transition-colors`}
                   title={t('clinic.form.removeLogo')}
                 >
                   <X className="w-5 h-5" />
@@ -359,12 +360,12 @@ export default function ClinicManagement() {
 
             {logoPreview && (
               <div className="mt-3">
-                <p className="text-sm text-gray-600 mb-2">{t('clinic.form.logoPreview')}</p>
+                <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-2`}>{t('clinic.form.logoPreview')}</p>
                 <div className="relative inline-block">
                   <img
                     src={logoPreview}
                     alt="Logo preview"
-                    className="max-w-xs h-32 object-contain border border-gray-200 rounded-lg p-2 bg-gray-50"
+                    className={`max-w-xs h-32 object-contain border ${theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'} rounded-lg p-2`}
                     onError={(e) => {
                       e.target.style.display = 'none';
                     }}
@@ -376,7 +377,7 @@ export default function ClinicManagement() {
                   )}
                 </div>
                 {logoFile && (
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mt-2`}>
                     {t('clinic.form.fileInfo', { name: logoFile.name, size: (logoFile.size / 1024).toFixed(2) })}
                   </p>
                 )}
@@ -385,11 +386,11 @@ export default function ClinicManagement() {
 
             {!logoPreview && formData.logoUrl && (
               <div className="mt-3">
-                <p className="text-sm text-gray-600 mb-2">{t('clinic.form.currentLogo')}</p>
+                <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-2`}>{t('clinic.form.currentLogo')}</p>
                 <img
                   src={formData.logoUrl}
                   alt="Current logo"
-                  className="max-w-xs h-32 object-contain border border-gray-200 rounded-lg p-2 bg-gray-50"
+                  className={`max-w-xs h-32 object-contain border ${theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'} rounded-lg p-2`}
                   onError={(e) => {
                     e.target.style.display = 'none';
                   }}
@@ -398,7 +399,7 @@ export default function ClinicManagement() {
             )}
 
             {!logoPreview && !formData.logoUrl && (
-              <p className="text-sm text-gray-500 mt-2">
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mt-2`}>
                 {t('clinic.form.noLogo')}
               </p>
             )}
@@ -406,7 +407,7 @@ export default function ClinicManagement() {
 
           {/* Tên phòng khám */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>
               {t('clinic.form.name')} <span className="text-red-500">*</span>
             </label>
             <input
@@ -415,8 +416,10 @@ export default function ClinicManagement() {
               value={formData.name}
               onChange={handleInputChange}
               disabled={!isEditing}
-              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${
+                theme === 'dark' 
+                  ? `bg-gray-700 border-gray-600 text-white ${!isEditing ? 'cursor-not-allowed' : ''}` 
+                  : `border-gray-300 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`
               }`}
               placeholder={t('clinic.form.namePlaceholder')}
               required
@@ -425,7 +428,7 @@ export default function ClinicManagement() {
 
           {/* Địa chỉ */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>
               {t('clinic.form.address')}
             </label>
             <textarea
@@ -434,8 +437,10 @@ export default function ClinicManagement() {
               onChange={handleInputChange}
               disabled={!isEditing}
               rows="3"
-              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${
+                theme === 'dark' 
+                  ? `bg-gray-700 border-gray-600 text-white ${!isEditing ? 'cursor-not-allowed' : ''}` 
+                  : `border-gray-300 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`
               }`}
               placeholder={t('clinic.form.addressPlaceholder')}
             />
@@ -443,7 +448,7 @@ export default function ClinicManagement() {
 
           {/* Số điện thoại */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>
               {t('clinic.form.phone')}
             </label>
             <input
@@ -452,8 +457,10 @@ export default function ClinicManagement() {
               value={formData.phone}
               onChange={handleInputChange}
               disabled={!isEditing}
-              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${
+                theme === 'dark' 
+                  ? `bg-gray-700 border-gray-600 text-white ${!isEditing ? 'cursor-not-allowed' : ''}` 
+                  : `border-gray-300 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`
               }`}
               placeholder={t('clinic.form.phonePlaceholder')}
             />
@@ -461,7 +468,7 @@ export default function ClinicManagement() {
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>
               {t('clinic.form.email')}
             </label>
             <input
@@ -470,8 +477,10 @@ export default function ClinicManagement() {
               value={formData.email}
               onChange={handleInputChange}
               disabled={!isEditing}
-              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${
+                theme === 'dark' 
+                  ? `bg-gray-700 border-gray-600 text-white ${!isEditing ? 'cursor-not-allowed' : ''}` 
+                  : `border-gray-300 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`
               }`}
               placeholder={t('clinic.form.emailPlaceholder')}
             />
@@ -479,7 +488,7 @@ export default function ClinicManagement() {
 
           {/* Website */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>
               {t('clinic.form.website')}
             </label>
             <input
@@ -488,45 +497,51 @@ export default function ClinicManagement() {
               value={formData.website}
               onChange={handleInputChange}
               disabled={!isEditing}
-              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${
+                theme === 'dark' 
+                  ? `bg-gray-700 border-gray-600 text-white ${!isEditing ? 'cursor-not-allowed' : ''}` 
+                  : `border-gray-300 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`
               }`}
               placeholder={t('clinic.form.websitePlaceholder')}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
               {t('clinic.form.websiteHint')}
             </p>
           </div>
 
           {/* Giờ làm việc buổi sáng */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>
               {t('clinic.form.morningHours')}
             </label>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-gray-600 mb-1">{t('clinic.form.startTime')}</label>
+                <label className={`block text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-1 transition-colors duration-300`}>{t('clinic.form.startTime')}</label>
                 <input
                   type="time"
                   name="morningStartTime"
                   value={formData.morningStartTime}
                   onChange={handleInputChange}
                   disabled={!isEditing}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${
+                    theme === 'dark' 
+                      ? `bg-gray-700 border-gray-600 text-white ${!isEditing ? 'cursor-not-allowed' : ''}` 
+                      : `border-gray-300 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`
                   }`}
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-600 mb-1">{t('clinic.form.endTime')}</label>
+                <label className={`block text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-1 transition-colors duration-300`}>{t('clinic.form.endTime')}</label>
                 <input
                   type="time"
                   name="morningEndTime"
                   value={formData.morningEndTime}
                   onChange={handleInputChange}
                   disabled={!isEditing}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${
+                    theme === 'dark' 
+                      ? `bg-gray-700 border-gray-600 text-white ${!isEditing ? 'cursor-not-allowed' : ''}` 
+                      : `border-gray-300 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`
                   }`}
                 />
               </div>
@@ -535,46 +550,50 @@ export default function ClinicManagement() {
 
           {/* Giờ làm việc buổi chiều */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>
               {t('clinic.form.afternoonHours')}
             </label>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-gray-600 mb-1">{t('clinic.form.startTime')}</label>
+                <label className={`block text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-1 transition-colors duration-300`}>{t('clinic.form.startTime')}</label>
                 <input
                   type="time"
                   name="afternoonStartTime"
                   value={formData.afternoonStartTime}
                   onChange={handleInputChange}
                   disabled={!isEditing}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${
+                    theme === 'dark' 
+                      ? `bg-gray-700 border-gray-600 text-white ${!isEditing ? 'cursor-not-allowed' : ''}` 
+                      : `border-gray-300 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`
                   }`}
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-600 mb-1">{t('clinic.form.endTime')}</label>
+                <label className={`block text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-1 transition-colors duration-300`}>{t('clinic.form.endTime')}</label>
                 <input
                   type="time"
                   name="afternoonEndTime"
                   value={formData.afternoonEndTime}
                   onChange={handleInputChange}
                   disabled={!isEditing}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${
+                    theme === 'dark' 
+                      ? `bg-gray-700 border-gray-600 text-white ${!isEditing ? 'cursor-not-allowed' : ''}` 
+                      : `border-gray-300 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`
                   }`}
                 />
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
               {t('clinic.form.hoursHint')}
             </p>
           </div>
 
           {/* Thông tin bổ sung */}
           {clinicInfo && (
-            <div className="pt-4 border-t border-gray-200">
-              <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+            <div className={`pt-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} transition-colors duration-300`}>
+              <div className={`grid grid-cols-2 gap-4 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} transition-colors duration-300`}>
                 <div>
                   <span className="font-medium">{t('clinic.form.createdAt')}:</span>{' '}
                   {clinicInfo.createdAt
@@ -626,7 +645,7 @@ export default function ClinicManagement() {
                       setLogoPreview(normalizedLogoUrl || null);
                     }
                   }}
-                  className="flex items-center gap-2 bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition"
+                  className={`flex items-center gap-2 px-6 py-2 rounded-lg transition ${theme === 'dark' ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
                 >
                   {t('clinic.common.cancel')}
                 </button>

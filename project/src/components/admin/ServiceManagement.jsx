@@ -1,16 +1,17 @@
-// src/pages/admin/ServiceManagement.jsx
 import { useState, useEffect } from 'react';
 import {
-  Plus, Edit, Trash2, X, Power, Eye, Upload, Image as ImageIcon, Search, AlertTriangle, Briefcase
+  Plus, Edit, Trash2, X, Power, Eye, Upload, Image as ImageIcon, Search, AlertTriangle, Briefcase,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import AdminServiceApi from '../../api/AdminServiceApi';
 import CountBadge from '../common/CountBadge';
-import Pagination from '../common/Pagination';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 
 export default function ServiceManagement() {
+  const { theme } = useTheme();
   const { t } = useTranslation();
 
   const [services, setServices] = useState([]);
@@ -253,22 +254,22 @@ export default function ServiceManagement() {
 
   const getCategoryStyle = (category) => {
     switch (category) {
-      case 'Consultation': return 'bg-indigo-100 text-indigo-800 border border-indigo-200';
-      case 'Test': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
-      case 'Procedure': return 'bg-amber-100 text-amber-800 border border-amber-200';
-      default: return 'bg-blue-100 text-blue-800';
+      case 'Consultation': return 'bg-indigo-100 text-indigo-800 border border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800';
+      case 'Test': return 'bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800';
+      case 'Procedure': return 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800';
+      default: return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
     }
   };
 
   return (
     <>
       <Toaster {...toastConfig} />
-      <div className="px-4 md:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
+      <div className={`px-4 md:px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="flex items-center gap-4">
-            <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
+            <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 transition-colors duration-300`}>
               <Briefcase className="w-9 h-9 text-blue-600" />
               <span>{t('adminSidebar.services')}</span>
             </h1>
@@ -282,12 +283,12 @@ export default function ServiceManagement() {
           </button>
         </div>
 
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 p-5 mb-6">
+        {/* Bộ lọc */}
+        <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'} border rounded-lg p-5 mb-6 shadow-md transition-colors duration-300`}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
             {/* Search */}
             <div className="lg:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>
                 {t('servicesManagement.searchLabel')}
               </label>
               <div className="relative">
@@ -296,7 +297,7 @@ export default function ServiceManagement() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder={t('servicesManagement.searchPlaceholder')}
-                  className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className={`w-full pl-10 pr-10 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300 bg-white text-gray-900'}`}
                 />
                 <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 {searchTerm && (
@@ -309,8 +310,10 @@ export default function ServiceManagement() {
 
             {/* Category */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('servicesManagement.category')}</label>
-              <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                {t('servicesManagement.category')}
+              </label>
+              <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 bg-white text-gray-900'}`}>
                 <option value="">{t('servicesManagement.common.all')}</option>
                 {categoryOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
@@ -318,8 +321,10 @@ export default function ServiceManagement() {
 
             {/* Status */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('servicesManagement.status')}</label>
-              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                {t('servicesManagement.status')}
+              </label>
+              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 bg-white text-gray-900'}`}>
                 <option value="">{t('servicesManagement.common.all')}</option>
                 <option value="true">{t('servicesManagement.active')}</option>
                 <option value="false">{t('servicesManagement.inactive')}</option>
@@ -328,8 +333,10 @@ export default function ServiceManagement() {
 
             {/* Price Range – ĐÃ DỊCH */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('servicesManagement.priceRange')}</label>
-              <select value={filterPriceRange} onChange={(e) => setFilterPriceRange(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                {t('servicesManagement.priceRange')}
+              </label>
+              <select value={filterPriceRange} onChange={(e) => setFilterPriceRange(e.target.value)} className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 bg-white text-gray-900'}`}>
                 {priceRangeOptions.map(item => (
                   <option key={item.value} value={item.value}>{item.label}</option>
                 ))}
@@ -338,7 +345,7 @@ export default function ServiceManagement() {
 
             {/* Clear */}
             <div>
-              <button onClick={handleClearFilters} className="w-full px-4 py-3 bg-gray-300 text-gray-700 rounded-xl hover:bg-gray-400 transition font-medium">
+              <button onClick={handleClearFilters} className={`w-full px-4 py-3 rounded-xl transition font-medium ${theme === 'dark' ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}>
                 {t('servicesManagement.clearFilters')}
               </button>
             </div>
@@ -349,70 +356,93 @@ export default function ServiceManagement() {
         {loading && !showModal ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-            <p className="mt-3 text-gray-600">{t('common.loading')}</p>
+            <p className={`mt-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} transition-colors duration-300`}>
+              {t('common.loading')}
+            </p>
           </div>
         ) : (
           <>
-            <div className="bg-white rounded-lg shadow overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className={`${theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'} rounded-lg shadow overflow-x-auto transition-colors duration-300`}>
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">STT</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">{t('servicesManagement.common.photo')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('servicesManagement.name')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">{t('servicesManagement.common.description')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('servicesManagement.category')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('servicesManagement.common.price')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('servicesManagement.status')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">{t('servicesManagement.common.actions')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-16">
+                      {t('servicesManagement.common.no')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">
+                      {t('servicesManagement.common.photo')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      {t('servicesManagement.name')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">
+                      {t('servicesManagement.common.description')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      {t('servicesManagement.category')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      {t('servicesManagement.common.price')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      {t('servicesManagement.status')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">
+                      {t('servicesManagement.common.actions')}
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {services.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="text-center py-20 text-gray-500 text-lg">
+                      <td colSpan={8} className="text-center py-20 text-gray-500 dark:text-gray-400 text-lg">
                         {t('servicesManagement.noServices')}
                       </td>
                     </tr>
                   ) : (
                     services.map((service, index) => (
-                      <tr key={service.serviceId} className="hover:bg-gray-50 transition">
-                        <td className="px-6 py-4 text-sm">{currentPage * pageSize + index + 1}</td>
+                      <tr key={service.serviceId} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                        <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                          {currentPage * pageSize + index + 1}
+                        </td>
                         <td className="px-6 py-4">
                           {service.photoUrl ? (
-                            <img src={`${getImageUrl(service.photoUrl)}?t=${Date.now()}`} alt={service.name}
-                                 className="h-14 w-14 object-cover rounded-lg shadow-sm"
-                                 onError={e => e.target.src = 'https://via.placeholder.com/64?text=No+Image'} />
+                            <img
+                              src={`${getImageUrl(service.photoUrl)}?t=${Date.now()}`}
+                              alt={service.name}
+                              className="h-14 w-14 object-cover rounded-lg shadow-sm mx-auto"
+                              onError={e => e.target.src = 'https://via.placeholder.com/64?text=No+Image'}
+                            />
                           ) : (
-                            <div className="h-14 w-14 bg-gray-200 rounded-lg flex items-center justify-center">
+                            <div className="h-14 w-14 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center mx-auto">
                               <ImageIcon className="w-8 h-8 text-gray-400" />
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 font-medium">{service.name}</td>
-                        <td className="px-6 py-4 hidden md:table-cell text-gray-600 max-w-xs truncate">{service.description}</td>
+                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{service.name}</td>
+                        <td className="px-6 py-4 hidden md:table-cell text-gray-600 dark:text-gray-300 max-w-xs truncate">{service.description}</td>
                         <td className="px-6 py-4">
                           <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${getCategoryStyle(service.category)}`}>
                             {getCategoryLabel(service.category)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 font-medium">{formatPrice(service.price)}</td>
+                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{formatPrice(service.price)}</td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex px-3 py-1.5 rounded-full text-xs font-bold ${service.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          <span className={`inline-flex px-3 py-1.5 rounded-full text-xs font-bold ${service.isActive ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'}`}>
                             {service.isActive ? t('servicesManagement.active') : t('servicesManagement.inactive')}
                           </span>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <button onClick={() => handleOpenModal('view', service)} title={t('common.view')} className="text-blue-600 hover:text-blue-900">
+                            <button onClick={() => handleOpenModal('view', service)} title={t('common.view')} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/30 transition">
                               <Eye className="w-5 h-5" />
                             </button>
-                            <button onClick={() => handleDeleteClick(service)} title={t('servicesManagement.common.delete')} className="text-red-600 hover:text-red-900">
+                            <button onClick={() => handleDeleteClick(service)} title={t('common.delete')} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 transition">
                               <Trash2 className="w-5 h-5" />
                             </button>
                             <button onClick={() => handleToggleStatusClick(service)}
                                     title={service.isActive ? t('servicesManagement.deactivate') : t('servicesManagement.activate')}
-                                    className={`p-2 rounded-full ${service.isActive ? 'text-green-600 hover:bg-green-50' : 'text-red-600 hover:bg-red-50'}`}>
+                                    className={`p-2 rounded-full transition ${service.isActive ? 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30' : 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30'}`}>
                               <Power className="w-5 h-5" />
                             </button>
                           </div>
@@ -424,21 +454,115 @@ export default function ServiceManagement() {
               </table>
             </div>
 
-            {/* Pagination tái sử dụng */}
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
+            {/* Pagination - ĐÃ SỬA ĐẸP 100% */}
+            {totalPages > 1 && (
+              <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
+                {/* First & Prev */}
+                <button
+                  onClick={() => handlePageChange(0)}
+                  disabled={currentPage === 0}
+                  className={`p-2.5 rounded-lg border ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'} disabled:opacity-50 disabled:cursor-not-allowed transition`}
+                >
+                  <ChevronsLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 0}
+                  className={`p-2.5 rounded-lg border ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'} disabled:opacity-50 disabled:cursor-not-allowed transition`}
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+
+                {/* Page Numbers */}
+                <div className="flex items-center gap-1">
+                  {(() => {
+                    const pages = [];
+                    const startPage = Math.max(0, currentPage - 2);
+                    const endPage = Math.min(totalPages - 1, currentPage + 2);
+
+                    // Luôn hiển thị trang 1
+                    if (startPage > 0) {
+                      pages.push(
+                        <button
+                          key={0}
+                          onClick={() => handlePageChange(0)}
+                          className={`px-4 py-2.5 rounded-lg border font-medium transition ${
+                            currentPage === 0
+                              ? 'bg-blue-600 text-white border-blue-600'
+                              : `${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'}`
+                          }`}
+                        >
+                          1
+                        </button>
+                      );
+                      if (startPage > 1) pages.push(<span key="start-ellipsis" className="px-2 text-gray-500">...</span>);
+                    }
+
+                    // Các trang ở giữa
+                    for (let i = startPage; i <= endPage; i++) {
+                      pages.push(
+                        <button
+                          key={i}
+                          onClick={() => handlePageChange(i)}
+                          className={`px-4 py-2.5 rounded-lg border font-medium transition ${
+                            currentPage === i
+                              ? 'bg-blue-600 text-white border-blue-600'
+                              : `${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'}`
+                          }`}
+                        >
+                          {i + 1}
+                        </button>
+                      );
+                    }
+
+                    // Trang cuối
+                    if (endPage < totalPages - 1) {
+                      if (endPage < totalPages - 2) pages.push(<span key="end-ellipsis" className="px-2 text-gray-500">...</span>);
+                      pages.push(
+                        <button
+                          key={totalPages - 1}
+                          onClick={() => handlePageChange(totalPages - 1)}
+                          className={`px-4 py-2.5 rounded-lg border font-medium transition ${
+                            currentPage === totalPages - 1
+                              ? 'bg-blue-600 text-white border-blue-600'
+                              : `${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'}`
+                          }`}
+                        >
+                          {totalPages}
+                        </button>
+                      );
+                    }
+
+                    return pages;
+                  })()}
+                </div>
+
+                {/* Next & Last */}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages - 1}
+                  className={`p-2.5 rounded-lg border ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'} disabled:opacity-50 disabled:cursor-not-allowed transition`}
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => handlePageChange(totalPages - 1)}
+                  disabled={currentPage === totalPages - 1}
+                  className={`p-2.5 rounded-lg border ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'} disabled:opacity-50 disabled:cursor-not-allowed transition`}
+                >
+                  <ChevronsRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
           </>
         )}
 
-        {/* Modal Create/Edit/View */}
+        {/* Modal Tạo / Sửa */}
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-blue-50/80 backdrop-blur">
-                <h2 className="text-2xl font-bold text-blue-700">
+            <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transition-colors duration-300`}>
+              <div className={`flex justify-between items-center p-6 border-b sticky top-0 ${theme === 'dark' ? 'bg-gray-700' : 'bg-blue-50/80'} backdrop-blur`}>
+                <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-blue-700'}`}>
                   {modalMode === 'create' ? t('servicesManagement.modal.createTitle') :
                    modalMode === 'view' ? t('servicesManagement.modal.viewTitle') :
                    t('servicesManagement.modal.editTitle')}
@@ -449,7 +573,7 @@ export default function ServiceManagement() {
                       <Edit className="w-5 h-5" /> {t('servicesManagement.common.edit')}
                     </button>
                   )}
-                  <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-white/50">
+                  <button onClick={handleCloseModal} className={`text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2 rounded-full ${theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-white/50'}`}>
                     <X className="w-7 h-7" />
                   </button>
                 </div>
@@ -457,25 +581,29 @@ export default function ServiceManagement() {
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
                 {/* Image Upload */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('servicesManagement.modal.image')}</label>
+                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    {t('servicesManagement.modal.image')}
+                  </label>
                   <div className="flex items-center gap-4">
                     <div className="flex-shrink-0">
                       {imagePreview ? (
-                        <img src={imagePreview.startsWith('data:') ? imagePreview : getImageUrl(imagePreview)} alt="Preview" className="h-32 w-32 object-cover rounded-lg border-2 border-gray-300" />
+                        <img src={imagePreview.startsWith('data:') ? imagePreview : getImageUrl(imagePreview)} alt="Preview" className="h-32 w-32 object-cover rounded-lg border-2 border-gray-300 dark:border-gray-600" />
                       ) : (
-                        <div className="h-32 w-32 bg-gray-200 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
-                          <ImageIcon className="w-12 h-12 text-gray-400" />
+                        <div className={`h-32 w-32 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'} rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600`}>
+                          <ImageIcon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
                         </div>
                       )}
                     </div>
                     {modalMode !== 'view' && (
                       <div>
                         <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="image-upload" />
-                        <label htmlFor="image-upload" className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 cursor-pointer transition border">
+                        <label htmlFor="image-upload" className={`flex items-center gap-2 px-4 py-2 ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} rounded-lg cursor-pointer transition border`}>
                           <Upload className="w-5 h-5" />
                           {imagePreview ? t('servicesManagement.modal.changeImage') : t('servicesManagement.modal.chooseImage')}
                         </label>
-                        <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF {t('servicesManagement.modal.maxSize')}</p>
+                        <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
+                          PNG, JPG, GIF {t('servicesManagement.modal.maxSize')}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -484,22 +612,63 @@ export default function ServiceManagement() {
                 {/* Form Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('servicesManagement.name')} <span className="text-red-500">*</span></label>
-                    <input type="text" name="name" value={formData.name} onChange={handleInputChange} required disabled={modalMode === 'view'} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50" />
+                    <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      {t('servicesManagement.name')} <span className="text-red-500">*</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      name="name" 
+                      value={formData.name} 
+                      onChange={handleInputChange} 
+                      required 
+                      disabled={modalMode === 'view'} 
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`} 
+                    />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('servicesManagement.common.description')} <span className="text-red-500">*</span></label>
-                    <textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" required disabled={modalMode === 'view'} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"></textarea>
+                    <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      {t('servicesManagement.common.description')} <span className="text-red-500">*</span>
+                    </label>
+                    <textarea 
+                      name="description" 
+                      value={formData.description} 
+                      onChange={handleInputChange} 
+                      rows="3" 
+                      required 
+                      disabled={modalMode === 'view'} 
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    ></textarea>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('servicesManagement.category')} <span className="text-red-500">*</span></label>
-                    <select name="category" value={formData.category} onChange={handleInputChange} required disabled={modalMode === 'view'} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50">
+                    <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      {t('servicesManagement.category')} <span className="text-red-500">*</span>
+                    </label>
+                    <select 
+                      name="category" 
+                      value={formData.category} 
+                      onChange={handleInputChange} 
+                      required 
+                      disabled={modalMode === 'view'} 
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    >
                       {categoryOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('servicesManagement.common.price')} (VNĐ) <span className="text-red-500">*</span></label>
-                    <input type="number" name="price" value={formData.price} onChange={handleInputChange} min="0" step="1000" required disabled={modalMode === 'view'} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50" />
+                    <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      {t('servicesManagement.common.price')} (VNĐ) <span className="text-red-500">*</span>
+                    </label>
+                    <input 
+                      type="number" 
+                      name="price" 
+                      value={formData.price} 
+                      onChange={handleInputChange} 
+                      min="0" 
+                      step="1000" 
+                      required 
+                      disabled={modalMode === 'view'} 
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`} 
+                    />
                   </div>
                 </div>
 
@@ -508,7 +677,7 @@ export default function ServiceManagement() {
                     <button type="submit" disabled={loading || uploadingImage} className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-70">
                       {uploadingImage ? t('common.processing') : loading ? t('common.processing') : modalMode === 'create' ? t('servicesManagement.createButton') : t('common.save')}
                     </button>
-                    <button type="button" onClick={handleCloseModal} disabled={loading || uploadingImage} className="flex-1 bg-gray-300 text-gray-700 py-2.5 rounded-lg hover:bg-gray-400 transition">
+                    <button type="button" onClick={handleCloseModal} disabled={loading || uploadingImage} className={`flex-1 py-2.5 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition ${theme === 'dark' ? 'bg-gray-600 text-gray-200' : 'bg-gray-300 text-gray-700'}`}>
                       {t('servicesManagement.common.cancel')}
                     </button>
                   </div>
@@ -521,17 +690,19 @@ export default function ServiceManagement() {
         {/* Confirm Delete Modal */}
         {showDeleteConfirmation && serviceToDelete && (
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
+            <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl max-w-sm w-full p-6 text-center transition-colors duration-300`}>
               <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-xl font-bold mb-2">{t('servicesManagement.common.confirm')}</h3>
-              <p className="text-gray-600 mb-6">
+              <h3 className={`text-xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                {t('common.confirmDelete')}
+              </h3>
+              <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-6`}>
                 {t('servicesManagement.confirm.deleteText', { name: serviceToDelete.name })}
               </p>
               <div className="flex gap-3">
                 <button onClick={handleConfirmDelete} disabled={loading} className="flex-1 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 font-semibold transition disabled:opacity-70">
                   {loading ? t('common.processing') : t('servicesManagement.common.delete')}
                 </button>
-                <button onClick={() => { setShowDeleteConfirmation(false); setServiceToDelete(null); }} className="flex-1 bg-gray-300 text-gray-700 py-2.5 rounded-lg hover:bg-gray-400 font-semibold transition">
+                <button onClick={() => { setShowDeleteConfirmation(false); setServiceToDelete(null); }} className={`flex-1 py-2.5 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 font-semibold transition ${theme === 'dark' ? 'bg-gray-600 text-gray-200' : 'bg-gray-300 text-gray-700'}`}>
                   {t('servicesManagement.common.cancel')}
                 </button>
               </div>
@@ -542,12 +713,12 @@ export default function ServiceManagement() {
         {/* Confirm Toggle Status Modal */}
         {showToggleConfirmation && toggleTarget && (
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
+            <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl max-w-sm w-full p-6 text-center transition-colors duration-300`}>
               <Power className={`w-12 h-12 mx-auto mb-4 ${toggleTarget.currentStatus ? 'text-red-500' : 'text-green-500'}`} />
-              <h3 className="text-xl font-bold mb-2">
+              <h3 className={`text-xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 {toggleTarget.currentStatus ? t('servicesManagement.confirm.deactivateTitle') : t('servicesManagement.confirm.activateTitle')}
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-6`}>
                 {t('servicesManagement.confirm.toggleText', { name: toggleTarget.name })}
               </p>
               <div className="flex gap-3">
@@ -558,7 +729,10 @@ export default function ServiceManagement() {
                 >
                   {loading ? t('common.processing') : t('servicesManagement.common.confirm')}
                 </button>
-                <button onClick={() => { setShowToggleConfirmation(false); setToggleTarget(null); }} className="flex-1 bg-gray-300 text-gray-700 py-2.5 rounded-lg hover:bg-gray-400 font-semibold transition">
+                <button
+                  onClick={() => { setShowToggleConfirmation(false); setToggleTarget(null); }}
+                  className={`flex-1 py-2.5 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 font-semibold transition ${theme === 'dark' ? 'bg-gray-600 text-gray-200' : 'bg-gray-300 text-gray-700'}`}
+                >
                   {t('servicesManagement.common.cancel')}
                 </button>
               </div>

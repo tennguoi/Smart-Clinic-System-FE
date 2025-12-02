@@ -29,14 +29,14 @@ export default function HomePage() {
   }, [t]);
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
       <Hero />
       <CoreValues />
       <ServicesSection />
       <DoctorsSection />
 
       {/* PHẦN ĐÁNH GIÁ – BẮT BUỘC HIỆN */}
-      <div className="bg-gray-50">
+      <div className="bg-gray-50 dark:bg-gray-800 transition-colors duration-300">
         <Testimonials />
       </div>
       <Footer />

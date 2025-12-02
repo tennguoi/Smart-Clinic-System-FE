@@ -1,5 +1,6 @@
 // src/components/common/Sidebar.jsx – BỎ THANH KÉO HOÀN TOÀN TRONG CODE, IN ĐẬM NHƯ DOCTOR, ĐẸP VL!
 import { Cloud } from 'lucide-react';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const Sidebar = ({ 
   title = "HealthCare", 
@@ -8,11 +9,12 @@ const Sidebar = ({
   onMenuChange,
   logo: LogoIcon = Cloud
 }) => {
+  const { theme } = useTheme();
 
   return (
-    <aside className="w-80 bg-[#1e3a5f] text-white flex flex-col shadow-2xl h-screen sticky top-0 z-50">
+    <aside className={`w-80 ${theme === 'dark' ? 'bg-gray-900 border-r border-gray-700' : 'bg-[#1e3a5f]'} text-white flex flex-col shadow-2xl h-screen sticky top-0 z-50 transition-colors duration-300`}>
       {/* Header */}
-      <div className="p-6 flex items-center gap-3 border-b border-blue-900 flex-shrink-0">
+      <div className={`p-6 flex items-center gap-3 ${theme === 'dark' ? 'border-b border-gray-700' : 'border-b border-blue-900'} flex-shrink-0 transition-colors duration-300`}>
         <LogoIcon className="w-10 h-10 text-blue-300" />
         <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
       </div>
@@ -67,7 +69,7 @@ const Sidebar = ({
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-blue-900 flex-shrink-0">
+      <div className={`p-4 ${theme === 'dark' ? 'border-t border-gray-700' : 'border-t border-blue-900'} flex-shrink-0 transition-colors duration-300`}>
         <p className="text-xs text-blue-300 text-center">© 2025 HealthCare System</p>
       </div>
     </aside>

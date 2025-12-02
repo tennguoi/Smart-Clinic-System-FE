@@ -1,14 +1,15 @@
 // src/components/receptionist/InvoicesSection.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next'; // Thêm i18n
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../contexts/ThemeContext';
 import { billingApi } from '../../api/billingApi';
 import { format } from 'date-fns';
 import { vi as dateFnsVi, enUS as dateFnsEn } from 'date-fns/locale';
 import CreateInvoiceModal from './CreateInvoiceModal';
 import InvoiceDetailModal from './InvoiceDetailModal';
 import { formatPrice } from '../../utils/formatPrice';
-import { FileText, Search, Plus, Eye, CreditCard, Receipt } from 'lucide-react';
+import { FileText, Search, Plus, Eye, CreditCard, Receipt, Download } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import CountBadge from '../common/CountBadge';
@@ -17,6 +18,7 @@ import Pagination from '../common/Pagination';
 const ITEMS_PER_PAGE = 10;
 
 export default function InvoicesSection({ isDoctorView = false }) {
+  const { theme } = useTheme();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
@@ -63,7 +65,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
       fetchInvoices();
     }, 300);
     return () => clearTimeout(timer);
-  }, [search, statusFilter, showUnpaidOnly]);
+  }, [search, statusFilter, showUnpaidOnly, t]);
 
   const paginatedInvoices = useMemo(() => {
     const start = currentPage * ITEMS_PER_PAGE;
@@ -76,13 +78,13 @@ export default function InvoicesSection({ isDoctorView = false }) {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'Paid':
-        return <span className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-full">{t('invoices.status.paid')}</span>;
+        return <span className={`px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 rounded-full`}>{t('invoices.status.paid')}</span>;
       case 'Pending':
-        return <span className="px-3 py-1.5 text-xs font-semibold bg-yellow-100 text-yellow-700 rounded-full">{t('invoices.status.pending')}</span>;
+        return <span className={`px-3 py-1.5 text-xs font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-full`}>{t('invoices.status.pending')}</span>;
       case 'PartiallyPaid':
-        return <span className="px-3 py-1.5 text-xs font-semibold bg-orange-100 text-orange-700 rounded-full">{t('invoices.status.partiallyPaid')}</span>;
+        return <span className={`px-3 py-1.5 text-xs font-semibold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300 rounded-full`}>{t('invoices.status.partiallyPaid')}</span>;
       default:
-        return <span className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-full">—</span>;
+        return <span className={`px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-full`}>—</span>;
     }
   };
 
@@ -100,11 +102,41 @@ export default function InvoicesSection({ isDoctorView = false }) {
     navigate(`/reception/payment/${invoice.billId}`);
   };
 
+  const handleDownloadPdf = async (billId, patientName) => {
+    try {
+      const response = await fetch(`http://localhost:8082/api/billing/${billId}/pdf`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(t('invoices.errors.pdfDownloadFailed'));
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `hoa-don-${patientName}-${new Date().getTime()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success(t('invoices.pdfDownloadSuccess'));
+    } catch (err) {
+      console.error('Lỗi tải PDF:', err);
+      toast.error(t('invoices.errors.pdfDownloadError'));
+    }
+  };
+
   return (
-    <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
+    <div className={`px-4 sm:px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
+        <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 transition-colors duration-300`}>
           <Receipt className="w-9 h-9 text-blue-600" />
           <span>{t('adminSidebar.invoices')}</span>
           <CountBadge 
@@ -126,10 +158,10 @@ export default function InvoicesSection({ isDoctorView = false }) {
       </div>
 
       {/* Bộ lọc */}
-      <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-6">
+      <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-md border p-6 mb-6 transition-colors duration-300`}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-5">
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t('invoices.filters.search')}</label>
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('invoices.filters.search')}</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
@@ -137,17 +169,17 @@ export default function InvoicesSection({ isDoctorView = false }) {
                 placeholder={t('invoices.filters.searchPlaceholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full pl-9 pr-4 px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'}`}
               />
             </div>
           </div>
 
           <div className="lg:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t('invoices.filters.status')}</label>
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('invoices.filters.status')}</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
             >
               <option value="all">{t('invoices.filters.allStatus')}</option>
               <option value="paid">{t('invoices.filters.paid')}</option>
@@ -163,7 +195,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
                 onChange={(e) => setShowUnpaidOnly(e.target.checked)}
                 className="w-4 h-4 text-blue-600 rounded"
               />
-              <span className="text-sm text-gray-700">{t('invoices.filters.unpaidOnly')}</span>
+              <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{t('invoices.filters.unpaidOnly')}</span>
             </label>
           </div>
 
@@ -175,7 +207,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
                   setStatusFilter('all');
                   setShowUnpaidOnly(false);
                 }}
-                className="w-full px-4 py-3 bg-gray-300 text-gray-700 rounded-xl hover:bg-gray-400 transition font-medium"
+                className={`w-full px-4 py-3 rounded-xl transition font-medium ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
               >
                 {t('invoices.filters.clear')}
               </button>
@@ -184,10 +216,10 @@ export default function InvoicesSection({ isDoctorView = false }) {
         </div>
       </div>
 
-      {/* Bảng */}
-      <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+      {/* Bảng hóa đơn + Phân trang */}
+      <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-md border overflow-hidden transition-colors duration-300`}>
         {loading ? (
-          <div className="p-16 text-center text-gray-500">
+          <div className={`p-16 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
             <div className="inline-flex items-center gap-3">
               <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
               <span>{t('invoices.loading')}</span>
@@ -195,45 +227,45 @@ export default function InvoicesSection({ isDoctorView = false }) {
           </div>
         ) : invoices.length === 0 ? (
           <div className="p-16 text-center">
-            <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <FileText className={`w-16 h-16 mx-auto mb-4 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} />
             <p className="text-red-600 font-semibold">
               {hasFilter ? t('invoices.noResults') : t('invoices.noInvoices')}
             </p>
-            <p className="text-gray-500 text-sm mt-2">
+            <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
               {hasFilter ? t('invoices.tryDifferentFilter') : t('invoices.createFirstInvoice')}
             </p>
           </div>
         ) : (
           <>
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className={`${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} border-b`}>
                 <tr>
-                  <th className="text-center px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-20">{t('invoices.table.stt')}</th>
-                  <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">{t('invoices.table.invoiceCode')}</th>
-                  <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">{t('invoices.table.patient')}</th>
-                  <th className="text-left px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">{t('invoices.table.createdDate')}</th>
-                  <th className="text-right px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">{t('invoices.table.totalAmount')}</th>
-                  <th className="text-center px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">{t('invoices.table.status')}</th>
-                  <th className="text-center px-6 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">{t('invoices.table.actions')}</th>
+                  <th className={`text-center px-4 py-3 text-xs font-bold uppercase tracking-wider w-20 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.stt')}</th>
+                  <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.invoiceCode')}</th>
+                  <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.patient')}</th>
+                  <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.createdDate')}</th>
+                  <th className={`text-right px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.totalAmount')}</th>
+                  <th className={`text-center px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.status')}</th>
+                  <th className={`text-center px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.actions')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
                 {paginatedInvoices.map((inv, index) => (
-                  <tr key={inv.billId} className="hover:bg-gray-50 transition">
-                    <td className="px-4 py-4 text-center font-semibold text-gray-700">
+                  <tr key={inv.billId} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition`}>
+                    <td className={`px-4 py-4 text-center font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                       {currentPage * ITEMS_PER_PAGE + index + 1}
                     </td>
-                    <td className="px-6 py-4 font-mono text-blue-600 font-medium">
+                    <td className="px-6 py-4 font-mono text-blue-600 dark:text-blue-400 font-medium">
                       #{inv.billId?.slice(0, 8).toUpperCase()}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="font-medium text-gray-900">{inv.patientName}</div>
-                      <div className="text-sm text-gray-500">{inv.patientPhone}</div>
+                      <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{inv.patientName}</div>
+                      <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{inv.patientPhone}</div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                       {format(new Date(inv.createdAt), 'dd/MM/yyyy HH:mm', { locale: currentLocale })}
                     </td>
-                    <td className="px-6 py-4 text-right font-bold text-lg text-gray-900">
+                    <td className={`px-6 py-4 text-right font-bold text-lg ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                       {formatPrice(inv.totalAmount)}
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -243,7 +275,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
                       <div className="flex items-center justify-center gap-3">
                         <button
                           onClick={() => handleViewDetail(inv)}
-                          className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-full transition group relative"
+                          className="p-2.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded-full transition group relative"
                           title={t('invoices.tooltips.viewDetail')}
                         >
                           <Eye className="w-5 h-5" />
@@ -252,10 +284,22 @@ export default function InvoicesSection({ isDoctorView = false }) {
                           </span>
                         </button>
 
+                        <button
+                          onClick={() => handleDownloadPdf(inv.billId, inv.patientName)}
+                          className="p-2.5 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/30 rounded-full transition group relative"
+                          title={t('invoices.tooltips.exportPdf')}
+                        >
+                          <Download className="w-5 h-5" />
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+                            {t('invoices.tooltips.exportPdf')}
+                          </span>
+                        </button>
+
+                        {/* Chỉ lễ tân mới thấy nút thu tiền */}
                         {!isDoctorView && inv.paymentStatus !== 'Paid' && (
                           <button
                             onClick={() => handlePayInvoice(inv)}
-                            className="p-2.5 text-green-600 hover:bg-green-50 rounded-full transition group relative"
+                            className="p-2.5 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30 rounded-full transition group relative"
                             title={t('invoices.tooltips.pay')}
                           >
                             <CreditCard className="w-5 h-5" />
@@ -271,7 +315,8 @@ export default function InvoicesSection({ isDoctorView = false }) {
               </tbody>
             </table>
 
-            <div className="border-t border-gray-200 bg-gray-50">
+            {/* PAGINATION NẰM TRONG BẢNG */}
+            <div className={`border-t ${theme === 'dark' ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-gray-50'}`}>
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}

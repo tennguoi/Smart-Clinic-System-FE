@@ -14,6 +14,7 @@ import AppointmentPage from "./pages/AppointmentPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import NewsDetailPage from "./pages/NewsDetailPage";
 import ChatbotAvatar from "./components/chatbot/ChatbotAvatar";
+import AppointmentTrackingPage from "./pages/AppointmentTrackingPage";
 
 // Auth
 import Login from "./components/Login";
@@ -33,6 +34,8 @@ import DoctorManagement from "./components/admin/DoctorManagement";
 import ServiceManagement from "./components/admin/ServiceManagement";
 import ArticleManagement from "./components/admin/ArticleManagement";
 import AccountManagement from "./components/admin/AccountManagement";
+import Review from "./components/admin/Review";
+import EmailTemplateManagement from "./components/admin/EmailTemplateManagement";
 
 import ClinicManagement from "./components/admin/ClinicManagement";
 import PlaceholderSection from "./components/common/PlaceholderSection";
@@ -53,7 +56,7 @@ import PaymentPage from "./pages/payment/PaymentPage";
 
 function App() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
       <Routes>
 
         {/* AUTH & PROFILE */}
@@ -79,6 +82,7 @@ function App() {
                 <Route path="/pricing" element={<PricingPage />} />
                 <Route path="/news" element={<NewsPage />} />
                 <Route path="/appointment" element={<AppointmentPage />} />
+                <Route path="/appointments/tracking" element={<AppointmentTrackingPage />} />
                 <Route path="/danh-gia" element={<ReviewsPage />} />
                 <Route path="/news/:id" element={<NewsDetailPage />} />
               </Routes>
@@ -107,6 +111,8 @@ function App() {
           <Route path="medical-records" element={<MedicalRecordHistory />} />
           <Route path="invoices" element={<InvoicesSection isDoctorView={true} />} />
           <Route path="doctors" element={<DoctorManagement />} />
+          <Route path="reviews" element={<Review />} />
+          <Route path="email-templates" element={<EmailTemplateManagement />} />
           
           <Route path="*" element={<PlaceholderSection title="Chức năng" message="Sắp ra mắt..." />} />
         </Route>

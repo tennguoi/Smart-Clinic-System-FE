@@ -4,12 +4,16 @@ import DatePicker from 'react-datepicker';
 import { vi, enUS } from 'date-fns/locale';
 import { X, Edit } from 'lucide-react';
 import 'react-datepicker/dist/react-datepicker.css';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, onCancel }) {
   const { t, i18n } = useTranslation();
+  const { theme } = useTheme();
   
   // State để quản lý chế độ xem/sửa (chỉ áp dụng khi isEdit = true)
   const [isEditMode, setIsEditMode] = useState(!isEdit);
+
+  const isDark = theme === 'dark';
 
   // Priority options with i18n
   const priorityOptions = [
@@ -41,10 +45,14 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className={`rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto transition-colors duration-300 ${
+        isDark ? 'bg-gray-800' : 'bg-white'
+      }`}>
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-800">
+        <div className={`flex justify-between items-center p-6 border-b sticky top-0 backdrop-blur z-10 transition-colors ${
+          isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+        }`}>
+          <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>
             {isEdit 
               ? (isEditMode 
                   ? t('queueManagement.patientForm.editTitle') 
@@ -64,7 +72,9 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
             )}
             <button
               onClick={onCancel}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className={`transition-colors ${
+                isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-400 hover:text-gray-600'
+              }`}
             >
               <X className="w-6 h-6" />
             </button>
@@ -76,7 +86,9 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Patient Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${
+                isDark ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 {t('queueManagement.patientForm.patientName')} <span className="text-red-500">*</span>
               </label>
               <input
@@ -84,14 +96,20 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 value={patientForm.patientName}
                 onChange={(e) => onChange('patientName', e.target.value)}
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
                 placeholder={t('queueManagement.patientForm.namePlaceholder')}
               />
             </div>
 
             {/* Phone */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${
+                isDark ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 {t('queueManagement.patientForm.phone')} <span className="text-red-500">*</span>
               </label>
               <input
@@ -103,14 +121,20 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                   onChange('phone', value);
                 }}
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
                 placeholder={t('queueManagement.patientForm.phonePlaceholder')}
               />
             </div>
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${
+                isDark ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 {t('queueManagement.patientForm.email')}
               </label>
               <input
@@ -118,14 +142,20 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 value={patientForm.email}
                 onChange={(e) => onChange('email', e.target.value)}
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
                 placeholder={t('queueManagement.patientForm.emailPlaceholder')}
               />
             </div>
 
             {/* Date of Birth */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${
+                isDark ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 {t('queueManagement.patientForm.dob')} <span className="text-red-500">*</span>
               </label>
               <DatePicker
@@ -140,7 +170,11 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 maxDate={new Date()}
                 isClearable
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
                 wrapperClassName="w-full"
                 required
               />
@@ -148,14 +182,20 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
 
             {/* Gender */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${
+                isDark ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 {t('queueManagement.patientForm.gender.label')}
               </label>
               <select
                 value={patientForm.gender}
                 onChange={(e) => onChange('gender', e.target.value)}
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
               >
                 {genderOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -167,14 +207,20 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
 
             {/* Priority */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${
+                isDark ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 {t('queueManagement.patientForm.priority')} <span className="text-red-500">*</span>
               </label>
               <select
                 value={patientForm.priority}
                 onChange={(e) => onChange('priority', e.target.value)}
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
               >
                 {priorityOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -186,7 +232,9 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
 
             {/* ID Number - Số căn cước */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${
+                isDark ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 {t('queueManagement.patientForm.idNumber')}
               </label>
               <input
@@ -198,7 +246,11 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                   onChange('idNumber', value);
                 }}
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
                 placeholder={t('queueManagement.patientForm.idPlaceholder')}
                 maxLength="12"
               />
@@ -206,7 +258,9 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
 
             {/* Insurance Number - Số thẻ BHYT */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${
+                isDark ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 {t('queueManagement.patientForm.insurance')}
               </label>
               <input
@@ -218,7 +272,11 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                   onChange('insuranceNumber', value);
                 }}
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
                 placeholder={t('queueManagement.patientForm.insurancePlaceholder')}
                 maxLength="15"
               />
@@ -226,14 +284,20 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
 
             {/* Address */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${
+                isDark ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 {t('queueManagement.patientForm.address')}
               </label>
               <textarea
                 value={patientForm.address}
                 onChange={(e) => onChange('address', e.target.value)}
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
                 placeholder={t('queueManagement.patientForm.addressPlaceholder')}
                 rows="2"
               />
@@ -241,14 +305,20 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
 
             {/* Notes - Triệu chứng */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${
+                isDark ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 {t('queueManagement.patientForm.notes')}
               </label>
               <textarea
                 value={patientForm.notes || ''}
                 onChange={(e) => onChange('notes', e.target.value)}
                 disabled={isDisabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
                 placeholder={t('queueManagement.patientForm.notesPlaceholder')}
                 rows="3"
               />
@@ -269,7 +339,11 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
               </button>
               <button
                 onClick={onCancel}
-                className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition-colors font-medium"
+                className={`flex-1 py-2 px-4 rounded-md transition-colors font-medium ${
+                  isDark 
+                    ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' 
+                    : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+                }`}
               >
                 {t('queueManagement.patientForm.cancelButton')}
               </button>
