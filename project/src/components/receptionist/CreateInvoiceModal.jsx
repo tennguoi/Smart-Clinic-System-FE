@@ -5,14 +5,17 @@ import { billingApi } from '../../api/billingApi';
 import { patientApi } from '../../api/patientApi';
 import { serviceApi, formatPrice } from '../../api/serviceApi';
 import toast from 'react-hot-toast';
-
-const PAYMENT_METHODS = [
-  { value: 'Cash', label: 'Tiền mặt' },
-  { value: 'Card', label: 'Thẻ tín dụng/ghi nợ' },
-  { value: 'Transfer', label: 'Chuyển khoản' },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
+  const { t } = useTranslation();
+  
+  const PAYMENT_METHODS = [
+    { value: 'Cash', label: t('createInvoice.paymentMethods.cash') },
+    { value: 'Card', label: t('createInvoice.paymentMethods.card') },
+    { value: 'Transfer', label: t('createInvoice.paymentMethods.transfer') },
+  ];
+
   const [searchPatient, setSearchPatient] = useState('');
   const [patients, setPatients] = useState([]);
   const [services, setServices] = useState([]);
@@ -37,13 +40,13 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
         setPatients(patientsRes.patients || []);
         setServices(servicesRes.services || servicesRes.data || []);
       } catch (err) {
-        toast.error('Không tải được dữ liệu');
+        toast.error(t('createInvoice.errors.loadFailed'));
       } finally {
         setLoading(false);
       }
     };
     loadData();
-  }, [isOpen]);
+  }, [isOpen, t]);
 
   const filteredPatients = patients.filter(p =>
     p.fullName?.toLowerCase().includes(searchPatient.toLowerCase()) ||
@@ -72,13 +75,13 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
     const res = await fetch(`http://localhost:8082/api/medical-records/patient/${patientId}/latest`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    if (!res.ok) throw new Error('Không tìm thấy hồ sơ khám');
+    if (!res.ok) throw new Error(t('createInvoice.errors.noRecord'));
     return (await res.json()).recordId;
   };
 
   const handleSubmit = async () => {
-    if (!selectedPatient) return toast.error('Vui lòng chọn bệnh nhân');
-    if (selectedServices.length === 0) return toast.error('Vui lòng chọn ít nhất 1 dịch vụ');
+    if (!selectedPatient) return toast.error(t('createInvoice.errors.selectPatient'));
+    if (selectedServices.length === 0) return toast.error(t('createInvoice.errors.selectService'));
 
     setSubmitting(true);
     try {
@@ -94,11 +97,11 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
         }))
       });
 
-      toast.success('Tạo hóa đơn thành công!');
+      toast.success(t('createInvoice.success'));
       onSuccess();
       onClose();
     } catch (err) {
-      toast.error(err.message || 'Tạo hóa đơn thất bại');
+      toast.error(err.message || t('createInvoice.errors.createFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -116,8 +119,8 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
               <FileText className="w-7 h-7 text-purple-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Tạo hóa đơn mới</h2>
-              <p className="text-sm text-gray-600">Nhanh chóng lập hóa đơn cho bệnh nhân</p>
+              <h2 className="text-2xl font-bold text-gray-900">{t('createInvoice.title')}</h2>
+              <p className="text-sm text-gray-600">{t('createInvoice.subtitle')}</p>
             </div>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -130,13 +133,13 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
           {/* 1. Chọn bệnh nhân */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Tìm & chọn bệnh nhân <span className="text-red-500">*</span>
+              {t('createInvoice.selectPatient')} <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Nhập tên hoặc số điện thoại..."
+                placeholder={t('createInvoice.searchPlaceholder')}
                 value={searchPatient}
                 onChange={(e) => setSearchPatient(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -147,7 +150,7 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
             {searchPatient && (
               <div className="mt-3 max-h-64 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-lg">
                 {filteredPatients.length === 0 ? (
-                  <p className="p-4 text-center text-gray-500">Không tìm thấy bệnh nhân</p>
+                  <p className="p-4 text-center text-gray-500">{t('createInvoice.noPatientFound')}</p>
                 ) : (
                   filteredPatients.slice(0, 8).map(patient => (
                     <div
@@ -188,7 +191,7 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
           {/* 2. Chọn dịch vụ */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Chọn dịch vụ <span className="text-red-500">*</span>
+              {t('createInvoice.selectServices')} <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto">
               {services.map(service => (
@@ -204,7 +207,7 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
                   <div className="font-medium text-gray-900">{service.name}</div>
                   <div className="text-sm text-gray-600 mt-1">{formatPrice(service.price)}</div>
                   {selectedServices.find(s => s.serviceId === service.serviceId) && (
-                    <div className="mt-2 text-xs font-semibold text-blue-600">Đã thêm</div>
+                    <div className="mt-2 text-xs font-semibold text-blue-600">{t('createInvoice.added')}</div>
                   )}
                 </div>
               ))}
@@ -213,7 +216,9 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
 
           {selectedServices.length > 0 && (
             <div className="bg-gray-50 rounded-xl p-5 space-y-3">
-              <h4 className="font-semibold text-gray-900">Dịch vụ đã chọn ({selectedServices.length})</h4>
+              <h4 className="font-semibold text-gray-900">
+                {t('createInvoice.selectedServices', { count: selectedServices.length })}
+              </h4>
               {selectedServices.map(s => (
                 <div key={s.serviceId} className="flex items-center justify-between bg-white rounded-lg p-3">
                   <div className="flex-1">
@@ -234,7 +239,9 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
           {/* Tổng tiền + Phương thức thanh toán */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Phương thức thanh toán</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                {t('createInvoice.paymentMethod')}
+              </label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
@@ -246,7 +253,7 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
               </select>
             </div>
             <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl p-6 flex items-center justify-between">
-              <span className="text-lg font-semibold">Tổng tiền</span>
+              <span className="text-lg font-semibold">{t('createInvoice.totalAmount')}</span>
               <span className="text-2xl font-bold">{formatPrice(totalAmount)}</span>
             </div>
           </div>
@@ -258,7 +265,7 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
             onClick={onClose}
             className="px-6 py-3 text-gray-700 bg-white border border-gray-300 rounded-xl font-medium hover:bg-gray-50"
           >
-            Hủy
+            {t('createInvoice.common.cancel')}
           </button>
           <button
             onClick={handleSubmit}
@@ -268,10 +275,10 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
             {submitting ? (
               <>
                 <Loader className="w-5 h-5 animate-spin" />
-                Đang tạo...
+                {t('createInvoice.creating')}
               </>
             ) : (
-              'Tạo hóa đơn'
+              t('createInvoice.createButton')
             )}
           </button>
         </div>
