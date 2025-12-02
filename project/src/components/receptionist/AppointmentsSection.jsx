@@ -352,7 +352,14 @@ export default function AppointmentsSection() {
         <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
           <Calendar className="w-9 h-9 text-blue-600" />
           <span>{t('appointmentManagement.title', 'Quản Lý Lịch Hẹn')}</span>
-          <CountBadge currentCount={appointments.length} totalCount={totalElements} label={t('appointmentManagement.appointment', 'lịch hẹn')} />
+        <CountBadge 
+  currentCount={appointments.length} 
+  totalCount={totalElements} 
+  label={totalElements === 1 
+    ? t('appointmentManagement.appointment', 'appointment')   // số ít
+    : t('appointmentManagement.appointments', 'appointments') // số nhiều
+  } 
+/>
         </h1>
         <button onClick={handleOpenAdd}
           className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2">

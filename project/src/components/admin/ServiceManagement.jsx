@@ -358,13 +358,13 @@ export default function ServiceManagement() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">STT</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">{t('common.photo')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">{t('servicesManagement.common.photo')}</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('servicesManagement.name')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">{t('common.description')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">{t('servicesManagement.common.description')}</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('servicesManagement.category')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.price')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('servicesManagement.common.price')}</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('servicesManagement.status')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">{t('common.actions')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">{t('servicesManagement.common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -407,7 +407,7 @@ export default function ServiceManagement() {
                             <button onClick={() => handleOpenModal('view', service)} title={t('common.view')} className="text-blue-600 hover:text-blue-900">
                               <Eye className="w-5 h-5" />
                             </button>
-                            <button onClick={() => handleDeleteClick(service)} title={t('common.delete')} className="text-red-600 hover:text-red-900">
+                            <button onClick={() => handleDeleteClick(service)} title={t('servicesManagement.common.delete')} className="text-red-600 hover:text-red-900">
                               <Trash2 className="w-5 h-5" />
                             </button>
                             <button onClick={() => handleToggleStatusClick(service)}
@@ -446,7 +446,7 @@ export default function ServiceManagement() {
                 <div className="flex items-center gap-3">
                   {modalMode === 'view' && (
                     <button onClick={handleSwitchToEdit} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                      <Edit className="w-5 h-5" /> {t('common.edit')}
+                      <Edit className="w-5 h-5" /> {t('servicesManagement.common.edit')}
                     </button>
                   )}
                   <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-white/50">
@@ -488,7 +488,7 @@ export default function ServiceManagement() {
                     <input type="text" name="name" value={formData.name} onChange={handleInputChange} required disabled={modalMode === 'view'} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50" />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.description')} <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('servicesManagement.common.description')} <span className="text-red-500">*</span></label>
                     <textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" required disabled={modalMode === 'view'} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"></textarea>
                   </div>
                   <div>
@@ -498,7 +498,7 @@ export default function ServiceManagement() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.price')} (VNĐ) <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('servicesManagement.common.price')} (VNĐ) <span className="text-red-500">*</span></label>
                     <input type="number" name="price" value={formData.price} onChange={handleInputChange} min="0" step="1000" required disabled={modalMode === 'view'} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50" />
                   </div>
                 </div>
@@ -509,7 +509,7 @@ export default function ServiceManagement() {
                       {uploadingImage ? t('common.processing') : loading ? t('common.processing') : modalMode === 'create' ? t('servicesManagement.createButton') : t('common.save')}
                     </button>
                     <button type="button" onClick={handleCloseModal} disabled={loading || uploadingImage} className="flex-1 bg-gray-300 text-gray-700 py-2.5 rounded-lg hover:bg-gray-400 transition">
-                      {t('common.cancel')}
+                      {t('servicesManagement.common.cancel')}
                     </button>
                   </div>
                 )}
@@ -529,10 +529,10 @@ export default function ServiceManagement() {
               </p>
               <div className="flex gap-3">
                 <button onClick={handleConfirmDelete} disabled={loading} className="flex-1 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 font-semibold transition disabled:opacity-70">
-                  {loading ? t('common.processing') : t('common.delete')}
+                  {loading ? t('common.processing') : t('servicesManagement.common.delete')}
                 </button>
                 <button onClick={() => { setShowDeleteConfirmation(false); setServiceToDelete(null); }} className="flex-1 bg-gray-300 text-gray-700 py-2.5 rounded-lg hover:bg-gray-400 font-semibold transition">
-                  {t('common.cancel')}
+                  {t('servicesManagement.common.cancel')}
                 </button>
               </div>
             </div>
@@ -556,10 +556,10 @@ export default function ServiceManagement() {
                   disabled={loading}
                   className={`flex-1 py-2.5 rounded-lg font-semibold transition disabled:opacity-70 ${toggleTarget.currentStatus ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
                 >
-                  {loading ? t('common.processing') : t('common.confirm')}
+                  {loading ? t('common.processing') : t('servicesManagement.common.confirm')}
                 </button>
                 <button onClick={() => { setShowToggleConfirmation(false); setToggleTarget(null); }} className="flex-1 bg-gray-300 text-gray-700 py-2.5 rounded-lg hover:bg-gray-400 font-semibold transition">
-                  {t('common.cancel')}
+                  {t('servicesManagement.common.cancel')}
                 </button>
               </div>
             </div>

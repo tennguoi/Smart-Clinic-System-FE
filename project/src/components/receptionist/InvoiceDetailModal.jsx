@@ -253,7 +253,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                 {t('invoices.modal.servicesAndCosts')}
               </h3>
 
-              {canEdit && !isEditing && (
+              {/* {canEdit && !isEditing && (
                 <button
                   onClick={() => setIsEditing(true)}
                   className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition"
@@ -261,7 +261,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                   <Edit2 className="w-5 h-5" />
                   {t('invoices.common.edit')}
                 </button>
-              )}
+              )} */}
 
               {isEditing && (
                 <div className="flex gap-3">

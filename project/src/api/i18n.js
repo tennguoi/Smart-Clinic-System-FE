@@ -438,7 +438,18 @@ accountManagement: {
   noDataHint: "Vui lòng điền thông tin bên dưới để tạo mới.",
   saving: "Đang lưu...",
   saveButton: "Lưu thông tin",
-  
+    common: {
+  // ... các key hiện tại ...
+  stt: "STT",
+  actions: "Thao tác",
+  view: "Xem chi tiết",
+  edit: "Chỉnh sửa",
+  delete: "Xóa",
+  cancel: "Hủy",
+  all: "Tất cả",
+  clearFilter: "Xóa lọc",
+  search: "Tìm kiếm"
+},
   form: {
     logo: "Logo Phòng Khám",
     selectLogo: "Chọn ảnh từ máy",
@@ -509,10 +520,23 @@ servicesManagement: {
     test: "Thăm Dò",
     procedure: "Thủ Thuật"
   },
-common: {
-  all: "Tất cả",
-  clearFilter: "Xóa lọc"
-},
+
+  common: {
+    "photo": "Hình ảnh",
+    all: "Tất cả",
+    clearFilter: "Xóa lọc",
+    name: "Tên",
+    category: "Danh mục",
+    status: "Trạng thái",
+      description: "Mô tả",
+  price: "Giá",
+  actions: "Thao tác",
+    edit: "Chỉnh sửa",
+     cancel: "Hủy",
+       delete: "Xóa",
+       confirm: "Xác nhận",
+
+  },
   modal: {
     createTitle: "Tạo dịch vụ mới",
     viewTitle: "Chi tiết dịch vụ",
@@ -527,8 +551,8 @@ common: {
     createSuccess: "Tạo dịch vụ thành công!",
     updateSuccess: "Cập nhật dịch vụ thành công!",
     deleteSuccess: "Đã xóa dịch vụ thành công!",
-    activated: "Đã kích hoạt dịch vụ",
-    deactivated: "Đã ngưng hoạt động dịch vụ"
+    activated: "Dịch vụ đã được kích hoạt ",
+    deactivated: "Dịch vụ đã bị vô hiệu hoá"
   },
 
   error: {
@@ -541,7 +565,7 @@ common: {
     deleteText: "Xóa dịch vụ \"{{name}}\"? Thao tác này không thể hoàn tác.",
     deactivateTitle: "Ngưng hoạt động dịch vụ?",
     activateTitle: "Kích hoạt dịch vụ?",
-    toggleText: "Dịch vụ: <strong>{{name}}</strong>"
+    toggleText: "Dịch vụ: {{name}}"
   },
 
   deactivate: "Ngưng hoạt động",
@@ -589,6 +613,8 @@ common: {
   loadError: "Không thể tải dữ liệu thống kê",
 },
 appointmentManagement: {
+  appointment: "lịch hẹn",
+    appointments: "lịch hẹn",
   title: "Quản Lý Lịch Hẹn",
   createButton: "Tạo lịch hẹn",
   createTitle: "Tạo lịch hẹn mới",
@@ -1016,6 +1042,180 @@ receptionSidebar: {
   rooms: "Quản Lý Phòng",
   invoices: "Hóa Đơn"
 },
+doctorStats: {
+  header: {
+    subtitle: "Thống kê hiệu suất",
+    title: "Bác sĩ – Báo cáo ca khám"
+  },
+  range: {
+    day: "Ngày",
+    week: "Tuần",
+    month: "Tháng"
+  },
+  kpi: {
+    totalVisits: {
+      title: "Tổng số ca khám",
+      unit: "ca",
+      subtitle: "Số ca đã xử lý"
+    },
+    avgTime: {
+      title: "Thời gian khám trung bình",
+      unit: "phút/ca",
+      subtitle: "Tính theo dữ liệu thực tế",
+      noData: "Chưa có dữ liệu"
+    },
+    completionRate: {
+      title: "Tỉ lệ hoàn thành",
+      subtitle: "So với lịch khám"
+    }
+  },
+  chart: {
+    visitsByPeriod: "Số ca khám theo {{#if (eq context 'hour')}}giờ{{else}}ngày{{/if}}",
+    trend: "Xu hướng số ca khám"
+  },
+  table: {
+    title: "Bảng thống kê theo khung giờ",
+    time: "Thời gian",
+    visits: "Số ca",
+    change: "% thay đổi",
+    note: "Ghi chú"
+  },
+  loading: "Đang tải dữ liệu thống kê...",
+  empty: {
+    title: "Không có dữ liệu",
+    message: "Không có thống kê cho khoảng thời gian đã chọn."
+  },
+  error: {
+    title: "Lỗi tải dữ liệu",
+    retry: "Thử lại",
+    noPermission: "Bạn không có quyền xem thống kê. Chỉ bác sĩ mới được phép.",
+    noDoctorInfo: "Không tìm thấy thông tin bác sĩ",
+    loadFailed: "Không thể tải dữ liệu thống kê"
+  }
+},
+doctorSidebar: {
+  stats: "Thống kê",
+  currentPatient: "Bệnh nhân hiện tại",
+  records: "Quản lý Hồ sơ",
+  history: "Lịch sử khám",
+  invoices: "Hóa đơn"
+},
+doctorExamination: {
+  // Tabs
+  tabExamination: "Khám & Kê đơn",
+  tabServices: "Chỉ định dịch vụ",
+
+  // Patient info
+  queueNumber: "Số thứ tự",
+  checkInTime: "Vào lúc",
+  symptomsTitle: "Triệu chứng / Lý do đến khám",
+  noSymptoms: "Chưa có ghi chú từ lễ tân",
+
+  // Waiting queue
+  waitingQueueTitle: "Hàng đợi tiếp theo",
+  nextPatientBadge: "Tiếp theo",
+  noPatientsInQueue: "Không còn bệnh nhân nào",
+
+  // Examination tab
+  diagnosisLabel: "Chẩn đoán",
+  diagnosisRequired: "Vui lòng nhập chẩn đoán",
+  treatmentNotesLabel: "Ghi chú điều trị",
+  prescriptionTitle: "Kê đơn thuốc",
+  drugName: "TÊN THUỐC",
+  instructions: "HƯỚNG DẪN SỬ DỤNG",
+  drugPlaceholder: "VD: Paracetamol 500mg (10 viên)",
+  instructionsPlaceholder: "VD: Uống 1 viên/lần, 3 lần/ngày sau ăn",
+  addDrug: "Thêm thuốc mới",
+  prescriptionPreviewTitle: "Đơn thuốc hiện tại:",
+  completeButton: "Hoàn thành khám",
+  processing: "Đang xử lý...",
+
+  // Services tab
+  searchServicePlaceholder: "Tìm kiếm dịch vụ...",
+  selectedServicesTitle: "Dịch vụ đã chọn",
+  totalAmount: "Tổng:",
+
+  // Buttons & actions
+  callNextPatient: "Gọi vào khám",
+  calling: "Đang gọi...",
+
+  // Toast messages
+  serviceAdded: "Đã thêm:",
+  serviceRemoved: "Đã bỏ chọn:",
+  completeSuccess: "Hoàn thành khám thành công!",
+  callNextSuccess: "Đã gọi bệnh nhân tiếp theo!",
+  noMorePatients: "Không còn bệnh nhân trong hàng chờ",
+  invoiceCreated: "Tạo hóa đơn thành công: {{code}}",
+  drugInstructionsRequired: "Vui lòng nhập hướng dẫn sử dụng cho tất cả các thuốc",
+  drugNameRequired: "Vui lòng nhập tên thuốc",
+
+  // Empty state (no current patient)
+  noPatientTitle: "Phòng khám của tôi",
+  patientsWaiting: "{{count}} bệnh nhân đang chờ khám",
+  noPatientsToday: "Hiện chưa có bệnh nhân nào",
+  waitingForNext: "Hệ thống đang chờ bệnh nhân tiếp theo...",
+  queueTitle: "Hàng chờ khám bệnh"
+},
+doctorRecords: {
+  title: "Quản lý Hồ sơ & Hoàn thành khám",
+  listTitle: "Danh sách hồ sơ đã tạo",
+  noRecords: "Chưa có hồ sơ nào. Hãy nhấn \"Tạo hồ sơ mới\" để hoàn thành ca khám.",
+  noResults: "Không tìm thấy hồ sơ nào phù hợp với bộ lọc.",
+  errors: {
+    loadFailed: "Không thể tải hồ sơ khám"
+  },
+  filters: {
+    keyword: "Từ khóa tìm kiếm",
+    keywordPlaceholder: "Nhập tên bệnh nhân, SĐT...",
+    fromDate: "Từ ngày",
+    toDate: "Đến ngày",
+    clear: "Xóa bộ lọc"
+  },
+  table: {
+    patient: "Tên bệnh nhân",
+    diagnosis: "Chẩn đoán",
+    treatmentNotes: "Ghi chú điều trị"
+  },
+  create: {
+    success: "Đã hoàn thành và lưu hồ sơ khám bệnh!",
+    failed: "Tạo hồ sơ khám thất bại",
+    diagnosisRequired: "Chẩn đoán là bắt buộc",
+    treatmentNotesRequired: "Ghi chú điều trị là bắt buộc"
+  },
+    common: {
+  // ... các key hiện tại ...
+  stt: "STT",
+  actions: "Thao tác",
+  view: "Xem chi tiết",
+  edit: "Chỉnh sửa",
+  delete: "Xóa",
+  cancel: "Hủy",
+  all: "Tất cả",
+  clearFilter: "Xóa lọc",
+  search: "Tìm kiếm"
+},
+modal: {
+    title: "Chỉnh sửa hồ sơ bệnh án",
+    pdfTitle: "Xuất PDF hồ sơ bệnh án",
+    pdfButton: "PDF Hồ sơ",
+    pdfExporting: "Đang xuất...",
+    pdfSuccess: "Xuất PDF hồ sơ thành công!",
+    pdfFailed: "Xuất PDF thất bại: ",
+    patientName: "Tên bệnh nhân",
+    diagnosis: "Chẩn đoán",
+    diagnosisPlaceholder: "Nhập chẩn đoán...",
+    treatmentNotes: "Ghi chú điều trị",
+    treatmentNotesPlaceholder: "Nhập ghi chú điều trị...",
+    prescriptionTitle: "Đơn thuốc",
+    prescriptionDrugs: "Toa thuốc",
+    prescriptionDrugsPlaceholder: "Nhập danh sách thuốc (mỗi thuốc một dòng)...",
+    prescriptionInstructions: "Hướng dẫn sử dụng",
+    prescriptionInstructionsPlaceholder: "Nhập hướng dẫn sử dụng thuốc...",
+    prescriptionIssuedAt: "Ngày tạo đơn: {{date}}",
+    createdAt: "Ngày tạo hồ sơ: {{date}}",
+    saveButton: "Lưu thay đổi"
+  },
+},
     }
   },
 
@@ -1311,6 +1511,7 @@ accountManagement: {
           status: "Status",
           actions: "Actions"
         },
+        
         modal: {
           createTitle: "Create New Account",
           viewTitle: "Account Details",
@@ -1476,7 +1677,18 @@ accountManagement: {
     createdAt: "Created At",
     updatedAt: "Last Updated"
   },
-  
+    common: {
+  // ... existing keys ...
+  stt: "No.",
+  actions: "Actions",
+  view: "View Details",
+  edit: "Edit",
+  delete: "Delete",
+  cancel: "Cancel",
+  all: "All",
+  clearFilter: "Clear Filters",
+  search: "Search"
+},
   toast: {
     updateSuccess: "Clinic information updated successfully!"
   },
@@ -1525,8 +1737,19 @@ servicesManagement: {
     maxSize: "max 10MB"
   },
 common: {
-    all: "All",                    // ← Thêm dòng này nếu chưa có
-    clearFilter: "Clear Filters"
+   "photo": "Photo",
+  "all": "All",
+  "clearFilter": "Clear filter",
+  "name": "Name",
+  "category": "Category",
+  "status": "Status",
+    description: "Description",
+  price: "Price",
+  actions: "Actions",
+   edit: "Edit",
+     delete: "Delete",
+       cancel: "Cancel",
+       confirm: "Confirm",
   },
   toast: {
     createSuccess: "Service created successfully!",
@@ -1546,7 +1769,8 @@ common: {
     deleteText: "Delete service \"{{name}} \"? This action cannot be undone.",
     deactivateTitle: "Deactivate service?",
     activateTitle: "Activate service?",
-    toggleText: "Service: <strong>{{name}}</strong>"
+    toggleText: "Service: {{name}}",
+     
   },
 
   deactivate: "Deactivate",
@@ -1591,6 +1815,8 @@ common: {
   loadError: "Unable to load statistics data",
 },
 appointmentManagement: {
+  "appointment": "appointment",
+    "appointments": "appointments",
   title: "Appointment Management",
   createButton: "Create Appointment",
   createTitle: "Create New Appointment",
@@ -1666,6 +1892,8 @@ appointmentManagement: {
 },
 roomManagement: {
   title: "Examination Room Management",
+  "appointment": "appointment",
+  "appointments": "appointments",
   createButton: "Add New Room",
    updateButton: "Update",
   room: "rooms",
@@ -1994,6 +2222,172 @@ receptionSidebar: {
   records: "Patient Records",
   rooms: "Room Management",
   invoices: "Invoices"
+},
+doctorStats: {
+  header: {
+    subtitle: "Performance Statistics",
+    title: "Doctor – Examination Report"
+  },
+  range: {
+    day: "Day",
+    week: "Week",
+    month: "Month"
+  },
+  kpi: {
+    totalVisits: {
+      title: "Total Examinations",
+      unit: "cases",
+      subtitle: "Completed cases"
+    },
+    avgTime: {
+      title: "Average Examination Time",
+      unit: "mins/case",
+      subtitle: "Based on actual data",
+      noData: "No data yet"
+    },
+    completionRate: {
+      title: "Completion Rate",
+      subtitle: "Compared to schedule"
+    }
+  },
+  chart: {
+    visitsByPeriod: "Examinations by {{#if (eq context 'hour')}}hour{{else}}day{{/if}}",
+    trend: "Examination Trend"
+  },
+  table: {
+    title: "Statistics Table by Time Slot",
+    time: "Time",
+    visits: "Cases",
+    change: "% Change",
+    note: "Note"
+  },
+  loading: "Loading statistics data...",
+  empty: {
+    title: "No Data",
+    message: "No statistics available for the selected period."
+  },
+  error: {
+    title: "Data Load Error",
+    retry: "Retry",
+    noPermission: "You do not have permission to view statistics. Only doctors are allowed.",
+    noDoctorInfo: "Doctor information not found",
+    loadFailed: "Unable to load statistics data"
+  }
+},
+doctorSidebar: {
+  stats: "Statistics",
+  currentPatient: "Current Patient",
+  records: "Medical Records",
+  history: "Examination History",
+  invoices: "Invoices"
+},
+doctorExamination: {
+  tabExamination: "Examination & Prescription",
+  tabServices: "Service Indications",
+
+  queueNumber: "Queue No.",
+  checkInTime: "Checked in at",
+  symptomsTitle: "Symptoms / Reason for visit",
+  noSymptoms: "No notes from receptionist yet",
+
+  waitingQueueTitle: "Next in queue",
+  nextPatientBadge: "Next",
+  noPatientsInQueue: "No more patients",
+
+  diagnosisLabel: "Diagnosis",
+  diagnosisRequired: "Please enter diagnosis",
+  treatmentNotesLabel: "Treatment notes",
+  prescriptionTitle: "Prescription",
+  drugName: "DRUG NAME",
+  instructions: "INSTRUCTIONS",
+  drugPlaceholder: "E.g: Paracetamol 500mg (10 tablets)",
+  instructionsPlaceholder: "E.g: Take 1 tablet 3 times daily after meals",
+  addDrug: "Add new drug",
+  prescriptionPreviewTitle: "Current prescription:",
+  completeButton: "Complete Examination",
+  processing: "Processing...",
+
+  searchServicePlaceholder: "Search services...",
+  selectedServicesTitle: "Selected services",
+  totalAmount: "Total:",
+
+  callNextPatient: "Call Next Patient",
+  calling: "Calling...",
+
+  serviceAdded: "Added:",
+  serviceRemoved: "Removed:",
+  completeSuccess: "Examination completed successfully!",
+  callNextSuccess: "Next patient called!",
+  noMorePatients: "No more patients in queue",
+  invoiceCreated: "Invoice created successfully: {{code}}",
+  drugInstructionsRequired: "Please enter usage instructions for all drugs",
+  drugNameRequired: "Please enter drug name",
+
+  noPatientTitle: "My Clinic",
+  patientsWaiting: "{{count}} patients waiting",
+  noPatientsToday: "No patients yet",
+  waitingForNext: "Waiting for next patient...",
+  queueTitle: "Examination Queue"
+},
+doctorRecords: {
+  title: "Medical Records & Complete Examination",
+  listTitle: "Created Records",
+  noRecords: "No records yet. Click \"Create New Record\" to complete an examination.",
+  noResults: "No records match the current filters.",
+  errors: {
+    loadFailed: "Failed to load medical records"
+  },
+  filters: {
+    keyword: "Search Keyword",
+    keywordPlaceholder: "Enter patient name, phone...",
+    fromDate: "From Date",
+    toDate: "To Date",
+    clear: "Clear Filters"
+  },
+  table: {
+    patient: "Patient Name",
+    diagnosis: "Diagnosis",
+    treatmentNotes: "Treatment Notes"
+  },
+  create: {
+    success: "Examination completed and record saved!",
+    failed: "Failed to create medical record",
+    diagnosisRequired: "Diagnosis is required",
+    treatmentNotesRequired: "Treatment notes are required"
+  },
+  common: {
+  // ... existing keys ...
+  stt: "No.",
+  actions: "Actions",
+  view: "View Details",
+  edit: "Edit",
+  delete: "Delete",
+  cancel: "Cancel",
+  all: "All",
+  clearFilter: "Clear Filters",
+  search: "Search"
+},
+modal: {
+    title: "Edit Medical Record",
+    pdfTitle: "Export Medical Record as PDF",
+    pdfButton: "PDF Record",
+    pdfExporting: "Exporting...",
+    pdfSuccess: "PDF exported successfully!",
+    pdfFailed: "Export failed: ",
+    patientName: "Patient Name",
+    diagnosis: "Diagnosis",
+    diagnosisPlaceholder: "Enter diagnosis...",
+    treatmentNotes: "Treatment Notes",
+    treatmentNotesPlaceholder: "Enter treatment notes...",
+    prescriptionTitle: "Prescription",
+    prescriptionDrugs: "Prescription List",
+    prescriptionDrugsPlaceholder: "Enter drugs (one per line)...",
+    prescriptionInstructions: "Usage Instructions",
+    prescriptionInstructionsPlaceholder: "Enter usage instructions...",
+    prescriptionIssuedAt: "Prescription issued on: {{date}}",
+    createdAt: "Medical record created on: {{date}}",
+    saveButton: "Save Changes"
+  },
 },
 }
   }

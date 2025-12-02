@@ -600,7 +600,7 @@ export default function ClinicManagement() {
                 className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
               >
                 <Edit className="w-5 h-5" />
-                {t('common.edit')}
+                {t('clinic.common.edit')}
               </button>
             ) : (
               <>
