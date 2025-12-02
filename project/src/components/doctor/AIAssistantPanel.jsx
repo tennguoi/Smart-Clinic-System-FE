@@ -1,11 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
-import { Sparkles, Send, Menu, Plus, Loader2, AlertCircle } from 'lucide-react';
+import { Sparkles, Send, Menu, Plus, Loader2, AlertCircle, CheckSquare, Square } from 'lucide-react';
 
-export default function AIAssistantPanel() {
+const N8N_WEBHOOK_URL = "https://n8n.quanliduan-pms.site/webhook/ai-support";
+const API_BASE_URL = "http://localhost:8082/api/v1/tmh-assistant";
+
+export default function AIAssistantPanel({ onApplySuggestion }) {
   const [showHistory, setShowHistory] = useState(false);
   const [conversationHistory, setConversationHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState(null);
+  const [currentSessionId, setCurrentSessionId] = useState(null);
+
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
@@ -14,20 +19,19 @@ export default function AIAssistantPanel() {
       timestamp: new Date(),
     }
   ]);
+
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [typingMessageId, setTypingMessageId] = useState(null);
+
   const messagesEndRef = useRef(null);
   const historyRef = useRef(null);
 
-  const API_BASE_URL = 'http://localhost:8082/api/v1/tmh-assistant';
-
-  // Cuộn xuống cuối khi có tin nhắn mới
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Click ngoài để đóng lịch sử
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (showHistory && historyRef.current && !historyRef.current.contains(e.target)) {
@@ -38,270 +42,365 @@ export default function AIAssistantPanel() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showHistory]);
 
-  // Load lịch sử khi mở sidebar
   useEffect(() => {
-    if (showHistory) {
-      loadConversationHistory();
-    }
+    if (showHistory) loadConversationHistory();
   }, [showHistory]);
 
-  // Lấy thông tin bác sĩ từ localStorage
-  const getDoctorInfo = () => {
+  const getDoctorId = () => {
     try {
-      const userInfoStr = localStorage.getItem('user_info');
-      if (!userInfoStr) {
-        throw new Error('Không tìm thấy thông tin bác sĩ');
-      }
-      const userInfo = JSON.parse(userInfoStr);
-      console.log('👤 Doctor Info:', userInfo);
+      const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
       return userInfo.userId;
-    } catch (err) {
-      console.error('❌ Lỗi lấy thông tin bác sĩ:', err);
+    } catch {
       return null;
     }
   };
 
-  // Lấy auth token
-  const getAuthToken = () => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      console.error('❌ Không tìm thấy auth token');
-      setError('Vui lòng đăng nhập lại');
+  const getAuthToken = () => localStorage.getItem('auth_token');
+
+  // ⭐ PARSE AI RESPONSE - Tìm chẩn đoán, ghi chú, thuốc
+  const parseAISuggestions = (text) => {
+    const suggestions = {
+      diagnosis: null,
+      treatmentNotes: null,
+      prescriptions: []
+    };
+
+    // Pattern 1: Chẩn đoán
+    const diagnosisMatch = text.match(/(?:chẩn đoán|CHẨN ĐOÁN|Diagnosis)[:\s]*(.+?)(?=\n\n|ghi chú|thuốc|$)/is);
+    if (diagnosisMatch) {
+      suggestions.diagnosis = diagnosisMatch[1].trim();
     }
-    return token;
+
+    // Pattern 2: Ghi chú điều trị
+    const notesMatch = text.match(/(?:ghi chú điều trị|GHI CHÚ|Treatment Notes)[:\s]*(.+?)(?=\n\n|thuốc|$)/is);
+    if (notesMatch) {
+      suggestions.treatmentNotes = notesMatch[1].trim();
+    }
+
+    // Pattern 3: Thuốc (nhiều dòng)
+    const prescriptionPattern = /(?:đơn thuốc|thuốc|THUỐC|Prescription)[:\s]*\n?((?:[-•\d]+\.?\s*.+\n?)+)/is;
+    const prescriptionMatch = text.match(prescriptionPattern);
+    
+    if (prescriptionMatch) {
+      const lines = prescriptionMatch[1].split('\n').filter(l => l.trim());
+      
+      lines.forEach(line => {
+        // Format: "- Paracetamol 500mg: Uống 1 viên x 3 lần/ngày"
+        const match = line.match(/[-•\d]+\.?\s*(.+?)[:：]\s*(.+)/);
+        if (match) {
+          suggestions.prescriptions.push({
+            drugName: match[1].trim(),
+            instructions: match[2].trim()
+          });
+        } else {
+          // Fallback: chỉ có tên thuốc
+          const drugOnly = line.replace(/^[-•\d]+\.?\s*/, '').trim();
+          if (drugOnly.length > 3) {
+            suggestions.prescriptions.push({
+              drugName: drugOnly,
+              instructions: ''
+            });
+          }
+        }
+      });
+    }
+
+    return suggestions;
   };
 
-  // Load lịch sử trò chuyện từ backend
-  const loadConversationHistory = async () => {
-    const doctorId = getDoctorInfo();
-    const authToken = getAuthToken();
-    
-    if (!doctorId || !authToken) {
-      console.error('❌ Thiếu doctorId hoặc authToken');
+  // Hiệu ứng gõ chữ
+  const typeWriter = (fullText, messageId) => {
+    let index = 0;
+    setTypingMessageId(messageId);
+
+    const type = () => {
+      if (index < fullText.length) {
+        setMessages(prev => prev.map(m =>
+          m.id === messageId
+            ? { ...m, displayedText: fullText.substring(0, index + 1) }
+            : m
+        ));
+        index++;
+        setTimeout(type, 12);
+      } else {
+        setMessages(prev => prev.map(m =>
+          m.id === messageId
+            ? { ...m, displayedText: fullText, isTyping: false }
+            : m
+        ));
+        setTypingMessageId(null);
+      }
+    };
+    type();
+  };
+
+  const createNewConversation = async () => {
+    const doctorId = getDoctorId();
+    const token = getAuthToken();
+    if (!doctorId || !token) {
+      setError('Vui lòng đăng nhập lại');
       return;
     }
 
-    setLoadingHistory(true);
-    setError(null);
-
     try {
-      console.log('📡 Đang gọi API lấy lịch sử...');
-      
-      const response = await fetch(`${API_BASE_URL}/history`, {
-        method: 'GET',
+      setIsLoading(true);
+      const res = await fetch(`${API_BASE_URL}/new-conversation`, {
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${authToken}`,
+          'Authorization': `Bearer ${token}`,
           'X-Doctor-Id': doctorId,
-          'Content-Type': 'application/json'
-        }
+        },
       });
 
-      console.log('📡 Response status:', response.status);
+      if (!res.ok) throw new Error('Tạo thất bại');
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
-      }
+      const data = await res.json();
+      setCurrentSessionId(data.sessionId);
+      setCurrentConversationId(data.conversationId);
 
-      const data = await response.json();
-      console.log('✅ Lịch sử trò chuyện:', data);
-      
-      // Backend trả về array: [{ conversationId, sessionId, startedAt, messageCount, firstMessage }]
-      setConversationHistory(data || []);
-
-      if (data.length === 0) {
-        console.log('ℹ️ Chưa có lịch sử trò chuyện');
-      }
-
-    } catch (error) {
-      console.error('❌ Lỗi load lịch sử:', error);
-      setError(`Không thể tải lịch sử: ${error.message}`);
-      setConversationHistory([]);
-    } finally {
-      setLoadingHistory(false);
-    }
-  };
-
-  // Tạo cuộc trò chuyện mới
-  const createNewConversation = () => {
-    console.log('➕ Tạo cuộc trò chuyện mới');
-    setMessages([
-      {
+      setMessages([{
         id: 'welcome-' + Date.now(),
         role: 'assistant',
         content: 'Xin chào bác sĩ!\nTôi là AI Trợ Lý Y Tế thông minh.\nBạn cần hỗ trợ chẩn đoán, kê đơn hay giải thích kết quả?',
         timestamp: new Date(),
-      }
-    ]);
-    setCurrentConversationId(null);
-    setShowHistory(false);
-    setError(null);
-  };
+      }]);
 
-  // Xem lại cuộc trò chuyện cũ
-  const loadConversation = async (conversationId) => {
-    const authToken = getAuthToken();
-    const doctorId = getDoctorInfo();
-    
-    if (!authToken || !doctorId) return;
-
-    console.log('📖 Đang load conversation:', conversationId);
-    setError(null);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/conversation/${conversationId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'X-Doctor-Id': doctorId,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      console.log('📡 Load conversation response:', response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('💬 Chi tiết cuộc trò chuyện:', data);
-      
-      // Backend trả về: { conversationId, sessionId, startedAt, messages: [...] }
-      // messages = [{ messageId, sender, message, sentAt }]
-      
-      if (!data.messages || data.messages.length === 0) {
-        console.warn('⚠️ Cuộc trò chuyện không có tin nhắn');
-        setMessages([{
-          id: 'empty',
-          role: 'assistant',
-          content: 'Cuộc trò chuyện này chưa có tin nhắn.',
-          timestamp: new Date()
-        }]);
-      } else {
-        const formattedMessages = data.messages.map(msg => ({
-          id: msg.messageId,
-          role: msg.sender === 'User' ? 'doctor' : 'assistant',
-          content: msg.message,
-          timestamp: new Date(msg.sentAt)
-        }));
-        
-        console.log('✅ Đã format', formattedMessages.length, 'tin nhắn');
-        setMessages(formattedMessages);
-      }
-      
-      setCurrentConversationId(conversationId);
       setShowHistory(false);
-
-    } catch (error) {
-      console.error('❌ Lỗi load conversation:', error);
-      setError(`Không thể tải cuộc trò chuyện: ${error.message}`);
-    }
-  };
-
-  // Gửi tin nhắn cho AI
-  const handleSend = async () => {
-    if (!inputValue.trim() || isLoading) return;
-
-    const userMessage = inputValue.trim();
-    const doctorId = getDoctorInfo();
-    const authToken = getAuthToken();
-
-    if (!doctorId || !authToken) {
-      setError('Không tìm thấy thông tin bác sĩ. Vui lòng đăng nhập lại.');
-      return;
-    }
-
-    const userMsgObj = {
-      id: 'user-' + Date.now(),
-      role: 'doctor',
-      content: userMessage,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMsgObj]);
-    setInputValue('');
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      console.log('🚀 Gửi tin nhắn đến backend:', userMessage);
-
-      const response = await fetch(`${API_BASE_URL}/ask`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-          'X-Doctor-Id': doctorId
-        },
-        body: JSON.stringify({
-          text: userMessage
-        })
-      });
-
-      console.log('📡 Backend response status:', response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.reply || errorData.error || `HTTP Error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('✅ Response từ backend:', data);
-
-      // Backend trả về { reply, conversationId } 
-      // ChatResponse trong Java có field "reply" chứ không phải "output"
-      const aiReply = data.reply || 'Tôi đang xử lý thông tin...';
-
-      // Update conversationId nếu là conversation mới
-      if (data.conversationId && !currentConversationId) {
-        setCurrentConversationId(data.conversationId);
-        console.log('🆔 Set conversationId:', data.conversationId);
-      }
-
-      setMessages(prev => [...prev, {
-        id: 'ai-' + Date.now(),
-        role: 'assistant',
-        content: aiReply,
-        timestamp: new Date()
-      }]);
-
-      // Reload lịch sử nếu sidebar đang mở
-      if (showHistory) {
-        loadConversationHistory();
-      }
-
-    } catch (error) {
-      console.error('❌ Lỗi gửi tin nhắn:', error);
-      
-      let errorMsg = 'AI đang bận, vui lòng thử lại sau ít phút.';
-      
-      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        errorMsg = 'Không kết nối được với Backend. Vui lòng kiểm tra mạng.';
-      } else if (error.message.includes('401')) {
-        errorMsg = 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
-      } else if (error.message.includes('403')) {
-        errorMsg = 'Bạn không có quyền sử dụng tính năng này.';
-      } else if (error.message.includes('500')) {
-        errorMsg = 'Backend gặp lỗi. Vui lòng thử lại.';
-      }
-
-      setError(errorMsg);
-      setMessages(prev => [...prev, {
-        id: 'error-' + Date.now(),
-        role: 'assistant',
-        content: `❌ ${errorMsg}`,
-        timestamp: new Date(),
-        isError: true
-      }]);
+      setError(null);
+    } catch (err) {
+      setError('Không tạo được cuộc trò chuyện mới');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const callN8nDirectly = async (userMessage) => {
+    if (!currentSessionId) {
+      await createNewConversation();
+      if (!currentSessionId) throw new Error('Chưa có session');
+    }
+
+    const res = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: currentSessionId,
+        chatInput: userMessage
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`n8n lỗi ${res.status}: ${text}`);
+    }
+
+    const data = await res.json();
+    return (data.output || data.text || data.reply || '').toString().trim();
+  };
+
+  const saveMessagesToBackend = async (userMessage, aiResponse) => {
+    const doctorId = getDoctorId();
+    const token = getAuthToken();
+    if (!doctorId || !token || !currentSessionId) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/save-message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'X-Doctor-Id': doctorId,
+        },
+        body: JSON.stringify({
+          sessionId: currentSessionId,
+          userMessage: userMessage,
+          aiMessage: aiResponse
+        }),
+      });
+    } catch (e) {
+      console.warn('Lưu lịch sử thất bại', e);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!inputValue.trim() || isLoading) return;
+
+    const userMessage = inputValue.trim();
+    setInputValue('');
+    setIsLoading(true);
+    setError(null);
+
+    const userMsg = {
+      id: `user-${Date.now()}`,
+      role: 'doctor',
+      content: userMessage,
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, userMsg]);
+
+    const aiMsgId = `ai-${Date.now()}`;
+    setMessages(prev => [...prev, {
+      id: aiMsgId,
+      role: 'assistant',
+      content: '',
+      displayedText: '',
+      isTyping: true,
+      timestamp: new Date(),
+    }]);
+
+    try {
+      const aiResponse = await callN8nDirectly(userMessage);
+      if (!aiResponse) throw new Error('AI không trả lời');
+
+      // ⭐ PARSE GỢI Ý
+      const suggestions = parseAISuggestions(aiResponse);
+
+      // Cập nhật message với suggestions
+      setMessages(prev => prev.map(m => 
+        m.id === aiMsgId 
+          ? { 
+              ...m, 
+              content: aiResponse,
+              displayedText: '',
+              suggestions: suggestions,
+              selectedSuggestions: {
+                diagnosis: false,
+                treatmentNotes: false,
+                prescriptions: []
+              }
+            } 
+          : m
+      ));
+
+      typeWriter(aiResponse, aiMsgId);
+      await saveMessagesToBackend(userMessage, aiResponse);
+
+      if (showHistory) loadConversationHistory();
+
+    } catch (err) {
+      setMessages(prev => prev.filter(m => m.id !== aiMsgId));
+      setMessages(prev => [...prev, {
+        id: `error-${Date.now()}`,
+        role: 'assistant',
+        content: 'Không kết nối được với AI. Vui lòng thử lại sau ít phút.',
+        timestamp: new Date(),
+        isError: true,
+      }]);
+      setError('Lỗi kết nối AI');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ⭐ TOGGLE CHECKBOX
+  const toggleSuggestion = (messageId, type, index = null) => {
+    setMessages(prev => prev.map(msg => {
+      if (msg.id !== messageId) return msg;
+      
+      const updated = { ...msg };
+      
+      if (type === 'diagnosis' || type === 'treatmentNotes') {
+        updated.selectedSuggestions[type] = !updated.selectedSuggestions[type];
+      } else if (type === 'prescription') {
+        const prescriptions = [...(updated.selectedSuggestions.prescriptions || [])];
+        if (prescriptions.includes(index)) {
+          prescriptions.splice(prescriptions.indexOf(index), 1);
+        } else {
+          prescriptions.push(index);
+        }
+        updated.selectedSuggestions.prescriptions = prescriptions;
+      }
+      
+      return updated;
+    }));
+  };
+
+  // ⭐ ÁP DỤNG GỢI Ý VÀO FORM
+  const applySelectedSuggestions = (messageId) => {
+    const message = messages.find(m => m.id === messageId);
+    if (!message || !message.suggestions) return;
+
+    const { suggestions, selectedSuggestions } = message;
+    const toApply = {};
+
+    if (selectedSuggestions.diagnosis && suggestions.diagnosis) {
+      toApply.diagnosis = suggestions.diagnosis;
+    }
+
+    if (selectedSuggestions.treatmentNotes && suggestions.treatmentNotes) {
+      toApply.treatmentNotes = suggestions.treatmentNotes;
+    }
+
+    if (selectedSuggestions.prescriptions.length > 0) {
+      toApply.prescriptions = selectedSuggestions.prescriptions.map(idx => 
+        suggestions.prescriptions[idx]
+      ).filter(Boolean);
+    }
+
+    // Gọi callback để update form bên ngoài
+    if (onApplySuggestion) {
+      onApplySuggestion(toApply);
+    }
+  };
+
+  const loadConversationHistory = async () => {
+    const doctorId = getDoctorId();
+    const token = getAuthToken();
+    if (!doctorId || !token) return;
+
+    setLoadingHistory(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/history`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-Doctor-Id': doctorId,
+        },
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setConversationHistory(data || []);
+    } catch {
+      setError('Không tải được lịch sử');
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const loadConversation = async (conversationId) => {
+    const doctorId = getDoctorId();
+    const token = getAuthToken();
+    if (!doctorId || !token) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/conversation/${conversationId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-Doctor-Id': doctorId,
+        },
+      });
+      if (!res.ok) throw new Error();
+
+      const data = await res.json();
+
+      const formatted = data.messages.map(m => ({
+        id: m.messageId,
+        role: m.sender === 'User' ? 'doctor' : 'assistant',
+        content: m.message,
+        timestamp: new Date(m.sentAt),
+      }));
+
+      setMessages(formatted);
+      setCurrentConversationId(conversationId);
+      setCurrentSessionId(data.sessionId);
+      setShowHistory(false);
+    } catch {
+      setError('Không tải được cuộc trò chuyện');
+    }
+  };
+
   return (
     <div className="h-full flex flex-col bg-gray-50 relative">
+
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 lg:px-6 py-4 lg:py-5 shadow-sm">
         <div className="flex items-center justify-between">
@@ -309,7 +408,6 @@ export default function AIAssistantPanel() {
             <button
               onClick={() => setShowHistory(!showHistory)}
               className="p-2 lg:p-2.5 hover:bg-gray-100 rounded-xl transition-colors"
-              title="Lịch sử trò chuyện"
             >
               <Menu className="w-4 h-4 lg:w-5 lg:h-5 text-gray-600" />
             </button>
@@ -332,17 +430,11 @@ export default function AIAssistantPanel() {
         </div>
       </div>
 
-      {/* Error Banner */}
       {error && (
         <div className="bg-red-50 border-b border-red-200 px-4 py-3 flex items-center gap-2">
           <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
           <span className="text-sm text-red-700 flex-1">{error}</span>
-          <button 
-            onClick={() => setError(null)}
-            className="text-red-600 hover:text-red-800 font-bold"
-          >
-            ✕
-          </button>
+          <button onClick={() => setError(null)} className="text-red-600 hover:text-red-800 font-bold">✕</button>
         </div>
       )}
 
@@ -350,15 +442,16 @@ export default function AIAssistantPanel() {
       {showHistory && (
         <div ref={historyRef} className="w-64 lg:w-80 bg-white border-r border-gray-200 absolute inset-y-0 left-0 z-20 shadow-2xl flex flex-col">
           <div className="p-4 lg:p-5 border-b border-gray-200">
-            <button 
+            <button
               onClick={createNewConversation}
-              className="w-full flex items-center justify-center gap-2 py-3 lg:py-3.5 bg-gradient-to-r from-blue-600 to-sky-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-sky-700 transition-all shadow-md text-sm lg:text-base"
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-2 py-3 lg:py-3.5 bg-gradient-to-r from-blue-600 to-sky-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-sky-700 disabled:opacity-70 transition-all shadow-md text-sm lg:text-base"
             >
               <Plus className="w-4 h-4 lg:w-5 lg:h-5" />
               Cuộc trò chuyện mới
             </button>
           </div>
-          
+
           <div className="flex-1 overflow-y-auto p-3 lg:p-4">
             {loadingHistory ? (
               <div className="flex flex-col items-center justify-center py-8">
@@ -369,7 +462,6 @@ export default function AIAssistantPanel() {
               <div className="text-center text-gray-400 py-8">
                 <Sparkles className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                 <p className="text-xs lg:text-sm font-medium">Chưa có lịch sử trò chuyện</p>
-                <p className="text-xs mt-2">Bắt đầu cuộc trò chuyện đầu tiên!</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -380,39 +472,15 @@ export default function AIAssistantPanel() {
                     className={`w-full text-left p-3 rounded-lg transition-all hover:bg-blue-50 border ${
                       currentConversationId === conv.conversationId
                         ? 'bg-blue-50 border-blue-200 shadow-sm'
-                        : 'bg-gray-50 border-gray-200 hover:border-blue-200'
+                        : 'bg-gray-50 border-gray-200'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        {/* Sử dụng firstMessage từ backend thay vì conv.messages */}
-                        <p className="text-xs font-semibold text-gray-900 truncate">
-                          {conv.firstMessage 
-                            ? (conv.firstMessage.length > 40 
-                                ? conv.firstMessage.substring(0, 40) + '...' 
-                                : conv.firstMessage)
-                            : 'Cuộc trò chuyện'}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(conv.startedAt).toLocaleDateString('vi-VN', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
-                        {/* Sử dụng messageCount từ backend */}
-                        <p className="text-xs text-blue-600 mt-1 font-medium">
-                          {conv.messageCount || 0} tin nhắn
-                        </p>
-                      </div>
-                      <Sparkles className={`w-4 h-4 flex-shrink-0 ${
-                        currentConversationId === conv.conversationId 
-                          ? 'text-blue-600' 
-                          : 'text-gray-400'
-                      }`} />
-                    </div>
+                    <p className="text-xs font-semibold text-gray-900 truncate">
+                      {conv.firstMessage?.substring(0, 40) || 'Cuộc trò chuyện'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(conv.startedAt).toLocaleDateString('vi-VN')}
+                    </p>
                   </button>
                 ))}
               </div>
@@ -422,8 +490,8 @@ export default function AIAssistantPanel() {
       )}
 
       {/* Tin nhắn */}
-      <div className={`flex-1 overflow-y-auto p-3 lg:p-6 space-y-3 lg:space-y-5 transition-all ${showHistory ? 'ml-64 lg:ml-80' : ''}`}>
-        {messages.map(msg => (
+      <div className={`flex-1 overflow-y-auto p-3 lg:p-6 space-y-3 lg:space-y-5 ${showHistory ? 'ml-64 lg:ml-80' : ''}`}>
+        {messages.map((msg) => (
           <div key={msg.id} className={`flex ${msg.role === 'doctor' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-xs lg:max-w-2xl rounded-2xl px-4 lg:px-6 py-3 lg:py-4 shadow-md ${
               msg.role === 'doctor'
@@ -432,24 +500,98 @@ export default function AIAssistantPanel() {
                   ? 'bg-red-50 border border-red-200 text-red-700'
                   : 'bg-white border border-gray-200 text-gray-800'
             }`}>
-              <p className="text-xs lg:text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-              <p className={`text-xs mt-2 lg:mt-3 ${
-                msg.role === 'doctor' ? 'text-white/80' : 'text-gray-400'
-              }`}>
+              <p className="text-xs lg:text-sm leading-relaxed whitespace-pre-wrap">
+                {msg.displayedText !== undefined ? msg.displayedText : msg.content}
+                {typingMessageId === msg.id && (
+                  <span className="inline-block w-2 h-5 bg-gray-700 ml-1 animate-pulse" />
+                )}
+              </p>
+
+              {/* ⭐ HIỂN THỊ CHECKBOX GỢI Ý */}
+              {msg.role === 'assistant' && msg.suggestions && !msg.isTyping && (
+                <div className="mt-4 space-y-3 border-t border-gray-200 pt-4">
+                  <p className="text-xs font-bold text-blue-600">💡 Gợi ý áp dụng:</p>
+
+                  {msg.suggestions.diagnosis && (
+                    <label className="flex items-start gap-2 cursor-pointer hover:bg-blue-50 p-2 rounded-lg transition-all">
+                      <button
+                        onClick={() => toggleSuggestion(msg.id, 'diagnosis')}
+                        className="mt-0.5"
+                      >
+                        {msg.selectedSuggestions?.diagnosis ? (
+                          <CheckSquare className="w-5 h-5 text-blue-600" />
+                        ) : (
+                          <Square className="w-5 h-5 text-gray-400" />
+                        )}
+                      </button>
+                      <div className="flex-1 text-xs">
+                        <span className="font-semibold text-gray-700">Chẩn đoán:</span>
+                        <p className="text-gray-600 mt-1">{msg.suggestions.diagnosis}</p>
+                      </div>
+                    </label>
+                  )}
+
+                  {msg.suggestions.treatmentNotes && (
+                    <label className="flex items-start gap-2 cursor-pointer hover:bg-blue-50 p-2 rounded-lg transition-all">
+                      <button
+                        onClick={() => toggleSuggestion(msg.id, 'treatmentNotes')}
+                        className="mt-0.5"
+                      >
+                        {msg.selectedSuggestions?.treatmentNotes ? (
+                          <CheckSquare className="w-5 h-5 text-blue-600" />
+                        ) : (
+                          <Square className="w-5 h-5 text-gray-400" />
+                        )}
+                      </button>
+                      <div className="flex-1 text-xs">
+                        <span className="font-semibold text-gray-700">Ghi chú:</span>
+                        <p className="text-gray-600 mt-1">{msg.suggestions.treatmentNotes}</p>
+                      </div>
+                    </label>
+                  )}
+
+                  {msg.suggestions.prescriptions && msg.suggestions.prescriptions.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-gray-700">Đơn thuốc:</p>
+                      {msg.suggestions.prescriptions.map((rx, idx) => (
+                        <label key={idx} className="flex items-start gap-2 cursor-pointer hover:bg-blue-50 p-2 rounded-lg transition-all">
+                          <button
+                            onClick={() => toggleSuggestion(msg.id, 'prescription', idx)}
+                            className="mt-0.5"
+                          >
+                            {msg.selectedSuggestions?.prescriptions?.includes(idx) ? (
+                              <CheckSquare className="w-5 h-5 text-blue-600" />
+                            ) : (
+                              <Square className="w-5 h-5 text-gray-400" />
+                            )}
+                          </button>
+                          <div className="flex-1 text-xs">
+                            <p className="font-semibold text-gray-800">{rx.drugName}</p>
+                            {rx.instructions && (
+                              <p className="text-gray-600 mt-1">{rx.instructions}</p>
+                            )}
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Nút áp dụng */}
+                  <button
+                    onClick={() => applySelectedSuggestions(msg.id)}
+                    className="w-full mt-3 py-2 bg-blue-600 text-white rounded-lg font-semibold text-xs hover:bg-blue-700 transition-all"
+                  >
+                    ✓ Áp dụng vào form
+                  </button>
+                </div>
+              )}
+
+              <p className={`text-xs mt-2 ${msg.role === 'doctor' ? 'text-white/80' : 'text-gray-400'}`}>
                 {msg.timestamp.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
           </div>
         ))}
-
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-white border border-gray-200 rounded-2xl px-4 lg:px-6 py-3 lg:py-4 shadow-md flex items-center gap-3">
-              <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
-              <span className="text-sm text-gray-600">AI đang phân tích triệu chứng...</span>
-            </div>
-          </div>
-        )}
 
         <div ref={messagesEndRef} />
       </div>
@@ -460,27 +602,22 @@ export default function AIAssistantPanel() {
           <input
             type="text"
             value={inputValue}
-            onChange={e => setInputValue(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
-            placeholder="Hỏi AI về chẩn đoán, đơn thuốc, hướng dẫn bệnh nhân..."
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+            placeholder="Hỏi AI về chẩn đoán, đơn thuốc..."
             disabled={isLoading}
-            className="flex-1 px-3 lg:px-5 py-3 lg:py-4 bg-gray-50 border border-gray-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 text-xs lg:text-sm placeholder-gray-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
+            className="flex-1 px-3 lg:px-5 py-3 lg:py-4 bg-gray-50 border border-gray-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-100 text-xs lg:text-sm placeholder-gray-500 disabled:bg-gray-100 transition-all"
           />
           <button
             onClick={handleSend}
             disabled={isLoading || !inputValue.trim()}
-            className="px-4 lg:px-8 py-3 lg:py-4 bg-gradient-to-r from-blue-600 to-sky-600 text-white rounded-2xl font-semibold hover:from-blue-700 hover:to-sky-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg flex items-center gap-2 text-sm lg:text-base"
+            className="px-4 lg:px-8 py-3 lg:py-4 bg-gradient-to-r from-blue-600 to-sky-600 text-white rounded-2xl font-semibold hover:from-blue-700 hover:to-sky-700 disabled:opacity-50 transition-all shadow-lg flex items-center gap-2"
           >
-            {isLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Send className="w-4 h-4 lg:w-5 lg:h-5" />
-            )}
-            <span className="hidden sm:inline">{isLoading ? 'Đang gửi...' : 'Gửi'}</span>
+            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4 lg:w-5 lg:h-5" />}
           </button>
         </div>
-        <p className="text-xs text-center text-gray-500 mt-3 lg:mt-4">
-          AI chỉ mang tính hỗ trợ • Luôn kiểm tra lại trước khi áp dụng
+        <p className="text-xs text-center text-gray-500 mt-3">
+          AI chỉ mang tính hỗ trợ • Luôn kiểm tra lại
         </p>
       </div>
     </div>
