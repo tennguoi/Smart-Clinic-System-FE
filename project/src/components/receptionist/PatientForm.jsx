@@ -1,24 +1,32 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import DatePicker from 'react-datepicker';
-import { vi } from 'date-fns/locale';
+import { vi, enUS } from 'date-fns/locale';
 import { X, Edit } from 'lucide-react';
 import 'react-datepicker/dist/react-datepicker.css';
 
-const priorityOptions = [
-  { value: 'Normal', label: 'Thường' },
-  { value: 'Urgent', label: 'Ưu tiên' },
-  { value: 'Emergency', label: 'Khẩn cấp' },
-];
-
-const genderOptions = [
-  { value: 'male', label: 'Nam' },
-  { value: 'female', label: 'Nữ' },
-  { value: 'other', label: 'Khác' },
-];
-
 export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, onCancel }) {
+  const { t, i18n } = useTranslation();
+  
   // State để quản lý chế độ xem/sửa (chỉ áp dụng khi isEdit = true)
   const [isEditMode, setIsEditMode] = useState(!isEdit);
+
+  // Priority options with i18n
+  const priorityOptions = [
+    { value: 'Normal', label: t('queueManagement.priority.normal') },
+    { value: 'Urgent', label: t('queueManagement.priority.urgent') },
+    { value: 'Emergency', label: t('queueManagement.priority.emergency') },
+  ];
+
+  // Gender options with i18n
+  const genderOptions = [
+    { value: 'male', label: t('queueManagement.patientForm.gender.male') },
+    { value: 'female', label: t('queueManagement.patientForm.gender.female') },
+    { value: 'other', label: t('queueManagement.patientForm.gender.other') },
+  ];
+
+  // Get DatePicker locale based on current language
+  const datePickerLocale = i18n.language === 'vi' ? vi : enUS;
 
   const handleSubmit = () => {
     onSubmit();
@@ -37,7 +45,11 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b">
           <h2 className="text-2xl font-bold text-gray-800">
-            {isEdit ? (isEditMode ? 'Chỉnh sửa thông tin bệnh nhân' : 'Xem chi tiết bệnh nhân') : 'Thêm bệnh nhân mới'}
+            {isEdit 
+              ? (isEditMode 
+                  ? t('queueManagement.patientForm.editTitle') 
+                  : t('queueManagement.patientForm.viewTitle'))
+              : t('queueManagement.patientForm.addTitle')}
           </h2>
           <div className="flex items-center gap-2">
             {/* Nút Chỉnh sửa - chỉ hiện khi đang ở chế độ xem */}
@@ -47,7 +59,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
               >
                 <Edit className="w-5 h-5" />
-                Chỉnh sửa
+                {t('queueManagement.patientForm.editButton')}
               </button>
             )}
             <button
@@ -65,7 +77,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
             {/* Patient Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tên bệnh nhân <span className="text-red-500">*</span>
+                {t('queueManagement.patientForm.patientName')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -73,14 +85,14 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 onChange={(e) => onChange('patientName', e.target.value)}
                 disabled={isDisabled}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                placeholder="Nhập tên đầy đủ"
+                placeholder={t('queueManagement.patientForm.namePlaceholder')}
               />
             </div>
 
             {/* Phone */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Số điện thoại <span className="text-red-500">*</span>
+                {t('queueManagement.patientForm.phone')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="tel"
@@ -92,14 +104,14 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 }}
                 disabled={isDisabled}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                placeholder="VD: 0912345678"
+                placeholder={t('queueManagement.patientForm.phonePlaceholder')}
               />
             </div>
 
             {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
+                {t('queueManagement.patientForm.email')}
               </label>
               <input
                 type="email"
@@ -107,21 +119,21 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 onChange={(e) => onChange('email', e.target.value)}
                 disabled={isDisabled}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                placeholder="example@email.com"
+                placeholder={t('queueManagement.patientForm.emailPlaceholder')}
               />
             </div>
 
             {/* Date of Birth */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ngày sinh <span className="text-red-500">*</span>
+                {t('queueManagement.patientForm.dob')} <span className="text-red-500">*</span>
               </label>
               <DatePicker
                 selected={patientForm.dobDate}
                 onChange={(date) => onChange('dob', date)}
                 dateFormat="dd/MM/yyyy"
                 placeholderText="dd/mm/yyyy"
-                locale={vi}
+                locale={datePickerLocale}
                 showMonthDropdown
                 showYearDropdown
                 dropdownMode="select"
@@ -137,7 +149,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
             {/* Gender */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Giới tính
+                {t('queueManagement.patientForm.gender.label')}
               </label>
               <select
                 value={patientForm.gender}
@@ -156,7 +168,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
             {/* Priority */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Mức độ ưu tiên <span className="text-red-500">*</span>
+                {t('queueManagement.patientForm.priority')} <span className="text-red-500">*</span>
               </label>
               <select
                 value={patientForm.priority}
@@ -175,7 +187,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
             {/* ID Number - Số căn cước */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Số căn cước / CMND
+                {t('queueManagement.patientForm.idNumber')}
               </label>
               <input
                 type="text"
@@ -187,7 +199,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 }}
                 disabled={isDisabled}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                placeholder="VD: 001234567890"
+                placeholder={t('queueManagement.patientForm.idPlaceholder')}
                 maxLength="12"
               />
             </div>
@@ -195,7 +207,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
             {/* Insurance Number - Số thẻ BHYT */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Số thẻ BHYT
+                {t('queueManagement.patientForm.insurance')}
               </label>
               <input
                 type="text"
@@ -207,7 +219,7 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 }}
                 disabled={isDisabled}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                placeholder="VD: HS4010012345678"
+                placeholder={t('queueManagement.patientForm.insurancePlaceholder')}
                 maxLength="15"
               />
             </div>
@@ -215,14 +227,14 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
             {/* Address */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Địa chỉ
+                {t('queueManagement.patientForm.address')}
               </label>
               <textarea
                 value={patientForm.address}
                 onChange={(e) => onChange('address', e.target.value)}
                 disabled={isDisabled}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                placeholder="Nhập địa chỉ đầy đủ"
+                placeholder={t('queueManagement.patientForm.addressPlaceholder')}
                 rows="2"
               />
             </div>
@@ -230,20 +242,18 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
             {/* Notes - Triệu chứng */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Triệu chứng / Ghi chú
+                {t('queueManagement.patientForm.notes')}
               </label>
               <textarea
                 value={patientForm.notes || ''}
                 onChange={(e) => onChange('notes', e.target.value)}
                 disabled={isDisabled}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                placeholder="Mô tả triệu chứng hoặc lý do khám bệnh..."
+                placeholder={t('queueManagement.patientForm.notesPlaceholder')}
                 rows="3"
               />
             </div>
           </div>
-
-         
 
           {/* Action Buttons */}
           {/* Chỉ hiện nút khi KHÔNG phải chế độ xem (isEdit && !isEditMode) */}
@@ -253,13 +263,15 @@ export default function PatientForm({ patientForm, isEdit, onChange, onSubmit, o
                 onClick={handleSubmit}
                 className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
               >
-                {isEdit ? 'Cập nhật' : 'Thêm bệnh nhân'}
+                {isEdit 
+                  ? t('queueManagement.patientForm.updateButton') 
+                  : t('queueManagement.patientForm.addButton')}
               </button>
               <button
                 onClick={onCancel}
                 className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition-colors font-medium"
               >
-                Hủy
+                {t('queueManagement.patientForm.cancelButton')}
               </button>
             </div>
           )}

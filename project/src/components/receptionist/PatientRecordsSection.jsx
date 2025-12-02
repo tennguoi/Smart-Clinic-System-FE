@@ -1,7 +1,8 @@
 // src/components/reception/PatientRecordsSection.jsx
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import toast, { Toaster } from 'react-hot-toast';
-import { Users , Plus} from 'lucide-react';
+import { Users, Plus } from 'lucide-react';
 
 import SearchFilter from './SearchFilter';
 import QueueTable from './QueueTable';
@@ -58,6 +59,8 @@ const ITEMS_PER_PAGE = 10;
 
 // ====================== MAIN COMPONENT ======================
 export default function PatientRecordsSection() {
+  const { t } = useTranslation();
+  
   const [queueList, setQueueList] = useState([]);
   const [loadingQueue, setLoadingQueue] = useState(false);
   const [queueError, setQueueError] = useState('');
@@ -118,13 +121,13 @@ export default function PatientRecordsSection() {
 
       setQueueList(sortQueueByPriority(mapped));
     } catch (error) {
-      const msg = error.response?.data?.message || error.message || 'Không thể tải danh sách bệnh nhân';
+      const msg = error.response?.data?.message || error.message || t('patientRecords.errors.loadFailed');
       setQueueError(msg);
       toast.error(msg);
     } finally {
       setLoadingQueue(false);
     }
-  }, [searchPhone, filterStatus]);
+  }, [searchPhone, filterStatus, t]);
 
   useEffect(() => {
     fetchQueueData();
@@ -187,33 +190,33 @@ export default function PatientRecordsSection() {
       setEditPatientId(full.queueId);
       setShowForm(true);
     } catch {
-      toast.error('Không tải được thông tin bệnh nhân!');
+      toast.error(t('patientRecords.errors.loadPatientFailed'));
     }
   };
 
   const handleDeletePatient = async (id) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa bệnh nhân này?')) return;
+    if (!window.confirm(t('patientRecords.confirmDelete'))) return;
     try {
       await queueApi.deletePatient(id);
       setQueueList(prev => prev.filter(p => p.queueId !== id));
-      toast.success('Đã xóa bệnh nhân thành công!');
+      toast.success(t('patientRecords.toast.deleteSuccess'));
     } catch {
-      toast.error('Không thể xóa bệnh nhân!');
+      toast.error(t('patientRecords.toast.deleteFailed'));
     }
   };
 
   const handleSubmitForm = async () => {
     try {
       if (patientForm.phone.length !== 10) {
-        toast.error('Số điện thoại phải đúng 10 chữ số!');
+        toast.error(t('patientRecords.errors.phoneInvalid'));
         return;
       }
       if (!patientForm.patientName.trim()) {
-        toast.error('Vui lòng nhập tên bệnh nhân!');
+        toast.error(t('patientRecords.errors.nameRequired'));
         return;
       }
       if (!patientForm.dob) {
-        toast.error('Vui lòng chọn ngày sinh!');
+        toast.error(t('patientRecords.errors.dobRequired'));
         return;
       }
 
@@ -222,7 +225,7 @@ export default function PatientRecordsSection() {
         setQueueList(prev => sortQueueByPriority(
           prev.map(p => p.queueId === editPatientId ? { ...p, ...res, dob: formatDateOfBirth(res.dob) } : p)
         ));
-        toast.success('Cập nhật bệnh nhân thành công!');
+        toast.success(t('patientRecords.toast.updateSuccess'));
       } else {
         const res = await queueApi.addPatient(patientForm);
         const newItem = {
@@ -235,8 +238,11 @@ export default function PatientRecordsSection() {
         
         // Toast với thời gian tùy chỉnh cho thông báo phòng khám
         const message = res.roomName
-          ? `Đã thêm bệnh nhân!\nPhòng: ${res.roomName}${res.doctorName ? ` - BS. ${res.doctorName}` : ''}`
-          : 'Đã thêm bệnh nhân thành công!';
+          ? t('patientRecords.toast.addSuccessWithRoom', {
+              room: res.roomName,
+              doctor: res.doctorName ? ` - ${t('queueManagement.doctor', { name: res.doctorName })}` : ''
+            })
+          : t('patientRecords.toast.addSuccess');
         
         toast.success(message, {
           duration: res.roomName ? 6000 : toastConfig.toastOptions.success.duration,
@@ -244,7 +250,7 @@ export default function PatientRecordsSection() {
       }
       setShowForm(false);
     } catch (err) {
-      const msg = err.response?.data?.message || 'Có lỗi xảy ra!';
+      const msg = err.response?.data?.message || t('patientRecords.errors.submitFailed');
       toast.error(msg);
     }
   };
@@ -256,9 +262,9 @@ export default function PatientRecordsSection() {
         const updated = prev.map(p => p.queueId === queueId ? { ...p, status: normalizeStatus(status) } : p);
         return sortQueueByPriority(updated);
       });
-      toast.success('Cập nhật trạng thái thành công!');
+      toast.success(t('patientRecords.toast.statusUpdateSuccess'));
     } catch {
-      toast.error('Cập nhật trạng thái thất bại!');
+      toast.error(t('patientRecords.toast.statusUpdateFailed'));
     }
   };
 
@@ -266,35 +272,35 @@ export default function PatientRecordsSection() {
     <div className="px-4 sm:px-8 pt-4 pb-8 min-h-screen bg-gray-50">
       <Toaster {...toastConfig} />
 
-      {/* HEADER - KÉO XUỐNG GẦN FILTER HƠN */}
+      {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
         <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
           <Users className="w-9 h-9 text-blue-600" />
-          <span>Quản Lý Bệnh Nhân</span>
+          <span>{t('patientRecords.title')}</span>
           <CountBadge 
             currentCount={paginatedList.length} 
             totalCount={queueList.length} 
-            label="bệnh nhân" 
+            label={t('patientRecords.label')}
           />
         </h1>
         <button 
           onClick={handleAddPatient}
           className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition font-medium flex items-center gap-2">
           <Plus className="w-5 h-5" />
-          Thêm bệnh nhân
+          {t('patientRecords.addButton')}
         </button>
       </div>
 
-      {/* Thống kê nhanh – giảm margin */}
+      {/* Thống kê nhanh */}
       <div className="flex flex-wrap gap-4 mb-4">
-        <CountBadge label="Đang chờ" count={statusCounts.Waiting} color="blue" />
-        <CountBadge label="Đang khám" count={statusCounts.InProgress} color="orange" />
-        <CountBadge label="Hoàn tất" count={statusCounts.Completed} color="green" />
-        <CountBadge label="Đã hủy" count={statusCounts.Cancelled} color="red" />
-        <CountBadge label="Tổng cộng" count={queueList.length} color="gray" />
+        <CountBadge label={t('queueManagement.status.waiting')} count={statusCounts.Waiting} color="blue" />
+        <CountBadge label={t('queueManagement.status.inProgress')} count={statusCounts.InProgress} color="orange" />
+        <CountBadge label={t('queueManagement.status.completed')} count={statusCounts.Completed} color="green" />
+        <CountBadge label={t('queueManagement.status.cancelled')} count={statusCounts.Cancelled} color="red" />
+        <CountBadge label={t('patientRecords.stats.total')} count={queueList.length} color="gray" />
       </div>
 
-      {/* Đưa SearchFilter lên gần hơn (chỉ cách thống kê 1 chút xíu) */}
+      {/* Search Filter */}
       <div className="mb-6">
         <SearchFilter
           searchPhone={searchPhone}
@@ -309,6 +315,7 @@ export default function PatientRecordsSection() {
           }}
         />
       </div>
+
       {queueError && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
           {queueError}
@@ -320,18 +327,18 @@ export default function PatientRecordsSection() {
         {loadingQueue ? (
           <div className="text-center py-20">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600"></div>
-            <p className="mt-4 text-gray-600 text-lg">Đang tải danh sách bệnh nhân...</p>
+            <p className="mt-4 text-gray-600 text-lg">{t('patientRecords.loading')}</p>
           </div>
         ) : (
           <>
-           <QueueTable
-  queueList={paginatedList}
-  currentPage={currentPage}       // thêm dòng này
-  itemsPerPage={ITEMS_PER_PAGE}   // thêm dòng này
-  onEdit={handleEditPatient}
-  onDelete={handleDeletePatient}
-  onStatusChange={handleQuickUpdateStatus}
-/>
+            <QueueTable
+              queueList={paginatedList}
+              currentPage={currentPage}
+              itemsPerPage={ITEMS_PER_PAGE}
+              onEdit={handleEditPatient}
+              onDelete={handleDeletePatient}
+              onStatusChange={handleQuickUpdateStatus}
+            />
 
             <div className="border-t border-gray-200 bg-gray-50">
               <Pagination

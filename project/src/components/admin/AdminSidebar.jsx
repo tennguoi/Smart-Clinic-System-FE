@@ -21,9 +21,23 @@ const adminMenuItems = [
 ];
 
 export default function AdminSidebar({ activeMenu: propActiveMenu, onMenuChange }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { clinicInfo } = useClinic();
+
+  // Danh sách menu đã được dịch qua i18next
+  const adminMenuItems = [
+    { id: 'statistics',      label: t('adminSidebar.statistics'),      icon: BarChart3 },
+    { id: 'clinic',          label: t('adminSidebar.clinic'),          icon: Building2 },
+    { id: 'accounts',        label: t('adminSidebar.accounts'),        icon: UserCircle },
+    { id: 'articles',        label: t('adminSidebar.articles'),        icon: Newspaper },
+    { id: 'services',        label: t('adminSidebar.services'),        icon: Briefcase },
+    { id: 'appointments',    label: t('adminSidebar.appointments'),    icon: Calendar },
+    { id: 'rooms',           label: t('adminSidebar.rooms'),           icon: DoorOpen },
+    { id: 'medical-records', label: t('adminSidebar.medicalRecords'),  icon: ClipboardList },
+    { id: 'invoices',        label: t('adminSidebar.invoices'),        icon: Receipt },
+  ];
 
   const currentPath = location.pathname;
 
@@ -61,7 +75,7 @@ export default function AdminSidebar({ activeMenu: propActiveMenu, onMenuChange 
 
   return (
     <Sidebar
-      title={clinicInfo?.name || "Admin"}
+      title={clinicInfo?.name || t('header.defaultName')}
       menuItems={adminMenuItems}
       activeMenu={activeMenu}
       onMenuChange={handleMenuChange}

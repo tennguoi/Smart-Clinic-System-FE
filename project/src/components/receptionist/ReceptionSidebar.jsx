@@ -1,4 +1,5 @@
 // src/components/receptionist/ReceptionSidebar.jsx
+import { useTranslation } from 'react-i18next';
 import Sidebar from '../common/Sidebar';
 import { 
   CalendarCheck, 
@@ -9,19 +10,21 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useClinic } from '../../contexts/ClinicContext';
 
-const receptionMenuItems = [
-  { id: 'appointments', label: 'Lịch Hẹn',        icon: CalendarCheck },
-  { id: 'records',      label: 'Danh Sách Bệnh Nhân',  icon: Users },
-  { id: 'rooms',        label: 'Quản Lý Phòng',  icon: BedDouble },
-  { id: 'invoices',     label: 'Hóa Đơn',         icon: FileText },
-];
-
 export default function ReceptionSidebar() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { clinicInfo } = useClinic();
 
-  // Xác định menu đang active theo URL – CỰC CHUẨN!
+  // Menu items với i18n
+  const receptionMenuItems = [
+    { id: 'appointments', label: t('receptionSidebar.appointments'), icon: CalendarCheck },
+    { id: 'records',      label: t('receptionSidebar.records'),      icon: Users },
+    { id: 'rooms',        label: t('receptionSidebar.rooms'),        icon: BedDouble },
+    { id: 'invoices',     label: t('receptionSidebar.invoices'),     icon: FileText },
+  ];
+
+  // Xác định menu đang active theo URL
   const getActiveMenu = () => {
     const path = location.pathname;
 
@@ -41,7 +44,7 @@ export default function ReceptionSidebar() {
 
   return (
     <Sidebar
-      title={clinicInfo?.name}
+      title={clinicInfo?.name || t('header.defaultName')}
       menuItems={receptionMenuItems}
       activeMenu={activeMenu}
       onMenuChange={handleMenuChange}

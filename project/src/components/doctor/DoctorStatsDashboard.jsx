@@ -25,11 +25,12 @@ import {
 import { getDoctorStats } from '../../api/doctorApi';
 import { authService } from '../../services/authService';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 const RANGE_OPTIONS = [
-  { label: 'Ngày', value: 'day' },
-  { label: 'Tuần', value: 'week' },
-  { label: 'Tháng', value: 'month' },
+  { label: 'day', value: 'day' },
+  { label: 'week', value: 'week' },
+  { label: 'month', value: 'month' },
 ];
 
 const formatPercentage = (value) => {
@@ -38,11 +39,9 @@ const formatPercentage = (value) => {
 };
 
 export default function DoctorStatsDashboard() {
+  const { t } = useTranslation();
   const [rangeType, setRangeType] = useState('day');
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 10;
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statsData, setStatsData] = useState(null);
@@ -59,14 +58,14 @@ export default function DoctorStatsDashboard() {
     const roles = authService.getRoles();
     const isDoctor = roles.includes('ROLE_BAC_SI') || roles.includes('ROLE_ADMIN');
     if (!isDoctor) {
-      setError('Bạn không có quyền xem thống kê. Chỉ bác sĩ mới được phép.');
+      setError(t('doctorStats.error.noPermission'));
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!doctorId) {
-      setError('Không tìm thấy thông tin bác sĩ');
+      setError(t('doctorStats.error.noDoctorInfo'));
       setLoading(false);
       return;
     }
@@ -80,8 +79,7 @@ export default function DoctorStatsDashboard() {
         setStatsData(data);
         if (isForceRefresh) setIsForceRefresh(false);
       } catch (err) {
-        const status = err.response?.status;
-        const message = err.response?.data?.message || 'Không thể tải dữ liệu thống kê';
+        const message = err.response?.data?.message || t('doctorStats.error.loadFailed');
         setError(message);
         toast.error(message);
       } finally {
@@ -90,7 +88,7 @@ export default function DoctorStatsDashboard() {
     };
 
     fetchStats();
-  }, [doctorId, rangeType, selectedDate, refreshKey, isForceRefresh]);
+  }, [doctorId, rangeType, selectedDate, refreshKey, isForceRefresh, t]);
 
   const chartData = useMemo(() => {
     if (!statsData?.series) return [];
@@ -127,7 +125,7 @@ export default function DoctorStatsDashboard() {
       <section className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-cyan-600 mx-auto mb-4" />
-          <p className="text-gray-600">Đang tải dữ liệu thống kê...</p>
+          <p className="text-gray-600">{t('doctorStats.loading')}</p>
         </div>
       </section>
     );
@@ -138,9 +136,8 @@ export default function DoctorStatsDashboard() {
       <section className="flex items-center justify-center min-h-[400px]">
         <div className="text-center max-w-md">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <p className="text-lg font-semibold text-gray-900 mb-2">Lỗi tải dữ liệu</p>
+          <p className="text-lg font-semibold text-gray-900 mb-2">{t('doctorStats.error.title')}</p>
           <p className="text-gray-600 mb-4">{error}</p>
-
           <button
             onClick={() => {
               setError(null);
@@ -148,7 +145,7 @@ export default function DoctorStatsDashboard() {
             }}
             className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition"
           >
-            Thử lại
+            {t('doctorStats.error.retry')}
           </button>
         </div>
       </section>
@@ -157,16 +154,15 @@ export default function DoctorStatsDashboard() {
 
   return (
     <section className="space-y-8">
-
-      {/* ALWAYS SHOW HEADER  */}
+      {/* Header */}
       <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="rounded-full bg-cyan-50 p-3 text-cyan-600">
             <LineChartIcon className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Thống kê hiệu suất</p>
-            <h2 className="text-xl font-semibold text-gray-900">Bác sĩ – Báo cáo ca khám</h2>
+            <p className="text-sm font-medium text-gray-500">{t('doctorStats.header.subtitle')}</p>
+            <h2 className="text-xl font-semibold text-gray-900">{t('doctorStats.header.title')}</h2>
           </div>
         </div>
 
@@ -183,7 +179,7 @@ export default function DoctorStatsDashboard() {
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                {option.label}
+                {t(`doctorStats.range.${option.label}`)}
               </button>
             ))}
           </div>
@@ -201,28 +197,32 @@ export default function DoctorStatsDashboard() {
         </div>
       </header>
 
-      {/* KPI */}
+      {/* KPI Cards */}
       {!isEmpty && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[{
-            title: 'Tổng số ca khám',
-            value: `${totals.visits} ca`,
-            subtitle: 'Số ca đã xử lý',
-            icon: Stethoscope,
-            accent: 'from-cyan-500 to-emerald-500',
-          }, {
-            title: 'Thời gian khám trung bình',
-            value: totals.avgTime > 0 ? `${totals.avgTime} phút/ca` : 'Chưa có dữ liệu',
-            subtitle: 'Tính theo dữ liệu thực tế',
-            icon: Clock3,
-            accent: 'from-amber-400 to-orange-500',
-          }, {
-            title: 'Tỉ lệ hoàn thành',
-            value: formatPercentage(totals.completion),
-            subtitle: 'So với lịch khám',
-            icon: CheckCircle2,
-            accent: 'from-violet-500 to-indigo-500',
-          }].map((card) => {
+          {[
+            {
+              title: t('doctorStats.kpi.totalVisits.title'),
+              value: `${totals.visits} ${t('doctorStats.kpi.totalVisits.unit')}`,
+              subtitle: t('doctorStats.kpi.totalVisits.subtitle'),
+              icon: Stethoscope,
+              accent: 'from-cyan-500 to-emerald-500',
+            },
+            {
+              title: t('doctorStats.kpi.avgTime.title'),
+              value: totals.avgTime > 0 ? `${totals.avgTime} ${t('doctorStats.kpi.avgTime.unit')}` : t('doctorStats.kpi.avgTime.noData'),
+              subtitle: t('doctorStats.kpi.avgTime.subtitle'),
+              icon: Clock3,
+              accent: 'from-amber-400 to-orange-500',
+            },
+            {
+              title: t('doctorStats.kpi.completionRate.title'),
+              value: formatPercentage(totals.completion),
+              subtitle: t('doctorStats.kpi.completionRate.subtitle'),
+              icon: CheckCircle2,
+              accent: 'from-violet-500 to-indigo-500',
+            },
+          ].map((card) => {
             const Icon = card.icon;
             return (
               <article
@@ -245,20 +245,23 @@ export default function DoctorStatsDashboard() {
         </div>
       )}
 
-      {/* CHARTS */}
+      {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
         {isEmpty ? (
           <div className="col-span-2 flex flex-col items-center justify-center min-h-[300px] py-10 text-center">
             <Activity className="h-16 w-16 text-gray-300 mb-4" />
-            <p className="text-lg font-semibold text-gray-900">Không có dữ liệu</p>
-            <p className="text-gray-600">Không có thống kê cho khoảng thời gian đã chọn.</p>
+            <p className="text-lg font-semibold text-gray-900">{t('doctorStats.empty.title')}</p>
+            <p className="text-gray-600">{t('doctorStats.empty.message')}</p>
           </div>
         ) : (
           <>
-            {/* BAR CHART */}
+            {/* Bar Chart */}
             <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Số ca khám theo {rangeType === 'day' ? 'giờ' : 'ngày'}
+                {rangeType === 'day' 
+                  ? t('doctorStats.chart.visitsByPeriod').replace('{{#if (eq context \'hour\')}}giờ{{else}}ngày{{/if}}', 'giờ')
+                  : t('doctorStats.chart.visitsByPeriod').replace('{{#if (eq context \'hour\')}}giờ{{else}}ngày{{/if}}', 'ngày')
+                }
               </h3>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
@@ -273,10 +276,10 @@ export default function DoctorStatsDashboard() {
               </div>
             </div>
 
-            {/* LINE CHART */}
+            {/* Line Chart */}
             <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Xu hướng số ca khám
+                {t('doctorStats.chart.trend')}
               </h3>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
@@ -294,19 +297,19 @@ export default function DoctorStatsDashboard() {
         )}
       </div>
 
-      {/* TABLE */}
+      {/* Table */}
       {!isEmpty && (
         <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Bảng thống kê theo khung giờ
+            {t('doctorStats.table.title')}
           </h3>
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-2 text-left">Thời gian</th>
-                <th className="px-4 py-2 text-left">Số ca</th>
-                <th className="px-4 py-2 text-left">% thay đổi</th>
-                <th className="px-4 py-2 text-left">Ghi chú</th>
+                <th className="px-4 py-2 text-left">{t('doctorStats.table.time')}</th>
+                <th className="px-4 py-2 text-left">{t('doctorStats.table.visits')}</th>
+                <th className="px-4 py-2 text-left">{t('doctorStats.table.change')}</th>
+                <th className="px-4 py-2 text-left">{t('doctorStats.table.note')}</th>
               </tr>
             </thead>
             <tbody>
@@ -322,7 +325,6 @@ export default function DoctorStatsDashboard() {
           </table>
         </div>
       )}
-
     </section>
   );
 }

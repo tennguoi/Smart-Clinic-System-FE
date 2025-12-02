@@ -143,7 +143,7 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <button
+              {/* <button
                 onClick={() => {
                   onError(null);
                   setShowPrescriptionModal(true);
@@ -153,7 +153,7 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
                 title="Tạo đơn thuốc"
               >
                 <Pill className="w-4 h-4" />
-              </button>
+              </button> */}
 
               <button
                 onClick={handleExportPdf}
