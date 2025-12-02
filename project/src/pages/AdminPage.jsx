@@ -30,6 +30,7 @@ export default function AdminPage() {
     else if (path.includes('/medical-records')) setActiveMenu('medical-records');
     else if (path.includes('/invoices')) setActiveMenu('invoices');
     else if (path.includes('/reviews')) setActiveMenu('reviews');
+    else if (path.includes('/email-templates')) setActiveMenu('email-templates');
     else setActiveMenu('statistics');
   }, [location.pathname, navigate]);
 

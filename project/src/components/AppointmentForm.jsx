@@ -54,27 +54,6 @@ export default function AppointmentForm() {
     }
   }, [submitStatus]);
 
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => fetchServices(serviceSearch), 300);
-    return () => clearTimeout(timer);
-  }, [serviceSearch]);
-
-  const fetchServices = async (keyword) => {
-    const mockServices = [
-      { serviceId: 1, name: 'Khám tổng quát', category: 'Khám bệnh', price: 200000 },
-      { serviceId: 2, name: 'Xét nghiệm máu', category: 'Xét nghiệm', price: 150000 },
-      { serviceId: 3, name: 'Chụp X-quang', category: 'Chẩn đoán hình ảnh', price: 300000 },
-      { serviceId: 4, name: 'Siêu âm', category: 'Chẩn đoán hình ảnh', price: 250000 },
-      { serviceId: 5, name: 'Khám tim mạch', category: 'Khám chuyên khoa', price: 350000 }
-    ];
-    
-    const filtered = keyword 
-      ? mockServices.filter(s => s.name.toLowerCase().includes(keyword.toLowerCase()))
-      : mockServices;
-    setServices(filtered);
-  };
-
   const isValidTime = (time) => {
     if (!time) return true;
     const [h, m] = time.split(':').map(Number);
