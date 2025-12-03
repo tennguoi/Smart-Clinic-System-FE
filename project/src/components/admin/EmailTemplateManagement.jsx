@@ -266,7 +266,7 @@ export default function EmailTemplateManagement() {
                   {/* Placeholders */}
                   <div className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border rounded-lg p-4`}>
                     <h3 className={`font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-                      📋 Available Placeholders
+                      Available Placeholders
                     </h3>
                     <div className="space-y-2 max-h-60 overflow-y-auto">
                       {selectedTemplate.availablePlaceholders?.map((placeholder, idx) => (
@@ -290,7 +290,7 @@ export default function EmailTemplateManagement() {
                   {(showPreview || modalMode === 'view') && (
                     <div className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border rounded-lg p-4`}>
                       <h3 className={`font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-                        👁️ Email Preview
+                        Email Preview
                       </h3>
                       <div className="bg-white rounded border border-gray-300 p-4 max-h-96 overflow-y-auto">
                         <div dangerouslySetInnerHTML={{ __html: getSampleData(selectedTemplate.availablePlaceholders || []) }} />

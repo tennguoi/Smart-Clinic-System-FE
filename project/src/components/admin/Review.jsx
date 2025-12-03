@@ -18,7 +18,7 @@ export default function ReviewManagement() {
   const [filteredReviews, setFilteredReviews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState('create'); // create | edit | view
+  const [modalMode, setModalMode] = useState('create'); 
   const [selectedReview, setSelectedReview] = useState(null);
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -35,11 +35,9 @@ export default function ReviewManagement() {
   const [formData, setFormData] = useState({
     rating: 5,
     comment: '',
-    reviewerName: '',
-    reviewerEmail: ''
+    reviewerName: ''
   });
 
-  // ==================== FETCH REVIEWS ====================
   const fetchReviews = async () => {
     setLoading(true);
     try {
@@ -71,8 +69,7 @@ export default function ReviewManagement() {
 
     if (filterReviewer.trim()) {
       filtered = filtered.filter(r =>
-        r.reviewerName.toLowerCase().includes(filterReviewer.toLowerCase()) ||
-        r.reviewerEmail.toLowerCase().includes(filterReviewer.toLowerCase())
+        r.reviewerName.toLowerCase().includes(filterReviewer.toLowerCase())
       );
     }
 
@@ -96,7 +93,6 @@ export default function ReviewManagement() {
     if (newPage >= 0 && newPage < totalPages) setCurrentPage(newPage);
   };
 
-  // ==================== DELETE ====================
   const handleDeleteClick = (review) => {
     setReviewToDelete(review);
     setShowDeleteConfirmation(true);
@@ -118,7 +114,6 @@ export default function ReviewManagement() {
     }
   };
 
-  // ==================== MODAL ====================
   const handleOpenModal = (mode, review = null) => {
     setModalMode(mode);
     setSelectedReview(review);
@@ -126,15 +121,13 @@ export default function ReviewManagement() {
       setFormData({
         rating: 5,
         comment: '',
-        reviewerName: '',
-        reviewerEmail: ''
+        reviewerName: ''
       });
     } else if (review) {
       setFormData({
         rating: review.rating,
         comment: review.comment,
-        reviewerName: review.reviewerName,
-        reviewerEmail: review.reviewerEmail
+        reviewerName: review.reviewerName
       });
     }
     setShowModal(true);
@@ -157,7 +150,7 @@ export default function ReviewManagement() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.reviewerName.trim() || !formData.comment.trim() || !formData.reviewerEmail.trim()) {
+    if (!formData.reviewerName.trim() || !formData.comment.trim()) {
       toast.error('Vui lòng điền đầy đủ thông tin');
       return;
     }
@@ -229,7 +222,7 @@ export default function ReviewManagement() {
 
         {/* Filters */}
         <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'} border rounded-lg p-5 mb-6 shadow-md transition-colors duration-300`}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
             {/* Rating Filter */}
             <div>
               <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
@@ -250,7 +243,7 @@ export default function ReviewManagement() {
             </div>
 
             {/* Reviewer Filter */}
-            <div className="lg:col-span-2">
+            <div>
               <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                 Tìm theo người đánh giá
               </label>
@@ -258,7 +251,7 @@ export default function ReviewManagement() {
                 type="text"
                 value={filterReviewer}
                 onChange={(e) => setFilterReviewer(e.target.value)}
-                placeholder="Tên hoặc email..."
+                placeholder="Tên người đánh giá..."
                 className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300 bg-white text-gray-900'}`}
               />
             </div>
@@ -296,12 +289,9 @@ export default function ReviewManagement() {
                       Người đánh giá
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Đánh giá
                     </th>
-                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">
                       Nhận xét
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -315,7 +305,7 @@ export default function ReviewManagement() {
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {currentPageReviews.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="text-center py-20 text-gray-500 dark:text-gray-400 text-lg">
+                      <td colSpan={6} className="text-center py-20 text-gray-500 dark:text-gray-400 text-lg">
                         Không có đánh giá nào
                       </td>
                     </tr>
@@ -326,7 +316,6 @@ export default function ReviewManagement() {
                           {currentPage * pageSize + index + 1}
                         </td>
                         <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{review.reviewerName}</td>
-                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{review.reviewerEmail}</td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
                             <div className="flex gap-0.5">
@@ -509,20 +498,6 @@ export default function ReviewManagement() {
                     />
                   </div>
                   <div>
-                    <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                      Email <span className="text-red-500">*</span>
-                    </label>
-                    <input 
-                      type="email" 
-                      name="reviewerEmail" 
-                      value={formData.reviewerEmail} 
-                      onChange={handleInputChange} 
-                      required 
-                      disabled={modalMode === 'view'} 
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`} 
-                    />
-                  </div>
-                  <div className="md:col-span-2">
                     <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       Đánh giá <span className="text-red-500">*</span>
                     </label>
