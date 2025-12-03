@@ -1,7 +1,7 @@
 // src/components/queue/QueueTable.jsx
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Eye, User } from 'lucide-react';
+import { Eye, User ,Trash2 } from 'lucide-react';
 
 const formatDateTime = (value) => {
   if (!value) return '—';
@@ -49,6 +49,7 @@ export default function QueueTable({
     Urgent: t('queueManagement.priority.urgent'),
     Emergency: t('queueManagement.priority.emergency'),
     Thường: t('queueManagement.priority.normal'),
+    'Bình thường': t('queueManagement.priority.normal'),
     'Ưu tiên': t('queueManagement.priority.urgent'),
     'Khẩn cấp': t('queueManagement.priority.emergency'),
   };
@@ -186,7 +187,7 @@ export default function QueueTable({
                         <Eye className="w-5 h-5" />
                       </button>
                     )}
-                    {onDelete && (
+                    {/* {onDelete && (
                       <button
                         onClick={() => onDelete(q.queueId)}
                         className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/30 transition"
@@ -194,7 +195,7 @@ export default function QueueTable({
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>
-                    )}
+                    )} */}
                   </div>
                 </td>
               </tr>
