@@ -146,12 +146,26 @@ export const queueApi = {
     const { data } = await axiosInstance.get('/api/reception/queue/waiting');
     return data;
   },
-  getCompletedQueue: async () =>{
+  
+  getCompletedQueue: async () => {
     const { data } = await axiosInstance.get('/api/reception/queue/completed');
     return data;
-
   },
 
+  // ✨ API MỚI: Lấy danh sách lịch hẹn hôm nay
+  getTodayAppointments: async () => {
+    const { data } = await axiosInstance.get('/api/reception/queue/appointments/today');
+    return data;
+  },
+
+  // ✨ API MỚI: Check-in từ appointment
+checkInFromAppointmentWithInfo: async (appointmentId, additionalInfo) => {
+  const { data } = await axiosInstance.post(
+    `/api/reception/queue/check-in-appointment/${appointmentId}`,
+    additionalInfo // ← gửi thông tin bổ sung
+  );
+  return data;
+},
 
   // Tìm kiếm bệnh nhân
   searchQueue: async (params) => {
@@ -209,5 +223,4 @@ export const userApi = {
   logout: async () => {
     await axiosInstance.post('/api/auth/logout');
   }
-  
 };
