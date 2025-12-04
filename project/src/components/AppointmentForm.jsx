@@ -1,3 +1,4 @@
+
 // src/components/AppointmentForm.jsx
 import { useState, useEffect, useMemo } from 'react';
 import { Send, Calendar, Clock, ChevronDown, Search, X, Check } from 'lucide-react';
@@ -9,6 +10,7 @@ export default function AppointmentForm() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
+  // -------------------- STATE --------------------
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -18,16 +20,16 @@ export default function AppointmentForm() {
     symptoms: '',
     serviceIds: []
   });
-
   const [services, setServices] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState('idle');
+  const [submitStatus, setSubmitStatus] = useState('idle'); // idle | success | error
   const [errorMessage, setErrorMessage] = useState('');
   const [timeError, setTimeError] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [serviceSearch, setServiceSearch] = useState('');
 
+  // -------------------- DATE LIMITS --------------------
   const { minDate, maxDate } = useMemo(() => {
     const today = new Date();
     const min = new Date(today);
@@ -44,23 +46,46 @@ export default function AppointmentForm() {
     if (!formData.date && minDate) {
       setFormData(prev => ({ ...prev, date: minDate }));
     }
-  }, [minDate]);
+  }, [minDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto redirect after success
+  // Auto redirect sau khi success
   useEffect(() => {
     if (submitStatus === 'success') {
       const timer = setTimeout(() => navigate('/'), 4000);
       return () => clearTimeout(timer);
     }
-  }, [submitStatus]);
+  }, [submitStatus, navigate]);
 
+  // -------------------- TIME VALIDATION --------------------
+  // Hợp lệ nếu trong 08:00–12:00 hoặc 14:00–18:00
   const isValidTime = (time) => {
     if (!time) return true;
     const [h, m] = time.split(':').map(Number);
     const total = h * 60 + m;
-    return (total >= 480 && total <= 720) || (total >= 840 && total <= 1080);
+    const inMorning = total >= 480 && total <= 720;
+    const inAfternoon = total >= 840 && total <= 1080;
+    return inMorning || inAfternoon;
   };
 
+  const fetchServices = async (keyword) => {
+    try {
+      const { serviceApi } = await import('../api/serviceApi');
+      const data = await serviceApi.searchServices(keyword, null, 0, 50);
+      setServices(data?.services ?? []);
+    } catch (err) {
+      console.error('Failed to load services', err);
+    }
+  };
+
+  // Debounce tìm kiếm dịch vụ: gọi sau 300ms khi gõ
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchServices(serviceSearch);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [serviceSearch]);
+
+  // -------------------- FORM EVENTS --------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -99,12 +124,18 @@ export default function AppointmentForm() {
 
       setSubmitStatus('success');
       setFormData({
-        fullName: '', phone: '', email: '', date: minDate, time: '', symptoms: '', serviceIds: []
+        fullName: '',
+        phone: '',
+        email: '',
+        date: minDate,
+        time: '',
+        symptoms: '',
+        serviceIds: []
       });
     } catch (error) {
       setErrorMessage(
-        error.response?.data?.message ||
-        error.message ||
+        error.response?.data?.message ??
+        error.message ??
         t('common.error')
       );
       setSubmitStatus('error');
@@ -117,7 +148,7 @@ export default function AppointmentForm() {
     const { name, value } = e.target;
 
     if (name === 'phone') {
-      const digits = value.replace(/\D/g, '').slice(0, 10);
+      const digits = value.replace(/\D/g, '').slice(0, 10); // VN đa số 10 số
       setFormData(prev => ({ ...prev, phone: digits }));
       setPhoneError(digits.length > 10 ? t('appointment.phoneTooLong') : '');
       return;
@@ -142,6 +173,7 @@ export default function AppointmentForm() {
     }));
   };
 
+  // Click ngoài để đóng dropdown
   useEffect(() => {
     const handler = (e) => {
       if (!e.target.closest('.services-dropdown')) setIsServicesOpen(false);
@@ -150,9 +182,9 @@ export default function AppointmentForm() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // -------------------- RENDER --------------------
   return (
     <div className="bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 transition-colors duration-300">
-      
       {/* SUCCESS TOAST */}
       {submitStatus === 'success' && (
         <div className="fixed top-6 right-6 z-50 animate-[slideInRight_0.4s_ease-out]">
@@ -168,7 +200,7 @@ export default function AppointmentForm() {
                 {t('appointment.successMessage')}
               </p>
             </div>
-            <button 
+            <button
               onClick={() => setSubmitStatus('idle')}
               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
@@ -193,7 +225,7 @@ export default function AppointmentForm() {
                 {errorMessage}
               </p>
             </div>
-            <button 
+            <button
               onClick={() => setSubmitStatus('idle')}
               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
@@ -204,17 +236,16 @@ export default function AppointmentForm() {
       )}
 
       <div className="w-full max-w-[95%] mx-auto px-4">
-        {/* HEADER - Đã sửa margin và padding */}
+        {/* HEADER */}
         <div className="text-center pt-8 pb-6 animate-[fadeInDown_0.6s_ease-out]">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent mb-2">
             {t('appointment.formTitle')}
           </h1>
         </div>
 
-        {/* FORM CARD - Đã sửa padding */}
+        {/* FORM CARD */}
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-2xl p-6 md:p-8 border border-white/20 dark:border-gray-700/20 animate-[fadeInUp_0.6s_ease-out] mb-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-
             {/* NAME + PHONE */}
             <div className="grid md:grid-cols-2 gap-6">
               <div className="group">
@@ -368,7 +399,6 @@ export default function AppointmentForm() {
 
                 {isServicesOpen && (
                   <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-xl shadow-2xl overflow-hidden animate-[fadeInDown_0.3s_ease-out]">
-
                     {/* SEARCH */}
                     <div className="p-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
                       <div className="relative">
@@ -409,10 +439,7 @@ export default function AppointmentForm() {
                               <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-2">
                                 <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded-full">{svc.category}</span>
                                 <span className="font-medium text-cyan-600 dark:text-cyan-400">
-                                  {new Intl.NumberFormat('vi-VN', {
-                                    style: 'currency',
-                                    currency: 'VND'
-                                  }).format(svc.price)}
+                                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(svc.price)}
                                 </span>
                               </div>
                             </div>
@@ -472,7 +499,6 @@ export default function AppointmentForm() {
                   </>
                 )}
               </button>
-
               <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-4 flex items-center justify-center gap-2">
                 <Clock className="w-4 h-4" />
                 {t('appointment.confirmationNote')}
@@ -489,54 +515,24 @@ export default function AppointmentForm() {
 
       <style jsx>{`
         @keyframes slideInRight {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
+          from { transform: translateX(100%); opacity: 0; }
+          to   { transform: translateX(0);     opacity: 1; }
         }
-
         @keyframes fadeInDown {
-          from {
-            transform: translateY(-20px);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
+          from { transform: translateY(-20px); opacity: 0; }
+          to   { transform: translateY(0);      opacity: 1; }
         }
-
         @keyframes fadeInUp {
-          from {
-            transform: translateY(20px);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
+          from { transform: translateY(20px); opacity: 0; }
+          to   { transform: translateY(0);     opacity: 1; }
         }
-
         @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
+          from { opacity: 0; }
+          to   { opacity: 1; }
         }
-
         @keyframes scaleIn {
-          from {
-            transform: scale(0);
-          }
-          to {
-            transform: scale(1);
-          }
+          from { transform: scale(0); }
+          to   { transform: scale(1); }
         }
       `}</style>
     </div>
