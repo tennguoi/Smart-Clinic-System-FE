@@ -31,6 +31,7 @@ export default function AdminPage() {
     else if (path.includes('/invoices')) setActiveMenu('invoices');
     else if (path.includes('/reviews')) setActiveMenu('reviews');
     else if (path.includes('/email-templates')) setActiveMenu('email-templates');
+    else if (path.includes('/rich-text-email')) setActiveMenu('rich-text-email');
     else setActiveMenu('statistics');
   }, [location.pathname, navigate]);
 

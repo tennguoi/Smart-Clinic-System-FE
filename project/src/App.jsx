@@ -36,6 +36,7 @@ import ArticleManagement from "./components/admin/ArticleManagement";
 import AccountManagement from "./components/admin/AccountManagement";
 import Review from "./components/admin/Review";
 import EmailTemplateManagement from "./components/admin/EmailTemplateManagement";
+import RichTextEmailManagement from "./components/admin/RichTextEmailManagement";
 
 import ClinicManagement from "./components/admin/ClinicManagement";
 import PlaceholderSection from "./components/common/PlaceholderSection";
@@ -101,7 +102,7 @@ function App() {
           }
         >
           <Route index element={<StatisticsPage />} />
-          <Route path="statistics" element={<StatisticsPage />} />  
+          <Route path="statistics" element={<StatisticsPage />} />
           <Route path="clinic" element={<ClinicManagement />} />
           <Route path="accounts" element={<AccountManagement />} />
           <Route path="articles" element={<ArticleManagement />} />
@@ -113,7 +114,8 @@ function App() {
           <Route path="doctors" element={<DoctorManagement />} />
           <Route path="reviews" element={<Review />} />
           <Route path="email-templates" element={<EmailTemplateManagement />} />
-          
+          <Route path="rich-text-email" element={<RichTextEmailManagement />} />
+
           <Route path="*" element={<PlaceholderSection title="Chức năng" message="Sắp ra mắt..." />} />
         </Route>
 
@@ -131,7 +133,7 @@ function App() {
           <Route path="stats" element={<DoctorStatsDashboard />} />
           <Route path="records" element={<MedicalRecordsSection />} />
           <Route path="history" element={<MedicalRecordHistory />} />
-          
+
           {/* ĐÂY LÀ DÒNG QUAN TRỌNG NHẤT – BÁC SĨ XEM HÓA ĐƠN */}
           <Route path="invoices" element={<InvoicesSection isDoctorView={true} />} />
 

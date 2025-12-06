@@ -33,10 +33,10 @@ const formatPrice = (price) => {
 const toLocalDateTimeString = (localDate) => {
   const d = new Date(localDate);
   return d.getFullYear() + '-' +
-         String(d.getMonth() + 1).padStart(2, '0') + '-' +
-         String(d.getDate()).padStart(2, '0') + 'T' +
-         String(d.getHours()).padStart(2, '0') + ':' +
-         String(d.getMinutes()).padStart(2, '0') + ':00';
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0') + 'T' +
+    String(d.getHours()).padStart(2, '0') + ':' +
+    String(d.getMinutes()).padStart(2, '0') + ':00';
 };
 
 export default function AppointmentsSection() {
@@ -83,6 +83,7 @@ export default function AppointmentsSection() {
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [cancelTargetId, setCancelTargetId] = useState(null);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
 
   const now = new Date();
   const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
@@ -247,7 +248,7 @@ export default function AppointmentsSection() {
         toast.success(t('appointmentManagement.updateSuccess', 'Cập nhật lịch hẹn thành công!'));
       } else {
         const res = await axiosInstance.post('/api/appointments', payload);
-       toast.success(t('appointmentManagement.createSuccess', { code: res.data.appointmentCode }));
+        toast.success(t('appointmentManagement.createSuccess', { code: res.data.appointmentCode }));
       }
 
       setShowForm(false);
@@ -307,12 +308,16 @@ export default function AppointmentsSection() {
 
   const handleCancelAppointment = async () => {
     if (!cancelTargetId) return;
+    if (!cancelReason.trim()) {
+      toast.error(t('appointmentManagement.cancelReasonRequired', 'Vui lòng nhập lý do hủy'));
+      return;
+    }
     setCancelLoading(true);
     try {
       await axiosInstance.patch(`/api/appointments/${cancelTargetId}/status`, null, {
-        params: { status: 'Cancelled' }
+        params: { status: 'Cancelled', cancelReason: cancelReason.trim() }
       });
-      setAppointments(prev => prev.map(a => 
+      setAppointments(prev => prev.map(a =>
         a.appointmentId === cancelTargetId ? { ...a, status: 'Cancelled' } : a
       ));
       if (showForm && editingAppointment?.appointmentId === cancelTargetId) {
@@ -325,6 +330,7 @@ export default function AppointmentsSection() {
       setCancelLoading(false);
       setShowCancelConfirmation(false);
       setCancelTargetId(null);
+      setCancelReason('');
     }
   };
 
@@ -354,14 +360,14 @@ export default function AppointmentsSection() {
         <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 transition-colors duration-300`}>
           <Calendar className="w-9 h-9 text-blue-600" />
           <span>{t('appointmentManagement.title', 'Quản Lý Lịch Hẹn')}</span>
-        <CountBadge 
-  currentCount={appointments.length} 
-  totalCount={totalElements} 
-  label={totalElements === 1 
-    ? t('appointmentManagement.appointment', 'appointment')   // số ít
-    : t('appointmentManagement.appointments', 'appointments') // số nhiều
-  } 
-/>
+          <CountBadge
+            currentCount={appointments.length}
+            totalCount={totalElements}
+            label={totalElements === 1
+              ? t('appointmentManagement.appointment', 'appointment')   // số ít
+              : t('appointmentManagement.appointments', 'appointments') // số nhiều
+            }
+          />
         </h1>
         <button onClick={handleOpenAdd}
           className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2">
@@ -517,14 +523,13 @@ export default function AppointmentsSection() {
                         </div>
                       </td>
                       <td className="px-4 py-4 text-center">
-                        <span className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
-                          a.status === 'Confirmed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
-                          a.status === 'Cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
-                          'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
-                        }`}>
-                          {a.status === 'Pending' ? t('appointmentManagement.statusPending', 'Chờ xác nhận') : 
-                           a.status === 'Confirmed' ? t('appointmentManagement.statusConfirmed', 'Đã xác nhận') : 
-                           t('appointmentManagement.statusCancelled', 'Đã hủy')}
+                        <span className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${a.status === 'Confirmed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
+                            a.status === 'Cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                              'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+                          }`}>
+                          {a.status === 'Pending' ? t('appointmentManagement.statusPending', 'Chờ xác nhận') :
+                            a.status === 'Confirmed' ? t('appointmentManagement.statusConfirmed', 'Đã xác nhận') :
+                              t('appointmentManagement.statusCancelled', 'Đã hủy')}
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center space-x-2">
@@ -769,19 +774,38 @@ export default function AppointmentsSection() {
 
       {showCancelConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-          <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl max-w-sm w-full p-6 text-center transition-colors duration-300`}>
-            <XCircle className="w-16 mx-auto mb-4 text-red-500" />
-            <h3 className={`text-2xl font-bold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('appointmentManagement.cancelConfirmTitle', 'Hủy lịch hẹn này?')}</h3>
-            <p className={`mb-8 leading-relaxed ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-              {t('appointmentManagement.cancelConfirmText', 'Lịch hẹn sẽ được chuyển sang trạng thái')} <span className="font-bold text-red-600">{t('appointmentManagement.statusCancelled', 'Đã hủy')}</span>.<br />
+          <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl max-w-md w-full p-6 transition-colors duration-300`}>
+            <div className="text-center">
+              <XCircle className="w-16 mx-auto mb-4 text-red-500" />
+              <h3 className={`text-2xl font-bold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('appointmentManagement.cancelConfirmTitle', 'Hủy lịch hẹn này?')}</h3>
+              <p className={`mb-4 leading-relaxed ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                {t('appointmentManagement.cancelConfirmText', 'Lịch hẹn sẽ được chuyển sang trạng thái')} <span className="font-bold text-red-600">{t('appointmentManagement.statusCancelled', 'Đã hủy')}</span>.
+              </p>
+            </div>
+
+            <div className="text-left mb-4">
+              <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                {t('appointmentManagement.cancelReasonLabel', 'Lý do hủy')} <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder={t('appointmentManagement.cancelReasonPlaceholder', 'Nhập lý do hủy lịch hẹn...')}
+                rows={3}
+                className={`w-full px-3 py-2 border rounded-lg resize-none focus:ring-2 focus:ring-red-500 focus:outline-none ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'}`}
+              />
+            </div>
+
+            <p className={`text-center mb-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
               {t('appointmentManagement.cancelConfirmQuestion', 'Bạn có chắc chắn muốn tiếp tục?')}
             </p>
+
             <div className="flex gap-4">
               <button onClick={handleCancelAppointment} disabled={cancelLoading}
                 className="flex-1 bg-red-600 text-white py-3 rounded-lg font-bold hover:bg-red-700 transition disabled:opacity-70">
                 {cancelLoading ? t('appointmentManagement.processing', 'Đang xử lý...') : t('appointmentManagement.confirmCancel', 'Xác nhận hủy')}
               </button>
-              <button onClick={() => { setShowCancelConfirmation(false); setCancelTargetId(null); }} disabled={cancelLoading}
+              <button onClick={() => { setShowCancelConfirmation(false); setCancelTargetId(null); setCancelReason(''); }} disabled={cancelLoading}
                 className={`flex-1 py-3 rounded-lg font-bold transition ${theme === 'dark' ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}>
                 {t('appointmentManagement.keep', 'Giữ lại')}
               </button>
