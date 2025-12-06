@@ -26,7 +26,6 @@ export default function InvoicesSection({ isDoctorView = false }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [showUnpaidOnly, setShowUnpaidOnly] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -46,9 +45,6 @@ export default function InvoicesSection({ isDoctorView = false }) {
       if (statusFilter === 'pending') {
         data = data.filter(i => i.paymentStatus === 'Pending' || i.paymentStatus === 'PartiallyPaid');
       }
-      if (showUnpaidOnly) {
-        data = data.filter(i => i.paymentStatus !== 'Paid');
-      }
 
       setInvoices(data);
       setCurrentPage(0);
@@ -65,7 +61,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
       fetchInvoices();
     }, 300);
     return () => clearTimeout(timer);
-  }, [search, statusFilter, showUnpaidOnly, t]);
+  }, [search, statusFilter, t]);
 
   const paginatedInvoices = useMemo(() => {
     const start = currentPage * ITEMS_PER_PAGE;
@@ -73,7 +69,6 @@ export default function InvoicesSection({ isDoctorView = false }) {
   }, [invoices, currentPage]);
 
   const totalPages = Math.max(1, Math.ceil(invoices.length / ITEMS_PER_PAGE));
-  const hasFilter = search || statusFilter !== 'all' || showUnpaidOnly;
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -160,7 +155,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
       {/* Bộ lọc */}
       <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-md border p-6 mb-6 transition-colors duration-300`}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-6">
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('invoices.filters.search')}</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -174,7 +169,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
             </div>
           </div>
 
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-4">
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('invoices.filters.status')}</label>
             <select
               value={statusFilter}
@@ -187,32 +182,17 @@ export default function InvoicesSection({ isDoctorView = false }) {
             </select>
           </div>
 
-          <div className="lg:col-span-3 flex items-end">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showUnpaidOnly}
-                onChange={(e) => setShowUnpaidOnly(e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
-              />
-              <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{t('invoices.filters.unpaidOnly')}</span>
-            </label>
+          <div className="lg:col-span-2 flex items-end">
+            <button
+              onClick={() => {
+                setSearch('');
+                setStatusFilter('all');
+              }}
+              className={`w-full px-4 py-3 rounded-xl transition font-medium ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
+            >
+              {t('invoices.filters.clear')}
+            </button>
           </div>
-
-          {hasFilter && (
-            <div className="lg:col-span-1 flex items-end">
-              <button
-                onClick={() => {
-                  setSearch('');
-                  setStatusFilter('all');
-                  setShowUnpaidOnly(false);
-                }}
-                className={`w-full px-4 py-3 rounded-xl transition font-medium ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
-              >
-                {t('invoices.filters.clear')}
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -229,10 +209,10 @@ export default function InvoicesSection({ isDoctorView = false }) {
           <div className="p-16 text-center">
             <FileText className={`w-16 h-16 mx-auto mb-4 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} />
             <p className="text-red-600 font-semibold">
-              {hasFilter ? t('invoices.noResults') : t('invoices.noInvoices')}
+              {(search || statusFilter !== 'all') ? t('invoices.noResults') : t('invoices.noInvoices')}
             </p>
             <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-              {hasFilter ? t('invoices.tryDifferentFilter') : t('invoices.createFirstInvoice')}
+              {(search || statusFilter !== 'all') ? t('invoices.tryDifferentFilter') : t('invoices.createFirstInvoice')}
             </p>
           </div>
         ) : (

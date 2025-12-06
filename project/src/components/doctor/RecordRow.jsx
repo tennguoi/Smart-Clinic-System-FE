@@ -7,10 +7,13 @@ import RecordDetailModal from './RecordDetailModal';
 import PrescriptionFormModal from './PrescriptionFormModal';
 import { downloadPdf, getMedicalRecordFilename } from '../../utils/pdfDownload';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
+  const { t } = useTranslation();
   const { theme } = useTheme();
-  const [editing, setEditing] = useState(false);
+
+  const [editing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [localDiagnosis, setLocalDiagnosis] = useState(record.diagnosis || '');
   const [localNotes, setLocalNotes] = useState(record.treatmentNotes || '');
@@ -25,8 +28,8 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
   const [exporting, setExporting] = useState(false);
 
   const handleSave = async () => {
-    if (!localDiagnosis || !localDiagnosis.trim()) {
-      onError && onError('Chẩn đoán là bắt buộc');
+    if (!localDiagnosis?.trim()) {
+      onError?.(t('doctorRecords.create.diagnosisRequired'));
       return;
     }
     setSaving(true);
@@ -36,35 +39,30 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
         treatmentNotes: localNotes?.trim() || '',
       });
       setEditing(false);
-      onUpdated && onUpdated();
+      toast.success(t('doctorRecords.modal.saveSuccess') || 'Cập nhật thành công!');
+      onUpdated?.();
     } catch (e) {
-      const msg = e.response?.data?.message || e.message || 'Cập nhật hồ sơ thất bại';
-      onError && onError(msg);
+      const msg = e.response?.data?.message || t('doctorRecords.modal.saveFailed') || 'Cập nhật thất bại';
+      onError?.(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Bạn có chắc muốn xóa hồ sơ này? Hành động này không thể hoàn tác.')) return;
+    if (!window.confirm(t('doctorRecords.common.deleteConfirm') || 'Bạn có chắc muốn xóa hồ sơ này? Hành động này không thể hoàn tác.')) return;
+
     setDeleting(true);
     try {
       await medicalRecordApi.remove(record.recordId);
-      
-      toast.success('Xóa hồ sơ bệnh án thành công!', {
-        duration: 3000,
-        position: 'top-right',
-      });
-      
-      onDelete && onDelete(record.recordId);
-      onUpdated && onUpdated();
+      toast.success(t('doctorRecords.modal.deleteSuccess') || 'Xóa hồ sơ thành công!');
+      onDelete?.(record.recordId);
+      onUpdated?.();
     } catch (e) {
-      const msg = e.response?.data?.message || e.message || 'Xóa hồ sơ thất bại';
-      toast.error(msg, {
-        duration: 4000,
-        position: 'top-right',
-      });
-      onError && onError(msg);
+      const msg = e.response?.data?.message || t('doctorRecords.modal.deleteFailed') || 'Xóa thất bại';
+      toast.error(msg);
+      onError?.(msg);
     } finally {
       setDeleting(false);
     }
@@ -75,48 +73,48 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
     try {
       const pdfBlob = await medicalRecordApi.exportAsPdf(record.recordId);
       await downloadPdf(pdfBlob, getMedicalRecordFilename(record.recordId));
-      
-      toast.success('Xuất PDF hồ sơ thành công!', {
-        duration: 3000,
-        position: 'top-right',
-      });
+      toast.success(t('doctorRecords.modal.pdfSuccess'));
     } catch (e) {
-      const msg = e.message || 'Xuất PDF thất bại';
-      toast.error(msg, {
-        duration: 4000,
-        position: 'top-right',
-      });
-      onError && onError(msg);
+      const msg = t('doctorRecords.modal.pdfFailed') + (e.message || '');
+      toast.error(msg);
+      onError?.(msg);
     } finally {
       setExporting(false);
     }
   };
 
-
   return (
     <>
       <tr className={`transition-colors ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
         <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{index}</td>
-        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>{record.patientName || record.patientId || '—'}</td>
+        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
+          {record.patientName || record.patientId || '—'}
+        </td>
         <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
           {editing ? (
             <input
               type="text"
               value={localDiagnosis}
               onChange={(e) => setLocalDiagnosis(e.target.value)}
-              className={`w-full border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+              className={`w-full border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
+              }`}
+              placeholder={t('modal.diagnosisPlaceholder')}
             />
           ) : (
-            record.diagnosis
+            record.diagnosis || '—'
           )}
         </td>
         <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
           {editing ? (
-            <input
-              type="text"
+            <textarea
               value={localNotes}
               onChange={(e) => setLocalNotes(e.target.value)}
-              className={`w-full border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+              rows={2}
+              className={`w-full border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
+                theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
+              }`}
+              placeholder={t('modal.treatmentNotesPlaceholder')}
             />
           ) : (
             record.treatmentNotes || '—'
@@ -128,9 +126,9 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-60"
+                className="px-4 py-1.5 bg-emerald-600 text-white text-xs rounded hover:bg-emerald-700 disabled:opacity-60 transition"
               >
-                {saving ? 'Đang lưu...' : 'Lưu'}
+                {saving ? t('doctorRecords.common.saving') || 'Đang lưu...' : t('doctorRecords.common.save') || 'Lưu'}
               </button>
               <button
                 onClick={() => {
@@ -138,42 +136,35 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
                   setLocalDiagnosis(record.diagnosis || '');
                   setLocalNotes(record.treatmentNotes || '');
                 }}
-                className={`px-3 py-1 rounded hover:bg-opacity-80 ${theme === 'dark' ? 'bg-gray-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                className={`px-4 py-1.5 text-xs rounded transition ${
+                  theme === 'dark'
+                    ? 'bg-gray-600 text-white hover:bg-gray-500'
+                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                }`}
               >
-                Hủy
+                {t('doctorRecords.common.cancel')}
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              {/* <button
-                onClick={() => {
-                  onError(null);
-                  setShowPrescriptionModal(true);
-                }}
-                className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors"
-                aria-label="Tạo đơn thuốc"
-                title="Tạo đơn thuốc"
-              >
-                <Pill className="w-4 h-4" />
-              </button> */}
 
+              {/* Nút Xuất PDF */}
               <button
                 onClick={handleExportPdf}
                 disabled={exporting}
-                className="p-2.5 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/30 rounded-full transition group relative disabled:opacity-60"
-                aria-label="Xuất PDF hồ sơ"
-                title={exporting ? 'Đang xuất...' : 'Xuất PDF hồ sơ bệnh án'}
+                className="p-2.5 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/30 rounded-full transition group relative disabled:opacity-60 disabled:cursor-not-allowed"
+                aria-label={t('doctorRecords.modal.pdfTitle')}
               >
                 <Download className="w-5 h-5" />
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
-                  {exporting ? 'Đang xuất...' : 'Xuất PDF hồ sơ bệnh án'}
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none z-10 shadow-lg">
+                  {exporting ? t('doctorRecords.modal.pdfExporting') : t('doctorRecords.modal.pdfTitle')}
                 </span>
               </button>
 
+              {/* Nút Chỉnh sửa (mở modal chi tiết) */}
               <button
                 type="button"
                 onClick={async (e) => {
-                  e.preventDefault();
                   e.stopPropagation();
                   setShowDetailModal(true);
                   setLoadingDetail(true);
@@ -184,36 +175,44 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
                     setPrescriptions(prescList);
                     setLocalDiagnosis(detail.diagnosis || '');
                     setLocalNotes(detail.treatmentNotes || '');
-                    if (prescList.length > 0 && prescList[0]) {
+                    if (prescList[0]) {
                       setLocalPrescriptionDrugs(prescList[0].drugs || '');
                       setLocalPrescriptionInstructions(prescList[0].instructions || '');
-                    } else {
-                      setLocalPrescriptionDrugs('');
-                      setLocalPrescriptionInstructions('');
                     }
                   } catch (err) {
-                    console.error('Error loading detail:', err);
-                    setRecordDetail(record);
-                    setPrescriptions([]);
-                    setLocalDiagnosis(record.diagnosis || '');
-                    setLocalNotes(record.treatmentNotes || '');
-                    setLocalPrescriptionDrugs('');
-                    setLocalPrescriptionInstructions('');
+                    console.error(err);
+                    toast.error(t('common.errors.loadFailed') || 'Không thể tải chi tiết');
                   } finally {
                     setLoadingDetail(false);
                   }
                 }}
-                className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors cursor-pointer"
-                aria-label="Chỉnh sửa"
-                title="Chỉnh sửa"
+                className="p-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 active:scale-95 transition group relative"
+                aria-label={t('doctorRecords.common.edit')}
               >
                 <Pencil className="w-4 h-4" />
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none z-10 shadow-lg">
+                  {t('doctorRecords.common.edit')}
+                </span>
               </button>
+
+              {/* Có thể bật lại sau nếu cần */}
+              {/* <button
+                onClick={() => setShowPrescriptionModal(true)}
+                className="p-2.5 bg-green-600 text-white rounded-full hover:bg-green-700 transition group relative"
+                aria-label={t('modal.prescriptionTitle')}
+              >
+                <Pill className="w-4 h-4" />
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none z-10">
+                  {t('modal.prescriptionTitle')}
+                </span>
+              </button> */}
+
             </div>
           )}
         </td>
       </tr>
 
+      {/* Modal chi tiết & chỉnh sửa */}
       {showDetailModal && (
         <RecordDetailModal
           record={recordDetail || record}
@@ -223,68 +222,51 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
           localNotes={localNotes}
           setLocalDiagnosis={setLocalDiagnosis}
           setLocalNotes={setLocalNotes}
-          onSave={async () => {
-            if (!localDiagnosis || !localDiagnosis.trim()) {
-              onError && onError('Chẩn đoán là bắt buộc');
-              return;
-            }
-            setSaving(true);
-            try {
-              const updatePayload = {
-                diagnosis: localDiagnosis.trim(),
-                treatmentNotes: localNotes?.trim() || '',
-                prescription: (localPrescriptionDrugs?.trim() || localPrescriptionInstructions?.trim()) ? {
-                  drugs: localPrescriptionDrugs?.trim() || '',
-                  instructions: localPrescriptionInstructions?.trim() || ''
-                } : null
-              };
-              
-              await medicalRecordApi.update(record.recordId, updatePayload);
-              
-              toast.success('Cập nhật hồ sơ bệnh án thành công!', {
-                duration: 3000,
-                position: 'top-right',
-              });
-              
-              setShowDetailModal(false);
-              setRecordDetail(null);
-              setPrescriptions([]);
-              onUpdated && onUpdated();
-            } catch (e) {
-              const msg = e.response?.data?.message || e.message || 'Cập nhật hồ sơ thất bại';
-              toast.error(msg, {
-                duration: 4000,
-                position: 'top-right',
-              });
-              onError && onError(msg);
-            } finally {
-              setSaving(false);
-            }
-          }}
           localPrescriptionDrugs={localPrescriptionDrugs}
           localPrescriptionInstructions={localPrescriptionInstructions}
           setLocalPrescriptionDrugs={setLocalPrescriptionDrugs}
           setLocalPrescriptionInstructions={setLocalPrescriptionInstructions}
           saving={saving}
+          onSave={async () => {
+            if (!localDiagnosis?.trim()) {
+              toast.error(t('doctorRecords.create.diagnosisRequired'));
+              return;
+            }
+            setSaving(true);
+            try {
+              const payload = {
+                diagnosis: localDiagnosis.trim(),
+                treatmentNotes: localNotes?.trim() || '',
+                prescription: localPrescriptionDrugs?.trim() || localPrescriptionInstructions?.trim()
+                  ? { drugs: localPrescriptionDrugs.trim(), instructions: localPrescriptionInstructions.trim() }
+                  : null,
+              };
+              await medicalRecordApi.update(record.recordId, payload);
+              toast.success(t('doctorRecords.modal.saveSuccess') || 'Cập nhật thành công!');
+              setShowDetailModal(false);
+              onUpdated?.();
+            } catch (e) {
+              const msg = e.response?.data?.message || t('doctorRecords.modal.saveFailed');
+              toast.error(msg);
+            } finally {
+              setSaving(false);
+            }
+          }}
           onClose={() => {
             setShowDetailModal(false);
             setRecordDetail(null);
             setPrescriptions([]);
-            setLocalDiagnosis(record.diagnosis || '');
-            setLocalNotes(record.treatmentNotes || '');
-            setLocalPrescriptionDrugs('');
-            setLocalPrescriptionInstructions('');
           }}
         />
       )}
 
+      {/* Modal kê đơn (nếu bật lại) */}
       {showPrescriptionModal && (
         <PrescriptionFormModal
           record={record}
-          onError={onError}
           onClose={() => setShowPrescriptionModal(false)}
           onSuccess={() => {
-            onUpdated();
+            onUpdated?.();
             setShowPrescriptionModal(false);
           }}
         />

@@ -26,7 +26,7 @@ export default function AdminSidebar({ activeMenu: propActiveMenu, onMenuChange 
     { id: 'medical-records', label: t('adminSidebar.medicalRecords'),  icon: ClipboardList },
     { id: 'invoices',        label: t('adminSidebar.invoices'),        icon: Receipt },
     { id: 'reviews',         label: t('adminSidebar.reviews'),         icon: MessageSquare },
-    { id: 'email-templates', label: 'Email Templates',                 icon: Mail },
+    { id: 'email-templates', label: t('adminSidebar.emailTemplates'),                 icon: Mail },
   ];
 
   const currentPath = location.pathname;

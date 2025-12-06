@@ -214,7 +214,7 @@ const RecordDetailModal = ({
                 : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
             }`}
           >
-            {t('common.cancel', 'Hủy')}
+            {t('doctorRecords.common.cancel', 'Hủy')}
           </button>
 
           <button
@@ -225,7 +225,7 @@ const RecordDetailModal = ({
             {saving ? (
               <>
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                {t('common.saving', 'Đang lưu...')}
+                {t('doctorRecords.common.saving', 'Đang lưu...')}
               </>
             ) : (
               <>

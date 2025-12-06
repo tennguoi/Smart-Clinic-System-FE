@@ -234,7 +234,7 @@ const MedicalRecordHistory = () => {
             {loading ? (
               <tr>
                 <td colSpan="5" className={`px-4 py-10 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                  {t('common.loading')}
+                  {t('medicalRecords.common.loading')}
                 </td>
               </tr>
             ) : currentPageRecords.length === 0 ? (

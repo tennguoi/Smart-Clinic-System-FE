@@ -299,7 +299,7 @@ export default function AccountManagement() {
           {/* Tìm kiếm */}
           <div className="lg:col-span-5">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              <Search className="inline w-4 h-4 mr-1" /> {t('common.search')}
+              <Search className="inline w-4 h-4 mr-1" /> {t('accountManagement.common.search')}
             </label>
             <input
               type="text"
