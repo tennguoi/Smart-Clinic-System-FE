@@ -23,28 +23,61 @@ export const serviceApi = {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
+      // Kiểm tra content-type trước khi parse JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Unexpected content-type:', contentType, 'Response:', text);
+        throw new Error('Invalid response format: expected JSON');
+      }
+
       const data = await response.json();
       console.log('Services data received:', data);
 
+      // Validate response structure
+      if (!data || typeof data !== 'object') {
+        console.error('Invalid response data structure:', data);
+        throw new Error('Invalid response data structure');
+      }
+
+      // Kiểm tra nếu response có error (chỉ throw nếu có error field)
+      if (data.error) {
+        console.error('API returned error:', data.error);
+        throw new Error(data.error || 'API error');
+      }
+      
+      // Nếu có message nhưng không có content/data, có thể là error response
+      // Nhưng không throw vì message có thể là success message
+      if (data.message && !data.content && !Array.isArray(data)) {
+        console.warn('API response has message but no content:', data.message);
+      }
+
       // Map data và xử lý photoUrl
-      const servicesWithImages = (data.content || []).map(service => ({
-        ...service,
-        // Xử lý imageUrl thông minh
-        imageUrl: service.photoUrl 
-          ? (service.photoUrl.startsWith('http://') || service.photoUrl.startsWith('https://'))
-            ? service.photoUrl  // External URL → dùng trực tiếp
-            : `${API_BASE_URL}${service.photoUrl}`  // Local path → ghép base URL
-          : null
-      }));
+      const servicesList = Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
+      const servicesWithImages = servicesList.map(service => {
+        if (!service || typeof service !== 'object') {
+          console.warn('Invalid service object:', service);
+          return null;
+        }
+        return {
+          ...service,
+          // Xử lý imageUrl thông minh
+          imageUrl: service.photoUrl 
+            ? (service.photoUrl.startsWith('http://') || service.photoUrl.startsWith('https://'))
+              ? service.photoUrl  // External URL → dùng trực tiếp
+              : `${API_BASE_URL}${service.photoUrl}`  // Local path → ghép base URL
+            : null
+        };
+      }).filter(Boolean); // Loại bỏ các service null
 
       return {
         services: servicesWithImages,
         totalPages: data.totalPages || 0,
         totalElements: data.totalElements || 0,
-        currentPage: data.number || 0,
+        currentPage: data.number !== undefined ? data.number : page,
         pageSize: data.size || size,
-        isFirst: data.first || false,
-        isLast: data.last || false,
+        isFirst: data.first !== undefined ? data.first : (page === 0),
+        isLast: data.last !== undefined ? data.last : false,
       };
     } catch (error) {
       console.error('Error fetching services:', error);
@@ -78,28 +111,61 @@ export const serviceApi = {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
+      // Kiểm tra content-type trước khi parse JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Unexpected content-type:', contentType, 'Response:', text);
+        throw new Error('Invalid response format: expected JSON');
+      }
+
       const data = await response.json();
       console.log('Filtered services data:', data);
 
+      // Validate response structure
+      if (!data || typeof data !== 'object') {
+        console.error('Invalid response data structure:', data);
+        throw new Error('Invalid response data structure');
+      }
+
+      // Kiểm tra nếu response có error (chỉ throw nếu có error field)
+      if (data.error) {
+        console.error('API returned error:', data.error);
+        throw new Error(data.error || 'API error');
+      }
+      
+      // Nếu có message nhưng không có content/data, có thể là error response
+      // Nhưng không throw vì message có thể là success message
+      if (data.message && !data.content && !Array.isArray(data)) {
+        console.warn('API response has message but no content:', data.message);
+      }
+
       // Map data và xử lý photoUrl
-      const servicesWithImages = (data.content || []).map(service => ({
-        ...service,
-        // Xử lý imageUrl thông minh
-        imageUrl: service.photoUrl 
-          ? (service.photoUrl.startsWith('http://') || service.photoUrl.startsWith('https://'))
-            ? service.photoUrl  // External URL → dùng trực tiếp
-            : `${API_BASE_URL}${service.photoUrl}`  // Local path → ghép base URL
-          : null
-      }));
+      const servicesList = Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
+      const servicesWithImages = servicesList.map(service => {
+        if (!service || typeof service !== 'object') {
+          console.warn('Invalid service object:', service);
+          return null;
+        }
+        return {
+          ...service,
+          // Xử lý imageUrl thông minh
+          imageUrl: service.photoUrl 
+            ? (service.photoUrl.startsWith('http://') || service.photoUrl.startsWith('https://'))
+              ? service.photoUrl  // External URL → dùng trực tiếp
+              : `${API_BASE_URL}${service.photoUrl}`  // Local path → ghép base URL
+            : null
+        };
+      }).filter(Boolean); // Loại bỏ các service null
 
       return {
         services: servicesWithImages,
         totalPages: data.totalPages || 0,
         totalElements: data.totalElements || 0,
-        currentPage: data.number || 0,
+        currentPage: data.number !== undefined ? data.number : page,
         pageSize: data.size || size,
-        isFirst: data.first || false,
-        isLast: data.last || false,
+        isFirst: data.first !== undefined ? data.first : (page === 0),
+        isLast: data.last !== undefined ? data.last : false,
       };
     } catch (error) {
       console.error('Error searching services:', error);
@@ -122,10 +188,32 @@ export const serviceApi = {
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
+      // Kiểm tra content-type trước khi parse JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Unexpected content-type:', contentType, 'Response:', text);
+        throw new Error('Invalid response format: expected JSON');
+      }
+
       const service = await response.json();
+      
+      // Validate response structure
+      if (!service || typeof service !== 'object') {
+        console.error('Invalid service data structure:', service);
+        throw new Error('Invalid service data structure');
+      }
+
+      // Kiểm tra nếu response có error (chỉ throw nếu có error field)
+      if (service.error) {
+        console.error('API returned error:', service.error);
+        throw new Error(service.error || 'API error');
+      }
       
       // Xử lý imageUrl thông minh
       return {

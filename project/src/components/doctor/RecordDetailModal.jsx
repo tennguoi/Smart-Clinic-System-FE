@@ -1,7 +1,7 @@
 // src/components/doctor/RecordDetailModal.jsx
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Pencil, FileText } from 'lucide-react';
+import { X, Pencil, Download } from 'lucide-react';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import toast from 'react-hot-toast';
 import { downloadPdf, getMedicalRecordFilename } from '../../utils/pdfDownload';
@@ -69,13 +69,13 @@ const RecordDetailModal = ({
             <button
               onClick={handleExportPdf}
               disabled={exporting}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition disabled:opacity-60 ${
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition disabled:opacity-60 ${
                 isDark
                   ? 'bg-purple-700 hover:bg-purple-600 text-white'
                   : 'bg-purple-600 hover:bg-purple-700 text-white'
               }`}
             >
-              <FileText className="w-4 h-4" />
+              <Download className="w-5 h-5" />
               {exporting ? 'Đang xuất...' : t('doctorRecords.modal.pdfButton', 'Xuất PDF')}
             </button>
 

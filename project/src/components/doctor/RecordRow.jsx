@@ -1,6 +1,6 @@
 // src/components/doctor/RecordRow.jsx
 import { useState } from 'react';
-import { Pencil, Trash2, Pill, Download, FileText } from 'lucide-react';
+import { Pencil, Trash2, Pill, Download } from 'lucide-react';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import toast from 'react-hot-toast';
 import RecordDetailModal from './RecordDetailModal';
@@ -160,11 +160,14 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
               <button
                 onClick={handleExportPdf}
                 disabled={exporting}
-                className="p-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 disabled:opacity-60 transition-colors"
+                className="p-2.5 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/30 rounded-full transition group relative disabled:opacity-60"
                 aria-label="Xuất PDF hồ sơ"
                 title={exporting ? 'Đang xuất...' : 'Xuất PDF hồ sơ bệnh án'}
               >
-                <FileText className="w-4 h-4" />
+                <Download className="w-5 h-5" />
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+                  {exporting ? 'Đang xuất...' : 'Xuất PDF hồ sơ bệnh án'}
+                </span>
               </button>
 
               <button

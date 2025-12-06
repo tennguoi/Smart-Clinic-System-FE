@@ -45,14 +45,20 @@ axiosInstance.interceptors.response.use(
       // 1. Chưa redirect rồi
       // 2. Không phải đang ở trang login hoặc verify-2fa
       // 3. Không phải đang ở protected route (để ProtectedRoute xử lý)
+      // 4. Không phải đang ở public route (như /services, /about, etc.)
       const isProtectedRoute = currentPath.startsWith('/admin') || 
                                currentPath.startsWith('/doctor') || 
                                currentPath.startsWith('/reception');
       
+      // Danh sách các public routes không nên redirect
+      const publicRoutes = ['/', '/services', '/about', '/doctors', '/pricing', '/news', '/appointment', '/appointments/tracking', '/danh-gia', '/profile'];
+      const isPublicRoute = publicRoutes.some(route => currentPath === route || currentPath.startsWith(route + '/'));
+      
       if (!isRedirecting && 
           !currentPath.includes('/login') && 
           !currentPath.includes('/verify-2fa') &&
-          !isProtectedRoute) {
+          !isProtectedRoute &&
+          !isPublicRoute) {
         // Chỉ redirect nếu không phải protected route
         // Protected route sẽ được ProtectedRoute xử lý
         isRedirecting = true;
