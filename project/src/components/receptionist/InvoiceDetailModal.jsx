@@ -447,7 +447,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
               disabled={saving}
             >
               <Download className="w-5 h-5" />
-              {t('invoices.modal.exportPdf')}
+              {t('invoices.tooltips.exportPdf')}
             </button>
 
             <div className="flex justify-end gap-4">
@@ -456,7 +456,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                 className={`px-8 py-4 rounded-xl font-bold text-lg transition ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-900'}`}
                 disabled={saving}
               >
-                {t('common.close')}
+                {t('invoices.common.close')}
               </button>
               {invoice.paymentStatus === 'Pending' && !isEditing && (
                 <button

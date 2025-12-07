@@ -3,16 +3,18 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
     LineChart, Line
 } from 'recharts';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosConfig';
 import { 
     FaCalendarCheck, FaUserInjured, FaMoneyBillWave, FaUserMd, 
-    FaArrowUp, FaArrowDown, FaChartBar, FaStethoscope, FaCoins 
+    FaArrowUp, FaArrowDown, FaChartBar, FaStethoscope, FaCoins, FaFileExcel
 } from 'react-icons/fa';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { CalendarDays } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
+import toast from 'react-hot-toast';
+import adminStatisticsApi from '../../api/adminStatisticsApi';
 
 const RANGE_OPTIONS = [
     { label: 'Ngày', value: 'day', en: 'Day' },
@@ -42,6 +44,7 @@ const StatisticsPage = () => {
     const [revenueTrend, setRevenueTrend] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [exporting, setExporting] = useState(false);
     
     // Date filter states
     const [rangeType, setRangeType] = useState('month');
@@ -108,21 +111,20 @@ const StatisticsPage = () => {
                     return;
                 }
 
-                const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
                 const params = { startDate, endDate };
 
-                let topServicesUrl = 'http://localhost:8082/api/admin/dashboard/top-services-by-appointments';
+                let topServicesEndpoint = '/api/admin/dashboard/top-services-by-appointments';
                 if (statType === 'medical_record') {
-                    topServicesUrl = 'http://localhost:8082/api/admin/dashboard/top-services-by-medical-records';
+                    topServicesEndpoint = '/api/admin/dashboard/top-services-by-medical-records';
                 } else if (statType === 'revenue') {
-                    topServicesUrl = 'http://localhost:8082/api/admin/dashboard/top-services-by-revenue';
+                    topServicesEndpoint = '/api/admin/dashboard/top-services-by-revenue';
                 }
 
                 const [topServicesRes, kpiRes, apptTrendRes, revTrendRes] = await Promise.all([
-                    axios.get(topServicesUrl, { headers, params }),
-                    axios.get('http://localhost:8082/api/admin/dashboard/kpi', { headers, params }),
-                    axios.get('http://localhost:8082/api/admin/dashboard/trend/appointments', { headers, params }),
-                    axios.get('http://localhost:8082/api/admin/dashboard/trend/revenue', { headers, params })
+                    axiosInstance.get(topServicesEndpoint, { params }),
+                    axiosInstance.get('/api/admin/dashboard/kpi', { params }),
+                    axiosInstance.get('/api/admin/dashboard/trend/appointments', { params }),
+                    axiosInstance.get('/api/admin/dashboard/trend/revenue', { params })
                 ]);
 
                 const formattedTopServices = topServicesRes.data.map((item) => ({
@@ -157,6 +159,60 @@ const StatisticsPage = () => {
 
         fetchData();
     }, [startDate, endDate, statType, currentLang, t]);
+
+    // Export Excel function
+    const handleExportExcel = async () => {
+        setExporting(true);
+        try {
+            const params = {
+                period: rangeType === 'custom' ? undefined : (rangeType === 'day' ? 'day' : rangeType === 'week' ? 'week' : 'month'),
+                date: rangeType === 'custom' ? undefined : startDate,
+                startDate: rangeType === 'custom' ? startDate : undefined,
+                endDate: rangeType === 'custom' ? endDate : undefined,
+            };
+
+            // Remove undefined values
+            Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
+
+            const blob = await adminStatisticsApi.exportStatisticsToExcel(params);
+
+            // Tạo URL từ blob
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            
+            // Tạo tên file dựa trên khoảng thời gian
+            let fileName = 'ThongKe.xlsx';
+            if (rangeType === 'custom') {
+                fileName = `ThongKe_${startDate}_${endDate}.xlsx`;
+            } else if (rangeType === 'day') {
+                fileName = `ThongKe_Ngay_${startDate.replace(/-/g, '')}.xlsx`;
+            } else if (rangeType === 'week') {
+                fileName = `ThongKe_Tuan_${startDate.replace(/-/g, '')}.xlsx`;
+            } else if (rangeType === 'month') {
+                fileName = `ThongKe_Thang_${startDate.substring(0, 7).replace(/-/g, '')}.xlsx`;
+            }
+
+            link.href = url;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Giải phóng URL
+            setTimeout(() => {
+                window.URL.revokeObjectURL(url);
+            }, 100);
+
+            toast.success(t('statistics.exportSuccess', { defaultValue: 'Xuất file Excel thành công!' }));
+        } catch (error) {
+            console.error('Lỗi khi xuất file Excel:', error);
+            const errorMessage = error.response?.data?.message || error.message || 
+                t('statistics.exportError', { defaultValue: 'Không thể xuất file Excel. Vui lòng thử lại.' });
+            toast.error(errorMessage);
+        } finally {
+            setExporting(false);
+        }
+    };
 
     // Refresh khi có thanh toán thành công
     useEffect(() => {
@@ -274,6 +330,26 @@ const StatisticsPage = () => {
                             />
                         )}
                     </div>
+
+                    {/* Export Excel Button */}
+                    <button
+                        onClick={handleExportExcel}
+                        disabled={exporting}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-white transition-all shadow-sm ${
+                            exporting
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-green-600 hover:bg-green-700 active:scale-95'
+                        }`}
+                        title={t('statistics.exportExcel', { defaultValue: 'Xuất file Excel' })}
+                    >
+                        <FaFileExcel className="h-5 w-5" />
+                        <span className="hidden sm:inline">
+                            {exporting 
+                                ? t('statistics.exporting', { defaultValue: 'Đang xuất...' })
+                                : t('statistics.export', { defaultValue: 'Xuất Excel' })
+                            }
+                        </span>
+                    </button>
                 </div>
             </header>
 

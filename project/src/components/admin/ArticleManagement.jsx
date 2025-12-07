@@ -458,10 +458,10 @@ export default function ArticleManagement() {
                     <td className="px-6 py-4 text-center text-sm text-gray-600 dark:text-gray-400">{formatDate(a.publishedAt)}</td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex justify-center gap-3">
-                        <button onClick={() => handleOpenModal("view", a)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/30 transition" title={t("common.view")}>
+                        <button onClick={() => handleOpenModal("view", a)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/30 transition" title={t("articles.common.view")}>
                           <Eye className="w-5 h-5" />
                         </button>
-                        <button onClick={() => handleDeleteClick(a)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition" title={t("common.delete")}>
+                        <button onClick={() => handleDeleteClick(a)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition" title={t("articles.common.delete")}>
                           <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
@@ -619,10 +619,10 @@ export default function ArticleManagement() {
               {!isViewMode && (
                 <div className={`flex gap-4 pt-6 border-t ${theme === 'dark' ? 'border-gray-700' : ''}`}>
                   <button type="submit" disabled={loading || uploading} className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-70 transition">
-                    {loading || uploading ? t("common.processing") : isCreateMode ? t("articles.createButton") : t("common.save")}
+                    {loading || uploading ? t("common.processing") : isCreateMode ? t("articles.createButton") : t("articles.common.save")}
                   </button>
                   <button type="button" onClick={handleCloseModal} className={`flex-1 bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-200 py-3 rounded-xl font-semibold hover:bg-gray-400 dark:hover:bg-gray-500 transition`}>
-                    {t("common.cancel")}
+                    {t("articles.common.cancel")}
                   </button>
                 </div>
               )}
@@ -655,7 +655,7 @@ export default function ArticleManagement() {
                 }}
                 className={`flex-1 bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-200 py-3 rounded-xl font-semibold hover:bg-gray-400 dark:hover:bg-gray-500 transition`}
               >
-                {t("common.cancel")}
+                {t("articles.common.cancel")}
               </button>
             </div>
           </div>

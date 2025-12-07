@@ -51,8 +51,11 @@ export default function FullServicesPage() {
       });
     } catch (err) {
       console.error('Error loading services:', err);
-      setError(t('fullServices.error'));
+      // Chỉ hiển thị lỗi, không redirect
+      const errorMessage = err.message || t('fullServices.error');
+      setError(errorMessage);
       setServices([]);
+      // Không throw error để tránh redirect
     } finally {
       setLoading(false);
     }

@@ -33,8 +33,11 @@ export default function ServicesSection() {
       sessionStorage.setItem(CACHE_TIMESTAMP, Date.now().toString());
     } catch (err) {
       console.error('Lỗi tải dịch vụ:', err);
-      setError(t('servicesSection.error'));
+      // Chỉ hiển thị lỗi, không redirect
+      const errorMessage = err.message || t('servicesSection.error');
+      setError(errorMessage);
       setServices([]);
+      // Không throw error để tránh redirect
     } finally {
       setLoading(false);
     }

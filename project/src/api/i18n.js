@@ -280,7 +280,8 @@ appointment: {
   successTitle: "Đặt lịch thành công!",
   successMessage: "Chúng tôi đã ghi nhận yêu cầu của bạn. Bạn sẽ được chuyển về trang chủ trong giây lát...",
   errorTitle: "Có lỗi xảy ra!",
-  confirmationNote: "Chúng tôi sẽ xác nhận lịch khám trong vòng 30 phút"
+  confirmationNote: "Chúng tôi sẽ xác nhận lịch khám trong vòng 30 phút",
+  helpText: "Cần hỗ trợ ngay? Gọi ngay",
 },
 
 //ADMIN ACCOUNT MANAGEMENT//
@@ -378,7 +379,9 @@ accountManagement: {
         appointments: "Quản Lý Lịch Hẹn",
         rooms: "Quản Lý Phòng Khám",
         medicalRecords: "Lịch Sử Khám Bệnh",
-        invoices: "Quản Lý Hóa Đơn"
+        invoices: "Quản Lý Hóa Đơn",
+        reviews: "Quản Lý Đánh Giá",
+        emailTemplates: "Quản Lý Mẫu Email",
       },
       articles: {
     pageTitle: "Quản Lý Tin Tức",
@@ -563,7 +566,8 @@ servicesManagement: {
      cancel: "Hủy",
        delete: "Xóa",
        confirm: "Xác nhận",
-
+view: "Xem chi tiết",
+save: "Lưu",
   },
   modal: {
     createTitle: "Tạo dịch vụ mới",
@@ -624,9 +628,12 @@ statistics: {
   byAppointment: "Đặt lịch",
   byExamination: "Khám thật",
   byRevenue: "Doanh thu",
-
+ exportExcel: "Xuất  Excel",
+  exporting: "Đang Xuất ...",
+  export: "Xuất Excel",
   // Tooltip & chung
   times: "lượt", // đã có trong common.times nhưng để chắc chắn
+  
 },
 
 common: {
@@ -727,6 +734,7 @@ appointmentManagement: {
   clearFilter: "Xóa lọc",
   search: "Tìm kiếm"
 },
+
 },
 
 
@@ -934,7 +942,8 @@ modal: {
 
       tooltips: {
         viewDetail: "Xem chi tiết",
-        pay: "Thu tiền"
+        pay: "Thu tiền",
+        exportPdf: "Xuất PDF",
       },
 
       errors: {
@@ -1218,6 +1227,7 @@ doctorRecords: {
   errors: {
     loadFailed: "Không thể tải hồ sơ khám"
   },
+ label: "hồ sơ",
   filters: {
     keyword: "Từ khóa tìm kiếm",
     keywordPlaceholder: "Nhập tên bệnh nhân, SĐT...",
@@ -1231,12 +1241,15 @@ doctorRecords: {
     treatmentNotes: "Ghi chú điều trị"
   },
   create: {
+    newRecord: "Tạo hồ sơ mới",
     success: "Đã hoàn thành và lưu hồ sơ khám bệnh!",
     failed: "Tạo hồ sơ khám thất bại",
     diagnosisRequired: "Chẩn đoán là bắt buộc",
-    treatmentNotesRequired: "Ghi chú điều trị là bắt buộc"
+    treatmentNotesRequired: "Ghi chú điều trị là bắt buộc",
+    
   },
     common: {
+      total: "Tổng số hồ sơ: ",
   // ... các key hiện tại ...
   stt: "STT",
   actions: "Thao tác",
@@ -1246,7 +1259,11 @@ doctorRecords: {
   cancel: "Hủy",
   all: "Tất cả",
   clearFilter: "Xóa lọc",
-  search: "Tìm kiếm"
+  search: "Tìm kiếm",
+  "deleteConfirm": "Bạn có chắc muốn xóa hồ sơ này? Hành động này không thể hoàn tác.",
+  "errors": {
+    "loadFailed": "Không thể tải chi tiết hồ sơ"
+  }
 },
 modal: {
     title: "Chỉnh sửa hồ sơ bệnh án",
@@ -1267,7 +1284,15 @@ modal: {
     prescriptionInstructionsPlaceholder: "Nhập hướng dẫn sử dụng thuốc...",
     prescriptionIssuedAt: "Ngày tạo đơn: {{date}}",
     createdAt: "Ngày tạo hồ sơ: {{date}}",
-    saveButton: "Lưu thay đổi"
+    saveButton: "Lưu thay đổi",
+ "pdfTitle": "Xuất PDF hồ sơ bệnh án",
+  "pdfExporting": "Đang xuất...",
+  "pdfSuccess": "Xuất PDF hồ sơ thành công!",
+  "pdfFailed": "Xuất PDF thất bại: ",
+  "saveSuccess": "Cập nhật hồ sơ thành công!",
+  "saveFailed": "Cập nhật hồ sơ thất bại",
+  "deleteSuccess": "Xóa hồ sơ thành công!",
+  "deleteFailed": "Xóa hồ sơ thất bại",
   },
 },
 profilepage: {
@@ -1420,6 +1445,8 @@ verifyOtp: {
   backTo: "Quay lại",
   login: "Đăng nhập"
 },
+
+
     }
   },
 
@@ -1691,7 +1718,8 @@ appointment: {
   successTitle: "Appointment booked successfully!",
   successMessage: "We have received your request. You will be redirected to homepage shortly...",
   errorTitle: "Something went wrong!",
-  confirmationNote: "We will confirm your appointment within 30 minutes"
+  confirmationNote: "We will confirm your appointment within 30 minutes",
+  helpText: "For assistance, please contact us via",
 },
 
 //ADMIN ACCOUNT MANAGEMENT//
@@ -1789,7 +1817,9 @@ accountManagement: {
         appointments: "Appointment Management",
         rooms: "Examination Rooms",
         medicalRecords: "Medical Records",
-        invoices: "Invoice Management"
+        invoices: "Invoice Management",
+        reviews:"Review Management",
+        emailTemplates: "Email Templates"
       },
     articles: {
     pageTitle: "Article Management",
@@ -1983,6 +2013,8 @@ common: {
      delete: "Delete",
        cancel: "Cancel",
        confirm: "Confirm",
+      view: "View Details",
+      save: "Save",
   },
   toast: {
     createSuccess: "Service created successfully!",
@@ -2035,6 +2067,9 @@ statistics: {
   byAppointment: "By Appointments",
   byExamination: "By Examinations",
   byRevenue: "By Revenue",
+  exportExcel: "Export to Excel",
+  exporting: "Exporting...",
+  export: "Export  Excel",
 },
 
 common: {
@@ -2135,6 +2170,8 @@ appointmentManagement: {
   search: "Search",
   
 },
+
+
 },
 roomManagement: {
   title: "Examination Room Management",
@@ -2289,7 +2326,8 @@ invoices: {
 
       tooltips: {
         viewDetail: "View Details",
-        pay: "Receive Payment"
+        pay: "Receive Payment",
+        exportPdf: "Export PDF"
       },
 
   modal: {
@@ -2602,6 +2640,7 @@ doctorExamination: {
   queueTitle: "Examination Queue"
 },
 doctorRecords: {
+  totalRecords: "Total Records: ",
   title: "Medical Records & Complete Examination",
   listTitle: "Created Records",
   noRecords: "No records yet. Click \"Create New Record\" to complete an examination.",
@@ -2609,6 +2648,7 @@ doctorRecords: {
   errors: {
     loadFailed: "Failed to load medical records"
   },
+  label: " records",
   filters: {
     keyword: "Search Keyword",
     keywordPlaceholder: "Enter patient name, phone...",
@@ -2622,12 +2662,14 @@ doctorRecords: {
     treatmentNotes: "Treatment Notes"
   },
   create: {
+    newRecord: "Create New Record",
     success: "Examination completed and record saved!",
     failed: "Failed to create medical record",
     diagnosisRequired: "Diagnosis is required",
     treatmentNotesRequired: "Treatment notes are required"
   },
   common: {
+    total: "Total records: ",
   // ... existing keys ...
   stt: "No.",
   actions: "Actions",
@@ -2637,7 +2679,11 @@ doctorRecords: {
   cancel: "Cancel",
   all: "All",
   clearFilter: "Clear Filters",
-  search: "Search"
+  search: "Search",
+  "deleteConfirm": "Are you sure you want to delete this record? This action cannot be undone.",
+  "errors": {
+    "loadFailed": "Failed to load record details",
+  }
 },
 modal: {
     title: "Edit Medical Record",
@@ -2658,7 +2704,15 @@ modal: {
     prescriptionInstructionsPlaceholder: "Enter usage instructions...",
     prescriptionIssuedAt: "Prescription issued on: {{date}}",
     createdAt: "Medical record created on: {{date}}",
-    saveButton: "Save Changes"
+    saveButton: "Save Changes",
+    "pdfTitle": "Export Medical Record as PDF",
+  "pdfExporting": "Exporting...",
+  "pdfSuccess": "PDF exported successfully!",
+  "pdfFailed": "Export failed: ",
+  "saveSuccess": "Record updated successfully!",
+  "saveFailed": "Failed to update record",
+  "deleteSuccess": "Record deleted successfully!",
+  "deleteFailed": "Failed to delete record"
   },
 },
 profilepage: {
