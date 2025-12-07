@@ -10,7 +10,7 @@ import CreateInvoiceModal from './CreateInvoiceModal';
 import InvoiceDetailModal from './InvoiceDetailModal';
 import { formatPrice } from '../../utils/formatPrice';
 import { FileText, Search, Plus, Eye, CreditCard, Receipt, Download } from 'lucide-react';
-import toast, { Toaster } from 'react-hot-toast';
+import toast ,{ Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import CountBadge from '../common/CountBadge';
 import Pagination from '../common/Pagination';
@@ -50,7 +50,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
       setCurrentPage(0);
     } catch (err) {
       console.error('Lỗi tải hóa đơn:', err);
-      toast.error(t('invoices.errors.loadFailed'));
+      toast.error(t('invoices.errors.loadFailed'), toastConfig.toastOptions.error);
     } finally {
       setLoading(false);
     }
@@ -120,10 +120,10 @@ export default function InvoicesSection({ isDoctorView = false }) {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      toast.success(t('invoices.pdfDownloadSuccess'));
+      toast.success(t('invoices.pdfDownloadSuccess'), toastConfig.toastOptions.success);
     } catch (err) {
       console.error('Lỗi tải PDF:', err);
-      toast.error(t('invoices.errors.pdfDownloadError'));
+      toast.error(t('invoices.errors.pdfDownloadError'), toastConfig.toastOptions.error);
     }
   };
 
@@ -330,7 +330,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
           }}
         />
       )}
-
+      
       <Toaster
         position={toastConfig.position}
         containerStyle={toastConfig.containerStyle}

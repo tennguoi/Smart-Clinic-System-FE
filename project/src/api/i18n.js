@@ -933,7 +933,8 @@ modal: {
         status: "Trạng thái",
         actions: "Thao tác"
       },
-
+pdfDownloadSuccess: "Tải PDF hóa đơn thành công!",
+      pdfDownloadError: "Không thể tải PDF hóa đơn",
       status: {
         paid: "Đã thanh toán",
         pending: "Chưa thanh toán",
@@ -1134,7 +1135,9 @@ doctorStats: {
   },
   chart: {
     visitsByPeriod: "Số ca khám theo {{#if (eq context 'hour')}}giờ{{else}}ngày{{/if}}",
-    trend: "Xu hướng số ca khám"
+    trend: "Xu hướng số ca khám",
+    "visitsByHour": "Lượt khám theo giờ",
+
   },
   table: {
     title: "Bảng thống kê theo khung giờ",
@@ -1445,7 +1448,70 @@ verifyOtp: {
   backTo: "Quay lại",
   login: "Đăng nhập"
 },
-
+reviewsManagement: {
+  title: "Quản Lý Đánh Giá",
+  createButton: "Tạo Đánh Giá",
+  filterRating: "Lọc theo đánh giá",
+  filterReviewer: "Tìm theo người đánh giá",
+  clearFilters: "Xóa bộ lọc",
+  allRatings: "Tất cả",
+  table: {
+    no: "STT",
+    reviewer: "Người đánh giá",
+    rating: "Đánh giá",
+    comment: "Nhận xét",
+    createdAt: "Ngày tạo",
+    actions: "Thao tác"
+  },
+  ratingBadge: "{rating}/5",
+  noReviews: "Không có đánh giá nào",
+  loading: "Đang tải...",
+  modal: {
+    createTitle: "Tạo Đánh Giá",
+    viewTitle: "Chi Tiết Đánh Giá",
+    editTitle: "Chỉnh Sửa Đánh Giá",
+    editButton: "Chỉnh sửa",
+    reviewerName: "Tên người đánh giá",
+    reviewerNameRequired: "Tên người đánh giá là bắt buộc",
+    ratingLabel: "Đánh giá",
+    ratingRequired: "Đánh giá là bắt buộc",
+    commentLabel: "Nhận xét",
+    commentRequired: "Nhận xét là bắt buộc",
+    save: "Lưu",
+    create: "Tạo Đánh Giá",
+    cancel: "Hủy",
+    processing: "Đang xử lý..."
+  },
+  toast: {
+    loadError: "Không thể tải danh sách đánh giá",
+    createSuccess: "Tạo đánh giá thành công",
+    updateSuccess: "Cập nhật đánh giá thành công",
+    deleteSuccess: "Đã xóa đánh giá thành công",
+    deleteError: "Xóa đánh giá thất bại",
+    validationError: "Vui lòng điền đầy đủ thông tin",
+    ratingRangeError: "Đánh giá phải từ 1-5 sao"
+  },
+  confirmDelete: {
+    title: "Xác nhận xóa",
+    text: "Bạn có chắc chắn muốn xóa đánh giá ?",
+    confirm: "Xóa",
+    cancel: "Hủy"
+  },
+     common: {
+  // ... các key hiện tại ...
+  stt: "STT",
+  actions: "Thao tác",
+  view: "Xem chi tiết",
+  edit: "Chỉnh sửa",
+  delete: "Xóa",
+  cancel: "Hủy",
+  all: "Tất cả",
+  clearFilter: "Xóa lọc",
+  search: "Tìm kiếm",
+  star: 'sao',
+  stars: 'sao',
+},
+},
 
     }
   },
@@ -2329,7 +2395,8 @@ invoices: {
         pay: "Receive Payment",
         exportPdf: "Export PDF"
       },
-
+pdfDownloadSuccess: "Invoice PDF downloaded successfully!",
+  pdfDownloadError: "Failed to download invoice PDF",
   modal: {
        "title": "Invoice Details",
     "code": "Code",
@@ -2562,7 +2629,8 @@ doctorStats: {
   },
   chart: {
     visitsByPeriod: "Examinations by {{#if (eq context 'hour')}}hour{{else}}day{{/if}}",
-    trend: "Examination Trend"
+    trend: "Examination Trend",
+    visitsByHour:"Visits By Hour",
   },
   table: {
     title: "Statistics Table by Time Slot",
@@ -2868,6 +2936,70 @@ verifyOtp: {
   resendFailed: "Resend failed, please try again",
   backTo: "Back to",
   login: "Login"
+},
+reviewsManagement: {
+  title: "Review Management",
+  createButton: "Create Review",
+  filterRating: "Filter by rating",
+  filterReviewer: "Search by reviewer",
+  clearFilters: "Clear filters",
+  allRatings: "All",
+  table: {
+    no: "No.",
+    reviewer: "Reviewer",
+    rating: "Rating",
+    comment: "Comment",
+    createdAt: "Created At",
+    actions: "Actions"
+  },
+  ratingBadge: "{rating}/5",
+  noReviews: "No reviews found",
+  loading: "Loading...",
+  modal: {
+    createTitle: "Create Review",
+    viewTitle: "Review Details",
+    editTitle: "Edit Review",
+    editButton: "Edit",
+    reviewerName: "Reviewer Name",
+    reviewerNameRequired: "Reviewer name is required",
+    ratingLabel: "Rating",
+    ratingRequired: "Rating is required",
+    commentLabel: "Comment",
+    commentRequired: "Comment is required",
+    save: "Save",
+    create: "Create Review",
+    cancel: "Cancel",
+    processing: "Processing..."
+  },
+  toast: {
+    loadError: "Failed to load reviews",
+    createSuccess: "Review created successfully",
+    updateSuccess: "Review updated successfully",
+    deleteSuccess: "Deleted review successfully",
+    deleteError: "Failed to delete review",
+    validationError: "Please fill in all required fields",
+    ratingRangeError: "Rating must be between 1-5 stars"
+  },
+  confirmDelete: {
+    title: "Confirm Delete",
+    text: "Are you sure you want to delete the review ?",
+    confirm: "Delete",
+    cancel: "Cancel"
+  },
+            common: {
+  // ... existing keys ...
+  stt: "No.",
+  actions: "Actions",
+  view: "View Details",
+  edit: "Edit",
+  delete: "Delete",
+  cancel: "Cancel",
+  all: "All",
+  clearFilter: "Clear Filters",
+  search: "Search",
+  star: 'star',
+  stars: 'stars',
+},
 },
 }
   }

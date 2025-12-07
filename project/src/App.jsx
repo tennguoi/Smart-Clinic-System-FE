@@ -107,7 +107,7 @@ function App() {
           <Route path="articles" element={<ArticleManagement />} />
           <Route path="services" element={<ServiceManagement />} />
           <Route path="appointments" element={<AppointmentsSection />} />
-          <Route path="rooms" element={<ClinicRoomManagement />} />
+         <Route path="rooms" element={<ClinicRoomManagement isAdminView={true} />} />
           <Route path="medical-records" element={<MedicalRecordHistory />} />
           <Route path="invoices" element={<InvoicesSection isDoctorView={true} />} />
           <Route path="doctors" element={<DoctorManagement />} />
@@ -159,7 +159,7 @@ function App() {
           <Route path="appointments" element={<AppointmentsSection />} />
           <Route path="check-in" element={<AppointmentCheckInSection/>} />
           <Route path="records" element={<PatientRecordsSection />} />
-          <Route path="rooms" element={<ClinicRoomManagement />} />
+        <Route path="rooms" element={<ClinicRoomManagement isAdminView={false} />} />
           <Route path="invoices" element={<InvoicesSection />} />
           <Route path="payment/:billId" element={<PaymentPage />} />
         </Route>

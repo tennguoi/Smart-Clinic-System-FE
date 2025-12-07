@@ -7,13 +7,14 @@ import MedicalRecordHistory from '../components/doctor/MedicalRecordHistory';
 import DoctorScheduleSection from '../components/doctor/DoctorScheduleSection';
 import CurrentPatientExamination from '../components/doctor/CurrentPatientExamination';
 import DoctorStatsDashboard from '../components/doctor/DoctorStatsDashboard';
-import InvoicesSection from '../components/receptionist/InvoicesSection'; // THÊM DÒNG NÀY
+import InvoicesSection from '../components/receptionist/InvoicesSection';
 import { Toaster } from 'react-hot-toast';
+import { toastConfig } from '../config/toastConfig';
 
 export default function DoctorPage() {
   const [activeMenu, setActiveMenu] = useState(() => {
     try {
-      return localStorage.getItem('doctor_active_menu') || 'current-patient'; // đổi default cho hợp lý
+      return localStorage.getItem('doctor_active_menu') || 'current-patient';
     } catch {
       return 'current-patient';
     }
@@ -39,16 +40,16 @@ export default function DoctorPage() {
           {activeMenu === 'stats' && <DoctorStatsDashboard />}
           {activeMenu === 'records' && <MedicalRecordsSection />}
           {activeMenu === 'history' && <MedicalRecordHistory />}
-          
-          {/* ĐÃ SỬA – BÁC SĨ XEM HÓA ĐƠN ĐẸP NHƯ LỄ TÂN */}
           {activeMenu === 'invoices' && <InvoicesSection isDoctorView={true} />}
-
-          {/* Nếu có menu khác chưa làm thì để placeholder tạm */}
           {/* {activeMenu === 'schedule' && <DoctorScheduleSection />} */}
         </main>
       </div>
 
-      <Toaster position="top-right" />
+      <Toaster
+        position={toastConfig.position}
+        containerStyle={toastConfig.containerStyle}
+        toastOptions={toastConfig.toastOptions}
+      />
     </div>
   );
 }
