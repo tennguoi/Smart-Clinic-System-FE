@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import { Search, ClipboardList, X } from 'lucide-react';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import CountBadge from '../common/CountBadge';
 import Pagination from '../common/Pagination';
@@ -17,11 +17,9 @@ const MedicalRecordHistory = () => {
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
   
-  // Pagination
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 10;
 
-  // LẤY ROLE CHÍNH XÁC TỪ localStorage
   const getUserRoles = () => {
     try {
       const rolesStr = localStorage.getItem('user_roles');
@@ -57,7 +55,7 @@ const MedicalRecordHistory = () => {
       setRecords(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch history:', err);
-      toast.error(t('medicalRecords.errors.loadFailed'));
+      toast.error(t('medicalRecords.errors.loadFailed'), toastConfig.toastOptions.error);
     } finally {
       setLoading(false);
     }
@@ -88,7 +86,6 @@ const MedicalRecordHistory = () => {
     setCurrentPage(0);
   };
 
-  // Lọc dữ liệu
   const filteredRecords = useMemo(() => {
     return records.filter((record) => {
       const matchesSearch = 
@@ -113,7 +110,6 @@ const MedicalRecordHistory = () => {
     });
   }, [records, searchTerm, filterStartDate, filterEndDate]);
 
-  // Phân trang
   const totalPages = Math.ceil(filteredRecords.length / pageSize);
   const currentPageRecords = useMemo(() => {
     const startIndex = currentPage * pageSize;
@@ -122,8 +118,6 @@ const MedicalRecordHistory = () => {
 
   return (
     <div className={`px-4 sm:px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <Toaster {...toastConfig} />
-      
       <div className="mb-6">
         <h1 className={`text-4xl font-bold flex items-center gap-3 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
           <ClipboardList className={`w-9 h-9 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
@@ -138,7 +132,6 @@ const MedicalRecordHistory = () => {
         </h1>
       </div>
 
-      {/* Bộ lọc */}
       <div className={`rounded-xl shadow-md border p-6 mb-6 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-5">
@@ -175,7 +168,7 @@ const MedicalRecordHistory = () => {
               onChange={(e) => {
                 const newStartDate = e.target.value;
                 if (filterEndDate && newStartDate > filterEndDate) {
-                  toast.error(t('medicalRecords.errors.startDateAfterEnd'));
+                  toast.error(t('medicalRecords.errors.startDateAfterEnd'), toastConfig.toastOptions.error);
                   return;
                 }
                 setFilterStartDate(newStartDate);
@@ -195,7 +188,7 @@ const MedicalRecordHistory = () => {
               onChange={(e) => {
                 const newEndDate = e.target.value;
                 if (filterStartDate && newEndDate < filterStartDate) {
-                  toast.error(t('medicalRecords.errors.endDateBeforeStart'));
+                  toast.error(t('medicalRecords.errors.endDateBeforeStart'), toastConfig.toastOptions.error);
                   return;
                 }
                 setFilterEndDate(newEndDate);
@@ -217,7 +210,6 @@ const MedicalRecordHistory = () => {
         </div>
       </div>
 
-      {/* Bảng dữ liệu */}
       <div className={`rounded-xl shadow-md border overflow-hidden ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         <table className="w-full">
           <thead className={`uppercase text-xs sticky top-0 ${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>

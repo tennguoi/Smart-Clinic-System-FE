@@ -933,7 +933,8 @@ modal: {
         status: "Trạng thái",
         actions: "Thao tác"
       },
-
+pdfDownloadSuccess: "Tải PDF hóa đơn thành công!",
+      pdfDownloadError: "Không thể tải PDF hóa đơn",
       status: {
         paid: "Đã thanh toán",
         pending: "Chưa thanh toán",
@@ -1134,7 +1135,9 @@ doctorStats: {
   },
   chart: {
     visitsByPeriod: "Số ca khám theo {{#if (eq context 'hour')}}giờ{{else}}ngày{{/if}}",
-    trend: "Xu hướng số ca khám"
+    trend: "Xu hướng số ca khám",
+    "visitsByHour": "Lượt khám theo giờ",
+
   },
   table: {
     title: "Bảng thống kê theo khung giờ",
@@ -2329,7 +2332,8 @@ invoices: {
         pay: "Receive Payment",
         exportPdf: "Export PDF"
       },
-
+pdfDownloadSuccess: "Invoice PDF downloaded successfully!",
+  pdfDownloadError: "Failed to download invoice PDF",
   modal: {
        "title": "Invoice Details",
     "code": "Code",
@@ -2562,7 +2566,8 @@ doctorStats: {
   },
   chart: {
     visitsByPeriod: "Examinations by {{#if (eq context 'hour')}}hour{{else}}day{{/if}}",
-    trend: "Examination Trend"
+    trend: "Examination Trend",
+    visitsByHour:"Visits By Hour",
   },
   table: {
     title: "Statistics Table by Time Slot",

@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import axiosInstance from '../../utils/axiosConfig';
 import toast from 'react-hot-toast';
+import { toastConfig } from '../../config/toastConfig';
 
 const PAYMENT_STATUS = {
   Pending: { label: 'invoices.modal.statusMap.pending', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' },
@@ -74,7 +75,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
           setAvailableServices(list);
         } catch (err) {
           console.error('Lỗi tải dịch vụ:', err);
-          toast.error(t('common.error'));
+          toast.error(t('common.error'), toastConfig.toastOptions.error);
         } finally {
           setLoadingServices(false);
         }
@@ -87,7 +88,6 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
 
   const canEdit = invoice.paymentStatus === 'Pending' && (!invoice.amountPaid || invoice.amountPaid === 0);
   const totalAmountLocal = editedItems.reduce((sum, item) => sum + (item.subTotal || 0), 0);
-  // Choose which total to show depending on edit state:
   const totalAmount = isEditing ? totalAmountLocal : (invoice.totalAmount ?? totalAmountLocal);
   const status = PAYMENT_STATUS[invoice.paymentStatus] || PAYMENT_STATUS.Pending;
 
@@ -97,7 +97,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
 
   const handleAddService = (service) => {
     if (editedItems.some(i => i.serviceId === service.serviceId)) {
-      toast.error(t('invoices.modal.serviceAlreadyExists'), { duration: 3000 });
+      toast.error(t('invoices.modal.serviceAlreadyExists'), toastConfig.toastOptions.error);
       return;
     }
     setEditedItems(prev => [...prev, {
@@ -108,15 +108,14 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
       subTotal: service.price,
       description: ''
     }]);
-    toast.success(`${t('invoices.modal.addedService')}: ${service.name}`);
+    toast.success(`${t('invoices.modal.addedService')}: ${service.name}`, toastConfig.toastOptions.success);
     setShowAddService(false);
     setSearchQuery('');
-    // optional: scroll into view or focus last added item in UI (left to implementation)
   };
 
   const handleRemoveItem = (index) => {
     if (editedItems.length === 1) {
-      toast.error(t('invoices.modal.atLeastOneService'));
+      toast.error(t('invoices.modal.atLeastOneService'), toastConfig.toastOptions.error);
       return;
     }
     setEditedItems(prev => prev.filter((_, i) => i !== index));
@@ -135,12 +134,12 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
 
   const handleSave = async () => {
     if (editedItems.length === 0) {
-      toast.error(t('invoices.modal.atLeastOneService'));
+      toast.error(t('invoices.modal.atLeastOneService'), toastConfig.toastOptions.error);
       return;
     }
 
     if (editedItems.some(item => !item.serviceId)) {
-      toast.error(t('invoices.modal.missingServiceInfo'));
+      toast.error(t('invoices.modal.missingServiceInfo'), toastConfig.toastOptions.error);
       return;
     }
 
@@ -155,9 +154,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
         }))
       });
 
-      toast.success(t('invoices.modal.updateSuccess'), {
-        icon: <CheckCircle />
-      });
+      toast.success(t('invoices.modal.updateSuccess'), toastConfig.toastOptions.success);
 
       setIsEditing(false);
       setShowAddService(false);
@@ -169,7 +166,8 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
       toast.error(
         err?.response?.data?.message ||
         err?.response?.data?.error ||
-        t('common.error')
+        t('common.error'),
+        toastConfig.toastOptions.error
       );
     } finally {
       setSaving(false);
@@ -180,7 +178,6 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
     setIsEditing(false);
     setShowAddService(false);
     setSearchQuery('');
-    // Reset edited items from current invoice safely
     setEditedItems(
       invoice && Array.isArray(invoice.items)
         ? invoice.items.map(item => ({
@@ -218,10 +215,10 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      toast.success(t('invoices.pdfDownloadSuccess'));
+      toast.success(t('invoices.pdfDownloadSuccess') || 'Tải PDF thành công!', toastConfig.toastOptions.success);
     } catch (err) {
       console.error('Lỗi tải PDF:', err);
-      toast.error(t('invoices.errors.pdfDownloadError'));
+      toast.error(t('invoices.errors.pdfDownloadError') || 'Không thể tải PDF', toastConfig.toastOptions.error);
     }
   };
 

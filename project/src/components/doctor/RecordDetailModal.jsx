@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { X, Pencil, Download } from 'lucide-react';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import toast from 'react-hot-toast';
+import { toastConfig } from '../../config/toastConfig';
 import { downloadPdf, getMedicalRecordFilename } from '../../utils/pdfDownload';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -36,9 +37,9 @@ const RecordDetailModal = ({
     try {
       const pdfBlob = await medicalRecordApi.exportAsPdf(record.recordId);
       downloadPdf(pdfBlob, getMedicalRecordFilename(record.recordId));
-      toast.success(t('doctorRecords.modal.pdfSuccess'));
+      toast.success(t('doctorRecords.modal.pdfSuccess'), toastConfig.toastOptions.success);
     } catch {
-      toast.error(t('doctorRecords.modal.pdfFailed'));
+      toast.error(t('doctorRecords.modal.pdfFailed'), toastConfig.toastOptions.error);
     } finally {
       setExporting(false);
     }
@@ -48,14 +49,12 @@ const RecordDetailModal = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
 
-      {/* Main modal */}
       <div
         className={`relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-xl border shadow-2xl flex flex-col ${
           isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div
           className={`flex items-center justify-between p-6 border-b sticky top-0 ${
             isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
@@ -90,7 +89,6 @@ const RecordDetailModal = ({
           </div>
         </div>
 
-        {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {loading ? (
             <div className="text-center py-12">
@@ -101,7 +99,6 @@ const RecordDetailModal = ({
             </div>
           ) : (
             <>
-              {/* Patient & Diagnosis */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div className={`p-5 rounded-lg border ${isDark ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200'}`}>
                   <label className={`block text-xs font-bold uppercase mb-2 ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>
@@ -128,7 +125,6 @@ const RecordDetailModal = ({
                 </div>
               </div>
 
-              {/* Treatment notes */}
               <div className={`p-5 rounded-lg border ${isDark ? 'bg-gray-700/50 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
                 <label className={`block text-xs font-bold uppercase mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   {t('doctorRecords.modal.treatmentNotes', 'Ghi chú điều trị')}
@@ -144,7 +140,6 @@ const RecordDetailModal = ({
                 />
               </div>
 
-              {/* Prescription */}
               <div className={`p-5 rounded-lg border ${isDark ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'}`}>
                 <label className={`block text-xs font-bold uppercase mb-4 ${isDark ? 'text-green-400' : 'text-green-700'}`}>
                   {t('doctorRecords.modal.prescriptionTitle', 'Đơn thuốc')}
@@ -199,7 +194,6 @@ const RecordDetailModal = ({
           )}
         </div>
 
-        {/* Footer */}
         <div
           className={`flex justify-end gap-4 p-6 border-t ${
             isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'

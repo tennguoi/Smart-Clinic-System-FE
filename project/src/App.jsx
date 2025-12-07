@@ -3,7 +3,6 @@ import { Routes, Route } from "react-router-dom";
 import StickyNavbar from "./components/StickyNavbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// Public Pages
 import HomePage from "./pages/HomePage";
 import AboutPage from "./pages/AboutPage";
 import ServicesPage from "./pages/ServicesPage";
@@ -57,6 +56,7 @@ import AppointmentCheckInSection from "./components/receptionist/AppointmentChec
 function App() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
+   
       <Routes>
 
         {/* AUTH & PROFILE */}

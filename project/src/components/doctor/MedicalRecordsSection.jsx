@@ -5,6 +5,8 @@ import CreateRecordForm from './CreateRecordForm';
 import RecordRow from './RecordRow';
 import { Plus, ClipboardList, Search, RotateCcw } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import toast from 'react-hot-toast';
+import { toastConfig } from '../../config/toastConfig';
 import CountBadge from '../common/CountBadge';
 import Pagination from '../common/Pagination';
 
@@ -27,7 +29,6 @@ const MedicalRecordsSection = () => {
   const patientNameMapRef = useRef(new Map());
   const today = new Date().toISOString().split('T')[0];
 
-  // Pagination
   const [currentPage, setCurrentPage] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
 
@@ -111,10 +112,12 @@ const MedicalRecordsSection = () => {
 
     if (!formData.diagnosis?.trim()) {
       setFormError(t('doctorRecords.create.diagnosisRequired'));
+      toast.error(t('doctorRecords.create.diagnosisRequired'), toastConfig.toastOptions.error);
       return;
     }
     if (!formData.treatmentNotes?.trim()) {
       setFormError(t('doctorRecords.create.treatmentNotesRequired'));
+      toast.error(t('doctorRecords.create.treatmentNotesRequired'), toastConfig.toastOptions.error);
       return;
     }
 
@@ -127,7 +130,9 @@ const MedicalRecordsSection = () => {
         treatmentNotes: formData.treatmentNotes.trim(),
       });
 
-      setFormSuccess(t('doctorRecords.create.success'));
+      const successMsg = t('doctorRecords.create.success');
+      setFormSuccess(successMsg);
+      toast.success(successMsg, toastConfig.toastOptions.success);
 
       const patientNameValue = created.patientName || formData.patientName?.trim() || null;
       if (patientNameValue && created.recordId && !created.patientName) {
@@ -142,6 +147,7 @@ const MedicalRecordsSection = () => {
     } catch (error) {
       const msg = error.response?.data?.message || error.message || t('doctorRecords.create.failed');
       setFormError(msg);
+      toast.error(msg, toastConfig.toastOptions.error);
     } finally {
       setFormSubmitting(false);
     }

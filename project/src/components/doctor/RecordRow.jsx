@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pencil, Trash2, Pill, Download } from 'lucide-react';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import toast from 'react-hot-toast';
+import { toastConfig } from '../../config/toastConfig';
 import RecordDetailModal from './RecordDetailModal';
 import PrescriptionFormModal from './PrescriptionFormModal';
 import { downloadPdf, getMedicalRecordFilename } from '../../utils/pdfDownload';
@@ -29,7 +30,9 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
 
   const handleSave = async () => {
     if (!localDiagnosis?.trim()) {
-      onError?.(t('doctorRecords.create.diagnosisRequired'));
+      const msg = t('doctorRecords.create.diagnosisRequired');
+      onError?.(msg);
+      toast.error(msg, toastConfig.toastOptions.error);
       return;
     }
     setSaving(true);
@@ -39,12 +42,13 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
         treatmentNotes: localNotes?.trim() || '',
       });
       setEditing(false);
-      toast.success(t('doctorRecords.modal.saveSuccess') || 'Cập nhật thành công!');
+      const successMsg = t('doctorRecords.modal.saveSuccess') || 'Cập nhật thành công!';
+      toast.success(successMsg, toastConfig.toastOptions.success);
       onUpdated?.();
     } catch (e) {
       const msg = e.response?.data?.message || t('doctorRecords.modal.saveFailed') || 'Cập nhật thất bại';
       onError?.(msg);
-      toast.error(msg);
+      toast.error(msg, toastConfig.toastOptions.error);
     } finally {
       setSaving(false);
     }
@@ -56,12 +60,13 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
     setDeleting(true);
     try {
       await medicalRecordApi.remove(record.recordId);
-      toast.success(t('doctorRecords.modal.deleteSuccess') || 'Xóa hồ sơ thành công!');
+      const successMsg = t('doctorRecords.modal.deleteSuccess') || 'Xóa hồ sơ thành công!';
+      toast.success(successMsg, toastConfig.toastOptions.success);
       onDelete?.(record.recordId);
       onUpdated?.();
     } catch (e) {
       const msg = e.response?.data?.message || t('doctorRecords.modal.deleteFailed') || 'Xóa thất bại';
-      toast.error(msg);
+      toast.error(msg, toastConfig.toastOptions.error);
       onError?.(msg);
     } finally {
       setDeleting(false);
@@ -73,10 +78,10 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
     try {
       const pdfBlob = await medicalRecordApi.exportAsPdf(record.recordId);
       await downloadPdf(pdfBlob, getMedicalRecordFilename(record.recordId));
-      toast.success(t('doctorRecords.modal.pdfSuccess'));
+      toast.success(t('doctorRecords.modal.pdfSuccess'), toastConfig.toastOptions.success);
     } catch (e) {
       const msg = t('doctorRecords.modal.pdfFailed') + (e.message || '');
-      toast.error(msg);
+      toast.error(msg, toastConfig.toastOptions.error);
       onError?.(msg);
     } finally {
       setExporting(false);
@@ -181,7 +186,7 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
                     }
                   } catch (err) {
                     console.error(err);
-                    toast.error(t('common.errors.loadFailed') || 'Không thể tải chi tiết');
+                    toast.error(t('common.errors.loadFailed') || 'Không thể tải chi tiết', toastConfig.toastOptions.error);
                   } finally {
                     setLoadingDetail(false);
                   }
@@ -194,18 +199,6 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
                   {t('doctorRecords.common.edit')}
                 </span>
               </button>
-
-              {/* Có thể bật lại sau nếu cần */}
-              {/* <button
-                onClick={() => setShowPrescriptionModal(true)}
-                className="p-2.5 bg-green-600 text-white rounded-full hover:bg-green-700 transition group relative"
-                aria-label={t('modal.prescriptionTitle')}
-              >
-                <Pill className="w-4 h-4" />
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none z-10">
-                  {t('modal.prescriptionTitle')}
-                </span>
-              </button> */}
 
             </div>
           )}
@@ -229,7 +222,7 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
           saving={saving}
           onSave={async () => {
             if (!localDiagnosis?.trim()) {
-              toast.error(t('doctorRecords.create.diagnosisRequired'));
+              toast.error(t('doctorRecords.create.diagnosisRequired'), toastConfig.toastOptions.error);
               return;
             }
             setSaving(true);
@@ -242,12 +235,12 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
                   : null,
               };
               await medicalRecordApi.update(record.recordId, payload);
-              toast.success(t('doctorRecords.modal.saveSuccess') || 'Cập nhật thành công!');
+              toast.success(t('doctorRecords.modal.saveSuccess') || 'Cập nhật thành công!', toastConfig.toastOptions.success);
               setShowDetailModal(false);
               onUpdated?.();
             } catch (e) {
               const msg = e.response?.data?.message || t('doctorRecords.modal.saveFailed');
-              toast.error(msg);
+              toast.error(msg, toastConfig.toastOptions.error);
             } finally {
               setSaving(false);
             }

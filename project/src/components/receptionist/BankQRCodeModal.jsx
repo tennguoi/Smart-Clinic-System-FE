@@ -213,7 +213,7 @@ export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPaym
               <div className={`${theme === 'dark' ? 'bg-amber-900/30 border-amber-800' : 'bg-amber-50 border-amber-200'} border rounded-lg p-2.5`}>
                 <div className={`text-xs ${theme === 'dark' ? 'text-amber-300' : 'text-amber-800'} mb-0.5 font-semibold`}>{t('bankQRModal.transferContent')}:</div>
                 <div className={`font-mono text-sm ${theme === 'dark' ? 'text-amber-200' : 'text-amber-900'} font-bold`}>
-                  {t('bankQRModal.paymentFor')} {billId?.slice(0, 8).toUpperCase()}
+                  {t('bankQRModal.transferContent')} {billId?.slice(0, 8).toUpperCase()}
                 </div>
               </div>
             </div>

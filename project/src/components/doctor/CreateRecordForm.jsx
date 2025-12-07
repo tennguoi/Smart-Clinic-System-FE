@@ -1,13 +1,13 @@
 // src/components/doctor/CreateRecordForm.jsx
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { toastConfig } from '../../config/toastConfig';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 
 const CreateRecordForm = ({ 
   onClose, 
   onSubmit, 
-  // nhận object { patientName, diagnosis, treatmentNotes, ... }
   error, 
   success, 
   submitting 
@@ -27,7 +27,6 @@ const CreateRecordForm = ({
   const [formDiagnosis, setFormDiagnosis] = useState('');
   const [formTreatmentNotes, setFormTreatmentNotes] = useState('');
 
-  // Optional: tự động focus vào ô chẩn đoán khi mở form
   useEffect(() => {
     const timer = setTimeout(() => {
       document.querySelector('input[placeholder*="chẩn đoán"]')?.focus();
@@ -39,12 +38,12 @@ const CreateRecordForm = ({
     e.preventDefault();
 
     if (!formDiagnosis.trim()) {
-      toast.error(t('doctorRecords.create.diagnosisRequired'));
+      toast.error(t('doctorRecords.create.diagnosisRequired'), toastConfig.toastOptions.error);
       return;
     }
 
     if (!formTreatmentNotes.trim()) {
-      toast.error(t('doctorRecords.create.treatmentNotesRequired'));
+      toast.error(t('doctorRecords.create.treatmentNotesRequired'), toastConfig.toastOptions.error);
       return;
     }
 
@@ -60,13 +59,8 @@ const CreateRecordForm = ({
 
   return (
     <div className="fixed inset-0 z-30">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/30"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
 
-      {/* Modal */}
       <div className="absolute inset-0 flex items-center justify-center px-4">
         <form
           onSubmit={handleSubmit}
@@ -76,7 +70,6 @@ const CreateRecordForm = ({
               : 'bg-white border-gray-200'
           }`}
         >
-          {/* Header */}
           <div className="flex items-center justify-between">
             <h3 className={`text-lg font-semibold ${
               theme === 'dark' ? 'text-white' : 'text-gray-800'
@@ -97,7 +90,6 @@ const CreateRecordForm = ({
             </button>
           </div>
 
-          {/* Server messages */}
           {error && (
             <div className={`border px-3 py-2 rounded-md text-sm ${
               theme === 'dark'
@@ -117,9 +109,7 @@ const CreateRecordForm = ({
             </div>
           )}
 
-          {/* Form fields */}
           <div className="space-y-4">
-            {/* Tên bệnh nhân (tùy chọn) */}
             <div>
               <label className={`block text-sm font-medium mb-1 ${
                 theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
@@ -139,7 +129,6 @@ const CreateRecordForm = ({
               />
             </div>
 
-            {/* Chẩn đoán */}
             <div>
               <label className={`block text-sm font-medium mb-1 ${
                 theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
@@ -169,7 +158,6 @@ const CreateRecordForm = ({
               )}
             </div>
 
-            {/* Ghi chú điều trị */}
             <div>
               <label className={`block text-sm font-medium mb-1 ${
                 theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
@@ -199,7 +187,6 @@ const CreateRecordForm = ({
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex justify-end gap-3 pt-3">
             <button
               type="button"
