@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { Sparkles, Send, Menu, Plus, Loader2, AlertCircle } from 'lucide-react';
+import { Sparkles, Send, Menu, Plus, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 
 const N8N_WEBHOOK_URL = "https://n8n.quanliduan-pms.site/webhook/ai-support";
 const API_BASE_URL = "http://localhost:8082/api/v1/tmh-assistant";
 
-export default function AIAssistantPanel() {
+export default function AIAssistantPanel({ onApplyTreatmentPlan }) {
   const [showHistory, setShowHistory] = useState(false);
   const [conversationHistory, setConversationHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -24,6 +24,7 @@ export default function AIAssistantPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [typingMessageId, setTypingMessageId] = useState(null);
+  const [parsedTreatmentPlan, setParsedTreatmentPlan] = useState(null);
 
   const messagesEndRef = useRef(null);
   const historyRef = useRef(null);
@@ -77,13 +78,45 @@ export default function AIAssistantPanel() {
             : m
         ));
         setTypingMessageId(null);
+        
+        // ⭐ Sau khi type xong, parse xem có phác đồ không
+        tryParseTreatmentPlan(fullText, messageId);
       }
     };
     type();
   };
 
-  // ⭐ FIX: TẠO CUỘC TRÒ CHUYỆN MỚI VÀ TRẢ VỀ sessionId
-  const createNewConversation = async () => {
+  // ⭐ Parse response để tìm phác đồ điều trị
+  const tryParseTreatmentPlan = (text, messageId) => {
+    try {
+      let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+      
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        
+        if (parsed.treatmentNotes || (parsed.drugs && Array.isArray(parsed.drugs))) {
+          const validDrugs = parsed.drugs?.filter(d => 
+            d.drugName && d.drugName.trim() && 
+            d.instructions && d.instructions.trim()
+          ) || [];
+          
+          if (parsed.treatmentNotes || validDrugs.length > 0) {
+            setParsedTreatmentPlan({
+              messageId,
+              treatmentNotes: parsed.treatmentNotes || '',
+              drugs: validDrugs
+            });
+          }
+        }
+      }
+    } catch (e) {
+      // Không parse được thì thôi, không hiện nút Apply
+      console.log('Không tìm thấy phác đồ trong response');
+    }
+  };
+
+  const createNewConversationSilently = async () => {
     const doctorId = getDoctorId();
     const token = getAuthToken();
     
@@ -93,8 +126,6 @@ export default function AIAssistantPanel() {
     }
 
     try {
-      console.log('🆕 Đang tạo conversation mới...');
-      
       const res = await fetch(`${API_BASE_URL}/new-conversation`, {
         method: 'POST',
         headers: {
@@ -103,18 +134,45 @@ export default function AIAssistantPanel() {
         },
       });
 
-      if (!res.ok) {
-        throw new Error('Backend không tạo được conversation');
-      }
-
+      if (!res.ok) throw new Error('Backend không tạo được conversation');
       const data = await res.json();
       
-      console.log('✅ Tạo conversation thành công:', data);
-      
-      // ⭐ QUAN TRỌNG: Set sessionId và conversationId ngay
       setCurrentSessionId(data.sessionId);
       setCurrentConversationId(data.conversationId);
+      setError(null);
+      
+      return data.sessionId;
+    } catch (err) {
+      console.error('❌ Lỗi tạo conversation:', err);
+      setError('Không tạo được cuộc trò chuyện mới');
+      throw err;
+    }
+  };
 
+  const createNewConversation = async () => {
+    const doctorId = getDoctorId();
+    const token = getAuthToken();
+    
+    if (!doctorId || !token) {
+      setError('Vui lòng đăng nhập lại');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/new-conversation`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-Doctor-Id': doctorId,
+        },
+      });
+
+      if (!res.ok) throw new Error('Backend không tạo được conversation');
+      const data = await res.json();
+      
+      setCurrentSessionId(data.sessionId);
+      setCurrentConversationId(data.conversationId);
+      
       setMessages([{
         id: 'welcome-' + Date.now(),
         role: 'assistant',
@@ -124,24 +182,15 @@ export default function AIAssistantPanel() {
 
       setShowHistory(false);
       setError(null);
-      
-      // ⭐ TRẢ VỀ sessionId để dùng ngay
-      return data.sessionId;
-      
+      setParsedTreatmentPlan(null);
     } catch (err) {
       console.error('❌ Lỗi tạo conversation:', err);
       setError('Không tạo được cuộc trò chuyện mới');
-      throw err;
     }
   };
 
-  // ⭐ FIX: Gọi n8n với sessionId đúng
   const callN8nDirectly = async (userMessage, sessionId) => {
-    console.log('🚀 Gọi n8n với sessionId:', sessionId);
-    
-    if (!sessionId) {
-      throw new Error('Không có sessionId để gọi n8n');
-    }
+    if (!sessionId) throw new Error('Không có sessionId để gọi n8n');
 
     const res = await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
@@ -158,25 +207,16 @@ export default function AIAssistantPanel() {
     }
 
     const data = await res.json();
-    const aiResponse = (data.output || data.text || data.reply || '').toString().trim();
-    
-    console.log('✅ n8n trả về:', aiResponse.substring(0, 100) + '...');
-    
-    return aiResponse;
+    return (data.output || data.text || data.reply || '').toString().trim();
   };
 
   const saveMessagesToBackend = async (userMessage, aiResponse, sessionId) => {
     const doctorId = getDoctorId();
     const token = getAuthToken();
     
-    if (!doctorId || !token || !sessionId) {
-      console.warn('⚠️ Thiếu thông tin để lưu tin nhắn');
-      return;
-    }
+    if (!doctorId || !token || !sessionId) return;
 
     try {
-      console.log('💾 Lưu tin nhắn vào backend...');
-      
       await fetch(`${API_BASE_URL}/save-message`, {
         method: 'POST',
         headers: {
@@ -190,15 +230,11 @@ export default function AIAssistantPanel() {
           aiMessage: aiResponse
         }),
       });
-      
-      console.log('✅ Đã lưu tin nhắn');
-      
     } catch (e) {
-      console.warn('⚠️ Lưu lịch sử thất bại (không ảnh hưởng chat)', e);
+      console.warn('⚠️ Lưu lịch sử thất bại', e);
     }
   };
 
-  // ⭐ FIX: GỬI TIN NHẮN - Đảm bảo có sessionId trước khi gọi n8n
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
 
@@ -206,6 +242,7 @@ export default function AIAssistantPanel() {
     setInputValue('');
     setIsLoading(true);
     setError(null);
+    setParsedTreatmentPlan(null); // Reset parsed plan
 
     const userMsg = {
       id: `user-${Date.now()}`,
@@ -228,32 +265,17 @@ export default function AIAssistantPanel() {
     try {
       let sessionToUse = currentSessionId;
       
-      // ⭐ Nếu chưa có session → tạo mới và ĐỢI kết quả
       if (!sessionToUse) {
-        console.log('⚠️ Chưa có session, đang tạo mới...');
-        sessionToUse = await createNewConversation();
-        
-        if (!sessionToUse) {
-          throw new Error('Không thể tạo session mới');
-        }
-        
-        console.log('✅ Đã có session:', sessionToUse);
+        sessionToUse = await createNewConversationSilently();
+        if (!sessionToUse) throw new Error('Không thể tạo session mới');
       }
 
-      // ⭐ Bây giờ mới gọi n8n với sessionId chắc chắn
       const aiResponse = await callN8nDirectly(userMessage, sessionToUse);
-      
-      if (!aiResponse) {
-        throw new Error('AI không trả lời');
-      }
+      if (!aiResponse) throw new Error('AI không trả lời');
 
-      // Hiển thị kết quả
       typeWriter(aiResponse, aiMsgId);
-      
-      // Lưu vào backend (không chờ)
       saveMessagesToBackend(userMessage, aiResponse, sessionToUse);
 
-      // Reload lịch sử nếu đang mở
       if (showHistory) {
         setTimeout(() => loadConversationHistory(), 1000);
       }
@@ -324,22 +346,25 @@ export default function AIAssistantPanel() {
 
       setMessages(formatted);
       setCurrentConversationId(conversationId);
-      
-      // ⭐ QUAN TRỌNG: Set sessionId khi load conversation cũ
       setCurrentSessionId(data.sessionId);
-      
       setShowHistory(false);
-      
-      console.log('✅ Đã load conversation với sessionId:', data.sessionId);
+      setParsedTreatmentPlan(null);
       
     } catch {
       setError('Không tải được cuộc trò chuyện');
     }
   };
 
+  // ⭐ Áp dụng phác đồ vào form
+  const handleApplyTreatmentPlan = () => {
+    if (parsedTreatmentPlan && onApplyTreatmentPlan) {
+      onApplyTreatmentPlan(parsedTreatmentPlan);
+      setParsedTreatmentPlan(null); // Ẩn nút sau khi apply
+    }
+  };
+
   return (
     <div className="h-full flex flex-col bg-gray-50 relative">
-
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 lg:px-6 py-4 lg:py-5 shadow-sm">
         <div className="flex items-center justify-between">
@@ -347,7 +372,6 @@ export default function AIAssistantPanel() {
             <button
               onClick={() => setShowHistory(!showHistory)}
               className="p-2 lg:p-2.5 hover:bg-gray-100 rounded-xl transition-colors"
-              title="Lịch sử trò chuyện"
             >
               <Menu className="w-4 h-4 lg:w-5 lg:h-5 text-gray-600" />
             </button>
@@ -356,7 +380,7 @@ export default function AIAssistantPanel() {
                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-blue-600 to-sky-600 rounded-2xl flex items-center justify-center shadow-lg">
                   <Sparkles className="w-5 h-5 lg:w-7 lg:h-7 text-white" />
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 lg:w-4 lg:h-4 bg-green-500 rounded-full border-2 lg:border-3 border-white animate-pulse"></div>
+                <div className="absolute -bottom-1 -right-1 w-3 h-3 lg:w-4 lg:h-4 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
               </div>
               <div>
                 <h3 className="text-base lg:text-lg font-bold text-gray-900">AI Trợ Lý Y Tế</h3>
@@ -385,14 +409,14 @@ export default function AIAssistantPanel() {
             <button
               onClick={createNewConversation}
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 lg:py-3.5 bg-gradient-to-r from-blue-600 to-sky-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-sky-700 disabled:opacity-70 transition-all shadow-md text-sm lg:text-base"
+              className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-blue-600 to-sky-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-sky-700 disabled:opacity-70 transition-all shadow-md text-sm"
             >
-              <Plus className="w-4 h-4 lg:w-5 lg:h-5" />
+              <Plus className="w-4 h-4" />
               Cuộc trò chuyện mới
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3 lg:p-4">
+          <div className="flex-1 overflow-y-auto p-3">
             {loadingHistory ? (
               <div className="flex flex-col items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
@@ -401,8 +425,7 @@ export default function AIAssistantPanel() {
             ) : conversationHistory.length === 0 ? (
               <div className="text-center text-gray-400 py-8">
                 <Sparkles className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="text-xs lg:text-sm font-medium">Chưa có lịch sử trò chuyện</p>
-                <p className="text-xs mt-2">Bắt đầu cuộc trò chuyện đầu tiên!</p>
+                <p className="text-xs font-medium">Chưa có lịch sử trò chuyện</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -412,38 +435,16 @@ export default function AIAssistantPanel() {
                     onClick={() => loadConversation(conv.conversationId)}
                     className={`w-full text-left p-3 rounded-lg transition-all hover:bg-blue-50 border ${
                       currentConversationId === conv.conversationId
-                        ? 'bg-blue-50 border-blue-200 shadow-sm'
-                        : 'bg-gray-50 border-gray-200 hover:border-blue-200'
+                        ? 'bg-blue-50 border-blue-200'
+                        : 'bg-gray-50 border-gray-200'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-gray-900 truncate">
-                          {conv.firstMessage
-                            ? (conv.firstMessage.length > 40
-                                ? conv.firstMessage.substring(0, 40) + '...'
-                                : conv.firstMessage)
-                            : 'Cuộc trò chuyện'}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(conv.startedAt).toLocaleDateString('vi-VN', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
-                        <p className="text-xs text-blue-600 mt-1 font-medium">
-                          {conv.messageCount || 0} tin nhắn
-                        </p>
-                      </div>
-                      <Sparkles className={`w-4 h-4 flex-shrink-0 ${
-                        currentConversationId === conv.conversationId
-                          ? 'text-blue-600'
-                          : 'text-gray-400'
-                      }`} />
-                    </div>
+                    <p className="text-xs font-semibold text-gray-900 truncate">
+                      {conv.firstMessage?.substring(0, 40) || 'Cuộc trò chuyện'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(conv.startedAt).toLocaleDateString('vi-VN')}
+                    </p>
                   </button>
                 ))}
               </div>
@@ -453,34 +454,49 @@ export default function AIAssistantPanel() {
       )}
 
       {/* Tin nhắn */}
-      <div className={`flex-1 overflow-y-auto p-3 lg:p-6 space-y-3 lg:space-y-5 transition-all ${showHistory ? 'ml-64 lg:ml-80' : ''}`}>
+      <div className={`flex-1 overflow-y-auto p-3 lg:p-6 space-y-3 ${showHistory ? 'ml-64 lg:ml-80' : ''}`}>
         {messages.map((msg) => (
-          <div key={msg.id} className={`flex ${msg.role === 'doctor' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-xs lg:max-w-2xl rounded-2xl px-4 lg:px-6 py-3 lg:py-4 shadow-md ${
-              msg.role === 'doctor'
-                ? 'bg-gradient-to-r from-blue-600 to-sky-600 text-white'
-                : msg.isError
-                  ? 'bg-red-50 border border-red-200 text-red-700'
-                  : 'bg-white border border-gray-200 text-gray-800'
-            }`}>
-              <p className="text-xs lg:text-sm leading-relaxed whitespace-pre-wrap">
-                {msg.displayedText !== undefined ? msg.displayedText : msg.content}
-                {typingMessageId === msg.id && (
-                  <span className="inline-block w-2 h-5 bg-gray-700 ml-1 animate-pulse" />
-                )}
-              </p>
-              <p className={`text-xs mt-2 lg:mt-3 ${msg.role === 'doctor' ? 'text-white/80' : 'text-gray-400'}`}>
-                {msg.timestamp.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-              </p>
+          <div key={msg.id}>
+            <div className={`flex ${msg.role === 'doctor' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-xs lg:max-w-2xl rounded-2xl px-4 py-3 shadow-md ${
+                msg.role === 'doctor'
+                  ? 'bg-gradient-to-r from-blue-600 to-sky-600 text-white'
+                  : msg.isError
+                    ? 'bg-red-50 border border-red-200 text-red-700'
+                    : 'bg-white border border-gray-200 text-gray-800'
+              }`}>
+                <p className="text-xs lg:text-sm leading-relaxed whitespace-pre-wrap">
+                  {msg.displayedText !== undefined ? msg.displayedText : msg.content}
+                  {typingMessageId === msg.id && (
+                    <span className="inline-block w-2 h-5 bg-gray-700 ml-1 animate-pulse" />
+                  )}
+                </p>
+                <p className={`text-xs mt-2 ${msg.role === 'doctor' ? 'text-white/80' : 'text-gray-400'}`}>
+                  {msg.timestamp.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
             </div>
+
+            {/* ⭐ Nút Apply nếu message này có phác đồ */}
+            {parsedTreatmentPlan && parsedTreatmentPlan.messageId === msg.id && (
+              <div className="flex justify-start mt-2">
+                <button
+                  onClick={handleApplyTreatmentPlan}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-semibold rounded-lg hover:shadow-lg transition-all"
+                >
+                  <CheckCircle size={16} />
+                  Áp dụng phác đồ này vào form
+                </button>
+              </div>
+            )}
           </div>
         ))}
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-white border border-gray-200 rounded-2xl px-4 lg:px-6 py-3 lg:py-4 shadow-md flex items-center gap-3">
+            <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-md flex items-center gap-3">
               <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
-              <span className="text-sm text-gray-600">AI đang phân tích triệu chứng...</span>
+              <span className="text-sm text-gray-600">AI đang phân tích...</span>
             </div>
           </div>
         )}
@@ -490,7 +506,7 @@ export default function AIAssistantPanel() {
 
       {/* Input */}
       <div className="border-t border-gray-200 bg-white p-3 lg:p-6">
-        <div className="flex gap-2 lg:gap-3">
+        <div className="flex gap-2">
           <input
             type="text"
             value={inputValue}
@@ -498,18 +514,18 @@ export default function AIAssistantPanel() {
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
             placeholder="Hỏi AI về chẩn đoán, đơn thuốc, hướng dẫn bệnh nhân..."
             disabled={isLoading}
-            className="flex-1 px-3 lg:px-5 py-3 lg:py-4 bg-gray-50 border border-gray-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 text-xs lg:text-sm placeholder-gray-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
+            className="flex-1 px-3 py-3 bg-gray-50 border border-gray-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 text-xs placeholder-gray-500 disabled:bg-gray-100 transition-all"
           />
           <button
             onClick={handleSend}
             disabled={isLoading || !inputValue.trim()}
-            className="px-4 lg:px-8 py-3 lg:py-4 bg-gradient-to-r from-blue-600 to-sky-600 text-white rounded-2xl font-semibold hover:from-blue-700 hover:to-sky-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg flex items-center gap-2 text-sm lg:text-base"
+            className="px-4 py-3 bg-gradient-to-r from-blue-600 to-sky-600 text-white rounded-2xl font-semibold hover:from-blue-700 hover:to-sky-700 disabled:opacity-50 transition-all shadow-lg flex items-center gap-2 text-sm"
           >
-            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4 lg:w-5 lg:h-5" />}
+            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4" />}
             <span className="hidden sm:inline">{isLoading ? 'Đang gửi...' : 'Gửi'}</span>
           </button>
         </div>
-        <p className="text-xs text-center text-gray-500 mt-3 lg:mt-4">
+        <p className="text-xs text-center text-gray-500 mt-3">
           AI chỉ mang tính hỗ trợ • Luôn kiểm tra lại trước khi áp dụng
         </p>
       </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { FileText, Stethoscope, Sparkles } from 'lucide-react';
 
@@ -48,6 +48,12 @@ export default function CurrentPatientExamination() {
   ]);
   const [activeTab, setActiveTab] = useState('examination');
 
+  // Track user modifications
+  const userModifiedDiagnosis = useRef(false);
+  const userModifiedTreatmentNotes = useRef(false);
+  const userModifiedPrescription = useRef(false);
+  const currentPatientId = useRef(null);
+
   // Load data
   const loadData = useCallback(async () => {
     try {
@@ -71,13 +77,28 @@ export default function CurrentPatientExamination() {
           patientId: patientRes.patientId,
           queueId: patientRes.queueId || patientRes.id
         };
+        
+        const isNewPatient = currentPatientId.current !== patient.patientId;
+        
+        if (isNewPatient) {
+          currentPatientId.current = patient.patientId;
+          userModifiedDiagnosis.current = false;
+          userModifiedTreatmentNotes.current = false;
+          userModifiedPrescription.current = false;
+        }
+        
         setCurrentPatient(patient);
 
         const summaryRes = await getExaminationSummary();
         setSummary(summaryRes);
 
-        setDiagnosis(summaryRes?.diagnosis || '');
-        setTreatmentNotes(summaryRes?.treatmentNotes || '');
+        if (!userModifiedDiagnosis.current || isNewPatient) {
+          setDiagnosis(summaryRes?.diagnosis || '');
+        }
+
+        if (!userModifiedTreatmentNotes.current || isNewPatient) {
+          setTreatmentNotes(summaryRes?.treatmentNotes || '');
+        }
 
         if (summaryRes?.serviceItems) {
           setSelectedServices(summaryRes.serviceItems.map(item => ({
@@ -88,16 +109,26 @@ export default function CurrentPatientExamination() {
           })));
         }
 
-        if (summaryRes?.prescription?.drugs) {
-          const drugs = summaryRes.prescription.drugs.split('\n').filter(Boolean);
-          const insts = (summaryRes.prescription.instructions || '').split('\n');
-          const items = drugs.map((d, i) => ({
-            drugName: d.trim(),
-            instructions: (insts[i] || '').trim()
-          }));
-          setPrescriptionItems(items.length > 0 ? items : [{ drugName: '', instructions: '' }]);
+        if (!userModifiedPrescription.current || isNewPatient) {
+          if (summaryRes?.prescription?.drugs) {
+            const drugs = summaryRes.prescription.drugs.split('\n').filter(Boolean);
+            const insts = (summaryRes.prescription.instructions || '').split('\n');
+            const items = drugs.map((d, i) => ({
+              drugName: d.trim(),
+              instructions: (insts[i] || '').trim()
+            }));
+            setPrescriptionItems(items.length > 0 ? items : [{ drugName: '', instructions: '' }]);
+          } else {
+            setPrescriptionItems([{ drugName: '', instructions: '' }]);
+          }
         }
+        
       } else {
+        currentPatientId.current = null;
+        userModifiedDiagnosis.current = false;
+        userModifiedTreatmentNotes.current = false;
+        userModifiedPrescription.current = false;
+        
         setCurrentPatient(null);
         setSummary(null);
         setDiagnosis('');
@@ -141,6 +172,44 @@ export default function CurrentPatientExamination() {
     const interval = setInterval(loadData, 8000);
     return () => clearInterval(interval);
   }, [loadData]);
+
+  // ⭐ Callback từ AIAssistantPanel
+  const handleApplyTreatmentPlanFromAI = (plan) => {
+    console.log('📋 Nhận phác đồ từ AI Panel:', plan);
+    
+    // Áp dụng ghi chú điều trị
+    if (plan.treatmentNotes && plan.treatmentNotes.trim()) {
+      setTreatmentNotes(plan.treatmentNotes.trim());
+      userModifiedTreatmentNotes.current = true;
+    }
+
+    // Áp dụng thuốc
+    if (plan.drugs && plan.drugs.length > 0) {
+      // Xóa tất cả prescription hiện tại
+      setPrescriptionItems([{ drugName: '', instructions: '' }]);
+      
+      // Thêm từng thuốc
+      setTimeout(() => {
+        plan.drugs.forEach((drug, index) => {
+          if (index === 0) {
+            setPrescriptionItems([{
+              drugName: drug.drugName,
+              instructions: drug.instructions
+            }]);
+          } else {
+            setPrescriptionItems(prev => [...prev, {
+              drugName: drug.drugName,
+              instructions: drug.instructions
+            }]);
+          }
+        });
+        
+        userModifiedPrescription.current = true;
+      }, 100);
+    }
+
+    toast.success('✅ Đã áp dụng phác đồ từ AI vào form!');
+  };
 
   // Handlers
   const toggleService = async (service) => {
@@ -203,6 +272,11 @@ export default function CurrentPatientExamination() {
       
       await completeExamination();
       toast.success('Hoàn thành khám thành công!');
+      
+      userModifiedDiagnosis.current = false;
+      userModifiedTreatmentNotes.current = false;
+      userModifiedPrescription.current = false;
+      
       loadData();
     } catch (e) {
       toast.error(e.response?.data?.message || 'Lỗi');
@@ -215,21 +289,23 @@ export default function CurrentPatientExamination() {
     setIsLoading(true);
     try {
       await callNextPatient();
-      toast.success('Đã gọi bệnh nhân tiếp theo');
       loadData();
-    } catch {
+    } catch (e) {
+      console.error(e);
       toast.error('Không còn bệnh nhân');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Prescription handlers
+  // Prescription handlers với tracking
   const addPrescriptionItem = () => {
+    userModifiedPrescription.current = true;
     setPrescriptionItems([...prescriptionItems, { drugName: '', instructions: '' }]);
   };
   
   const removePrescriptionItem = (i) => {
+    userModifiedPrescription.current = true;
     setPrescriptionItems(p => 
       p.length === 1 
         ? [{ drugName: '', instructions: '' }] 
@@ -238,11 +314,22 @@ export default function CurrentPatientExamination() {
   };
   
   const updatePrescriptionItem = (idx, field, val) => {
+    userModifiedPrescription.current = true;
     setPrescriptionItems(p => {
       const n = [...p];
       n[idx][field] = val;
       return n;
     });
+  };
+
+  const handleDiagnosisChange = (value) => {
+    userModifiedDiagnosis.current = true;
+    setDiagnosis(value);
+  };
+
+  const handleTreatmentNotesChange = (value) => {
+    userModifiedTreatmentNotes.current = true;
+    setTreatmentNotes(value);
   };
 
   // Nếu có bệnh nhân đang khám
@@ -252,21 +339,16 @@ export default function CurrentPatientExamination() {
         <Toaster position="top-right" />
         <div className="flex flex-col lg:flex-row h-screen">
 
-          {/* Sidebar bệnh nhân */}
           <PatientSidebar 
             currentPatient={currentPatient} 
             waitingQueue={waitingQueue}
             aiAssistantOpen={aiAssistantOpen}
           />
 
-          {/* Nội dung chính + AI panel */}
           <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-            {/* Form khám */}
             <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Header với tabs */}
               <div className="bg-white border-b border-blue-100 shadow-sm px-4 lg:px-8 py-3 lg:py-4">
                 <div className={`flex gap-2 ${aiAssistantOpen ? 'flex-col' : 'overflow-x-auto'}`}>
-                  {/* Tabs */}
                   <div className={`flex gap-2 ${aiAssistantOpen ? 'flex-col' : ''}`}>
                     {[
                       { id: 'examination', label: 'Khám & Kê đơn', icon: FileText },
@@ -290,14 +372,12 @@ export default function CurrentPatientExamination() {
                     })}
                   </div>
 
-                  {/* Divider */}
                   {aiAssistantOpen ? (
                     <div className="h-px bg-gray-300 my-2"></div>
                   ) : (
                     <div className="w-px bg-gray-300 mx-2"></div>
                   )}
 
-                  {/* Button AI */}
                   <button
                     onClick={() => setAiAssistantOpen(!aiAssistantOpen)}
                     className={`flex items-center gap-2 lg:gap-3 px-4 lg:px-6 py-2.5 lg:py-3 rounded-lg font-semibold transition-all shadow-md text-sm lg:text-base whitespace-nowrap ${
@@ -314,7 +394,6 @@ export default function CurrentPatientExamination() {
                 </div>
               </div>
 
-              {/* Nội dung form */}
               <div className={`flex-1 overflow-y-auto bg-gradient-to-b from-blue-50/50 to-white ${
                 aiAssistantOpen ? 'p-3 lg:p-4' : 'p-4 lg:p-8'
               }`}>
@@ -324,8 +403,8 @@ export default function CurrentPatientExamination() {
                       diagnosis={diagnosis}
                       treatmentNotes={treatmentNotes}
                       prescriptionItems={prescriptionItems}
-                      onDiagnosisChange={setDiagnosis}
-                      onTreatmentNotesChange={setTreatmentNotes}
+                      onDiagnosisChange={handleDiagnosisChange}
+                      onTreatmentNotesChange={handleTreatmentNotesChange}
                       onAddPrescription={addPrescriptionItem}
                       onRemovePrescription={removePrescriptionItem}
                       onUpdatePrescription={updatePrescriptionItem}
@@ -350,9 +429,9 @@ export default function CurrentPatientExamination() {
               </div>
             </div>
 
-            {/* AI Panel */}
+            {/* ⭐ AI Panel với callback */}
             <ResizablePanel isOpen={aiAssistantOpen}>
-              <AIAssistantPanel />
+              <AIAssistantPanel onApplyTreatmentPlan={handleApplyTreatmentPlanFromAI} />
             </ResizablePanel>
           </div>
         </div>
@@ -360,7 +439,6 @@ export default function CurrentPatientExamination() {
     );
   }
 
-  // Màn hình chờ bệnh nhân
   return (
     <WaitingQueueScreen
       waitingQueue={waitingQueue}
