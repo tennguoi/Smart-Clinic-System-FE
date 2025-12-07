@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react';
-import { Mail, Edit, RotateCcw, X, Eye, Copy, Check } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Mail, Edit, RotateCcw, X, Eye, Copy, Check, Plus } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import EmailTemplateApi from '../../api/EmailTemplateApi';
 import { useTheme } from '../../contexts/ThemeContext';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 export default function EmailTemplateManagement() {
   const { theme } = useTheme();
+  const quillRef = useRef(null);
 
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -18,9 +21,27 @@ export default function EmailTemplateManagement() {
 
   const [formData, setFormData] = useState({
     subject: '',
-    content: '',
+    bodyContent: '',
     isHtml: true
   });
+
+  // React Quill modules configuration
+  const quillModules = useMemo(() => ({
+    toolbar: [
+      [{ 'header': [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'color': [] }, { 'background': [] }],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      [{ 'align': [] }],
+      ['link'],
+      ['clean']
+    ]
+  }), []);
+
+  const quillFormats = [
+    'header', 'bold', 'italic', 'underline', 'strike',
+    'color', 'background', 'list', 'bullet', 'align', 'link'
+  ];
 
   // Fetch all templates
   const fetchTemplates = async () => {
@@ -44,7 +65,7 @@ export default function EmailTemplateManagement() {
     setSelectedTemplate(template);
     setFormData({
       subject: template.subject,
-      content: template.content,
+      bodyContent: template.bodyContent || template.content,
       isHtml: template.isHtml
     });
     setShowModal(true);
@@ -63,16 +84,34 @@ export default function EmailTemplateManagement() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleQuillChange = (value) => {
+    setFormData(prev => ({ ...prev, bodyContent: value }));
+  };
+
+  const insertPlaceholder = (placeholder) => {
+    const quill = quillRef.current?.getEditor();
+    if (quill) {
+      const range = quill.getSelection(true);
+      const placeholderText = `{{${placeholder}}}`;
+      quill.insertText(range.index, placeholderText);
+      quill.setSelection(range.index + placeholderText.length);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.subject.trim() || !formData.content.trim()) {
+    if (!formData.subject.trim() || !formData.bodyContent.trim()) {
       toast.error('Vui lòng điền đầy đủ thông tin');
       return;
     }
 
     setLoading(true);
     try {
-      await EmailTemplateApi.updateTemplate(selectedTemplate.templateId, formData);
+      await EmailTemplateApi.updateTemplate(selectedTemplate.templateId, {
+        subject: formData.subject,
+        bodyContent: formData.bodyContent,
+        isHtml: formData.isHtml
+      });
       toast.success('Cập nhật template thành công');
       handleCloseModal();
       fetchTemplates();
@@ -125,17 +164,86 @@ export default function EmailTemplateManagement() {
       'logoUrl': 'http://localhost:8082/images/logo.png'
     };
 
-    let result = formData.content;
+    // Build full preview with header + bodyContent + footer
+    const header = `
+      <div style="text-align:center;padding:20px;background:#0056b3;color:white;border-radius:8px 8px 0 0;">
+        <img src="${samples.logoUrl}" alt="Logo" style="max-width:150px;height:auto;margin-bottom:10px;">
+        <h2>${selectedTemplate?.templateName || 'Email'}</h2>
+      </div>
+    `;
+    const footer = `
+      <div style="text-align:center;padding:20px;color:#666;font-size:12px;">
+        <p>Trân trọng,<br><strong>Phòng khám Tai-Mũi-Họng 2CTW</strong></p>
+        <p style="font-size:11px;color:#999;">Email này được gửi tự động, vui lòng không trả lời.</p>
+      </div>
+    `;
+
+    let bodyResult = formData.bodyContent;
     placeholders.forEach(placeholder => {
       const value = samples[placeholder] || `[${placeholder}]`;
-      result = result.replace(new RegExp(`{{${placeholder}}}`, 'g'), value);
+      bodyResult = bodyResult.replace(new RegExp(`{{${placeholder}}}`, 'g'), value);
     });
-    return result;
+
+    return `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;">
+        ${header}
+        <div style="background:#f9f9f9;padding:30px;border-radius:0 0 8px 8px;">
+          ${bodyResult}
+        </div>
+        ${footer}
+      </div>
+    `;
   };
 
   return (
     <>
       <Toaster {...toastConfig} />
+      <style>{`
+        .quill-dark .ql-toolbar {
+          background: #374151;
+          border-color: #4B5563;
+        }
+        .quill-dark .ql-container {
+          background: #1F2937;
+          border-color: #4B5563;
+          color: #E5E7EB;
+        }
+        .quill-dark .ql-editor {
+          color: #E5E7EB;
+        }
+        .quill-dark .ql-editor.ql-blank::before {
+          color: #9CA3AF;
+        }
+        .quill-dark .ql-stroke {
+          stroke: #E5E7EB;
+        }
+        .quill-dark .ql-fill {
+          fill: #E5E7EB;
+        }
+        .quill-dark .ql-picker-label {
+          color: #E5E7EB;
+        }
+        .quill-dark .ql-picker-options {
+          background: #374151;
+          border-color: #4B5563;
+        }
+        .quill-dark .ql-picker-item {
+          color: #E5E7EB;
+        }
+        .quill-dark .ql-picker-item:hover {
+          color: #60A5FA;
+        }
+        .quill-view .ql-toolbar {
+          display: none;
+        }
+        .quill-view .ql-container {
+          border-top: 1px solid #ccc;
+          border-radius: 8px;
+        }
+        .quill-dark.quill-view .ql-container {
+          border-color: #4B5563;
+        }
+      `}</style>
       <div className={`px-4 md:px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
         
         {/* Header */}
@@ -147,7 +255,7 @@ export default function EmailTemplateManagement() {
         </div>
 
         <p className={`mb-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-          Tùy chỉnh nội dung email gửi cho khách hàng. Sử dụng placeholders như <code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">{'{{patientName}}'}</code> để thay thế dữ liệu động.
+          Tùy chỉnh nội dung email gửi cho khách hàng. Sử dụng các nút placeholder để chèn dữ liệu động như <code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">{'{{patientName}}'}</code>.
         </p>
 
         {/* Templates Grid */}
@@ -235,17 +343,23 @@ export default function EmailTemplateManagement() {
 
                     <div>
                       <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                        HTML Content <span className="text-red-500">*</span>
+                        Nội dung Email <span className="text-red-500">*</span>
                       </label>
-                      <textarea 
-                        name="content" 
-                        value={formData.content} 
-                        onChange={handleInputChange} 
-                        rows="18" 
-                        required 
-                        disabled={modalMode === 'view'} 
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-700 font-mono text-sm ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-                      ></textarea>
+                      <p className={`text-xs mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Header và Footer sẽ được tự động thêm vào khi gửi email.
+                      </p>
+                      <div className={`${theme === 'dark' ? 'quill-dark' : ''} ${modalMode === 'view' ? 'quill-view' : ''}`}>
+                        <ReactQuill
+                          ref={quillRef}
+                          theme="snow"
+                          value={formData.bodyContent}
+                          onChange={handleQuillChange}
+                          modules={quillModules}
+                          formats={quillFormats}
+                          readOnly={modalMode === 'view'}
+                          style={{ height: modalMode === 'view' ? 'auto' : '300px', marginBottom: modalMode === 'view' ? '0' : '50px' }}
+                        />
+                      </div>
                     </div>
 
                     {modalMode === 'edit' && (
@@ -266,7 +380,7 @@ export default function EmailTemplateManagement() {
                   {/* Placeholders */}
                   <div className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border rounded-lg p-4`}>
                     <h3 className={`font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-                      Available Placeholders
+                      {modalMode === 'edit' ? 'Chèn Placeholder' : 'Available Placeholders'}
                     </h3>
                     <div className="space-y-2 max-h-60 overflow-y-auto">
                       {selectedTemplate.availablePlaceholders?.map((placeholder, idx) => (
@@ -274,13 +388,25 @@ export default function EmailTemplateManagement() {
                           <code className={`text-sm px-2 py-1 rounded ${theme === 'dark' ? 'bg-gray-800 text-blue-400' : 'bg-white text-blue-600'}`}>
                             {'{{' + placeholder + '}}'}
                           </code>
-                          <button
-                            onClick={() => copyToClipboard(`{{${placeholder}}}`, idx)}
-                            className={`p-1.5 rounded transition ${theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-gray-200'}`}
-                            title="Copy to clipboard"
-                          >
-                            {copiedIndex === idx ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                          </button>
+                          <div className="flex gap-1">
+                            {modalMode === 'edit' && (
+                              <button
+                                type="button"
+                                onClick={() => insertPlaceholder(placeholder)}
+                                className="p-1.5 rounded bg-blue-500 hover:bg-blue-600 text-white transition"
+                                title="Chèn vào editor"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => copyToClipboard(`{{${placeholder}}}`, idx)}
+                              className={`p-1.5 rounded transition ${theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-gray-200'}`}
+                              title="Copy to clipboard"
+                            >
+                              {copiedIndex === idx ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -290,7 +416,7 @@ export default function EmailTemplateManagement() {
                   {(showPreview || modalMode === 'view') && (
                     <div className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border rounded-lg p-4`}>
                       <h3 className={`font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-                        Email Preview
+                        Email Preview (với Header & Footer)
                       </h3>
                       <div className="bg-white rounded border border-gray-300 p-4 max-h-96 overflow-y-auto">
                         <div dangerouslySetInnerHTML={{ __html: getSampleData(selectedTemplate.availablePlaceholders || []) }} />
