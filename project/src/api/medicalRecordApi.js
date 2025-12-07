@@ -194,6 +194,23 @@ export const medicalRecordApi = {
 			console.error('Lỗi khi lấy Top dịch vụ theo Revenue:', error);
 			return [];
 		}
+	},
+
+	// ============ TRA CỨU LỊCH SỬ KHÁM BỆNH THEO THÔNG TIN BỆNH NHÂN ============
+	
+	/**
+	 * Tra cứu lịch sử khám bệnh theo SĐT, CCCD hoặc số bảo hiểm y tế
+	 * @param {Object} params - { phone, idNumber, insuranceNumber }
+	 * @returns {Promise<Object>} - Thông tin bệnh nhân + danh sách lịch sử khám
+	 */
+	searchPatientHistory: async ({ phone, idNumber, insuranceNumber }) => {
+		const params = {};
+		if (phone) params.phone = phone;
+		if (idNumber) params.idNumber = idNumber;
+		if (insuranceNumber) params.insuranceNumber = insuranceNumber;
+		
+		const { data } = await axiosInstance.get('/api/doctor/medical-records/patient-history', { params });
+		return data;
 	}
 	
 };

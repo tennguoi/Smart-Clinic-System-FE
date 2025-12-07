@@ -40,6 +40,28 @@ export default function ClinicRoomManagement() {
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 8;
 
+  // LẤY ROLE CHÍNH XÁC TỪ localStorage
+  const getUserRoles = () => {
+    try {
+      const rolesStr = localStorage.getItem('user_roles');
+      if (rolesStr) {
+        return JSON.parse(rolesStr);
+      }
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        return user.role ? [user.role] : [];
+      }
+      return [];
+    } catch (error) {
+      console.error('Error parsing user roles:', error);
+      return [];
+    }
+  };
+
+  const userRoles = getUserRoles();
+  const isAdmin = userRoles.includes('ROLE_ADMIN');
+
   const statusOptions = [
     { value: 'Available', label: t('roomManagement.statusAvailable', 'Sẵn sàng') },
     { value: 'Occupied', label: t('roomManagement.statusOccupied', 'Đang sử dụng') },
@@ -237,11 +259,13 @@ export default function ClinicRoomManagement() {
           <span>{t('roomManagement.title', 'Quản Lý Phòng Khám')}</span>
           <CountBadge currentCount={currentPageRooms.length} totalCount={rooms.length} label={t('roomManagement.room', 'phòng')} />
         </h1>
-        <button onClick={() => handleOpenModal('create')}
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2">
-          <Plus className="w-5 h-5" />
-          {t('roomManagement.createButton', 'Thêm phòng mới')}
-        </button>
+        {isAdmin && (
+          <button onClick={() => handleOpenModal('create')}
+            className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            {t('roomManagement.createButton', 'Thêm phòng mới')}
+          </button>
+        )}
       </div>
 
       {/* Filter và Search */}
@@ -402,10 +426,12 @@ export default function ClinicRoomManagement() {
                         >
                           <Eye className="w-5 h-5" />
                         </button>
-                        <button onClick={() => openDeleteConfirm(room)} title={t('roomManagement.common.delete', 'Xóa')}
-                          className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors">
-                          <Trash2 className="w-5 h-5" />
-                        </button>
+                        {isAdmin && (
+                          <button onClick={() => openDeleteConfirm(room)} title={t('roomManagement.common.delete', 'Xóa')}
+                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors">
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -428,7 +454,7 @@ export default function ClinicRoomManagement() {
                  t('roomManagement.modal.edit', 'Chỉnh sửa phòng khám')}
               </h2>
               <div className="flex items-center gap-3">
-                {modalMode === 'view' && (
+                {modalMode === 'view' && isAdmin && (
                   <button onClick={handleSwitchToEdit}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
                     <Edit className="w-5 h-5" /> {t('roomManagement.common.edit', 'Chỉnh sửa')}
