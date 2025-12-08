@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
-import { Search, ClipboardList, X } from 'lucide-react';
+import { Search, ClipboardList, X, Eye } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import CountBadge from '../common/CountBadge';
 import Pagination from '../common/Pagination';
 import { useTheme } from '../../contexts/ThemeContext';
+import PatientHistoryModal from './PatientHistoryModal';
 
 const MedicalRecordHistory = () => {
   const { theme } = useTheme();
@@ -16,6 +17,10 @@ const MedicalRecordHistory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
+  
+  // History Modal State
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState(null);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(0);
@@ -211,19 +216,20 @@ const MedicalRecordHistory = () => {
               <th className="px-4 py-3 text-left w-48">{t('medicalRecords.table.patient')}</th>
               <th className="px-4 py-3 text-left">{t('medicalRecords.table.diagnosis')}</th>
               <th className="px-4 py-3 text-left">{t('medicalRecords.table.treatmentNotes')}</th>
+              <th className="px-4 py-3 text-center w-24">{t('medicalRecords.common.actions') || 'Thao tác'}</th>
             </tr>
           </thead>
 
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="5" className={`px-4 py-10 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                <td colSpan="6" className={`px-4 py-10 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                   {t('medicalRecords.common.loading')}
                 </td>
               </tr>
             ) : currentPageRecords.length === 0 ? (
               <tr>
-                <td colSpan="5" className={`px-4 py-10 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                <td colSpan="6" className={`px-4 py-10 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                   {searchTerm || filterStartDate || filterEndDate
                     ? t('medicalRecords.noResults')
                     : t('medicalRecords.noRecords')}
@@ -249,6 +255,23 @@ const MedicalRecordHistory = () => {
                   <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                     {record.treatmentNotes || '-'}
                   </td>
+                  <td className="px-4 py-3 text-center">
+                    {record.patientId && (
+                      <button
+                        onClick={() => {
+                          setSelectedPatient({
+                            patientId: record.patientId,
+                            patientName: record.patientName
+                          });
+                          setShowHistoryModal(true);
+                        }}
+                        className={`p-2 rounded-full transition-colors ${theme === 'dark' ? 'hover:bg-gray-600 text-blue-400' : 'hover:bg-gray-100 text-blue-600'}`}
+                        title={t('medicalRecords.viewHistory') || 'Xem lịch sử khám'}
+                      >
+                        <Eye className="w-5 h-5" />
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))
             )}
@@ -261,6 +284,18 @@ const MedicalRecordHistory = () => {
           onPageChange={setCurrentPage} 
         />
       </div>
+
+      {/* History Modal */}
+      {showHistoryModal && selectedPatient && (
+        <PatientHistoryModal
+          patientId={selectedPatient.patientId}
+          patientName={selectedPatient.patientName}
+          onClose={() => {
+            setShowHistoryModal(false);
+            setSelectedPatient(null);
+          }}
+        />
+      )}
     </div>
   );
 };

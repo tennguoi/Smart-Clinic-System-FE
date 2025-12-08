@@ -7,6 +7,7 @@ import { Plus, ClipboardList, Search, RotateCcw } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import CountBadge from '../common/CountBadge';
 import Pagination from '../common/Pagination';
+import PatientHistoryModal from './PatientHistoryModal';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -26,6 +27,10 @@ const MedicalRecordsSection = () => {
 
   const patientNameMapRef = useRef(new Map());
   const today = new Date().toISOString().split('T')[0];
+
+  // History Modal State
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(0);
@@ -144,6 +149,13 @@ const MedicalRecordsSection = () => {
       setFormError(msg);
     } finally {
       setFormSubmitting(false);
+    }
+  };
+
+  const handleViewHistory = (patientId, patientName) => {
+    if (patientId) {
+      setSelectedPatient({ patientId, patientName });
+      setShowHistoryModal(true);
     }
   };
 
@@ -306,6 +318,7 @@ const MedicalRecordsSection = () => {
                       onUpdated={fetchMyRecords}
                       onError={setFormError}
                       onDelete={(recordId) => patientNameMapRef.current.delete(recordId)}
+                      onViewHistory={handleViewHistory}
                     />
                   ))}
                 </tbody>
@@ -323,6 +336,18 @@ const MedicalRecordsSection = () => {
           </>
         )}
       </div>
+
+      {/* History Modal */}
+      {showHistoryModal && selectedPatient && (
+        <PatientHistoryModal
+          patientId={selectedPatient.patientId}
+          patientName={selectedPatient.patientName}
+          onClose={() => {
+            setShowHistoryModal(false);
+            setSelectedPatient(null);
+          }}
+        />
+      )}
     </div>
   );
 };

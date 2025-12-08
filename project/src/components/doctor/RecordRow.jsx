@@ -1,6 +1,6 @@
 // src/components/doctor/RecordRow.jsx
 import { useState } from 'react';
-import { Pencil, Trash2, Pill, Download } from 'lucide-react';
+import { Pencil, Trash2, Pill, Download, Eye } from 'lucide-react';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import toast from 'react-hot-toast';
 import RecordDetailModal from './RecordDetailModal';
@@ -9,7 +9,7 @@ import { downloadPdf, getMedicalRecordFilename } from '../../utils/pdfDownload';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 
-const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
+const RecordRow = ({ index, record, onUpdated, onError, onDelete, onViewHistory }) => {
   const { t } = useTranslation();
   const { theme } = useTheme();
 
@@ -148,6 +148,20 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
           ) : (
             <div className="flex items-center gap-2">
 
+               {/* Nút Xem Lịch Sử (MỚI) */}
+               {record.patientId && (
+                <button
+                  onClick={() => onViewHistory && onViewHistory(record.patientId, record.patientName)}
+                  className="p-2.5 text-teal-600 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-900/30 rounded-full transition group relative"
+                  aria-label={t('medicalRecords.viewHistory') || 'Xem lịch sử'}
+                >
+                  <Eye className="w-5 h-5" />
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none z-10 shadow-lg">
+                    {t('medicalRecords.viewHistory') || 'Xem lịch sử'}
+                  </span>
+                </button>
+              )}
+
               {/* Nút Xuất PDF */}
               <button
                 onClick={handleExportPdf}
@@ -194,18 +208,6 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
                   {t('doctorRecords.common.edit')}
                 </span>
               </button>
-
-              {/* Có thể bật lại sau nếu cần */}
-              {/* <button
-                onClick={() => setShowPrescriptionModal(true)}
-                className="p-2.5 bg-green-600 text-white rounded-full hover:bg-green-700 transition group relative"
-                aria-label={t('modal.prescriptionTitle')}
-              >
-                <Pill className="w-4 h-4" />
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none z-10">
-                  {t('modal.prescriptionTitle')}
-                </span>
-              </button> */}
 
             </div>
           )}
