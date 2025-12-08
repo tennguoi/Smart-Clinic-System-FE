@@ -121,7 +121,7 @@ const MedicalRecordHistory = () => {
           <CountBadge
             currentCount={records.length}
             totalCount={records.length}
-            label={t('medicalRecords.patientLabel') || 'bệnh nhân'}
+            label={t('medicalRecords.patientLabel')}
           />
         </h1>
       </div>
@@ -131,7 +131,7 @@ const MedicalRecordHistory = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-4">
             <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-              Tìm kiếm (Tên, SĐT, CCCD, BHYT, Chẩn đoán)
+              {t('medicalRecords.filters.searchLabelDetail')}
             </label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -199,7 +199,7 @@ const MedicalRecordHistory = () => {
               onClick={handleClearFilters}
               className={`w-full px-4 py-3 rounded-xl transition font-medium whitespace-nowrap ${theme === 'dark' ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
             >
-              Xóa lọc
+              {t('medicalRecords.filters.clear')}
             </button>
           </div>
         </div>
@@ -212,14 +212,14 @@ const MedicalRecordHistory = () => {
         <table className="w-full">
           <thead className={`uppercase text-xs sticky top-0 ${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>
             <tr>
-              <th className="px-4 py-3 text-center w-16">STT</th>
-              <th className="px-4 py-3 text-left w-48">BỆNH NHÂN</th>
-              <th className="px-4 py-3 text-left w-32">SĐT</th>
-              <th className="px-4 py-3 text-left w-32">CCCD</th>
-              <th className="px-4 py-3 text-left w-32">BHYT</th>
-              <th className="px-4 py-3 text-center w-24">SỐ LẦN KHÁM</th>
-              <th className="px-4 py-3 text-left w-32">LẦN CUỐI</th>
-              <th className="px-4 py-3 text-center w-24">THAO TÁC</th>
+              <th className="px-4 py-3 text-center w-16">{t('medicalRecords.table.stt')}</th>
+              <th className="px-4 py-3 text-left w-48">{t('medicalRecords.table.patient')}</th>
+              <th className="px-4 py-3 text-left w-32">{t('medicalRecords.table.phone')}</th>
+              <th className="px-4 py-3 text-left w-32">{t('medicalRecords.table.idNumber')}</th>
+              <th className="px-4 py-3 text-left w-32">{t('medicalRecords.table.insurance')}</th>
+              <th className="px-4 py-3 text-center w-24">{t('medicalRecords.table.visitCount')}</th>
+              <th className="px-4 py-3 text-left w-32">{t('medicalRecords.table.lastVisit')}</th>
+              <th className="px-4 py-3 text-center w-24">{t('common.actions')}</th>
             </tr>
           </thead>
 

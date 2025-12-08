@@ -202,14 +202,14 @@ const MedicalRecordsSection = () => {
           {/* Keyword */}
           <div className="lg:col-span-4">
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-              Từ khóa tìm kiếm
+              {t('medicalRecords.filters.search')}
             </label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 name="keyword"
-                placeholder="Nhập tên bệnh nhân, SĐT..."
+                placeholder={t('medicalRecords.filters.searchPlaceholder')}
                 className={`w-full pl-9 pr-4 px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'}`}
                 value={searchParams.keyword}
                 onChange={handleSearchChange}
@@ -220,7 +220,7 @@ const MedicalRecordsSection = () => {
           {/* Start Date */}
           <div className="lg:col-span-3">
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-              Từ ngày
+              {t('medicalRecords.filters.fromDate')}
             </label>
             <input
               type="date"
@@ -235,7 +235,7 @@ const MedicalRecordsSection = () => {
           {/* End Date */}
           <div className="lg:col-span-3">
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-              Đến ngày
+              {t('medicalRecords.filters.toDate')}
             </label>
             <input
               type="date"
@@ -255,7 +255,7 @@ const MedicalRecordsSection = () => {
               onClick={handleResetSearch}
               className={`w-full px-4 py-3 rounded-xl transition font-medium whitespace-nowrap ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
             >
-              Xóa lọc
+              {t('medicalRecords.filters.clear')}
             </button>
           </div>
         </div>
@@ -293,19 +293,19 @@ const MedicalRecordsSection = () => {
                 <thead className={`${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} border-b`}>
                   <tr>
                     <th className={`text-center px-4 py-3 text-xs font-bold uppercase tracking-wider w-20 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      STT
+                      {t('medicalRecords.table.stt')}
                     </th>
                     <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      TÊN BỆNH NHÂN
+                      {t('medicalRecords.table.patient')}
                     </th>
                     <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      CHẨN ĐOÁN
+                      {t('medicalRecords.table.diagnosis')}
                     </th>
                     <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      GHI CHÚ ĐIỀU TRỊ
+                      {t('medicalRecords.table.treatmentNotes')}
                     </th>
                     <th className={`text-center px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      THAO TÁC
+                      {t('common.actions')}
                     </th>
                   </tr>
                 </thead>
