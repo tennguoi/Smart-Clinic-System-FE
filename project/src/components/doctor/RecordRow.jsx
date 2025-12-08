@@ -86,11 +86,18 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
   return (
     <>
       <tr className={`transition-colors ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
-        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{index}</td>
-        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
+        {/* STT - w-16 */}
+        <td className={`px-4 py-4 text-sm text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+          {index}
+        </td>
+
+        {/* Tên bệnh nhân - w-1/5 */}
+        <td className={`px-4 py-4 text-sm text-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
           {record.patientName || record.patientId || '—'}
         </td>
-        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
+
+        {/* Chẩn đoán - w-1/4 */}
+        <td className={`px-4 py-4 text-sm text-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
           {editing ? (
             <input
               type="text"
@@ -105,7 +112,9 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
             record.diagnosis || '—'
           )}
         </td>
-        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+
+        {/* Ghi chú điều trị - w-1/4 */}
+        <td className={`px-4 py-4 text-sm text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
           {editing ? (
             <textarea
               value={localNotes}
@@ -120,9 +129,11 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
             record.treatmentNotes || '—'
           )}
         </td>
-        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+
+        {/* Thao tác - w-32 */}
+        <td className={`px-4 py-4 text-sm text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
           {editing ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center gap-3">
               <button
                 onClick={handleSave}
                 disabled={saving}
@@ -146,7 +157,7 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2">
 
               {/* Nút Xuất PDF */}
               <button
@@ -194,18 +205,6 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
                   {t('doctorRecords.common.edit')}
                 </span>
               </button>
-
-              {/* Có thể bật lại sau nếu cần */}
-              {/* <button
-                onClick={() => setShowPrescriptionModal(true)}
-                className="p-2.5 bg-green-600 text-white rounded-full hover:bg-green-700 transition group relative"
-                aria-label={t('modal.prescriptionTitle')}
-              >
-                <Pill className="w-4 h-4" />
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none z-10">
-                  {t('modal.prescriptionTitle')}
-                </span>
-              </button> */}
 
             </div>
           )}

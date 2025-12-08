@@ -171,7 +171,7 @@ export default function PaymentPage() {
         <div className="mb-6">
           <button onClick={handleBack} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4">
             <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium">{t('common.backToList') || 'Quay lại danh sách hóa đơn'}</span>
+            <span className="font-medium">{t('invoices.common.backToList') || 'Quay lại danh sách hóa đơn'}</span>
           </button>
           <h1 className="text-3xl font-bold text-gray-900">{t('invoices.paymentTitle')}</h1>
         </div>

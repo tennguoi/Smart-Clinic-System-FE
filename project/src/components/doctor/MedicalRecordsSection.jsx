@@ -73,7 +73,7 @@ const MedicalRecordsSection = () => {
       setRecordsError(msg);
       setRecords([]);
       setTotalRecords(0);
-      toast.error(msg);    // 🔥 dùng toast
+      toast.error(msg);
     } finally {
       setRecordsLoading(false);
     }
@@ -114,7 +114,7 @@ const MedicalRecordsSection = () => {
 
     if (!formData.diagnosis?.trim()) {
       setFormError(t('doctorRecords.create.diagnosisRequired'));
-      toast.error(t('doctorRecords.create.diagnosisRequired')); // 🔥 toast
+      toast.error(t('doctorRecords.create.diagnosisRequired'));
       return;
     }
     if (!formData.treatmentNotes?.trim()) {
@@ -133,7 +133,7 @@ const MedicalRecordsSection = () => {
       });
 
       setFormSuccess(t('doctorRecords.create.success'));
-      toast.success(t('doctorRecords.create.success')); // 🔥 toast
+      toast.success(t('doctorRecords.create.success'));
 
       const patientNameValue = created.patientName || formData.patientName?.trim() || null;
       if (patientNameValue && created.recordId && !created.patientName) {
@@ -148,7 +148,7 @@ const MedicalRecordsSection = () => {
     } catch (error) {
       const msg = error.response?.data?.message || error.message || t('doctorRecords.create.failed');
       setFormError(msg);
-      toast.error(msg);  // 🔥 toast
+      toast.error(msg);
     } finally {
       setFormSubmitting(false);
     }
@@ -172,13 +172,7 @@ const MedicalRecordsSection = () => {
           />
         </h1>
         
-        <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2"
-        >
-          <Plus className="w-5 h-5" />
-          {t('doctorRecords.create.newRecord')}
-        </button>
+    
       </div>
 
       {/* CREATE FORM */}
@@ -228,7 +222,7 @@ const MedicalRecordsSection = () => {
                 max={searchParams.endDate || today}
               />
             </div>
-            <span className={`mb-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>-</span>
+            <span className={`mb-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}></span>
             <div className="flex-1">
               <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                 {t('doctorRecords.filters.toDate')}
@@ -250,7 +244,7 @@ const MedicalRecordsSection = () => {
               onClick={handleResetSearch}
               className={`w-full px-4 py-3 rounded-xl transition font-medium flex items-center justify-center gap-2 ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
             >
-              <RotateCcw className="w-4 h-4" />
+              
               {t('doctorRecords.filters.clear')}
             </button>
           </div>
@@ -284,22 +278,22 @@ const MedicalRecordsSection = () => {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed">
                 <thead className={`${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} border-b`}>
                   <tr>
-                    <th className={`text-center px-4 py-3 text-xs font-bold uppercase tracking-wider w-20 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <th className={`text-center px-4 py-3 text-xs font-bold uppercase tracking-wider w-16 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                       {t('doctorRecords.common.stt')}
                     </th>
-                    <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <th className={`text-center px-4 py-3 text-xs font-bold uppercase tracking-wider w-1/5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                       {t('doctorRecords.table.patient')}
                     </th>
-                    <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <th className={`text-center px-4 py-3 text-xs font-bold uppercase tracking-wider w-1/4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                       {t('doctorRecords.table.diagnosis')}
                     </th>
-                    <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <th className={`text-center px-4 py-3 text-xs font-bold uppercase tracking-wider w-1/4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                       {t('doctorRecords.table.treatmentNotes')}
                     </th>
-                    <th className={`text-center px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <th className={`text-center px-4 py-3 text-xs font-bold uppercase tracking-wider w-32 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                       {t('doctorRecords.common.actions')}
                     </th>
                   </tr>
@@ -311,7 +305,7 @@ const MedicalRecordsSection = () => {
                       index={currentPage * ITEMS_PER_PAGE + idx + 1}
                       record={r}
                       onUpdated={fetchMyRecords}
-                      onError={(msg) => toast.error(msg)}  // 🔥 dùng toast
+                      onError={(msg) => toast.error(msg)}
                       onDelete={(recordId) => patientNameMapRef.current.delete(recordId)}
                     />
                   ))}

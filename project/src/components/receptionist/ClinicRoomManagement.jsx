@@ -376,7 +376,7 @@ export default function ClinicRoomManagement({ isAdminView = true }) {
 
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
-                        <Building2 className="w-5 h-5 text-gray-400" />
+                      
                         <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{room.roomName || 'N/A'}</span>
                       </div>
                     </td>
