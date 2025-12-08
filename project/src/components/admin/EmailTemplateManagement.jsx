@@ -272,9 +272,7 @@ export default function EmailTemplateManagement() {
                   <h3 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
                     {template.templateName}
                   </h3>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${template.isHtml ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
-                    {template.isHtml ? 'HTML' : 'Text'}
-                  </span>
+
                 </div>
                 <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-4 truncate`}>
                   <strong>Subject:</strong> {template.subject}
@@ -362,13 +360,26 @@ export default function EmailTemplateManagement() {
                       </div>
                     </div>
 
+
                     {modalMode === 'edit' && (
-                      <div className="flex gap-3">
-                        <button type="submit" disabled={loading} className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition">
-                          {loading ? 'Đang lưu...' : 'Lưu Thay Đổi'}
-                        </button>
+                      <div
+                        className={`mt-4 sticky bottom-0 z-10 border-t pt-3 ${theme === 'dark'
+                            ? 'bg-gray-800/80 border-gray-700 backdrop-blur'
+                            : 'bg-white/80 border-gray-200 backdrop-blur'
+                          }`}
+                      >
+                        <div className="flex gap-3">
+                          <button
+                            type="submit"
+                            disabled={loading}
+                            className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-70"
+                          >
+                            {loading ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                          </button>
+                        </div>
                       </div>
                     )}
+
                   </form>
                 </div>
 
@@ -386,7 +397,7 @@ export default function EmailTemplateManagement() {
                           Email Preview (Real-time)
                         </h3>
 
-                        <div className="bg-white rounded border border-gray-300 p-4 max-h-96 overflow-y-auto">
+                        <div >
                           <div
                             dangerouslySetInnerHTML={{
                               __html: getSampleData(selectedTemplate.availablePlaceholders || [])
