@@ -1,4 +1,8 @@
+
 import { PhoneCall, Clock, User, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import toast, { Toaster } from 'react-hot-toast';
+import { toastConfig } from '../../config/toastConfig';
 import { calculateAge, formatTime } from '../../utils/helpers';
 
 export default function WaitingQueueScreen({ 
@@ -6,16 +10,21 @@ export default function WaitingQueueScreen({
   onCallNext, 
   isLoading 
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-50">
+      {/* Toast Container */}
+      <Toaster {...toastConfig} />
+
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-blue-100">
         <div className="max-w-6xl mx-auto px-4 lg:px-6 py-6 lg:py-8 text-center">
           <h1 className="text-2xl lg:text-3xl font-bold text-blue-900">
-            Phòng khám của tôi
+            {t('waitingQueue.title')}
           </h1>
           <p className="text-lg lg:text-xl text-blue-600 mt-2 font-medium">
-            {waitingQueue.length} bệnh nhân đang chờ khám
+            {t('waitingQueue.patientsWaiting', { count: waitingQueue.length })}
           </p>
         </div>
       </div>
@@ -26,10 +35,10 @@ export default function WaitingQueueScreen({
           <div className="text-center py-16 lg:py-32 bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100">
             <div className="text-6xl lg:text-8xl mb-6">😊</div>
             <h2 className="text-xl lg:text-2xl font-semibold text-blue-800">
-              Hiện chưa có bệnh nhân nào
+              {t('waitingQueue.noPatients')}
             </h2>
             <p className="text-base lg:text-lg text-blue-600 mt-3">
-              Hệ thống đang chờ bệnh nhân tiếp theo...
+              {t('waitingQueue.waitingSystem')}
             </p>
           </div>
         ) : (
@@ -39,7 +48,7 @@ export default function WaitingQueueScreen({
             <div className="bg-gradient-to-r from-blue-600 to-sky-600 text-white px-4 lg:px-6 py-4 lg:py-5">
               <h2 className="text-lg lg:text-xl font-bold flex items-center gap-3">
                 <Clock className="w-5 h-5 lg:w-6 lg:h-6" />
-                Hàng chờ khám bệnh
+                {t('waitingQueue.queueTitle')}
               </h2>
             </div>
 
@@ -48,12 +57,12 @@ export default function WaitingQueueScreen({
               <table className="w-full">
                 <thead className="bg-blue-50 text-blue-800 text-sm font-semibold uppercase tracking-wider">
                   <tr>
-                    <th className="px-6 py-4 text-left">STT</th>
-                    <th className="px-6 py-4 text-left">Họ và tên</th>
-                    <th className="px-6 py-4 text-center">Giới tính</th>
-                    <th className="px-6 py-4 text-center">Tuổi</th>
-                    <th className="px-6 py-4 text-center">Giờ vào</th>
-                    <th className="px-6 py-4 text-center">Thao tác</th>
+                    <th className="px-6 py-4 text-left">{t('waitingQueue.table.queueNumber')}</th>
+                    <th className="px-6 py-4 text-left">{t('waitingQueue.table.fullName')}</th>
+                    <th className="px-6 py-4 text-center">{t('waitingQueue.table.gender')}</th>
+                    <th className="px-6 py-4 text-center">{t('waitingQueue.table.age')}</th>
+                    <th className="px-6 py-4 text-center">{t('waitingQueue.table.checkInTime')}</th>
+                    <th className="px-6 py-4 text-center">{t('waitingQueue.table.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-blue-100">
@@ -77,7 +86,7 @@ export default function WaitingQueueScreen({
                             </span>
                             {isNextPatient && (
                               <span className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full font-bold">
-                                Tiếp theo
+                                {t('waitingQueue.nextBadge')}
                               </span>
                             )}
                           </div>
@@ -86,7 +95,9 @@ export default function WaitingQueueScreen({
                           {patient.patientName}
                         </td>
                         <td className="px-6 py-5 text-center text-gray-700">
-                          {patient.gender === 'Male' || patient.gender === 'Nam' ? 'Nam' : 'Nữ'}
+                          {patient.gender === 'Male' || patient.gender === 'Nam' 
+                            ? t('waitingQueue.gender.male') 
+                            : t('waitingQueue.gender.female')}
                         </td>
                         <td className="px-6 py-5 text-center text-gray-800 font-semibold">
                           {calculateAge(patient.dob)}
@@ -104,12 +115,12 @@ export default function WaitingQueueScreen({
                               {isLoading ? (
                                 <>
                                   <Loader2 className="animate-spin" size={18} />
-                                  Đang gọi...
+                                  {t('waitingQueue.calling')}
                                 </>
                               ) : (
                                 <>
                                   <PhoneCall size={18} />
-                                  Gọi vào khám
+                                  {t('waitingQueue.callButton')}
                                 </>
                               )}
                             </button>
@@ -144,7 +155,7 @@ export default function WaitingQueueScreen({
                         </span>
                         {isNextPatient && (
                           <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-bold">
-                            Tiếp theo
+                            {t('waitingQueue.nextBadge')}
                           </span>
                         )}
                       </div>
@@ -159,11 +170,13 @@ export default function WaitingQueueScreen({
                       </div>
                       <div className="flex items-center gap-4 text-sm text-gray-600">
                         <span>
-                          {patient.gender === 'Male' || patient.gender === 'Nam' ? 'Nam' : 'Nữ'}
+                          {patient.gender === 'Male' || patient.gender === 'Nam' 
+                            ? t('waitingQueue.gender.male') 
+                            : t('waitingQueue.gender.female')}
                         </span>
                         <span>•</span>
                         <span className="font-semibold">
-                          {calculateAge(patient.dob)} tuổi
+                          {calculateAge(patient.dob)} {t('waitingQueue.yearsOld')}
                         </span>
                         <span>•</span>
                         <span>{formatTime(patient.checkInTime)}</span>
@@ -179,12 +192,12 @@ export default function WaitingQueueScreen({
                         {isLoading ? (
                           <>
                             <Loader2 className="animate-spin" size={18} />
-                            Đang gọi...
+                            {t('waitingQueue.calling')}
                           </>
                         ) : (
                           <>
                             <PhoneCall size={18} />
-                            Gọi vào khám
+                            {t('waitingQueue.callButton')}
                           </>
                         )}
                       </button>
