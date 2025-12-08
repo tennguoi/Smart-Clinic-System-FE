@@ -30,7 +30,7 @@ export default function ProfileManager({ initialData = {} }) {
     let toastId; // Khai báo để có thể dismiss khi thành công
 
     const fetchUserProfile = async () => {
-      toastId = toast.loading(t('profileManager.loading'));
+      // toastId = toast.loading(t('profileManager.loading'));
 
       try {
         setIsLoading(true);

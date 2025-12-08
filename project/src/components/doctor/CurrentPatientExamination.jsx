@@ -432,19 +432,19 @@ export default function CurrentPatientExamination() {
                     <div className="w-px bg-gray-300 mx-2"></div>
                   )}
 
-                  <button
-                    onClick={() => setAiAssistantOpen(!aiAssistantOpen)}
-                    className={`flex items-center gap-2 lg:gap-3 px-4 lg:px-6 py-2.5 lg:py-3 rounded-lg font-semibold transition-all shadow-md text-sm lg:text-base whitespace-nowrap ${
-                      aiAssistantOpen
-                        ? 'bg-gradient-to-r from-blue-600 to-sky-600 text-white w-full justify-start'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    <Sparkles className="w-4 h-4 lg:w-5 lg:h-5" />
-                    <span>
-                      {aiAssistantOpen ? 'Đang bật AI' : 'Bật AI Trợ lý'}
-                    </span>
-                  </button>
+             <button
+  onClick={() => setAiAssistantOpen(!aiAssistantOpen)}
+  className={`flex items-center gap-2 lg:gap-3 px-4 lg:px-6 py-2.5 lg:py-3 rounded-lg font-semibold transition-all shadow-md text-sm lg:text-base whitespace-nowrap ${
+    aiAssistantOpen
+      ? 'bg-gradient-to-r from-blue-600 to-sky-600 text-white w-full justify-start'
+      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+  }`}
+>
+  <Sparkles className="w-4 h-4 lg:w-5 lg:h-5" />
+  <span>
+    {aiAssistantOpen ? t('doctorExamination.aiAssistantOn') : t('doctorExamination.aiAssistantOff')}
+  </span>
+</button>
                 </div>
               </div>
 

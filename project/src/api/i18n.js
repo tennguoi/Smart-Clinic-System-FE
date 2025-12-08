@@ -568,6 +568,7 @@ servicesManagement: {
        confirm: "Xác nhận",
 view: "Xem chi tiết",
 save: "Lưu",
+no: "STT",
   },
   modal: {
     createTitle: "Tạo dịch vụ mới",
@@ -739,64 +740,71 @@ appointmentManagement: {
 
 
 // === THÊM VÀO resources.en.translation ===
-roomManagement: {
-  title: "Quản Lý Phòng Khám",
-  createButton: "Thêm phòng mới",
-  updateButton: "Cập nhật",           // ← mới thêm
-  room: "phòng",
-  searchPlaceholder: "Tên phòng hoặc tên bác sĩ...",
-  statusLabel: "Trạng thái",
-  statusAvailable: "Sẵn sàng",
-  statusOccupied: "Đang sử dụng",
-  activeLabel: "Hoạt động",
-  active: "Hoạt động",
-  inactive: "Ngưng hoạt động",
-  loading: "Đang tải danh sách phòng khám...",
-  noRooms: "Chưa có phòng khám nào",
-  noDoctor: "Chưa gán bác sĩ",
-  noDoctorSelect: "-- Chưa gán bác sĩ --",
-  loadingDoctors: "Đang tải danh sách bác sĩ...",
-  roomName: "Tên phòng",
-  roomNamePlaceholder: "VD: Phòng khám Tai-Mũi-Họng số 1",
-  doctorLabel: "Bác sĩ phụ trách (Tùy chọn)",
-  activeCheckbox: "Phòng đang hoạt động",
-  nameRequired: "Vui lòng nhập tên phòng",
-  createSuccess: "Tạo phòng khám thành công!",
-  updateSuccess: "Cập nhật phòng khám thành công!",
-  deleteSuccess: "Xóa phòng khám thành công!",
-  deleteError: "Không thể xóa phòng khám",
-  loadError: "Không thể tải danh sách phòng khám",
-  loadDoctorsError: "Không thể tải danh sách bác sĩ",
-  modal: {
-    create: "Thêm phòng khám mới",
-    view: "Chi tiết phòng khám",
-    edit: "Chỉnh sửa phòng khám"
+"roomManagement": {
+    "title": "Quản Lý Phòng Khám",
+    "createButton": "Thêm phòng mới",
+    "updateButton": "Cập nhật",
+    "room": "phòng",
+    "searchPlaceholder": "Tên phòng hoặc tên bác sĩ...",
+    "statusLabel": "Trạng thái",
+    "statusAvailable": "Sẵn sàng",
+    "statusOccupied": "Đang sử dụng",
+    "activeLabel": "Hoạt động",
+    "active": "Hoạt động",
+    "inactive": "Ngưng hoạt động",
+    "loading": "Đang tải danh sách phòng khám...",
+    "noRooms": "Chưa có phòng khám nào",
+    "noDoctor": "Chưa gán bác sĩ",
+    "noDoctorSelect": "-- Chưa gán bác sĩ --",
+    "loadingDoctors": "Đang tải danh sách bác sĩ...",
+    "roomName": "Tên phòng",
+    "roomNamePlaceholder": "VD: Phòng khám Tai-Mũi-Họng số 1",
+    "doctorLabel": "Bác sĩ phụ trách (Tùy chọn)",
+    "activeStatus": "Trạng thái hoạt động",
+    "activeCheckbox": "Phòng đang hoạt động",
+    "nameRequired": "Vui lòng nhập tên phòng",
+    "createSuccess": "Tạo phòng khám thành công!",
+    "updateSuccess": "Cập nhật phòng khám thành công!",
+    "activateSuccess": "Đã kích hoạt phòng khám!",
+    "deactivateSuccess": "Đã vô hiệu hóa phòng khám!",
+    "toggleError": "Không thể thay đổi trạng thái phòng khám",
+    "noPermission": "Bạn không có quyền thực hiện thao tác này",
+    "loadError": "Không thể tải danh sách phòng khám",
+    "loadDoctorsError": "Không thể tải danh sách bác sĩ",
+    "modal": {
+      "create": "Thêm phòng khám mới",
+      "view": "Chi tiết phòng khám",
+      "edit": "Chỉnh sửa phòng khám"
+    },
+    "table": {
+      "roomName": "Tên phòng",
+      "doctor": "Bác sĩ",
+      "status": "Trạng thái",
+      "active": "Hoạt động"
+    },
+    "confirmDeactivate": {
+      "title": "Vô hiệu hóa phòng khám?",
+      "text": "Bạn có chắc muốn vô hiệu hóa phòng",
+      "confirm": "Vô hiệu hóa"
+    },
+    "confirmActivate": {
+      "title": "Kích hoạt phòng khám?",
+      "text": "Bạn có chắc muốn kích hoạt phòng",
+      "confirm": "Kích hoạt"
+    },
+    "common": {
+      "stt": "STT",
+      "actions": "Thao tác",
+      "view": "Xem chi tiết",
+      "edit": "Chỉnh sửa",
+      "activate": "Kích hoạt",
+      "deactivate": "Vô hiệu hóa",
+      "cancel": "Hủy",
+      "all": "Tất cả",
+      "clearFilter": "Xóa lọc",
+      "search": "Tìm kiếm"
+    }
   },
-  table: {
-    roomName: "Tên phòng",
-    doctor: "Bác sĩ",
-    status: "Trạng thái",
-    active: "Hoạt động"
-  },
-  confirmDelete: {
-    title: "Xóa phòng khám?",
-    text1: "Bạn có chắc chắn muốn xóa phòng khám",
-    warning: "Hành động này không thể hoàn tác.",
-    confirm: "Xóa"
-  },
-  common: {
-  // ... các key hiện tại ...
-  stt: "STT",
-  actions: "Thao tác",
-  view: "Xem chi tiết",
-  edit: "Chỉnh sửa",
-  delete: "Xóa",
-  cancel: "Hủy",
-  all: "Tất cả",
-  clearFilter: "Xóa lọc",
-  search: "Tìm kiếm"
-},
-},
 medicalRecords: {
   title: "Lịch Sử Khám Bệnh",
   allRecords: "Tất cả",
@@ -1105,7 +1113,8 @@ receptionSidebar: {
   appointments: "Lịch Hẹn",
   records: "Danh Sách Bệnh Nhân",
   rooms: "Quản Lý Phòng",
-  invoices: "Hóa Đơn"
+  invoices: "Hóa Đơn",
+  appointmentstoday: "Lịch Hẹn Hôm Nay",
 },
 doctorStats: {
   header: {
@@ -1239,7 +1248,9 @@ doctorExamination: {
   aiHint: 'Nhập chẩn đoán → Nhấn "AI Sinh Phác Đồ" để tự động tạo ghi chú và thuốc',
   aiSuggestedDrugs: "AI Đề Xuất {{count}} Thuốc",
   applyAll: "Áp dụng tất cả",
-  selectDrugsHint: "Tick chọn thuốc cần dùng hoặc áp dụng tất cả"
+  selectDrugsHint: "Tick chọn thuốc cần dùng hoặc áp dụng tất cả",
+    aiAssistantOn: "Đang bật AI",
+  aiAssistantOff: "Bật AI Trợ lý",
 },
 doctorRecords: {
   title: "Quản lý phiếu khám",
@@ -1608,6 +1619,62 @@ serviceSelection: {
   loading: "Đang tải dịch vụ...",
   noResults: "Không tìm thấy dịch vụ phù hợp"
 },
+emailTemplates: {
+  title: "Quản Lý Mẫu Email",
+  subject: "Tiêu đề",
+  subjectLabel: "Tiêu đề",
+  contentLabel: "Nội dung Email",
+  saveButton: "Lưu Thay Đổi",
+  
+  errors: {
+    loadFailed: "Không thể tải danh sách email templates",
+    fillRequired: "Vui lòng điền đầy đủ thông tin",
+    updateFailed: "Có lỗi xảy ra"
+  },
+  
+  toast: {
+    updateSuccess: "Cập nhật template thành công"
+  },
+      common: {
+  // ... các key hiện tại ...
+  stt: "STT",
+  actions: "Thao tác",
+  view: "Xem chi tiết",
+  edit: "Chỉnh sửa",
+  delete: "Xóa",
+  cancel: "Hủy",
+  all: "Tất cả",
+  clearFilter: "Xóa lọc",
+  search: "Tìm kiếm"
+},
+},
+// Trong resources.vi.translation
+aiAssistant: {
+  title: "AI Trợ Lý Y Tế",
+  statusThinking: "Đang suy nghĩ...",
+  statusReady: "Sẵn sàng hỗ trợ",
+  welcomeMessage: "Xin chào bác sĩ!\nTôi là AI Trợ Lý Y Tế thông minh.\nBạn cần hỗ trợ chẩn đoán, kê đơn hay giải thích kết quả?",
+  newConversation: "Cuộc trò chuyện mới",
+  loadingHistory: "Đang tải...",
+  noHistory: "Chưa có lịch sử trò chuyện",
+  conversationTitle: "Cuộc trò chuyện",
+  applyPlan: "Áp dụng phác đồ này vào form",
+  noPlanFound: "Không tìm thấy phác đồ trong response",
+  inputPlaceholder: "Hỏi AI về chẩn đoán, đơn thuốc, hướng dẫn bệnh nhân...",
+  sendButton: "Gửi",
+  sending: "Đang gửi...",
+  aiAnalyzing: "AI đang phân tích...",
+  disclaimer: "AI chỉ mang tính hỗ trợ • Luôn kiểm tra lại trước khi áp dụng",
+  errorLoginRequired: "Vui lòng đăng nhập lại",
+  errorCreateConversation: "Không tạo được cuộc trò chuyện mới",
+  errorNoSession: "Không có sessionId để gọi n8n",
+  errorAINoResponse: "AI không trả lời",
+  errorConnection: "Không kết nối được với AI",
+  errorLoadHistory: "Không tải được lịch sử",
+  errorLoadConversation: "Không tải được cuộc trò chuyện",
+  errorPrefix: "Lỗi kết nối AI: "
+},
+
     }
   },
 
@@ -2176,6 +2243,7 @@ common: {
        confirm: "Confirm",
       view: "View Details",
       save: "Save",
+      no: "No.",
   },
   toast: {
     createSuccess: "Service created successfully!",
@@ -2334,68 +2402,71 @@ appointmentManagement: {
 
 
 },
-roomManagement: {
-  title: "Examination Room Management",
-  "appointment": "appointment",
-  "appointments": "appointments",
-  createButton: "Add New Room",
-   updateButton: "Update",
-  room: "rooms",
-  searchPlaceholder: "Room name or doctor name...",
-  statusLabel: "Status",
-  statusAvailable: "Available",
-  statusOccupied: "Occupied",
-  activeLabel: "Active",
-  active: "Active",
-  inactive: "Inactive",
-  loading: "Loading room list...",
-  noRooms: "No examination rooms yet",
-  noDoctor: "No doctor assigned",
-  noDoctorSelect: "-- No doctor assigned --",
-  loadingDoctors: "Loading doctor list...",
-  roomName: "Room Name",
-  roomNamePlaceholder: "E.g: ENT Examination Room 1",
-  doctorLabel: "Assigned Doctor (Optional)",
-  activeCheckbox: "Room is active",
-  nameRequired: "Please enter room name",
-  createSuccess: "Room created successfully!",
-  updateSuccess: "Room updated successfully!",
-  deleteSuccess: "Room deleted successfully!",
-  deleteError: "Cannot delete room",
-  deleteConfirm: "Are you sure you want to delete this room?",
-  loadError: "Unable to load room list",
-  loadDoctorsError: "Unable to load doctor list",
-  modal: {
-    create: "Add New Examination Room",
-    view: "Room Details",
-    edit: "Edit Room"
+"roomManagement": {
+    "title": "Examination Room Management",
+    "createButton": "Add New Room",
+    "updateButton": "Update",
+    "room": "rooms",
+    "searchPlaceholder": "Room name or doctor name...",
+    "statusLabel": "Status",
+    "statusAvailable": "Available",
+    "statusOccupied": "Occupied",
+    "activeLabel": "Active",
+    "active": "Active",
+    "inactive": "Inactive",
+    "loading": "Loading room list...",
+    "noRooms": "No examination rooms yet",
+    "noDoctor": "No doctor assigned",
+    "noDoctorSelect": "-- No doctor assigned --",
+    "loadingDoctors": "Loading doctor list...",
+    "roomName": "Room Name",
+    "roomNamePlaceholder": "E.g: ENT Examination Room 1",
+    "doctorLabel": "Assigned Doctor (Optional)",
+    "activeStatus": "Active Status",
+    "activeCheckbox": "Room is active",
+    "nameRequired": "Please enter room name",
+    "createSuccess": "Room created successfully!",
+    "updateSuccess": "Room updated successfully!",
+    "activateSuccess": "Room activated successfully!",
+    "deactivateSuccess": "Room deactivated successfully!",
+    "toggleError": "Cannot change room status",
+    "noPermission": "You do not have permission to perform this action",
+    "loadError": "Unable to load room list",
+    "loadDoctorsError": "Unable to load doctor list",
+    "modal": {
+      "create": "Add New Examination Room",
+      "view": "Room Details",
+      "edit": "Edit Room"
+    },
+    "table": {
+      "roomName": "Room Name",
+      "doctor": "Doctor",
+      "status": "Status",
+      "active": "Active"
+    },
+    "confirmDeactivate": {
+      "title": "Deactivate Room?",
+      "text": "Are you sure you want to deactivate the room",
+      "confirm": "Deactivate"
+    },
+    "confirmActivate": {
+      "title": "Activate Room?",
+      "text": "Are you sure you want to activate the room",
+      "confirm": "Activate"
+    },
+    "common": {
+      "stt": "No.",
+      "actions": "Actions",
+      "view": "View Details",
+      "edit": "Edit",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "cancel": "Cancel",
+      "all": "All",
+      "clearFilter": "Clear Filters",
+      "search": "Search"
+    }
   },
-  table: {
-    roomName: "Room Name",
-    doctor: "Doctor",
-    status: "Status",
-    active: "Active"
-  },
-  confirmDelete: {
-    title: "Delete Room?",
-    text1: "Are you sure you want to delete the room",
-    warning: "This action cannot be undone.",
-    confirm: "Delete"
-  },
-  common: {
-  // ... existing keys ...
-  stt: "No.",
-  actions: "Actions",
-  view: "View Details",
-  edit: "Edit",
-  delete: "Delete",
-  cancel: "Cancel",
-  all: "All",
-  clearFilter: "Clear Filters",
-  search: "Search",
-  
-},
-},
 medicalRecords: {
   title: "Medical Record History",
   allRecords: "All Records",
@@ -2694,7 +2765,8 @@ receptionSidebar: {
   appointments: "Appointments",
   records: "Patient Records",
   rooms: "Room Management",
-  invoices: "Invoices"
+  invoices: "Invoices",
+  appointmentstoday: "Today's Appointments"
 },
 doctorStats: {
   header: {
@@ -2827,7 +2899,9 @@ doctorExamination: {
   aiHint: 'Enter diagnosis → Click "AI Generate Plan" to auto-create notes and drugs',
   aiSuggestedDrugs: "AI Suggested {{count}} Drugs",
   applyAll: "Apply All",
-  selectDrugsHint: "Check drugs to use or apply all"
+  selectDrugsHint: "Check drugs to use or apply all",
+   aiAssistantOn: "AI On",
+  aiAssistantOff: "Enable AI Assistant",
 },
 doctorRecords: {
   totalRecords: "Total Records: ",
@@ -3199,6 +3273,62 @@ serviceSelection: {
   loading: "Loading services...",
   noResults: "No matching services found"
 },
+emailTemplates: {
+  title: "Email Template Management",
+  subject: "Subject",
+  subjectLabel: "Subject",
+  contentLabel: "Email Content",
+  saveButton: "Save Changes",
+  
+  errors: {
+    loadFailed: "Failed to load email templates",
+    fillRequired: "Please fill in all required fields",
+    updateFailed: "An error occurred"
+  },
+  
+  toast: {
+    updateSuccess: "Template updated successfully"
+  },
+              common: {
+  // ... existing keys ...
+  stt: "No.",
+  actions: "Actions",
+  view: "View Details",
+  edit: "Edit",
+  delete: "Delete",
+  cancel: "Cancel",
+  all: "All",
+  clearFilter: "Clear Filters",
+  search: "Search",
+  
+},
+},
+aiAssistant: {
+  title: "AI Medical Assistant",
+  statusThinking: "Thinking...",
+  statusReady: "Ready to assist",
+  welcomeMessage: "Hello doctor!\nI am your intelligent AI Medical Assistant.\nDo you need help with diagnosis, prescriptions, or explaining results?",
+  newConversation: "New conversation",
+  loadingHistory: "Loading...",
+  noHistory: "No conversation history",
+  conversationTitle: "Conversation",
+  applyPlan: "Apply this treatment plan to the form",
+  noPlanFound: "No treatment plan found in the response",
+  inputPlaceholder: "Ask AI about diagnosis, prescriptions, patient instructions...",
+  sendButton: "Send",
+  sending: "Sending...",
+  aiAnalyzing: "AI is analyzing...",
+  disclaimer: "AI is for support only • Always verify before applying",
+  errorLoginRequired: "Please log in again",
+  errorCreateConversation: "Unable to create a new conversation",
+  errorNoSession: "No sessionId available to call n8n",
+  errorAINoResponse: "AI did not respond",
+  errorConnection: "Unable to connect to AI",
+  errorLoadHistory: "Failed to load history",
+  errorLoadConversation: "Failed to load conversation",
+  errorPrefix: "AI connection error: "
+},
+
 }
   }
 };

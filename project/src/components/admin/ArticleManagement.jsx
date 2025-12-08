@@ -637,7 +637,7 @@ export default function ArticleManagement() {
           <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl max-w-sm w-full p-6 text-center transition-colors duration-300`}>
             <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
             <h3 className={`text-xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>
-              {t("common.confirm")}
+              {t("articles.common.confirm")}
             </h3>
             <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-6 transition-colors duration-300`}>
               {t("articles.toast.deleteSuccess", { title: "" }).replace(/^.*"/, '').replace(/".*$/, '')} <strong>{articleToDelete.title}</strong>?<br />
