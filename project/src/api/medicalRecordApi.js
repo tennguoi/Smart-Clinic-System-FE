@@ -22,17 +22,27 @@ export const medicalRecordApi = {
 	},
 
 	search: async ({ keyword, startDate, endDate }) => {
-        const params = {
-            keyword,
-            startDate,
-            endDate
-        };
-        // Backend endpoint: GET /api/doctor/medical-records/search?keyword=...&startDate=...
-        const { data } = await axiosInstance.get('/api/doctor/medical-records/search', { params });
-        
-        // Xử lý dữ liệu trả về an toàn giống như các hàm list khác
-        return Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
-    },
+		const params = {
+			keyword,
+			startDate,
+			endDate
+		};
+		// Backend endpoint: GET /api/doctor/medical-records/search?keyword=...&startDate=...
+		const { data } = await axiosInstance.get('/api/doctor/medical-records/search', { params });
+
+		// Xử lý dữ liệu trả về an toàn giống như các hàm list khác
+		return Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
+	},
+
+	getHistorySummary: async ({ keyword, startDate, endDate }) => {
+		const params = {
+			keyword,
+			startDate,
+			endDate
+		};
+		const { data } = await axiosInstance.get('/api/doctor/medical-records/history-summary', { params });
+		return Array.isArray(data) ? data : [];
+	},
 
 	listByPatient: async (patientId) => {
 		const { data } = await axiosInstance.get(`/api/doctor/medical-records/patient/${patientId}`);
@@ -61,15 +71,15 @@ export const medicalRecordApi = {
 		return data;
 	},
 	addPrescription: async ({ recordId, drugs, instructions }) => {
-        const payload = { recordId, drugs, instructions };
-        
-        // Gọi API endpoint MỚI của bạn
-        const { data } = await axiosInstance.post(
-            '/api/doctor/medical-records/prescription', 
-            payload
-        );
-        return data; // Trả về 201 Created
-    },
+		const payload = { recordId, drugs, instructions };
+
+		// Gọi API endpoint MỚI của bạn
+		const { data } = await axiosInstance.post(
+			'/api/doctor/medical-records/prescription',
+			payload
+		);
+		return data; // Trả về 201 Created
+	},
 
 
 	getRecordDetail: async (recordId) => {
@@ -117,7 +127,7 @@ export const medicalRecordApi = {
 			const params = {};
 			if (startDate) params.startDate = startDate;
 			if (endDate) params.endDate = endDate;
-			
+
 			const { data } = await axiosInstance.get(
 				'/api/admin/dashboard/completed-records-with-services',
 				{ params }
@@ -137,7 +147,7 @@ export const medicalRecordApi = {
 			const params = {};
 			if (startDate) params.startDate = startDate;
 			if (endDate) params.endDate = endDate;
-			
+
 			const { data } = await axiosInstance.get(
 				'/api/admin/dashboard/top-services-by-appointments',
 				{ params }
@@ -155,7 +165,7 @@ export const medicalRecordApi = {
 			const params = {};
 			if (startDate) params.startDate = startDate;
 			if (endDate) params.endDate = endDate;
-			
+
 			const { data } = await axiosInstance.get(
 				'/api/admin/dashboard/top-services-by-medical-records',
 				{ params }
@@ -167,16 +177,16 @@ export const medicalRecordApi = {
 		}
 	},
 	getAllForAdmin: async (keyword = '', startDate = null, endDate = null) => {
-        const params = new URLSearchParams();
-        if (keyword) params.append('keyword', keyword);
-        if (startDate) params.append('startDate', startDate);
-        if (endDate) params.append('endDate', endDate);
+		const params = new URLSearchParams();
+		if (keyword) params.append('keyword', keyword);
+		if (startDate) params.append('startDate', startDate);
+		if (endDate) params.append('endDate', endDate);
 
-        const { data } = await axiosInstance.get(
-            `/api/admin/medical-records/all?${params.toString()}`
-        );
-        return Array.isArray(data) ? data : [];
-    },
+		const { data } = await axiosInstance.get(
+			`/api/admin/medical-records/all?${params.toString()}`
+		);
+		return Array.isArray(data) ? data : [];
+	},
 
 	// C. Top dịch vụ theo doanh thu (Invoice) - Đo hiệu quả tài chính
 	getTopServicesByRevenue: async (startDate, endDate) => {
@@ -184,7 +194,7 @@ export const medicalRecordApi = {
 			const params = {};
 			if (startDate) params.startDate = startDate;
 			if (endDate) params.endDate = endDate;
-			
+
 			const { data } = await axiosInstance.get(
 				'/api/admin/dashboard/top-services-by-revenue',
 				{ params }
@@ -197,7 +207,7 @@ export const medicalRecordApi = {
 	},
 
 	// ============ TRA CỨU LỊCH SỬ KHÁM BỆNH THEO THÔNG TIN BỆNH NHÂN ============
-	
+
 	/**
 	 * Tra cứu lịch sử khám bệnh theo SĐT, CCCD hoặc số bảo hiểm y tế
 	 * @param {Object} params - { phone, idNumber, insuranceNumber }
@@ -208,14 +218,14 @@ export const medicalRecordApi = {
 		if (phone) params.phone = phone;
 		if (idNumber) params.idNumber = idNumber;
 		if (insuranceNumber) params.insuranceNumber = insuranceNumber;
-		
+
 		const { data } = await axiosInstance.get('/api/doctor/medical-records/patient-history', { params });
 		return data;
 	}
-	
+
 };
 
 export default medicalRecordApi;
 
 
-																								
+

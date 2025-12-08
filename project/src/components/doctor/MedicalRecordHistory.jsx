@@ -17,11 +17,11 @@ const MedicalRecordHistory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
-  
+
   // History Modal State
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 10;
@@ -48,15 +48,14 @@ const MedicalRecordHistory = () => {
   const userRoles = getUserRoles();
   const isAdmin = userRoles.includes('ROLE_ADMIN');
 
-  // ==================== TÌM KIẾM TỪ BACKEND (UNIFIED SEARCH) ====================
+  // ==================== TÌM KIẾM TỪ BACKEND (HISTORY SUMMARY) ====================
   const fetchRecords = async () => {
     setLoading(true);
     try {
       let data;
 
-      // Sử dụng API search với keyword để tìm kiếm thống nhất
-      // Backend sẽ tìm theo: Tên, SĐT, CCCD, BHYT, Chẩn đoán
-      data = await medicalRecordApi.search({
+      // Sử dụng API mới để lấy danh sách nhóm theo bệnh nhân
+      data = await medicalRecordApi.getHistorySummary({
         keyword: searchTerm.trim() || null,
         startDate: filterStartDate || null,
         endDate: filterEndDate || null
@@ -112,17 +111,17 @@ const MedicalRecordHistory = () => {
   return (
     <div className={`px-4 sm:px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <Toaster {...toastConfig} />
-      
+
       <div className="mb-6">
         <h1 className={`text-4xl font-bold flex items-center gap-3 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
           <ClipboardList className={`w-9 h-9 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
           <span>
             {t('medicalRecords.title')} {isAdmin && `(${t('medicalRecords.allRecords')})`}
           </span>
-          <CountBadge 
-            currentCount={records.length} 
-            totalCount={records.length} 
-            label={t('medicalRecords.recordLabel')} 
+          <CountBadge
+            currentCount={records.length}
+            totalCount={records.length}
+            label={t('medicalRecords.patientLabel') || 'bệnh nhân'}
           />
         </h1>
       </div>
@@ -130,7 +129,7 @@ const MedicalRecordHistory = () => {
       {/* Bộ lọc tìm kiếm thống nhất */}
       <div className={`rounded-xl shadow-md border p-6 mb-6 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-4">
             <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               Tìm kiếm (Tên, SĐT, CCCD, BHYT, Chẩn đoán)
             </label>
@@ -194,42 +193,46 @@ const MedicalRecordHistory = () => {
             />
           </div>
 
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-2">
             <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>&nbsp;</label>
             <button
               onClick={handleClearFilters}
               className={`w-full px-4 py-3 rounded-xl transition font-medium whitespace-nowrap ${theme === 'dark' ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
             >
-              {t('medicalRecords.filters.clear')}
+              Xóa lọc
             </button>
           </div>
         </div>
       </div>
+
+
 
       {/* Bảng dữ liệu */}
       <div className={`rounded-xl shadow-md border overflow-hidden ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         <table className="w-full">
           <thead className={`uppercase text-xs sticky top-0 ${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>
             <tr>
-              <th className="px-4 py-3 text-center w-16">{t('medicalRecords.table.stt')}</th>
-              <th className="px-4 py-3 text-left w-32">{t('medicalRecords.table.examDate')}</th>
-              <th className="px-4 py-3 text-left w-48">{t('medicalRecords.table.patient')}</th>
-              <th className="px-4 py-3 text-left">{t('medicalRecords.table.diagnosis')}</th>
-              <th className="px-4 py-3 text-left">{t('medicalRecords.table.treatmentNotes')}</th>
-              <th className="px-4 py-3 text-center w-24">{t('medicalRecords.common.actions') || 'Thao tác'}</th>
+              <th className="px-4 py-3 text-center w-16">STT</th>
+              <th className="px-4 py-3 text-left w-48">BỆNH NHÂN</th>
+              <th className="px-4 py-3 text-left w-32">SĐT</th>
+              <th className="px-4 py-3 text-left w-32">CCCD</th>
+              <th className="px-4 py-3 text-left w-32">BHYT</th>
+              <th className="px-4 py-3 text-center w-24">SỐ LẦN KHÁM</th>
+              <th className="px-4 py-3 text-left w-32">LẦN CUỐI</th>
+              <th className="px-4 py-3 text-center w-24">THAO TÁC</th>
             </tr>
           </thead>
 
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="6" className={`px-4 py-10 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                <td colSpan="8" className={`px-4 py-10 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                   {t('medicalRecords.common.loading')}
                 </td>
               </tr>
             ) : currentPageRecords.length === 0 ? (
               <tr>
-                <td colSpan="6" className={`px-4 py-10 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                <td colSpan="8" className={`px-4 py-10 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                   {searchTerm || filterStartDate || filterEndDate
                     ? t('medicalRecords.noResults')
                     : t('medicalRecords.noRecords')}
@@ -237,23 +240,29 @@ const MedicalRecordHistory = () => {
               </tr>
             ) : (
               currentPageRecords.map((record, index) => (
-                <tr key={record.recordId || record.id} className={`border-b transition-colors ${theme === 'dark' ? 'border-gray-700 hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
+                <tr key={index} className={`border-b transition-colors ${theme === 'dark' ? 'border-gray-700 hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
                   <td className={`px-4 py-3 text-center text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                     {currentPage * pageSize + index + 1}
-                  </td>
-                  <td className={`px-4 py-3 text-sm whitespace-nowrap ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                    {record.createdAt
-                      ? new Date(record.createdAt).toLocaleDateString('vi-VN')
-                      : t('medicalRecords.na')}
                   </td>
                   <td className={`px-4 py-3 text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                     {record.patientName || t('medicalRecords.walkInPatient')}
                   </td>
                   <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
-                    {record.diagnosis || '-'}
+                    {record.phone || '-'}
                   </td>
-                  <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {record.treatmentNotes || '-'}
+                  <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
+                    {record.idNumber || '-'}
+                  </td>
+                  <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
+                    {record.insuranceNumber || '-'}
+                  </td>
+                  <td className={`px-4 py-3 text-center text-sm font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                    {record.visitCount}
+                  </td>
+                  <td className={`px-4 py-3 text-sm whitespace-nowrap ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {record.lastVisitDate
+                      ? new Date(record.lastVisitDate).toLocaleDateString('vi-VN')
+                      : '-'}
                   </td>
                   <td className="px-4 py-3 text-center">
                     {record.patientId && (
@@ -277,26 +286,28 @@ const MedicalRecordHistory = () => {
             )}
           </tbody>
         </table>
-        
-        <Pagination 
-          currentPage={currentPage} 
-          totalPages={totalPages} 
-          onPageChange={setCurrentPage} 
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
         />
       </div>
 
       {/* History Modal */}
-      {showHistoryModal && selectedPatient && (
-        <PatientHistoryModal
-          patientId={selectedPatient.patientId}
-          patientName={selectedPatient.patientName}
-          onClose={() => {
-            setShowHistoryModal(false);
-            setSelectedPatient(null);
-          }}
-        />
-      )}
-    </div>
+      {
+        showHistoryModal && selectedPatient && (
+          <PatientHistoryModal
+            patientId={selectedPatient.patientId}
+            patientName={selectedPatient.patientName}
+            onClose={() => {
+              setShowHistoryModal(false);
+              setSelectedPatient(null);
+            }}
+          />
+        )
+      }
+    </div >
   );
 };
 
