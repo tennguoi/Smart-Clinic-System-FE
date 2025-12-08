@@ -8,6 +8,10 @@ import { useTheme } from '../../contexts/ThemeContext';
 import CountBadge from '../common/CountBadge';
 import Pagination from '../common/Pagination';
 
+// 🔥 Thêm import Toast vào component
+import toast, { Toaster } from "react-hot-toast";
+import { toastConfig } from "../../config/toastConfig";
+
 const ITEMS_PER_PAGE = 10;
 
 const MedicalRecordsSection = () => {
@@ -27,7 +31,6 @@ const MedicalRecordsSection = () => {
   const patientNameMapRef = useRef(new Map());
   const today = new Date().toISOString().split('T')[0];
 
-  // Pagination
   const [currentPage, setCurrentPage] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
 
@@ -42,10 +45,9 @@ const MedicalRecordsSection = () => {
     setRecordsError('');
     setRecordsLoading(true);
     setCurrentPage(0);
-    
+
     try {
       let list = [];
-
       const hasFilter = searchParams.keyword || searchParams.startDate || searchParams.endDate;
 
       if (hasFilter) {
@@ -71,6 +73,7 @@ const MedicalRecordsSection = () => {
       setRecordsError(msg);
       setRecords([]);
       setTotalRecords(0);
+      toast.error(msg);    // 🔥 dùng toast
     } finally {
       setRecordsLoading(false);
     }
@@ -111,10 +114,12 @@ const MedicalRecordsSection = () => {
 
     if (!formData.diagnosis?.trim()) {
       setFormError(t('doctorRecords.create.diagnosisRequired'));
+      toast.error(t('doctorRecords.create.diagnosisRequired')); // 🔥 toast
       return;
     }
     if (!formData.treatmentNotes?.trim()) {
       setFormError(t('doctorRecords.create.treatmentNotesRequired'));
+      toast.error(t('doctorRecords.create.treatmentNotesRequired'));
       return;
     }
 
@@ -128,6 +133,7 @@ const MedicalRecordsSection = () => {
       });
 
       setFormSuccess(t('doctorRecords.create.success'));
+      toast.success(t('doctorRecords.create.success')); // 🔥 toast
 
       const patientNameValue = created.patientName || formData.patientName?.trim() || null;
       if (patientNameValue && created.recordId && !created.patientName) {
@@ -142,6 +148,7 @@ const MedicalRecordsSection = () => {
     } catch (error) {
       const msg = error.response?.data?.message || error.message || t('doctorRecords.create.failed');
       setFormError(msg);
+      toast.error(msg);  // 🔥 toast
     } finally {
       setFormSubmitting(false);
     }
@@ -149,6 +156,10 @@ const MedicalRecordsSection = () => {
 
   return (
     <div className={`px-4 sm:px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
+
+      {/* 🔥 Toaster đặt trực tiếp trong component */}
+      <Toaster {...toastConfig} />
+
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 transition-colors duration-300`}>
@@ -183,10 +194,9 @@ const MedicalRecordsSection = () => {
         </div>
       )}
 
-      {/* BỘ LỌC */}
+      {/* FILTERS */}
       <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-md border p-6 mb-6 transition-colors duration-300`}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          {/* Keyword */}
           <div className="lg:col-span-5">
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
               {t('doctorRecords.filters.keyword')}
@@ -204,7 +214,6 @@ const MedicalRecordsSection = () => {
             </div>
           </div>
 
-          {/* Date range */}
           <div className="lg:col-span-5 flex gap-2 items-end">
             <div className="flex-1">
               <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
@@ -236,7 +245,6 @@ const MedicalRecordsSection = () => {
             </div>
           </div>
 
-          {/* Clear button */}
           <div className="lg:col-span-2 flex items-end">
             <button
               onClick={handleResetSearch}
@@ -249,14 +257,13 @@ const MedicalRecordsSection = () => {
         </div>
       </div>
 
-      {/* ERROR MESSAGE */}
+      {/* ERROR */}
       {recordsError && (
         <div className={`rounded-xl border px-4 py-3 mb-6 ${theme === 'dark' ? 'bg-red-900/30 border-red-800 text-red-300' : 'bg-red-50 border-red-200 text-red-700'}`}>
           {recordsError}
         </div>
       )}
 
-      {/* BẢNG + PHÂN TRANG */}
       <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-md border overflow-hidden transition-colors duration-300`}>
         {recordsLoading ? (
           <div className={`p-16 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -304,7 +311,7 @@ const MedicalRecordsSection = () => {
                       index={currentPage * ITEMS_PER_PAGE + idx + 1}
                       record={r}
                       onUpdated={fetchMyRecords}
-                      onError={setFormError}
+                      onError={(msg) => toast.error(msg)}  // 🔥 dùng toast
                       onDelete={(recordId) => patientNameMapRef.current.delete(recordId)}
                     />
                   ))}
@@ -312,7 +319,6 @@ const MedicalRecordsSection = () => {
               </table>
             </div>
 
-            {/* PAGINATION */}
             <div className={`border-t ${theme === 'dark' ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-gray-50'}`}>
               <Pagination
                 currentPage={currentPage}

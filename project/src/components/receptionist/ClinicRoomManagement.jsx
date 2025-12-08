@@ -9,7 +9,7 @@ import Pagination from '../common/Pagination';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 
-export default function ClinicRoomManagement() {
+export default function ClinicRoomManagement({ isAdminView = true }) {
   const { theme } = useTheme();
   const { t } = useTranslation();
 
@@ -21,7 +21,6 @@ export default function ClinicRoomManagement() {
   const [modalMode, setModalMode] = useState('create');
   const [selectedRoom, setSelectedRoom] = useState(null);
 
-  // XÓA: Thêm state cho modal xác nhận xóa
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [roomToDelete, setRoomToDelete] = useState(null);
 
@@ -117,6 +116,12 @@ export default function ClinicRoomManagement() {
   };
 
   const handleOpenModal = (mode, room = null) => {
+    // Chặn nếu không phải Admin và đang cố sửa/tạo
+    if (!isAdminView && (mode === 'create' || mode === 'edit')) {
+      toast.error(t('roomManagement.noPermission', 'Bạn không có quyền thực hiện thao tác này'));
+      return;
+    }
+
     setModalMode(mode);
     setSelectedRoom(room);
 
@@ -145,7 +150,13 @@ export default function ClinicRoomManagement() {
     setSelectedRoom(null);
   };
 
-  const handleSwitchToEdit = () => setModalMode('edit');
+  const handleSwitchToEdit = () => {
+    if (!isAdminView) {
+      toast.error(t('roomManagement.noPermission', 'Bạn không có quyền chỉnh sửa'));
+      return;
+    }
+    setModalMode('edit');
+  };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -157,6 +168,12 @@ export default function ClinicRoomManagement() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!isAdminView) {
+      toast.error(t('roomManagement.noPermission', 'Bạn không có quyền thực hiện thao tác này'));
+      return;
+    }
+
     if (!formData.roomName.trim()) {
       toast.error(t('roomManagement.nameRequired', 'Vui lòng nhập tên phòng'));
       return;
@@ -189,14 +206,17 @@ export default function ClinicRoomManagement() {
     }
   };
 
-  // XÓA: Thay window.confirm bằng modal đẹp
   const openDeleteConfirm = (room) => {
+    if (!isAdminView) {
+      toast.error(t('roomManagement.noPermission', 'Bạn không có quyền xóa phòng'));
+      return;
+    }
     setRoomToDelete(room);
     setShowDeleteConfirm(true);
   };
 
   const confirmDelete = async () => {
-    if (!roomToDelete) return;
+    if (!roomToDelete || !isAdminView) return;
     setLoading(true);
     try {
       await roomApi.deleteRoom(roomToDelete.roomId);
@@ -237,11 +257,15 @@ export default function ClinicRoomManagement() {
           <span>{t('roomManagement.title', 'Quản Lý Phòng Khám')}</span>
           <CountBadge currentCount={currentPageRooms.length} totalCount={rooms.length} label={t('roomManagement.room', 'phòng')} />
         </h1>
-        <button onClick={() => handleOpenModal('create')}
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2">
-          <Plus className="w-5 h-5" />
-          {t('roomManagement.createButton', 'Thêm phòng mới')}
-        </button>
+        
+        {/* Chỉ hiện nút Thêm nếu là Admin */}
+        {isAdminView && (
+          <button onClick={() => handleOpenModal('create')}
+            className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            {t('roomManagement.createButton', 'Thêm phòng mới')}
+          </button>
+        )}
       </div>
 
       {/* Filter và Search */}
@@ -346,7 +370,6 @@ export default function ClinicRoomManagement() {
               ) : (
                 currentPageRooms.map((room, index) => (
                   <tr key={room.roomId} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}>
-                    {/* STT - Đã thêm */}
                     <td className={`px-4 py-4 text-center font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                       {currentPage * pageSize + index + 1}
                     </td>
@@ -402,10 +425,14 @@ export default function ClinicRoomManagement() {
                         >
                           <Eye className="w-5 h-5" />
                         </button>
-                        <button onClick={() => openDeleteConfirm(room)} title={t('roomManagement.common.delete', 'Xóa')}
-                          className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors">
-                          <Trash2 className="w-5 h-5" />
-                        </button>
+                        
+                        {/* Chỉ hiện nút Xóa nếu là Admin */}
+                        {isAdminView && (
+                          <button onClick={() => openDeleteConfirm(room)} title={t('roomManagement.common.delete', 'Xóa')}
+                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors">
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -417,7 +444,7 @@ export default function ClinicRoomManagement() {
         </div>
       )}
 
-      {/* Modal tạo/sửa */}
+      {/* Modal tạo/sửa/xem */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transition-colors duration-300`}>
@@ -428,7 +455,8 @@ export default function ClinicRoomManagement() {
                  t('roomManagement.modal.edit', 'Chỉnh sửa phòng khám')}
               </h2>
               <div className="flex items-center gap-3">
-                {modalMode === 'view' && (
+                {/* Chỉ hiện nút Chỉnh sửa nếu là Admin và đang ở mode view */}
+                {modalMode === 'view' && isAdminView && (
                   <button onClick={handleSwitchToEdit}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
                     <Edit className="w-5 h-5" /> {t('roomManagement.common.edit', 'Chỉnh sửa')}
@@ -557,8 +585,8 @@ export default function ClinicRoomManagement() {
         </div>
       )}
 
-      {/* MODAL XÁC NHẬN XÓA – ĐẸP + i18n SONG NGỮ */}
-      {showDeleteConfirm && roomToDelete && (
+      {/* MODAL XÁC NHẬN XÓA – CHỈ HIỆN CHO ADMIN */}
+      {showDeleteConfirm && roomToDelete && isAdminView && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl max-w-sm w-full p-6 text-center transition-colors duration-300`}>
             <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FileText, CheckCircle, Loader2, Sparkles, RefreshCw } from 'lucide-react';
 import PrescriptionForm from './PrescriptionForm';
+import { useTranslation } from 'react-i18next';
 
 export default function ExaminationForm({
   diagnosis,
@@ -15,6 +16,7 @@ export default function ExaminationForm({
   isLoading,
   aiAssistantOpen
 }) {
+  const { t } = useTranslation();
   const [isGenerating, setIsGenerating] = useState(false);
   const [suggestedDrugs, setSuggestedDrugs] = useState([]);
   const [showDrugSuggestions, setShowDrugSuggestions] = useState(false);
@@ -22,7 +24,7 @@ export default function ExaminationForm({
   // Gọi AI để sinh ghi chú điều trị và đề xuất thuốc
   const generateTreatmentPlan = async () => {
     if (!diagnosis.trim()) {
-      alert('Vui lòng nhập chẩn đoán trước');
+      alert(t('doctorExamination.diagnosisRequired'));
       return;
     }
 
@@ -60,7 +62,7 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`
 
     } catch (error) {
       console.error('Lỗi sinh phác đồ:', error);
-      alert('Không thể sinh phác đồ tự động. Vui lòng thử lại.');
+      alert(t('doctorExamination.generatePlanError') || 'Không thể sinh phác đồ tự động. Vui lòng thử lại.');
     } finally {
       setIsGenerating(false);
     }
@@ -94,7 +96,7 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`
             setSuggestedDrugs(validDrugs);
             setShowDrugSuggestions(true);
           } else {
-            alert('AI không đề xuất thuốc cụ thể. Vui lòng kê đơn thủ công.');
+            alert(t('doctorExamination.noDrugsRecommended') || 'AI không đề xuất thuốc cụ thể. Vui lòng kê đơn thủ công.');
           }
         }
       } else {
@@ -126,7 +128,7 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`
     } catch (e) {
       console.error('Lỗi parse AI response:', e);
       console.log('Raw text:', text);
-      alert('Không thể phân tích kết quả AI. Vui lòng thử lại hoặc kê đơn thủ công.');
+      alert(t('doctorExamination.parseError') || 'Không thể phân tích kết quả AI. Vui lòng thử lại hoặc kê đơn thủ công.');
     }
   };
 
@@ -212,7 +214,7 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`
       <div className="bg-white p-3 lg:p-4 rounded-xl shadow-md border border-blue-200">
         <div className="flex items-center justify-between mb-2">
           <label className="block text-sm font-bold text-slate-800">
-            Chẩn đoán <span className="text-red-500">*</span>
+            {t('doctorExamination.diagnosisLabel')} <span className="text-red-500">*</span>
           </label>
           
           <button
@@ -223,12 +225,12 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`
             {isGenerating ? (
               <>
                 <Loader2 className="animate-spin" size={14} />
-                Đang sinh...
+                {t('doctorExamination.generating') || 'Đang sinh...'}
               </>
             ) : (
               <>
                 <Sparkles size={14} />
-                AI Sinh Phác Đồ
+                {t('doctorExamination.aiGeneratePlan') || 'AI Sinh Phác Đồ'}
               </>
             )}
           </button>
@@ -238,24 +240,24 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`
           value={diagnosis}
           onChange={e => onDiagnosisChange(e.target.value)}
           className="w-full h-24 lg:h-28 p-3 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-500 resize-none text-sm transition-all"
-          placeholder="Nhập chẩn đoán chi tiết..."
+          placeholder={t('doctorExamination.diagnosisPlaceholder') || "Nhập chẩn đoán chi tiết..."}
         />
 
         <p className="text-xs text-gray-500 mt-2">
-          💡 Nhập chẩn đoán → Nhấn "AI Sinh Phác Đồ" để tự động tạo ghi chú và thuốc
+          💡 {t('doctorExamination.aiHint') || 'Nhập chẩn đoán → Nhấn "AI Sinh Phác Đồ" để tự động tạo ghi chú và thuốc'}
         </p>
       </div>
 
       {/* Ghi chú điều trị */}
       <div className="bg-white p-3 lg:p-4 rounded-xl shadow-md border border-blue-200">
         <label className="block text-sm font-bold mb-2 text-slate-800">
-          Ghi chú điều trị
+          {t('doctorExamination.treatmentNotesLabel')}
         </label>
         <textarea
           value={treatmentNotes}
           onChange={e => onTreatmentNotesChange(e.target.value)}
           className="w-full h-20 lg:h-24 p-3 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-500 resize-none text-sm transition-all"
-          placeholder="Ghi chú về quá trình điều trị, theo dõi..."
+          placeholder={t('doctorExamination.treatmentNotesPlaceholder') || "Ghi chú về quá trình điều trị, theo dõi..."}
         />
       </div>
 
@@ -265,7 +267,7 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-purple-900 flex items-center gap-2">
               <Sparkles size={18} className="text-purple-600" />
-              AI Đề Xuất {suggestedDrugs.length} Thuốc
+              {t('doctorExamination.aiSuggestedDrugs', { count: suggestedDrugs.length }) || `AI Đề Xuất ${suggestedDrugs.length} Thuốc`}
             </h3>
             
             <div className="flex gap-2">
@@ -274,14 +276,14 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`
                 className="px-3 py-1.5 bg-purple-600 text-white text-xs font-semibold rounded-lg hover:bg-purple-700 transition-all flex items-center gap-1"
               >
                 <CheckCircle size={14} />
-                Áp dụng tất cả
+                {t('doctorExamination.applyAll') || 'Áp dụng tất cả'}
               </button>
               
               <button
                 onClick={() => setShowDrugSuggestions(false)}
                 className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-300 transition-all"
               >
-                Đóng
+                {t('common.close') || 'Đóng'}
               </button>
             </div>
           </div>
@@ -321,7 +323,7 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`
 
           <p className="text-xs text-purple-700 mt-3 italic flex items-center gap-1">
             <Sparkles size={12} />
-            Tick chọn thuốc cần dùng hoặc áp dụng tất cả
+            {t('doctorExamination.selectDrugsHint') || 'Tick chọn thuốc cần dùng hoặc áp dụng tất cả'}
           </p>
         </div>
       )}
@@ -345,12 +347,12 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`
           {isLoading ? (
             <>
               <Loader2 className="animate-spin" size={20} />
-              Đang xử lý...
+              {t('common.processing') || 'Đang xử lý...'}
             </>
           ) : (
             <>
               <CheckCircle size={20} />
-              Hoàn thành khám
+              {t('doctorExamination.completeButton')}
             </>
           )}
         </button>

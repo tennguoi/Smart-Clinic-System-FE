@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { FileText, Stethoscope, Sparkles } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 // Import components
 import AIAssistantPanel from './AIAssistantPanel';
@@ -29,7 +30,12 @@ import axiosInstance from '../../utils/axiosConfig';
 // Import helpers
 import { calculateAge, formatTime } from '../../utils/helpers';
 
+// Import toast config
+import { toastConfig } from '../../config/toastConfig';
+
 export default function CurrentPatientExamination() {
+  const { t } = useTranslation();
+  
   // States
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
   const [currentPatient, setCurrentPatient] = useState(null);
@@ -138,11 +144,11 @@ export default function CurrentPatientExamination() {
       }
     } catch (err) {
       console.error(err);
-      toast.error('Lỗi tải dữ liệu');
+      toast.error(t('common.loadError') || 'Lỗi tải dữ liệu', toastConfig.toastOptions.error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // Load services
   useEffect(() => {
@@ -157,14 +163,17 @@ export default function CurrentPatientExamination() {
             price: s.price
           })));
         } catch {
-          toast.error('Không tải được dịch vụ');
+          toast.error(
+            t('appointmentManagement.loadServicesError') || 'Không tải được dịch vụ', 
+            toastConfig.toastOptions.error
+          );
         } finally {
           setLoadingServices(false);
         }
       };
       fetchServices();
     }
-  }, [currentPatient, services.length]);
+  }, [currentPatient, services.length, t]);
 
   // Polling
   useEffect(() => {
@@ -208,7 +217,10 @@ export default function CurrentPatientExamination() {
       }, 100);
     }
 
-    toast.success('✅ Đã áp dụng phác đồ từ AI vào form!');
+    toast.success(
+      '✅ Đã áp dụng phác đồ từ AI vào form!', 
+      toastConfig.toastOptions.success
+    );
   };
 
   // Handlers
@@ -216,11 +228,19 @@ export default function CurrentPatientExamination() {
     const isSelected = selectedServices.some(s => s.id === service.id);
     if (isSelected) {
       setSelectedServices(prev => prev.filter(s => s.id !== service.id));
-      toast.success(`Đã bỏ chọn: ${service.name}`);
+      toast.success(
+        `${t('doctorExamination.serviceRemoved')} ${service.name}`, 
+        toastConfig.toastOptions.success
+      );
       const updated = await getExaminationSummary();
       setSummary(updated);
     } else {
-      if (!currentPatient?.queueId) return toast.error('Không có bệnh nhân');
+      if (!currentPatient?.queueId) {
+        return toast.error(
+          t('doctorExamination.noMorePatients') || 'Không có bệnh nhân', 
+          toastConfig.toastOptions.error
+        );
+      }
       setIsLoading(true);
       try {
         const res = await addService({
@@ -231,9 +251,15 @@ export default function CurrentPatientExamination() {
         });
         setSummary(res);
         setSelectedServices(prev => [...prev, { ...service, quantity: 1 }]);
-        toast.success(`Đã thêm: ${service.name}`);
+        toast.success(
+          `${t('doctorExamination.serviceAdded')} ${service.name}`, 
+          toastConfig.toastOptions.success
+        );
       } catch {
-        toast.error('Lỗi thêm dịch vụ');
+        toast.error(
+          t('common.error') || 'Lỗi thêm dịch vụ', 
+          toastConfig.toastOptions.error
+        );
       } finally {
         setIsLoading(false);
       }
@@ -241,12 +267,27 @@ export default function CurrentPatientExamination() {
   };
 
   const handleComplete = async () => {
-    if (!diagnosis.trim()) return toast.error('Vui lòng nhập chẩn đoán');
+    if (!diagnosis.trim()) {
+      return toast.error(
+        t('doctorExamination.diagnosisRequired') || 'Vui lòng nhập chẩn đoán', 
+        toastConfig.toastOptions.error
+      );
+    }
 
     const valid = prescriptionItems.filter(i => i.drugName.trim() || i.instructions.trim());
     for (const i of valid) {
-      if (i.drugName.trim() && !i.instructions.trim()) return toast.error('Thiếu hướng dẫn');
-      if (!i.drugName.trim() && i.instructions.trim()) return toast.error('Thiếu tên thuốc');
+      if (i.drugName.trim() && !i.instructions.trim()) {
+        return toast.error(
+          t('doctorExamination.drugInstructionsRequired') || 'Thiếu hướng dẫn', 
+          toastConfig.toastOptions.error
+        );
+      }
+      if (!i.drugName.trim() && i.instructions.trim()) {
+        return toast.error(
+          t('doctorExamination.drugNameRequired') || 'Thiếu tên thuốc', 
+          toastConfig.toastOptions.error
+        );
+      }
     }
 
     setIsLoading(true);
@@ -271,7 +312,10 @@ export default function CurrentPatientExamination() {
       }
       
       await completeExamination();
-      toast.success('Hoàn thành khám thành công!');
+      toast.success(
+        t('doctorExamination.completeSuccess') || 'Hoàn thành khám thành công!', 
+        toastConfig.toastOptions.success
+      );
       
       userModifiedDiagnosis.current = false;
       userModifiedTreatmentNotes.current = false;
@@ -279,7 +323,10 @@ export default function CurrentPatientExamination() {
       
       loadData();
     } catch (e) {
-      toast.error(e.response?.data?.message || 'Lỗi');
+      toast.error(
+        e.response?.data?.message || t('common.error') || 'Lỗi', 
+        toastConfig.toastOptions.error
+      );
     } finally {
       setIsLoading(false);
     }
@@ -292,7 +339,10 @@ export default function CurrentPatientExamination() {
       loadData();
     } catch (e) {
       console.error(e);
-      toast.error('Không còn bệnh nhân');
+      toast.error(
+        t('doctorExamination.noMorePatients') || 'Không còn bệnh nhân', 
+        toastConfig.toastOptions.error
+      );
     } finally {
       setIsLoading(false);
     }
@@ -336,7 +386,11 @@ export default function CurrentPatientExamination() {
   if (currentPatient) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-50">
-        <Toaster position="top-right" />
+        <Toaster 
+          position={toastConfig.position}
+          containerStyle={toastConfig.containerStyle}
+          toastOptions={toastConfig.toastOptions}
+        />
         <div className="flex flex-col lg:flex-row h-screen">
 
           <PatientSidebar 
@@ -351,22 +405,22 @@ export default function CurrentPatientExamination() {
                 <div className={`flex gap-2 ${aiAssistantOpen ? 'flex-col' : 'overflow-x-auto'}`}>
                   <div className={`flex gap-2 ${aiAssistantOpen ? 'flex-col' : ''}`}>
                     {[
-                      { id: 'examination', label: 'Khám & Kê đơn', icon: FileText },
-                      { id: 'services', label: 'Chỉ định dịch vụ', icon: Stethoscope },
-                    ].map(t => {
-                      const Icon = t.icon;
+                      { id: 'examination', label: t('doctorExamination.tabExamination'), icon: FileText },
+                      { id: 'services', label: t('doctorExamination.tabServices'), icon: Stethoscope },
+                    ].map(tab => {
+                      const Icon = tab.icon;
                       return (
                         <button
-                          key={t.id}
-                          onClick={() => setActiveTab(t.id)}
+                          key={tab.id}
+                          onClick={() => setActiveTab(tab.id)}
                           className={`flex items-center gap-2 lg:gap-3 px-4 lg:px-6 py-2.5 lg:py-3 font-semibold rounded-lg transition-all text-sm lg:text-base whitespace-nowrap ${
-                            activeTab === t.id
+                            activeTab === tab.id
                               ? 'bg-blue-50 text-blue-600 border-2 border-blue-600'
                               : 'text-slate-600 hover:bg-blue-50'
                           } ${aiAssistantOpen ? 'w-full justify-start' : ''}`}
                         >
                           <Icon size={18} className="lg:w-5 lg:h-5" />
-                          <span>{t.label}</span>
+                          <span>{tab.label}</span>
                         </button>
                       );
                     })}

@@ -1,4 +1,5 @@
 import { Search, Check, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { formatPrice } from '../../utils/helpers';
 
 export default function ServiceSelection({
@@ -10,6 +11,8 @@ export default function ServiceSelection({
   loadingServices,
   aiAssistantOpen
 }) {
+  const { t } = useTranslation();
+  
   const filteredServices = services.filter(s => 
     s.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -29,7 +32,7 @@ export default function ServiceSelection({
         <input
           value={searchQuery}
           onChange={e => onSearchChange(e.target.value)}
-          placeholder="Tìm kiếm dịch vụ..."
+          placeholder={t('serviceSelection.searchPlaceholder')}
           className={`w-full border-2 border-transparent rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 text-sm lg:text-base transition-all ${
             aiAssistantOpen ? 'pl-10 pr-3 py-2.5' : 'pl-12 pr-4 py-3.5'
           }`}
@@ -45,7 +48,7 @@ export default function ServiceSelection({
             aiAssistantOpen ? 'text-sm lg:text-base mb-2 lg:mb-3' : 'text-base lg:text-lg mb-4'
           }`}>
             <Check className="text-blue-600" size={aiAssistantOpen ? 18 : 20} />
-            Dịch vụ đã chọn ({selectedServices.length})
+            {t('serviceSelection.selectedTitle', { count: selectedServices.length })}
           </h3>
           <div className={aiAssistantOpen ? 'space-y-2' : 'space-y-2 lg:space-y-3'}>
             {selectedServices.map((s, i) => (
@@ -62,7 +65,7 @@ export default function ServiceSelection({
                     {s.name}
                   </div>
                   <div className="text-xs text-slate-600">
-                    Số lượng: {s.quantity}
+                    {t('serviceSelection.quantity')}: {s.quantity}
                   </div>
                 </div>
                 <div className={`font-bold text-blue-600 ${
@@ -79,7 +82,7 @@ export default function ServiceSelection({
             <span className={`font-bold text-blue-700 ${
               aiAssistantOpen ? 'text-base lg:text-lg' : 'text-xl lg:text-2xl'
             }`}>
-              Tổng: {formatPrice(totalAmount)}
+              {t('serviceSelection.total')}: {formatPrice(totalAmount)}
             </span>
           </div>
         </div>
@@ -93,7 +96,7 @@ export default function ServiceSelection({
           <h3 className={`font-bold text-white ${
             aiAssistantOpen ? 'text-sm lg:text-base' : 'text-base lg:text-lg'
           }`}>
-            Danh sách dịch vụ
+            {t('serviceSelection.listTitle')}
           </h3>
         </div>
         <div className={aiAssistantOpen ? 'max-h-64 lg:max-h-80 overflow-y-auto' : 'max-h-96 lg:max-h-[500px] overflow-y-auto'}>
@@ -102,6 +105,11 @@ export default function ServiceSelection({
               <Loader2 className={`animate-spin mx-auto text-blue-600 ${
                 aiAssistantOpen ? 'w-8 h-8' : 'w-10 h-10 lg:w-12 lg:h-12'
               }`} />
+              <p className="mt-4 text-slate-600">{t('serviceSelection.loading')}</p>
+            </div>
+          ) : filteredServices.length === 0 ? (
+            <div className="p-8 text-center text-slate-500">
+              {t('serviceSelection.noResults')}
             </div>
           ) : filteredServices.map(svc => {
             const selected = selectedServices.some(s => s.id === svc.id);

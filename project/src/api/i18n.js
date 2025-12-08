@@ -933,7 +933,8 @@ modal: {
         status: "Trạng thái",
         actions: "Thao tác"
       },
-
+pdfDownloadSuccess: "Tải PDF hóa đơn thành công!",
+      pdfDownloadError: "Không thể tải PDF hóa đơn",
       status: {
         paid: "Đã thanh toán",
         pending: "Chưa thanh toán",
@@ -1134,7 +1135,9 @@ doctorStats: {
   },
   chart: {
     visitsByPeriod: "Số ca khám theo {{#if (eq context 'hour')}}giờ{{else}}ngày{{/if}}",
-    trend: "Xu hướng số ca khám"
+    trend: "Xu hướng số ca khám",
+    "visitsByHour": "Lượt khám theo giờ",
+
   },
   table: {
     title: "Bảng thống kê theo khung giờ",
@@ -1167,7 +1170,11 @@ doctorExamination: {
   // Tabs
   tabExamination: "Khám & Kê đơn",
   tabServices: "Chỉ định dịch vụ",
-
+  
+  // AI Assistant Button
+  aiAssistantOn: "Đang bật AI",
+  aiAssistantOff: "Bật AI Trợ lý",
+  
   // Patient info
   queueNumber: "Số thứ tự",
   checkInTime: "Vào lúc",
@@ -1182,7 +1189,9 @@ doctorExamination: {
   // Examination tab
   diagnosisLabel: "Chẩn đoán",
   diagnosisRequired: "Vui lòng nhập chẩn đoán",
+  diagnosisPlaceholder: "Nhập chẩn đoán chi tiết...",
   treatmentNotesLabel: "Ghi chú điều trị",
+  treatmentNotesPlaceholder: "Ghi chú về quá trình điều trị, theo dõi...",
   prescriptionTitle: "Kê đơn thuốc",
   drugName: "TÊN THUỐC",
   instructions: "HƯỚNG DẪN SỬ DỤNG",
@@ -1211,13 +1220,25 @@ doctorExamination: {
   invoiceCreated: "Tạo hóa đơn thành công: {{code}}",
   drugInstructionsRequired: "Vui lòng nhập hướng dẫn sử dụng cho tất cả các thuốc",
   drugNameRequired: "Vui lòng nhập tên thuốc",
-
+  aiPlanApplied: "Đã áp dụng phác đồ từ AI vào form!",
+  
   // Empty state (no current patient)
   noPatientTitle: "Phòng khám của tôi",
   patientsWaiting: "{{count}} bệnh nhân đang chờ khám",
   noPatientsToday: "Hiện chưa có bệnh nhân nào",
   waitingForNext: "Hệ thống đang chờ bệnh nhân tiếp theo...",
-  queueTitle: "Hàng chờ khám bệnh"
+  queueTitle: "Hàng chờ khám bệnh",
+  
+  // AI Features
+  generatePlanError: "Không thể sinh phác đồ tự động. Vui lòng thử lại.",
+  noDrugsRecommended: "AI không đề xuất thuốc cụ thể. Vui lòng kê đơn thủ công.",
+  parseError: "Không thể phân tích kết quả AI. Vui lòng thử lại hoặc kê đơn thủ công.",
+  generating: "Đang sinh...",
+  aiGeneratePlan: "AI Sinh Phác Đồ",
+  aiHint: 'Nhập chẩn đoán → Nhấn "AI Sinh Phác Đồ" để tự động tạo ghi chú và thuốc',
+  aiSuggestedDrugs: "AI Đề Xuất {{count}} Thuốc",
+  applyAll: "Áp dụng tất cả",
+  selectDrugsHint: "Tick chọn thuốc cần dùng hoặc áp dụng tất cả"
 },
 doctorRecords: {
   title: "Quản lý Hồ sơ & Hoàn thành khám",
@@ -1445,8 +1466,147 @@ verifyOtp: {
   backTo: "Quay lại",
   login: "Đăng nhập"
 },
+reviewsManagement: {
+  title: "Quản Lý Đánh Giá",
+  createButton: "Tạo Đánh Giá",
+  filterRating: "Lọc theo đánh giá",
+  filterReviewer: "Tìm theo người đánh giá",
+  clearFilters: "Xóa bộ lọc",
+  allRatings: "Tất cả",
+  table: {
+    no: "STT",
+    reviewer: "Người đánh giá",
+    rating: "Đánh giá",
+    comment: "Nhận xét",
+    createdAt: "Ngày tạo",
+    actions: "Thao tác"
+  },
+  ratingBadge: "{rating}/5",
+  noReviews: "Không có đánh giá nào",
+  loading: "Đang tải...",
+  modal: {
+    createTitle: "Tạo Đánh Giá",
+    viewTitle: "Chi Tiết Đánh Giá",
+    editTitle: "Chỉnh Sửa Đánh Giá",
+    editButton: "Chỉnh sửa",
+    reviewerName: "Tên người đánh giá",
+    reviewerNameRequired: "Tên người đánh giá là bắt buộc",
+    ratingLabel: "Đánh giá",
+    ratingRequired: "Đánh giá là bắt buộc",
+    commentLabel: "Nhận xét",
+    commentRequired: "Nhận xét là bắt buộc",
+    save: "Lưu",
+    create: "Tạo Đánh Giá",
+    cancel: "Hủy",
+    processing: "Đang xử lý..."
+  },
+  toast: {
+    loadError: "Không thể tải danh sách đánh giá",
+    createSuccess: "Tạo đánh giá thành công",
+    updateSuccess: "Cập nhật đánh giá thành công",
+    deleteSuccess: "Đã xóa đánh giá thành công",
+    deleteError: "Xóa đánh giá thất bại",
+    validationError: "Vui lòng điền đầy đủ thông tin",
+    ratingRangeError: "Đánh giá phải từ 1-5 sao"
+  },
+  confirmDelete: {
+    title: "Xác nhận xóa",
+    text: "Bạn có chắc chắn muốn xóa đánh giá ?",
+    confirm: "Xóa",
+    cancel: "Hủy"
+  },
+     common: {
+  // ... các key hiện tại ...
+  stt: "STT",
+  actions: "Thao tác",
+  view: "Xem chi tiết",
+  edit: "Chỉnh sửa",
+  delete: "Xóa",
+  cancel: "Hủy",
+  all: "Tất cả",
+  clearFilter: "Xóa lọc",
+  search: "Tìm kiếm",
+  star: 'sao',
+  stars: 'sao',
+},
 
+},
+waitingQueue: {
+  title: "Phòng khám của tôi",
+  patientsWaiting: "{{count}} bệnh nhân đang chờ khám",
+  noPatients: "Hiện chưa có bệnh nhân nào",
+  waitingSystem: "Hệ thống đang chờ bệnh nhân tiếp theo...",
+  queueTitle: "Hàng chờ khám bệnh",
+  nextBadge: "Tiếp theo",
+  callButton: "Gọi vào khám",
+  calling: "Đang gọi...",
+  yearsOld: "tuổi",
+  
+  table: {
+    queueNumber: "STT",
+    fullName: "Họ và tên",
+    gender: "Giới tính",
+    age: "Tuổi",
+    checkInTime: "Giờ vào",
+    actions: "Thao tác"
+  },
+  
+  gender: {
+    male: "Nam",
+    female: "Nữ"
+  }
+},
+// ============ PRESCRIPTION FORM ============
+prescriptionForm: {
+  title: "Kê đơn thuốc",
+  table: {
+    stt: "STT",
+    drugName: "TÊN THUỐC *",
+    instructions: "HƯỚNG DẪN SỬ DỤNG *",
+    delete: "XÓA"
+  },
+  drugNameLabel: "Tên thuốc *",
+  drugNamePlaceholder: "Paracetamol 500mg...",
+  instructionsLabel: "Hướng dẫn sử dụng *",
+  instructionsPlaceholder: "Uống 1 viên x 3 lần/ngày...",
+  addButton: "Thêm thuốc mới",
+  deleteButton: "Xóa thuốc"
+},
 
+// ============ PRESCRIPTION MODAL ============
+prescriptionModal: {
+  title: "Thêm Toa thuốc cho",
+  table: {
+    stt: "STT",
+    drugName: "Tên thuốc",
+    instructions: "Hướng dẫn sử dụng",
+    actions: "Thao tác"
+  },
+  placeholder: {
+    drugName: "VD: Paracetamol 500mg (10 viên)",
+    instructions: "VD: Uống 1 viên/lần, 3 lần/ngày sau ăn"
+  },
+  addButton: "Thêm thuốc",
+  deleteButton: "Xóa thuốc này",
+  saveButton: "Lưu Toa thuốc",
+  saving: "Đang lưu...",
+  success: "Thêm toa thuốc thành công!",
+  error: "Thêm toa thuốc thất bại",
+  validation: {
+    required: "Vui lòng điền đầy đủ tên thuốc và hướng dẫn sử dụng cho tất cả các thuốc."
+  }
+},
+
+// ============ SERVICE SELECTION ============
+serviceSelection: {
+  searchPlaceholder: "Tìm kiếm dịch vụ...",
+  selectedTitle: "Dịch vụ đã chọn ({{count}})",
+  quantity: "Số lượng",
+  total: "Tổng",
+  listTitle: "Danh sách dịch vụ",
+  loading: "Đang tải dịch vụ...",
+  noResults: "Không tìm thấy dịch vụ phù hợp"
+},
     }
   },
 
@@ -2329,7 +2489,8 @@ invoices: {
         pay: "Receive Payment",
         exportPdf: "Export PDF"
       },
-
+pdfDownloadSuccess: "Invoice PDF downloaded successfully!",
+  pdfDownloadError: "Failed to download invoice PDF",
   modal: {
        "title": "Invoice Details",
     "code": "Code",
@@ -2562,7 +2723,8 @@ doctorStats: {
   },
   chart: {
     visitsByPeriod: "Examinations by {{#if (eq context 'hour')}}hour{{else}}day{{/if}}",
-    trend: "Examination Trend"
+    trend: "Examination Trend",
+    visitsByHour:"Visits By Hour",
   },
   table: {
     title: "Statistics Table by Time Slot",
@@ -2592,21 +2754,31 @@ doctorSidebar: {
   invoices: "Invoices"
 },
 doctorExamination: {
+  // Tabs
   tabExamination: "Examination & Prescription",
   tabServices: "Service Indications",
-
+  
+  // AI Assistant Button
+  aiAssistantOn: "AI On",
+  aiAssistantOff: "Enable AI Assistant",
+  
+  // Patient info
   queueNumber: "Queue No.",
   checkInTime: "Checked in at",
   symptomsTitle: "Symptoms / Reason for visit",
   noSymptoms: "No notes from receptionist yet",
 
+  // Waiting queue
   waitingQueueTitle: "Next in queue",
   nextPatientBadge: "Next",
   noPatientsInQueue: "No more patients",
 
+  // Examination tab
   diagnosisLabel: "Diagnosis",
   diagnosisRequired: "Please enter diagnosis",
+  diagnosisPlaceholder: "Enter detailed diagnosis...",
   treatmentNotesLabel: "Treatment notes",
+  treatmentNotesPlaceholder: "Notes about treatment process, follow-up...",
   prescriptionTitle: "Prescription",
   drugName: "DRUG NAME",
   instructions: "INSTRUCTIONS",
@@ -2617,13 +2789,16 @@ doctorExamination: {
   completeButton: "Complete Examination",
   processing: "Processing...",
 
+  // Services tab
   searchServicePlaceholder: "Search services...",
   selectedServicesTitle: "Selected services",
   totalAmount: "Total:",
 
+  // Buttons & actions
   callNextPatient: "Call Next Patient",
   calling: "Calling...",
 
+  // Toast messages
   serviceAdded: "Added:",
   serviceRemoved: "Removed:",
   completeSuccess: "Examination completed successfully!",
@@ -2632,12 +2807,25 @@ doctorExamination: {
   invoiceCreated: "Invoice created successfully: {{code}}",
   drugInstructionsRequired: "Please enter usage instructions for all drugs",
   drugNameRequired: "Please enter drug name",
+  aiPlanApplied: "AI treatment plan applied to form!",
 
+  // Empty state (no current patient)
   noPatientTitle: "My Clinic",
   patientsWaiting: "{{count}} patients waiting",
   noPatientsToday: "No patients yet",
   waitingForNext: "Waiting for next patient...",
-  queueTitle: "Examination Queue"
+  queueTitle: "Examination Queue",
+  
+  // AI Features
+  generatePlanError: "Unable to generate treatment plan. Please try again.",
+  noDrugsRecommended: "AI did not recommend specific drugs. Please prescribe manually.",
+  parseError: "Unable to parse AI response. Please try again or prescribe manually.",
+  generating: "Generating...",
+  aiGeneratePlan: "AI Generate Plan",
+  aiHint: 'Enter diagnosis → Click "AI Generate Plan" to auto-create notes and drugs',
+  aiSuggestedDrugs: "AI Suggested {{count}} Drugs",
+  applyAll: "Apply All",
+  selectDrugsHint: "Check drugs to use or apply all"
 },
 doctorRecords: {
   totalRecords: "Total Records: ",
@@ -2868,6 +3056,146 @@ verifyOtp: {
   resendFailed: "Resend failed, please try again",
   backTo: "Back to",
   login: "Login"
+},
+reviewsManagement: {
+  title: "Review Management",
+  createButton: "Create Review",
+  filterRating: "Filter by rating",
+  filterReviewer: "Search by reviewer",
+  clearFilters: "Clear filters",
+  allRatings: "All",
+  table: {
+    no: "No.",
+    reviewer: "Reviewer",
+    rating: "Rating",
+    comment: "Comment",
+    createdAt: "Created At",
+    actions: "Actions"
+  },
+  ratingBadge: "{rating}/5",
+  noReviews: "No reviews found",
+  loading: "Loading...",
+  modal: {
+    createTitle: "Create Review",
+    viewTitle: "Review Details",
+    editTitle: "Edit Review",
+    editButton: "Edit",
+    reviewerName: "Reviewer Name",
+    reviewerNameRequired: "Reviewer name is required",
+    ratingLabel: "Rating",
+    ratingRequired: "Rating is required",
+    commentLabel: "Comment",
+    commentRequired: "Comment is required",
+    save: "Save",
+    create: "Create Review",
+    cancel: "Cancel",
+    processing: "Processing..."
+  },
+  toast: {
+    loadError: "Failed to load reviews",
+    createSuccess: "Review created successfully",
+    updateSuccess: "Review updated successfully",
+    deleteSuccess: "Deleted review successfully",
+    deleteError: "Failed to delete review",
+    validationError: "Please fill in all required fields",
+    ratingRangeError: "Rating must be between 1-5 stars"
+  },
+  confirmDelete: {
+    title: "Confirm Delete",
+    text: "Are you sure you want to delete the review ?",
+    confirm: "Delete",
+    cancel: "Cancel"
+  },
+            common: {
+  // ... existing keys ...
+  stt: "No.",
+  actions: "Actions",
+  view: "View Details",
+  edit: "Edit",
+  delete: "Delete",
+  cancel: "Cancel",
+  all: "All",
+  clearFilter: "Clear Filters",
+  search: "Search",
+  star: 'star',
+  stars: 'stars',
+},
+},
+waitingQueue: {
+  title: "My Clinic",
+  patientsWaiting: "{{count}} patients waiting",
+  noPatients: "No patients yet",
+  waitingSystem: "System is waiting for the next patient...",
+  queueTitle: "Examination Queue",
+  nextBadge: "Next",
+  callButton: "Call for Examination",
+  calling: "Calling...",
+  yearsOld: "years old",
+  
+  table: {
+    queueNumber: "No.",
+    fullName: "Full Name",
+    gender: "Gender",
+    age: "Age",
+    checkInTime: "Check-in Time",
+    actions: "Actions"
+  },
+  
+  gender: {
+    male: "Male",
+    female: "Female"
+  }
+},
+// ============ PRESCRIPTION FORM ============
+prescriptionForm: {
+  title: "Prescription",
+  table: {
+    stt: "No.",
+    drugName: "DRUG NAME *",
+    instructions: "USAGE INSTRUCTIONS *",
+    delete: "DELETE"
+  },
+  drugNameLabel: "Drug name *",
+  drugNamePlaceholder: "Paracetamol 500mg...",
+  instructionsLabel: "Usage instructions *",
+  instructionsPlaceholder: "Take 1 tablet 3 times/day...",
+  addButton: "Add new drug",
+  deleteButton: "Delete drug"
+},
+
+// ============ PRESCRIPTION MODAL ============
+prescriptionModal: {
+  title: "Add Prescription for",
+  table: {
+    stt: "No.",
+    drugName: "Drug name",
+    instructions: "Usage instructions",
+    actions: "Actions"
+  },
+  placeholder: {
+    drugName: "E.g: Paracetamol 500mg (10 tablets)",
+    instructions: "E.g: Take 1 tablet 3 times daily after meals"
+  },
+  addButton: "Add drug",
+  deleteButton: "Delete this drug",
+  saveButton: "Save Prescription",
+  saving: "Saving...",
+  success: "Prescription added successfully!",
+  error: "Failed to add prescription",
+  validation: {
+    required: "Please fill in drug name and usage instructions for all drugs."
+  }
+},
+
+// ============ SERVICE SELECTION ============
+serviceSelection: {
+  searchPlaceholder: "Search services...",
+  selectedTitle: "Selected services ({{count}})",
+  quantity: "Quantity",
+  total: "Total",
+  listTitle: "Service List",
+  loading: "Loading services...",
+  noResults: "No matching services found"
 },
 }
   }
