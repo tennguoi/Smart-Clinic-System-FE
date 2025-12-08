@@ -31,7 +31,7 @@ export default function EmailTemplateManagement() {
       [{ 'header': [1, 2, 3, false] }],
       ['bold', 'italic', 'underline', 'strike'],
       [{ 'color': [] }, { 'background': [] }],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
       [{ 'align': [] }],
       ['link'],
       ['clean']
@@ -145,7 +145,7 @@ export default function EmailTemplateManagement() {
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
-  const getSampleData = (placeholders) =>  {
+  const getSampleData = (placeholders) => {
     const samples = {
       'patientName': 'Nguyễn Văn A',
       'otp': '123456',
@@ -245,7 +245,7 @@ export default function EmailTemplateManagement() {
         }
       `}</style>
       <div className={`px-4 md:px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
-        
+
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3`}>
@@ -330,14 +330,14 @@ export default function EmailTemplateManagement() {
                       <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                         Subject <span className="text-red-500">*</span>
                       </label>
-                      <input 
-                        type="text" 
-                        name="subject" 
-                        value={formData.subject} 
-                        onChange={handleInputChange} 
-                        required 
-                        disabled={modalMode === 'view'} 
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-700 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`} 
+                      <input
+                        type="text"
+                        name="subject"
+                        value={formData.subject}
+                        onChange={handleInputChange}
+                        required
+                        disabled={modalMode === 'view'}
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-700 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
                       />
                     </div>
 
@@ -367,9 +367,6 @@ export default function EmailTemplateManagement() {
                         <button type="submit" disabled={loading} className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition">
                           {loading ? 'Đang lưu...' : 'Lưu Thay Đổi'}
                         </button>
-                        <button type="button" onClick={() => setShowPreview(!showPreview)} className={`flex-1 py-2.5 rounded-lg transition ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-300 hover:bg-gray-400 text-gray-700'}`}>
-                          {showPreview ? 'Ẩn Preview' : 'Xem Preview'}
-                        </button>
                       </div>
                     )}
                   </form>
@@ -378,51 +375,26 @@ export default function EmailTemplateManagement() {
                 {/* Right: Placeholders & Preview */}
                 <div className="space-y-4">
                   {/* Placeholders */}
-                  <div className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border rounded-lg p-4`}>
-                    <h3 className={`font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-                      {modalMode === 'edit' ? 'Chèn Placeholder' : 'Available Placeholders'}
-                    </h3>
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {selectedTemplate.availablePlaceholders?.map((placeholder, idx) => (
-                        <div key={idx} className="flex items-center justify-between">
-                          <code className={`text-sm px-2 py-1 rounded ${theme === 'dark' ? 'bg-gray-800 text-blue-400' : 'bg-white text-blue-600'}`}>
-                            {'{{' + placeholder + '}}'}
-                          </code>
-                          <div className="flex gap-1">
-                            {modalMode === 'edit' && (
-                              <button
-                                type="button"
-                                onClick={() => insertPlaceholder(placeholder)}
-                                className="p-1.5 rounded bg-blue-500 hover:bg-blue-600 text-white transition"
-                                title="Chèn vào editor"
-                              >
-                                <Plus className="w-4 h-4" />
-                              </button>
-                            )}
-                            <button
-                              onClick={() => copyToClipboard(`{{${placeholder}}}`, idx)}
-                              className={`p-1.5 rounded transition ${theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-gray-200'}`}
-                              title="Copy to clipboard"
-                            >
-                              {copiedIndex === idx ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+
 
                   {/* Preview */}
-                  {(showPreview || modalMode === 'view') && (
-                    <div className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border rounded-lg p-4`}>
-                      <h3 className={`font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-                        Email Preview (với Header & Footer)
-                      </h3>
-                      <div className="bg-white rounded border border-gray-300 p-4 max-h-96 overflow-y-auto">
-                        <div dangerouslySetInnerHTML={{ __html: getSampleData(selectedTemplate.availablePlaceholders || []) }} />
+                  {(
+                    modalMode === 'edit' || modalMode === 'view'
+                  ) && (
+                      <div className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border rounded-lg p-4`}>
+                        <h3 className={`font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+                          Email Preview (Real-time)
+                        </h3>
+
+                        <div className="bg-white rounded border border-gray-300 p-4 max-h-96 overflow-y-auto">
+                          <div
+                            dangerouslySetInnerHTML={{
+                              __html: getSampleData(selectedTemplate.availablePlaceholders || [])
+                            }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
               </div>
             </div>
