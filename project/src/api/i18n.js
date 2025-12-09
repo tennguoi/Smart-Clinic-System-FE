@@ -1755,7 +1755,20 @@ appointmentCheckIn: {
     "filteringBy": "Đang lọc",
     "keyword": "Từ khóa",
     "removeKeyword": "Bỏ từ khóa"
-  }
+  },
+  profileManager: {
+  loading: "Đang tải thông tin hồ sơ...",
+  updateSuccess: "Cập nhật hồ sơ thành công!",
+  updateFailed: "Cập nhật thất bại",
+  uploadPhoto: "Đang tải ảnh lên...",
+  uploadSuccess: "Cập nhật ảnh đại diện thành công!",
+  uploadFailed: "Tải ảnh lên thất bại",
+  fileTooLarge: "Kích thước ảnh không được vượt quá 5MB",
+  cancel: "Hủy",
+  saveChanges: "Lưu thay đổi",
+  processing: "Đang xử lý..."
+},
+
     }
   },
 
