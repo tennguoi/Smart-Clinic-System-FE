@@ -283,7 +283,7 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`
                 onClick={() => setShowDrugSuggestions(false)}
                 className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-300 transition-all"
               >
-                {t('common.close') || 'Đóng'}
+                {t('doctorExamination.close') || 'Đóng'}
               </button>
             </div>
           </div>

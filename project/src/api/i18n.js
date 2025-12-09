@@ -436,13 +436,16 @@ accountManagement: {
       actions: "Thao tác"
     },
     noArticles: "Không tìm thấy tin tức nào",
-    categories: {
-      health: "Sức khỏe",
-      advice: "Tư vấn",
-      treatment: "Điều trị",
-      warning: "Cảnh báo",
-      technology: "Công nghệ"
-    },
+  categories: {
+    health: "Sức khỏe",
+    advice: "Tư vấn",
+    treatment: "Điều trị",
+    warning: "Cảnh báo",
+    technology: "Công nghệ",
+    news: "Tin tức",
+    research: "Nghiên cứu",
+    prevention: "Phòng bệnh"
+  },
     toast: {
       createSuccess: "Tạo tin tức thành công!",
       updateSuccess: "Cập nhật tin tức thành công!",
@@ -1219,7 +1222,7 @@ doctorExamination: {
   waitingQueueTitle: "Hàng đợi tiếp theo",
   nextPatientBadge: "Tiếp theo",
   noPatientsInQueue: "Không còn bệnh nhân nào",
-
+close:"Đóng",
   // Examination tab
   diagnosisLabel: "Chẩn đoán",
   diagnosisRequired: "Vui lòng nhập chẩn đoán",
@@ -2075,13 +2078,16 @@ accountManagement: {
       actions: "Actions"
     },
     noArticles: "No articles found",
-    categories: {
-      health: "Health",
-      advice: "Advice",
-      treatment: "Treatment",
-      warning: "Warning",
-      technology: "Technology"
-    },
+   categories: {
+    health: "Health",
+    advice: "Advice",
+    treatment: "Treatment",
+    warning: "Warning",
+    technology: "Technology",
+    news: "News",
+    research: "Research",
+    prevention: "Prevention"
+  },
                 common: {
   // ... existing keys ...
   stt: "No.",
@@ -2842,7 +2848,7 @@ doctorExamination: {
   // Tabs
   tabExamination: "Examination & Prescription",
   tabServices: "Service Indications",
-  
+  close:"Close",
   // AI Assistant Button
   aiAssistantOn: "AI On",
   aiAssistantOff: "Enable AI Assistant",

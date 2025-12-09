@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import {
   Plus, Edit, Trash2, X, FileText, Upload, Image as ImageIcon,
@@ -50,16 +51,75 @@ export default function ArticleManagement() {
     title: "", content: "", category: "", author: "", source: "", image: "",
   });
 
-  // Mapping cố định cho các danh mục phổ biến (chỉ cần 1 variant, normalize sẽ xử lý)
-  const fixedCategoryColors = {
-    "sức khỏe": "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
-    "tư vấn": "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
-    "điều trị": "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
-    "cảnh báo": "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
-    "công nghệ": "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800",
-    "tin tức": "bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:border-cyan-800",
-    "nghiên cứu": "bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800",
-    "phòng bệnh": "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-800",
+  // Mapping key categories với màu sắc và translation key
+  const categoryConfig = {
+    // English keys
+    "health": {
+      color: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
+      key: "articles.categories.health"
+    },
+    "advice": {
+      color: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
+      key: "articles.categories.advice"
+    },
+    "treatment": {
+      color: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
+      key: "articles.categories.treatment"
+    },
+    "warning": {
+      color: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
+      key: "articles.categories.warning"
+    },
+    "technology": {
+      color: "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800",
+      key: "articles.categories.technology"
+    },
+    "news": {
+      color: "bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:border-cyan-800",
+      key: "articles.categories.news"
+    },
+    "research": {
+      color: "bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800",
+      key: "articles.categories.research"
+    },
+    "prevention": {
+      color: "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-800",
+      key: "articles.categories.prevention"
+    },
+    
+    // Vietnamese keys (from backend)
+    "sức khỏe": {
+      color: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
+      key: "articles.categories.health"
+    },
+    "tư vấn": {
+      color: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
+      key: "articles.categories.advice"
+    },
+    "điều trị": {
+      color: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
+      key: "articles.categories.treatment"
+    },
+    "cảnh báo": {
+      color: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
+      key: "articles.categories.warning"
+    },
+    "công nghệ": {
+      color: "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800",
+      key: "articles.categories.technology"
+    },
+    "tin tức": {
+      color: "bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:border-cyan-800",
+      key: "articles.categories.news"
+    },
+    "nghiên cứu": {
+      color: "bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800",
+      key: "articles.categories.research"
+    },
+    "phòng bệnh": {
+      color: "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-800",
+      key: "articles.categories.prevention"
+    },
   };
 
   // Palette màu dự phòng cho danh mục khác
@@ -78,15 +138,15 @@ export default function ArticleManagement() {
   const getCategoryColor = (category) => {
     if (!category) return "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600";
     
-    // Normalize: trim + lowercase để đảm bảo nhất quán
+    // Normalize: trim + lowercase
     const normalized = category.trim().toLowerCase();
     
-    // Tìm trong mapping cố định
-    if (fixedCategoryColors[normalized]) {
-      return fixedCategoryColors[normalized];
+    // Tìm trong config
+    if (categoryConfig[normalized]) {
+      return categoryConfig[normalized].color;
     }
     
-    // Nếu không có trong mapping, dùng hash (dùng normalized để đảm bảo nhất quán)
+    // Fallback: dùng hash
     const hash = normalized.split('').reduce((acc, char) => {
       return char.charCodeAt(0) + ((acc << 5) - acc);
     }, 0);
@@ -94,6 +154,30 @@ export default function ArticleManagement() {
     const index = Math.abs(hash) % colorPalette.length;
     return colorPalette[index];
   };
+
+  // Hàm dịch tên category
+  const getCategoryLabel = (category) => {
+    if (!category) return "—";
+    
+    const normalized = category.trim().toLowerCase();
+    
+    if (categoryConfig[normalized]) {
+      return t(categoryConfig[normalized].key);
+    }
+    
+    return category;
+  };
+
+  // Lọc các category trùng lặp theo label đã dịch
+  const uniqueCategories = useMemo(() => {
+    const seen = new Set();
+    return categories.filter(c => {
+      const label = getCategoryLabel(c);
+      if (seen.has(label)) return false;
+      seen.add(label);
+      return true;
+    });
+  }, [categories, t]);
 
   const hasActiveFilters = useMemo(() => {
     return !!(filterTitle || filterCategory || filterStartDate || filterEndDate);
@@ -115,6 +199,10 @@ export default function ArticleManagement() {
       const list = res.data.content || [];
 
       setArticles(list);
+
+      // Lấy tất cả categories từ toàn bộ articles (không filter)
+      const uniqueCats = [...new Set(list.map(a => a.category))].filter(Boolean);
+      setCategories(uniqueCats);
 
       let filtered = [...list];
 
@@ -142,9 +230,6 @@ export default function ArticleManagement() {
       }
 
       setFilteredArticles(filtered);
-
-      const uniqueCats = [...new Set(filtered.map(a => a.category))].filter(Boolean);
-      setCategories(uniqueCats);
 
       if (hasFilters) {
         setTotalPages(Math.ceil(filtered.length / size));
@@ -327,7 +412,7 @@ export default function ArticleManagement() {
               placeholder={t("articles.filter.titlePlaceholder")}
               value={filterTitle}
               onChange={(e) => { setFilterTitle(e.target.value); setPage(0); }}
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300 bg-white text-gray-900'}`}
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300 bg-white text-gray-900 placeholder-gray-400'}`}
             />
           </div>
           <div className="lg:col-span-3">
@@ -340,7 +425,7 @@ export default function ArticleManagement() {
               className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
             >
               <option value="">{t("articles.filter.allCategories")}</option>
-              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+              {uniqueCategories.map(c => <option key={c} value={c}>{getCategoryLabel(c)}</option>)}
             </select>
           </div>
           <div className="lg:col-span-2">
@@ -451,7 +536,7 @@ export default function ArticleManagement() {
                     <td className="px-6 py-4 text-gray-900 dark:text-white max-w-xs truncate">{a.title}</td>
                     <td className="px-6 py-4 text-center">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getCategoryColor(a.category)}`}>
-                        {a.category || "—"}
+                        {getCategoryLabel(a.category)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center text-gray-700 dark:text-gray-300">{a.author || "—"}</td>
@@ -580,7 +665,7 @@ export default function ArticleManagement() {
                     className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   >
                     <option value="">{t("articles.modal.selectCategory")}</option>
-                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                    {categories.map(c => <option key={c} value={c}>{getCategoryLabel(c)}</option>)}
                   </select>
                 </div>
 
@@ -640,8 +725,7 @@ export default function ArticleManagement() {
               {t("articles.common.confirm")}
             </h3>
             <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-6 transition-colors duration-300`}>
-              {t("articles.toast.deleteSuccess", { title: "" }).replace(/^.*"/, '').replace(/".*$/, '')} <strong>{articleToDelete.title}</strong>?<br />
-              {/* <span className="text-red-600 font-semibold">{t("common.delete")}</span> */}
+              {t("articles.toast.deleteSuccess", { title: "" }).replace(/^.*"/, '').replace(/".*$/, '')} <strong>{articleToDelete.title}</strong>?
             </p>
             <div className="flex gap-3">
               <button onClick={handleConfirmDelete}
