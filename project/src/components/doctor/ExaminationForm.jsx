@@ -260,7 +260,7 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`,
                   theme === 'dark' ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
-                {t('common.close') ?? 'Đóng'}
+                {t('doctorExamination.close') || 'Đóng'}
               </button>
             </div>
           </div>
