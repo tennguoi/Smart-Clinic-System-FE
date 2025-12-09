@@ -1,4 +1,3 @@
-
 // AppointmentCheckInSection.jsx
 import { useEffect, useState } from 'react';
 import { Calendar, CheckCircle, Clock, AlertCircle, Loader2, Eye, Plus, X } from 'lucide-react';
@@ -23,7 +22,7 @@ export default function AppointmentCheckInSection() {
   const [selectedDetail, setSelectedDetail] = useState(null);
 
   // Trạng thái lọc
-  const [searchStatus, setSearchStatus] = useState('all'); // đã có ở file gốc
+  const [searchStatus, setSearchStatus] = useState('all');
   const [searchKeyword, setSearchKeyword] = useState('');
 
   const [filteredAppointments, setFilteredAppointments] = useState([]);
@@ -63,11 +62,11 @@ export default function AppointmentCheckInSection() {
   useEffect(() => {
     let result = [...appointments];
 
-    // 1) Lọc theo keyword (tên hoặc số điện thoại)
+    // 1) Lọc theo keyword (tên hoặc số điện thoại) - Thêm optional chaining (?.) để tránh lỗi null
     if (searchKeyword) {
       const keyword = searchKeyword.toLowerCase();
       result = result.filter(a =>
-        (a.patientName?.toLowerCase().includes(keyword)) ||
+        (a.patientName?.toLowerCase()?.includes(keyword)) ||
         (a.phone?.includes(searchKeyword))
       );
     }
@@ -93,14 +92,34 @@ export default function AppointmentCheckInSection() {
     setTotalPages(pages);
   }, [appointments, searchKeyword, searchStatus, currentPage]);
 
-  // Tải lịch hẹn hôm nay
+  // Tải lịch hẹn hôm nay (ĐÃ SỬA: Xử lý linh hoạt cấu trúc data)
   const fetchTodayAppointments = async () => {
     setLoading(true);
     try {
-      const data = await queueApi.getTodayAppointments();
-      setAppointments(Array.isArray(data) ? data : []);
+      const response = await queueApi.getTodayAppointments();
+      
+      // Log dữ liệu ra console để kiểm tra (F12)
+      console.log('Dữ liệu API getTodayAppointments:', response);
+
+      let dataToSet = [];
+      
+      // Trường hợp 1: API trả về mảng trực tiếp [item, item]
+      if (Array.isArray(response)) {
+        dataToSet = response;
+      } 
+      // Trường hợp 2: API trả về object { data: [item, item], ... }
+      else if (response && Array.isArray(response.data)) {
+        dataToSet = response.data;
+      }
+      // Trường hợp 3: API trả về object { result: [item, item], ... }
+      else if (response && Array.isArray(response.result)) {
+        dataToSet = response.result;
+      }
+
+      setAppointments(dataToSet);
       setCurrentPage(0);
     } catch (error) {
+      console.error("Lỗi fetch lịch hẹn:", error);
       toast.error(error.response?.data?.message ?? 'Không thể tải danh sách');
       setAppointments([]);
     } finally {
