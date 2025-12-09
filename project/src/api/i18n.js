@@ -813,7 +813,7 @@ medicalRecords: {
         title: "Quản Lý Hồ Sơ",
         allRecords: "Tất cả",
         recordLabel: "hồ sơ",
-        patientLabel: "bệnh nhân",
+        patientLabel: "hồ sơ",
  
         // Patient History Modal
         historyTitle: "Lịch sử khám bệnh",
@@ -2578,7 +2578,7 @@ medicalRecords: {
         title: "Medical Record History",
         allRecords: "All Records",
         recordLabel: "records",
-        patientLabel: "patients",
+        patientLabel: "records",
  
         // Patient History Modal
         historyTitle: "Medical History",
