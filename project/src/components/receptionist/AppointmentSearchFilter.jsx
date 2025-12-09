@@ -1,6 +1,7 @@
 // AppointmentSearchFilter.jsx
 import { X } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 export default function AppointmentSearchFilter({
   searchKeyword,
@@ -10,6 +11,7 @@ export default function AppointmentSearchFilter({
   onClear,
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
 
   const isDark = theme === 'dark';
 
@@ -37,14 +39,14 @@ export default function AppointmentSearchFilter({
               isDark ? 'text-gray-300' : 'text-gray-700'
             }`}
           >
-            Tìm kiếm
+            {t('appointments.search')}
           </label>
           <div className="relative">
             <input
               id="searchKeyword"
               value={searchKeyword}
               onChange={(e) => onSearchKeywordChange(e.target.value)}
-              placeholder="Nhập tên hoặc số điện thoại"
+              placeholder={t('appointments.searchPlaceholder')}
               className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
                 isDark
                   ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
@@ -58,8 +60,8 @@ export default function AppointmentSearchFilter({
                 className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors ${
                   isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-400 hover:text-gray-600'
                 }`}
-                aria-label="Xóa nội dung tìm kiếm"
-                title="Xóa nội dung tìm kiếm"
+                aria-label={t('appointments.clearSearch')}
+                title={t('appointments.clearSearch')}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -75,7 +77,7 @@ export default function AppointmentSearchFilter({
               isDark ? 'text-gray-300' : 'text-gray-700'
             }`}
           >
-            Trạng thái
+            {t('appointments.status')}
           </label>
           <select
             id="searchStatus"
@@ -87,28 +89,26 @@ export default function AppointmentSearchFilter({
                 : 'bg-white border-gray-300 text-gray-900'
             }`}
           >
-            <option value="all">Tất cả</option>
-            <option value="checked-in">Đã thêm</option>
-            <option value="upcoming">Sắp tới</option>
-            <option value="past">Quá giờ</option>
-            <option value="waiting">Chờ check-in</option>
+            <option value="all">{t('appointments.statusOptions.all')}</option>
+            <option value="checked-in">{t('appointments.statusOptions.checkedIn')}</option>
+            <option value="upcoming">{t('appointments.statusOptions.upcoming')}</option>
+            <option value="past">{t('appointments.statusOptions.past')}</option>
+            <option value="waiting">{t('appointments.statusOptions.waiting')}</option>
           </select>
         </div>
 
         {/* Xóa bộ lọc */}
         <div className="flex flex-col justify-end">
-          <button
-            type="button"
-            onClick={handleClearAll}
-            className={`w-full px-4 py-3 font-medium rounded-xl transition ${
-              hasActiveFilters
-                ? 'bg-gradient-to-r from-blue-600 to-sky-600 text-white hover:from-blue-700 hover:to-sky-700'
-                : isDark
-                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
-            }`}
-          >
-            Xóa bộ lọc
+         <button
+  type="button"
+  onClick={handleClearAll}
+  className={`w-full px-4 py-3 font-medium rounded-xl transition ${
+    isDark
+      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+      : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+  }`}
+>
+            {t('appointments.clearFilters')}
           </button>
         </div>
       </div>
@@ -124,22 +124,20 @@ export default function AppointmentSearchFilter({
                   : 'bg-gray-50 border-gray-200 text-gray-700'
               }`}
             >
-              Đang lọc: Từ khóa: <strong>{searchKeyword}</strong>
+              {t('appointments.filteringBy')}: {t('appointments.keyword')}: <strong>{searchKeyword}</strong>
               <button
                 type="button"
                 onClick={() => onSearchKeywordChange('')}
                 className={`rounded p-1 transition ${
                   isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'
                 }`}
-                aria-label="Bỏ từ khóa"
-                title="Bỏ từ khóa"
+                aria-label={t('appointments.removeKeyword')}
+                title={t('appointments.removeKeyword')}
               >
                 <X size={14} />
               </button>
             </span>
           )}
-
-          
         </div>
       )}
     </div>

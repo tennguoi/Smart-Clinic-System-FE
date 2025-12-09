@@ -1,17 +1,20 @@
-// AppointmentCheckInSection.jsx
 import { useEffect, useState } from 'react';
 import { Calendar, CheckCircle, Clock, AlertCircle, Loader2, Eye, Plus, X } from 'lucide-react';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast, Toaster } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import PatientForm from './PatientForm';
 import Pagination from '../common/Pagination';
 import AppointmentSearchFilter from './AppointmentSearchFilter';
+import CountBadge from '../common/CountBadge'; // 👈 IMPORT COMPONENT
 import { queueApi } from '../../api/receptionApi';
 import { useTheme } from '../../contexts/ThemeContext';
+import { toastConfig } from '../../config/toastConfig';
 
 const PAGE_SIZE = 10;
 
 export default function AppointmentCheckInSection() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
 
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -28,6 +31,7 @@ export default function AppointmentCheckInSection() {
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [totalFiltered, setTotalFiltered] = useState(0); // 👈 THÊM STATE ĐỂ LƯU TỔNG SỐ SAU KHI LỌC
 
   const [patientForm, setPatientForm] = useState({
     patientName: '',
@@ -62,7 +66,7 @@ export default function AppointmentCheckInSection() {
   useEffect(() => {
     let result = [...appointments];
 
-    // 1) Lọc theo keyword (tên hoặc số điện thoại) - Thêm optional chaining (?.) để tránh lỗi null
+    // 1) Lọc theo keyword (tên hoặc số điện thoại)
     if (searchKeyword) {
       const keyword = searchKeyword.toLowerCase();
       result = result.filter(a =>
@@ -82,8 +86,11 @@ export default function AppointmentCheckInSection() {
       });
     }
 
-    // 3) Paginate
+    // 3) Lưu tổng số sau khi lọc
     const total = result.length;
+    setTotalFiltered(total); // 👈 LƯU TỔNG SỐ
+
+    // 4) Paginate
     const pages = Math.ceil(total / PAGE_SIZE);
     const start = currentPage * PAGE_SIZE;
     const paginated = result.slice(start, start + PAGE_SIZE);
@@ -92,27 +99,21 @@ export default function AppointmentCheckInSection() {
     setTotalPages(pages);
   }, [appointments, searchKeyword, searchStatus, currentPage]);
 
-  // Tải lịch hẹn hôm nay (ĐÃ SỬA: Xử lý linh hoạt cấu trúc data)
+  // Tải lịch hẹn hôm nay
   const fetchTodayAppointments = async () => {
     setLoading(true);
     try {
       const response = await queueApi.getTodayAppointments();
       
-      // Log dữ liệu ra console để kiểm tra (F12)
       console.log('Dữ liệu API getTodayAppointments:', response);
 
       let dataToSet = [];
       
-      // Trường hợp 1: API trả về mảng trực tiếp [item, item]
       if (Array.isArray(response)) {
         dataToSet = response;
-      } 
-      // Trường hợp 2: API trả về object { data: [item, item], ... }
-      else if (response && Array.isArray(response.data)) {
+      } else if (response && Array.isArray(response.data)) {
         dataToSet = response.data;
-      }
-      // Trường hợp 3: API trả về object { result: [item, item], ... }
-      else if (response && Array.isArray(response.result)) {
+      } else if (response && Array.isArray(response.result)) {
         dataToSet = response.result;
       }
 
@@ -120,7 +121,7 @@ export default function AppointmentCheckInSection() {
       setCurrentPage(0);
     } catch (error) {
       console.error("Lỗi fetch lịch hẹn:", error);
-      toast.error(error.response?.data?.message ?? 'Không thể tải danh sách');
+      toast.error(error.response?.data?.message ?? t('appointmentCheckIn.errors.loadFailed'));
       setAppointments([]);
     } finally {
       setLoading(false);
@@ -129,7 +130,7 @@ export default function AppointmentCheckInSection() {
 
   useEffect(() => {
     fetchTodayAppointments();
-    const interval = setInterval(fetchTodayAppointments, 120000); // 2 phút
+    const interval = setInterval(fetchTodayAppointments, 120000);
     return () => clearInterval(interval);
   }, []);
 
@@ -183,10 +184,10 @@ export default function AppointmentCheckInSection() {
 
   // Submit form
   const handleSubmitForm = async () => {
-    if (!selectedAppointment) return toast.error('Không tìm thấy lịch hẹn!');
-    if (patientForm.phone.length !== 10) return toast.error('Số điện thoại phải đúng 10 chữ số!');
-    if (!patientForm.patientName.trim()) return toast.error('Vui lòng nhập tên bệnh nhân!');
-    if (!patientForm.dob) return toast.error('Vui lòng chọn ngày sinh!');
+    if (!selectedAppointment) return toast.error(t('appointmentCheckIn.errors.noAppointment'));
+    if (patientForm.phone.length !== 10) return toast.error(t('appointmentCheckIn.errors.phoneInvalid'));
+    if (!patientForm.patientName.trim()) return toast.error(t('appointmentCheckIn.errors.nameRequired'));
+    if (!patientForm.dob) return toast.error(t('appointmentCheckIn.errors.dobRequired'));
 
     setFormSubmitting(true);
     try {
@@ -197,8 +198,11 @@ export default function AppointmentCheckInSection() {
 
       toast.success(
         res.roomName
-          ? `Đã thêm – Phòng: ${res.roomName}${res.doctorName ? ` – BS: ${res.doctorName}` : ''}`
-          : 'Đã thêm vào hàng chờ thành công!'
+          ? t('appointmentCheckIn.success.addedWithRoom', { 
+              room: res.roomName, 
+              doctor: res.doctorName ? ` – ${t('appointmentCheckIn.doctor')}: ${res.doctorName}` : '' 
+            })
+          : t('appointmentCheckIn.success.added')
       );
 
       setShowForm(false);
@@ -218,7 +222,7 @@ export default function AppointmentCheckInSection() {
       });
       fetchTodayAppointments();
     } catch (error) {
-      toast.error(error.response?.data?.message ?? 'Check-in thất bại');
+      toast.error(error.response?.data?.message ?? t('appointmentCheckIn.errors.checkInFailed'));
     } finally {
       setFormSubmitting(false);
     }
@@ -229,17 +233,52 @@ export default function AppointmentCheckInSection() {
     setSelectedAppointment(null);
   };
 
+  // Translate gender
+  const getGenderText = (gender) => {
+    if (gender === 'female') return t('appointmentCheckIn.gender.female');
+    if (gender === 'other') return t('appointmentCheckIn.gender.other');
+    return t('appointmentCheckIn.gender.male');
+  };
+
+  // Translate priority
+  const getPriorityText = (priority) => {
+    if (priority === 'Emergency') return t('appointmentCheckIn.priority.emergency');
+    if (priority === 'Urgent') return t('appointmentCheckIn.priority.urgent');
+    return t('appointmentCheckIn.priority.normal');
+  };
+
+  // Get priority color class
+  const getPriorityColorClass = (priority) => {
+    if (priority === 'Emergency') return theme === 'dark' ? 'text-red-400' : 'text-red-600';
+    if (priority === 'Urgent') return theme === 'dark' ? 'text-orange-400' : 'text-orange-600';
+    return theme === 'dark' ? 'text-gray-300' : 'text-gray-700';
+  };
+
   // =================== RENDER ===================
   return (
     <div className={`px-4 sm:px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <ToastContainer position="top-right" autoClose={3000} />
+      <Toaster 
+        position={toastConfig.position}
+        containerStyle={toastConfig.containerStyle}
+        toastOptions={toastConfig.toastOptions}
+      />
 
-      {/* Header */}
+      {/* Header với CountBadge */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <h1 className={`text-4xl font-bold flex items-center gap-3 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
-          <Calendar className="w-9 h-9 text-blue-600" />
-          <span>Lịch hẹn hôm nay</span>
-        </h1>
+        <div className="flex items-center gap-4 flex-wrap">
+          <h1 className={`text-4xl font-bold flex items-center gap-3 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
+            <Calendar className="w-9 h-9 text-blue-600" />
+            <span>{t('appointmentCheckIn.title')}</span>
+          </h1>
+          
+          {/* 👇 THÊM COUNTBADGE */}
+          <CountBadge
+            currentCount={filteredAppointments.length}
+            totalCount={totalFiltered}
+            label={t('appointmentCheckIn.label') || 'lịch hẹn'}
+           
+          />
+        </div>
       </div>
 
       {/* Bộ lọc */}
@@ -255,21 +294,37 @@ export default function AppointmentCheckInSection() {
       {loading ? (
         <div className={`rounded-lg shadow border p-12 text-center mt-6 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
           <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-blue-600" />
-          <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>Đang tải danh sách lịch hẹn...</p>
+          <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>{t('appointmentCheckIn.loading')}</p>
         </div>
       ) : (
         <div className={`rounded-lg shadow border overflow-hidden mt-6 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
           <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
             <thead className={theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}>
               <tr>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase w-20 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>STT</th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Mã lịch</th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Bệnh nhân</th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Số điện thoại</th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Thời gian</th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Dịch vụ</th>
-                <th className={`px-4 py-3 text-center text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Trạng thái</th>
-                <th className={`px-4 py-3 text-center text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Thao tác</th>
+                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase w-20 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {t('appointmentCheckIn.table.stt')}
+                </th>
+                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {t('appointmentCheckIn.table.code')}
+                </th>
+                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {t('appointmentCheckIn.table.patient')}
+                </th>
+                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {t('appointmentCheckIn.table.phone')}
+                </th>
+                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {t('appointmentCheckIn.table.time')}
+                </th>
+                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {t('appointmentCheckIn.table.services')}
+                </th>
+                <th className={`px-4 py-3 text-center text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {t('appointmentCheckIn.table.status')}
+                </th>
+                <th className={`px-4 py-3 text-center text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {t('appointmentCheckIn.table.actions')}
+                </th>
               </tr>
             </thead>
             <tbody className={`divide-y ${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
@@ -277,8 +332,8 @@ export default function AppointmentCheckInSection() {
                 <tr>
                   <td colSpan={8} className={`px-4 py-16 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                     {(searchKeyword || searchStatus !== 'all')
-                      ? 'Không tìm thấy lịch hẹn phù hợp'
-                      : 'Không có lịch hẹn nào hôm nay'}
+                      ? t('appointmentCheckIn.noResults')
+                      : t('appointmentCheckIn.noAppointments')}
                   </td>
                 </tr>
               ) : (
@@ -320,25 +375,25 @@ export default function AppointmentCheckInSection() {
                           <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold ${
                             theme === 'dark' ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'
                           }`}>
-                            <CheckCircle className="w-4 h-4" /> Đã thêm
+                            <CheckCircle className="w-4 h-4" /> {t('appointmentCheckIn.status.added')}
                           </span>
                         ) : isUpcoming(appt.appointmentTime) ? (
                           <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse ${
                             theme === 'dark' ? 'bg-amber-900/30 text-amber-300' : 'bg-amber-100 text-amber-700'
                           }`}>
-                            <Clock className="w-4 h-4" /> Sắp tới
+                            <Clock className="w-4 h-4" /> {t('appointmentCheckIn.status.upcoming')}
                           </span>
                         ) : isPast(appt.appointmentTime) ? (
                           <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold ${
                             theme === 'dark' ? 'bg-red-900/30 text-red-300' : 'bg-red-100 text-red-700'
                           }`}>
-                            <AlertCircle className="w-4 h-4" /> Quá giờ
+                            <AlertCircle className="w-4 h-4" /> {t('appointmentCheckIn.status.overdue')}
                           </span>
                         ) : (
                           <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold ${
                             theme === 'dark' ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'
                           }`}>
-                            <Clock className="w-4 h-4" /> Chờ check-in
+                            <Clock className="w-4 h-4" /> {t('appointmentCheckIn.status.waiting')}
                           </span>
                         )}
                       </td>
@@ -347,7 +402,7 @@ export default function AppointmentCheckInSection() {
                           <button
                             onClick={() => handleAddPatientFromAppointment(appt)}
                             className="text-green-600 hover:text-green-700 p-2 transition"
-                            title="Thêm vào hàng chờ"
+                            title={t('appointmentCheckIn.actions.addToQueue')}
                           >
                             <Plus className="w-6 h-6" />
                           </button>
@@ -355,7 +410,7 @@ export default function AppointmentCheckInSection() {
                           <button
                             onClick={() => handleViewDetail(appt)}
                             className={`p-2 rounded-full transition ${theme === 'dark' ? 'text-blue-300 hover:bg-blue-900/30' : 'text-blue-600 hover:bg-blue-100'}`}
-                            title="Xem chi tiết lịch hẹn"
+                            title={t('appointmentCheckIn.actions.viewDetail')}
                           >
                             <Eye className="w-6 h-6" />
                           </button>
@@ -402,7 +457,7 @@ export default function AppointmentCheckInSection() {
             <div className={`flex justify-between items-center p-6 sticky top-0 z-10 border-b ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
               <h2 className={`text-2xl font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}`}>
                 <Eye className="w-6 h-6" />
-                Chi tiết lịch hẹn
+                {t('appointmentCheckIn.modal.title')}
               </h2>
               <button
                 onClick={() => setShowDetailModal(false)}
@@ -417,13 +472,17 @@ export default function AppointmentCheckInSection() {
               {/* Mã lịch + thời gian */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className={theme === 'dark' ? 'block text-sm text-gray-300 mb-1' : 'block text-sm text-gray-700 mb-1'}>Mã lịch hẹn</label>
+                  <label className={theme === 'dark' ? 'block text-sm text-gray-300 mb-1' : 'block text-sm text-gray-700 mb-1'}>
+                    {t('appointmentCheckIn.modal.code')}
+                  </label>
                   <div className={`px-4 py-3 font-mono rounded-lg border ${theme === 'dark' ? 'bg-blue-900/20 border-blue-800 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-700'}`}>
                     {selectedDetail.appointmentCode}
                   </div>
                 </div>
                 <div>
-                  <label className={theme === 'dark' ? 'block text-sm text-gray-300 mb-1' : 'block text-sm text-gray-700 mb-1'}>Thời gian hẹn</label>
+                  <label className={theme === 'dark' ? 'block text-sm text-gray-300 mb-1' : 'block text-sm text-gray-700 mb-1'}>
+                    {t('appointmentCheckIn.modal.time')}
+                  </label>
                   <div className={`px-4 py-3 rounded-lg border ${theme === 'dark' ? 'bg-gray-900 border-gray-700 text-gray-300' : 'bg-gray-50 border-gray-300 text-gray-700'}`}>
                     {formatTime(selectedDetail.appointmentTime)}
                   </div>
@@ -432,46 +491,58 @@ export default function AppointmentCheckInSection() {
 
               {/* Thông tin bệnh nhân */}
               <div>
-                <h3 className={theme === 'dark' ? 'text-lg font-bold text-gray-100 mb-4' : 'text-lg font-bold text-gray-800 mb-4'}>Thông tin bệnh nhân</h3>
+                <h3 className={theme === 'dark' ? 'text-lg font-bold text-gray-100 mb-4' : 'text-lg font-bold text-gray-800 mb-4'}>
+                  {t('appointmentCheckIn.modal.patientInfo')}
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={theme === 'dark' ? 'block text-xs text-gray-400 mb-1' : 'block text-xs text-gray-600 mb-1'}>Họ tên</label>
+                    <label className={theme === 'dark' ? 'block text-xs text-gray-400 mb-1' : 'block text-xs text-gray-600 mb-1'}>
+                      {t('appointmentCheckIn.modal.name')}
+                    </label>
                     <div className={`px-4 py-3 rounded-lg border text-sm font-medium ${theme === 'dark' ? 'bg-gray-900 border-gray-700 text-gray-100' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
                       {selectedDetail.patientName ?? '—'}
                     </div>
                   </div>
                   <div>
-                    <label className={theme === 'dark' ? 'block text-xs text-gray-400 mb-1' : 'block text-xs text-gray-600 mb-1'}>Số điện thoại</label>
+                    <label className={theme === 'dark' ? 'block text-xs text-gray-400 mb-1' : 'block text-xs text-gray-600 mb-1'}>
+                      {t('appointmentCheckIn.modal.phone')}
+                    </label>
                     <div className={`px-4 py-3 rounded-lg border text-sm font-medium ${theme === 'dark' ? 'bg-gray-900 border-gray-700 text-gray-100' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
                       {selectedDetail.phone ?? '—'}
                     </div>
                   </div>
                   <div>
-                    <label className={theme === 'dark' ? 'block text-xs text-gray-400 mb-1' : 'block text-xs text-gray-600 mb-1'}>Email</label>
+                    <label className={theme === 'dark' ? 'block text-xs text-gray-400 mb-1' : 'block text-xs text-gray-600 mb-1'}>
+                      {t('appointmentCheckIn.modal.email')}
+                    </label>
                     <div className={`px-4 py-3 rounded-lg border text-sm ${theme === 'dark' ? 'bg-gray-900 border-gray-700 text-gray-300' : 'bg-gray-50 border-gray-300 text-gray-700'}`}>
                       {selectedDetail.email ?? '—'}
                     </div>
                   </div>
                   <div>
-                    <label className={theme === 'dark' ? 'block text-xs text-gray-400 mb-1' : 'block text-xs text-gray-600 mb-1'}>Giới tính</label>
+                    <label className={theme === 'dark' ? 'block text-xs text-gray-400 mb-1' : 'block text-xs text-gray-600 mb-1'}>
+                      {t('appointmentCheckIn.modal.gender')}
+                    </label>
                     <div className={`px-4 py-3 rounded-lg border text-sm ${theme === 'dark' ? 'bg-gray-900 border-gray-700 text-gray-300' : 'bg-gray-50 border-gray-300 text-gray-700'}`}>
-                      {selectedDetail.gender === 'female' ? 'Nữ' : selectedDetail.gender === 'other' ? 'Khác' : 'Nam'}
+                      {getGenderText(selectedDetail.gender)}
                     </div>
                   </div>
                   <div>
-                    <label className={theme === 'dark' ? 'block text-xs text-gray-400 mb-1' : 'block text-xs text-gray-600 mb-1'}>Ghi chú</label>
+                    <label className={theme === 'dark' ? 'block text-xs text-gray-400 mb-1' : 'block text-xs text-gray-600 mb-1'}>
+                      {t('appointmentCheckIn.modal.notes')}
+                    </label>
                     <div className={`px-4 py-3 rounded-lg border text-sm font-semibold ${theme === 'dark' ? 'bg-gray-900 border-gray-700 text-gray-100' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
                       {selectedDetail.notes ?? '—'}
                     </div>
                   </div>
                   <div>
-                    <label className={theme === 'dark' ? 'block text-xs text-gray-400 mb-1' : 'block text-xs text-gray-600 mb-1'}>Mức độ ưu tiên</label>
+                    <label className={theme === 'dark' ? 'block text-xs text-gray-400 mb-1' : 'block text-xs text-gray-600 mb-1'}>
+                      {t('appointmentCheckIn.modal.priority')}
+                    </label>
                     <div className={`px-4 py-3 rounded-lg border text-sm ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-300'}`}>
-                      {selectedDetail.priority === 'Emergency'
-                        ? <span className="text-red-400 font-bold">Khẩn cấp</span>
-                        : selectedDetail.priority === 'Urgent'
-                          ? <span className="text-orange-400 font-bold">Ưu tiên</span>
-                          : <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>Thường</span>}
+                      <span className={`font-bold ${getPriorityColorClass(selectedDetail.priority)}`}>
+                        {getPriorityText(selectedDetail.priority)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -482,7 +553,9 @@ export default function AppointmentCheckInSection() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {selectedDetail.idNumber && (
                         <div>
-                          <label className={theme === 'dark' ? 'block text-xs text-gray-400 mb-1' : 'block text-xs text-gray-600 mb-1'}>CCCD/CMND</label>
+                          <label className={theme === 'dark' ? 'block text-xs text-gray-400 mb-1' : 'block text-xs text-gray-600 mb-1'}>
+                            {t('appointmentCheckIn.modal.idNumber')}
+                          </label>
                           <div className={`px-4 py-3 rounded-lg border text-sm ${theme === 'dark' ? 'bg-gray-900 border-gray-700 text-gray-300' : 'bg-gray-50 border-gray-300 text-gray-700'}`}>
                             {selectedDetail.idNumber}
                           </div>
@@ -490,7 +563,9 @@ export default function AppointmentCheckInSection() {
                       )}
                       {selectedDetail.insuranceNumber && (
                         <div>
-                          <label className={theme === 'dark' ? 'block text-xs text-gray-400 mb-1' : 'block text-xs text-gray-600 mb-1'}>Số BHYT</label>
+                          <label className={theme === 'dark' ? 'block text-xs text-gray-400 mb-1' : 'block text-xs text-gray-600 mb-1'}>
+                            {t('appointmentCheckIn.modal.insurance')}
+                          </label>
                           <div className={`px-4 py-3 rounded-lg border text-sm ${theme === 'dark' ? 'bg-gray-900 border-gray-700 text-gray-300' : 'bg-gray-50 border-gray-300 text-gray-700'}`}>
                             {selectedDetail.insuranceNumber}
                           </div>
@@ -498,7 +573,9 @@ export default function AppointmentCheckInSection() {
                       )}
                       {selectedDetail.address && (
                         <div className="md:col-span-2">
-                          <label className={theme === 'dark' ? 'block text-xs text-gray-400 mb-1' : 'block text-xs text-gray-600 mb-1'}>Địa chỉ</label>
+                          <label className={theme === 'dark' ? 'block text-xs text-gray-400 mb-1' : 'block text-xs text-gray-600 mb-1'}>
+                            {t('appointmentCheckIn.modal.address')}
+                          </label>
                           <div className={`px-4 py-3 rounded-lg border text-sm ${theme === 'dark' ? 'bg-gray-900 border-gray-700 text-gray-300' : 'bg-gray-50 border-gray-300 text-gray-700'}`}>
                             {selectedDetail.address}
                           </div>
@@ -513,7 +590,7 @@ export default function AppointmentCheckInSection() {
               {selectedDetail.services?.length > 0 && (
                 <div>
                   <h3 className={theme === 'dark' ? 'text-lg font-bold text-gray-100 mb-4' : 'text-lg font-bold text-gray-800 mb-4'}>
-                    Dịch vụ đã chọn
+                    {t('appointmentCheckIn.modal.services')}
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedDetail.services.map((s, i) => (
@@ -537,7 +614,7 @@ export default function AppointmentCheckInSection() {
                     theme === 'dark' ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'
                   }`}>
                     <CheckCircle className="w-5 h-5" />
-                    Đã được thêm vào hàng chờ
+                    {t('appointmentCheckIn.modal.checkedIn')}
                   </span>
                 </div>
               </div>

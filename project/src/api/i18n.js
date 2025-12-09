@@ -1664,7 +1664,98 @@ aiAssistant: {
   errorLoadConversation: "Không tải được cuộc trò chuyện",
   errorPrefix: "Lỗi kết nối AI: "
 },
-
+appointmentCheckIn: {
+  title: "Lịch hẹn hôm nay",
+  loading: "Đang tải danh sách lịch hẹn...",
+  noResults: "Không tìm thấy lịch hẹn phù hợp",
+  noAppointments: "Không có lịch hẹn nào hôm nay",
+  
+  table: {
+    stt: "STT",
+    code: "Mã lịch",
+    patient: "Bệnh nhân",
+    phone: "Số điện thoại",
+    time: "Thời gian",
+    services: "Dịch vụ",
+    status: "Trạng thái",
+    actions: "Thao tác"
+  },
+  
+  status: {
+    added: "Đã thêm",
+    upcoming: "Sắp tới",
+    overdue: "Quá giờ",
+    waiting: "Chờ check-in"
+  },
+  
+  actions: {
+    addToQueue: "Thêm vào hàng chờ",
+    viewDetail: "Xem chi tiết lịch hẹn"
+  },
+  
+  gender: {
+    male: "Nam",
+    female: "Nữ",
+    other: "Khác"
+  },
+  
+  priority: {
+    emergency: "Khẩn cấp",
+    urgent: "Ưu tiên",
+    normal: "Thường"
+  },
+  
+  modal: {
+    title: "Chi tiết lịch hẹn",
+    code: "Mã lịch hẹn",
+    time: "Thời gian hẹn",
+    patientInfo: "Thông tin bệnh nhân",
+    name: "Họ tên",
+    phone: "Số điện thoại",
+    email: "Email",
+    gender: "Giới tính",
+    notes: "Ghi chú",
+    priority: "Mức độ ưu tiên",
+    idNumber: "CCCD/CMND",
+    insurance: "Số BHYT",
+    address: "Địa chỉ",
+    services: "Dịch vụ đã chọn",
+    checkedIn: "Đã được thêm vào hàng chờ"
+  },
+  label: "lịch hẹn",
+  errors: {
+    loadFailed: "Không thể tải danh sách",
+    noAppointment: "Không tìm thấy lịch hẹn!",
+    phoneInvalid: "Số điện thoại phải đúng 10 chữ số!",
+    nameRequired: "Vui lòng nhập tên bệnh nhân!",
+    dobRequired: "Vui lòng chọn ngày sinh!",
+    checkInFailed: "Check-in thất bại"
+  },
+  
+  success: {
+    added: "Đã thêm vào hàng chờ thành công!",
+    addedWithRoom: "Đã thêm – Phòng: {{room}}{{doctor}}"
+  },
+  
+  doctor: "BS"
+},
+ "appointments": {
+    "search": "Tìm kiếm",
+    "searchPlaceholder": "Nhập tên hoặc số điện thoại",
+    "clearSearch": "Xóa nội dung tìm kiếm",
+    "status": "Trạng thái",
+    "statusOptions": {
+      "all": "Tất cả",
+      "checkedIn": "Đã thêm",
+      "upcoming": "Sắp tới",
+      "past": "Quá giờ",
+      "waiting": "Chờ check-in"
+    },
+    "clearFilters": "Xóa bộ lọc",
+    "filteringBy": "Đang lọc",
+    "keyword": "Từ khóa",
+    "removeKeyword": "Bỏ từ khóa"
+  }
     }
   },
 
@@ -3345,7 +3436,98 @@ aiAssistant: {
   errorLoadConversation: "Failed to load conversation",
   errorPrefix: "AI connection error: "
 },
-
+appointmentCheckIn: {
+  title: "Today's Appointments",
+  loading: "Loading appointment list...",
+  noResults: "No matching appointments found",
+  noAppointments: "No appointments today",
+  
+  table: {
+    stt: "No.",
+    code: "Code",
+    patient: "Patient",
+    phone: "Phone",
+    time: "Time",
+    services: "Services",
+    status: "Status",
+    actions: "Actions"
+  },
+  
+  status: {
+    added: "Added",
+    upcoming: "Upcoming",
+    overdue: "Overdue",
+    waiting: "Waiting"
+  },
+  
+  actions: {
+    addToQueue: "Add to queue",
+    viewDetail: "View appointment details"
+  },
+  
+  gender: {
+    male: "Male",
+    female: "Female",
+    other: "Other"
+  },
+  
+  priority: {
+    emergency: "Emergency",
+    urgent: "Urgent",
+    normal: "Normal"
+  },
+  label: " appointments",
+  modal: {
+    title: "Appointment Details",
+    code: "Appointment Code",
+    time: "Appointment Time",
+    patientInfo: "Patient Information",
+    name: "Full Name",
+    phone: "Phone Number",
+    email: "Email",
+    gender: "Gender",
+    notes: "Notes",
+    priority: "Priority Level",
+    idNumber: "ID Number",
+    insurance: "Insurance Number",
+    address: "Address",
+    services: "Selected Services",
+    checkedIn: "Added to queue"
+  },
+  
+  errors: {
+    loadFailed: "Failed to load list",
+    noAppointment: "Appointment not found!",
+    phoneInvalid: "Phone number must be exactly 10 digits!",
+    nameRequired: "Please enter patient name!",
+    dobRequired: "Please select date of birth!",
+    checkInFailed: "Check-in failed"
+  },
+  
+  success: {
+    added: "Successfully added to queue!",
+    addedWithRoom: "Added – Room: {{room}}{{doctor}}"
+  },
+  
+  doctor: "Dr."
+},
+"appointments": {
+    "search": "Search",
+    "searchPlaceholder": "Enter name or phone number",
+    "clearSearch": "Clear search",
+    "status": "Status",
+    "statusOptions": {
+      "all": "All",
+      "checkedIn": "Added",
+      "upcoming": "Upcoming",
+      "past": "Overdue",
+      "waiting": "Waiting for check-in"
+    },
+    "clearFilters": "Clear filters",
+    "filteringBy": "Filtering",
+    "keyword": "Keyword",
+    "removeKeyword": "Remove keyword"
+  }
 }
   }
 };
