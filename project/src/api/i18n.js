@@ -221,7 +221,7 @@ doctorsPage: {
 
 },
 newsPage: {
-  title: "Bản Tin Sức Khỏe Cập Nhật Mỗi Ngày",
+  title: " Tin Tức ",
   subtitle: "Theo dõi thông tin mới nhất về công nghệ, điều trị và chăm sóc sức khỏe Tai-Mũi-Họng.",
   searchPlaceholder: "Tìm kiếm theo tiêu đề...",
   allCategories: "Tất cả chuyên mục",
@@ -373,12 +373,12 @@ accountManagement: {
       adminSidebar: {
         statistics: "Thống kê",
         clinic: "Thông Tin Phòng Khám",
-        accounts: "Tài Khoản",
+        accounts: "Quản Lý Tài Khoản",
         articles: "Quản Lý Tin Tức",
         services: "Quản Lý Dịch Vụ",
         appointments: "Quản Lý Lịch Hẹn",
         rooms: "Quản Lý Phòng Khám",
-        medicalRecords: "Lịch Sử Khám Bệnh",
+        medicalRecords: "Quản Lý Hồ Sơ",
         invoices: "Quản Lý Hóa Đơn",
         reviews: "Quản Lý Đánh Giá",
         emailTemplates: "Quản Lý Mẫu Email",
@@ -404,7 +404,7 @@ accountManagement: {
       imageHint: "Kích thước tối đa 10MB, định dạng JPG, PNG, WEBP"
     },
     filter: {
-      title: "Tìm kiếm tiêu đề",
+      title: "Tìm kiếm ",
       titlePlaceholder: "Nhập từ khóa...",
       category: "Danh mục",
       allCategories: "Tất cả danh mục",
@@ -534,7 +534,7 @@ accountManagement: {
 servicesManagement: {
   title: "Quản Lý Dịch Vụ",
   createButton: "Tạo dịch vụ",
-  searchLabel: "Tìm kiếm dịch vụ",
+  searchLabel: "Tìm kiếm ",
   searchPlaceholder: "Nhập tên dịch vụ...",
   category: "Danh mục",
   status: "Trạng thái",
@@ -806,37 +806,61 @@ appointmentManagement: {
     }
   },
 medicalRecords: {
-  title: "Lịch Sử Khám Bệnh",
-  allRecords: "Tất cả",
-  recordLabel: "hồ sơ",
-
-  filters: {
-    search: "Tìm kiếm",
-    searchPlaceholder: "Tên bệnh nhân hoặc chẩn đoán...",
-    fromDate: "Từ ngày",
-    toDate: "Đến ngày",
-    clear: "Xóa lọc"
-  },
-
-  table: {
-    stt: "STT",
-    examDate: "Ngày khám",
-    patient: "Bệnh nhân",
-    diagnosis: "Chẩn đoán",
-    treatmentNotes: "Ghi chú điều trị"
-  },
-
-  noResults: "Không tìm thấy kết quả phù hợp.",
-  noRecords: "Chưa có lịch sử khám bệnh nào.",
-  na: "N/A",
-  walkInPatient: "Khách vãng lai",
-
-  errors: {
-    loadFailed: "Không thể tải lịch sử khám bệnh.",
-    startDateAfterEnd: "Từ ngày phải nhỏ hơn hoặc bằng Đến ngày",
-    endDateBeforeStart: "Đến ngày phải lớn hơn hoặc bằng Từ ngày"
-  }
-},
+        title: "Quản Lý Hồ Sơ",
+        allRecords: "Tất cả",
+        recordLabel: "hồ sơ",
+        patientLabel: "bệnh nhân",
+ 
+        // Patient History Modal
+        historyTitle: "Lịch sử khám bệnh",
+        patient: "Bệnh nhân",
+        diagnosis: "Chẩn đoán",
+        treatmentNotes: "Ghi chú điều trị",
+        doctor: "Bác sĩ",
+        noHistory: "Chưa có lịch sử khám bệnh nào",
+        viewHistory: "Xem lịch sử",
+ 
+        filters: {
+          search: "Tìm kiếm",
+          searchLabelDetail: "Tìm kiếm ",
+          searchPlaceholder: "Tìm kiếm (Tên, SĐT, CCCD, BHYT, Chẩn đoán)",
+          fromDate: "Từ ngày",
+          toDate: "Đến ngày",
+          clear: "Xóa lọc"
+        },
+ 
+        table: {
+          stt: "STT",
+          examDate: "Ngày khám",
+          patient: "Bệnh nhân",
+          diagnosis: "Chẩn đoán",
+          treatmentNotes: "Ghi chú điều trị",
+          phone: "SĐT",
+          idNumber: "CCCD",
+          insurance: "BHYT",
+          visitCount: "Số lần khám",
+          lastVisit: "Lần cuối"
+        },
+ 
+        common: {
+          loading: "Đang tải...",
+          actions: "Thao tác",
+          close: "Đóng",
+          exportPdf: "Xuất PDF"
+        },
+ 
+        noResults: "Không tìm thấy kết quả phù hợp.",
+        noRecords: "Chưa có lịch sử khám bệnh nào.",
+        na: "N/A",
+        walkInPatient: "Khách vãng lai",
+ 
+        errors: {
+          loadFailed: "Không thể tải lịch sử khám bệnh.",
+          startDateAfterEnd: "Từ ngày phải nhỏ hơn hoặc bằng Đến ngày",
+          endDateBeforeStart: "Đến ngày phải lớn hơn hoặc bằng Từ ngày"
+        }
+      },
+ 
 invoices: {
       label: "hóa đơn",
       createButton: "Tạo hóa đơn",
@@ -866,7 +890,7 @@ invoices: {
       "1": "Chỉ định dịch vụ",
       "2": "Thanh toán"
     },
-    reateFirstInvoice: "Vui lòng tạo hóa đơn mới",
+    createFirstInvoice: "Vui lòng tạo hóa đơn mới",
 
       status: {
         search: "Tìm kiếm",
@@ -1172,8 +1196,8 @@ doctorStats: {
 doctorSidebar: {
   stats: "Thống kê",
   currentPatient: "Bệnh nhân hiện tại",
-  records: "Quản lý Hồ sơ",
-  history: "Lịch sử khám",
+  records: "Quản lý phiếu khám ",
+  history: "Quản lý hồ sơ",
   invoices: "Hóa đơn"
 },
 doctorExamination: {
@@ -1329,95 +1353,58 @@ modal: {
   },
 },
 profilepage: {
-  "settings": "Cài Đặt",
+ "settings": "Cài đặt",
   "back": "Quay lại",
-  "personal_info": "Thông Tin Cá Nhân",
-  "security": "Bảo Mật",
-  "personal_info_title": "Thông Tin Cá Nhân",
-    "loading_personal_info": "Đang tải thông tin cá nhân...",
-    "edit": "Chỉnh sửa",
-    "change_avatar": "Thay đổi ảnh đại diện",
-    "no_name_yet": "Chưa có tên",
-    "full_name": "Tên đầy đủ",
-    "enter_full_name": "Nhập tên đầy đủ",
-    "email_cannot_change": "Email không thể thay đổi",
-    "phone": "Số điện thoại",
-    "phone_placeholder": "0xxxxxxxxx (10 số)",
-    "date_of_birth": "Ngày sinh",
-    "gender": "Giới tính",
-    "gender_male": "Nam",
-    "gender_female": "Nữ",
-    "gender_other": "Khác",
-    "address": "Địa chỉ",
-    "enter_address": "Nhập địa chỉ của bạn",
-    "security_title": "Bảo Mật & Cài Đặt",
-    "security_password": "Mật khẩu",
-    "security_password_desc": "Quản lý mật khẩu đăng nhập của bạn",
-    "security_change_password": "Đổi Mật Khẩu",
-    "security_2fa": "Xác Thực 2 Yếu Tố (2FA)",
-    "security_2fa_enabled": "Tài khoản của bạn được bảo vệ với lớp bảo mật bổ sung",
-    "security_2fa_disabled": "Bật tính năng này để tăng cường bảo mật tài khoản",
-    "security_2fa_warning": "Bạn sẽ cần mã xác thực từ email mỗi khi đăng nhập",
-    "security_2fa_recommend": "Khuyến nghị bật 2FA để bảo vệ tài khoản",
-    "security_tips": "Lời Khuyên Bảo Mật",
-    "security_tip1": "Sử dụng mật khẩu mạnh với ít nhất 12 ký tự",
-    "security_tip2": "Không chia sẻ mật khẩu với bất kỳ ai",
-    "security_tip3": "Đổi mật khẩu định kỳ mỗi 3-6 tháng",
-    "security_tip4": "Bật xác thực 2 yếu tố để tăng cường bảo mật",
-    "security_current_pw": "Mật khẩu hiện tại",
-    "security_new_pw": "Mật khẩu mới",
-    "security_confirm_pw": "Xác nhận mật khẩu mới",
-    "security_pw_mismatch": "Mật khẩu mới và xác nhận không khớp.",
-    "security_pw_success": "Đổi mật khẩu thành công!",
-    "security_otp_title": "Xác Thực OTP",
-    "security_otp_desc": "Mã OTP đã được gửi đến email của bạn.<br>Vui lòng nhập mã 6 số để bật 2FA.",
-    "security_otp_code": "Mã OTP",
-    "security_otp_invalid": "OTP không hợp lệ. Vui lòng thử lại.",
-    "security_otp_length": "Vui lòng nhập mã OTP 6 số.",
-    "security_verifying": "Đang xác thực...",
-    "security_confirm_otp": "Xác nhận OTP",
-    "cancel": "Hủy"
-},
-profileManager: {
-  loading: "Đang tải thông tin...",
-  updateSuccess: "Cập nhật thông tin thành công!",
-  updateFailed: "Cập nhật thất bại",
-  uploadPhoto: "Đang tải ảnh lên...",
-  uploadSuccess: "Cập nhật ảnh đại diện thành công!",
-  uploadFailed: "Tải ảnh thất bại",
-  fileTooLarge: "Kích thước ảnh không được vượt quá 5MB",
-  cancel: "Hủy",
-  saveChanges: "Cập Nhật Thông Tin",
-  processing: "Đang xử lý..."
-},
-bankQRModal: {
-  title: "Quét mã QR thanh toán",
-  billId: "Mã HĐ",
-  amountToPay: "Số tiền thanh toán",
-  scanQR: "Mở app ngân hàng và quét mã QR",
-  downloadQR: "Tải xuống",
-  manualTransfer: "Hoặc chuyển khoản thủ công",
-  bank: "Ngân hàng",
-  accountHolder: "Chủ TK",
-  accountNumber: "Số tài khoản",
-  amount: "Số tiền",
-  transferContent: "Nội dung CK",
-  paymentSuccess: "Thanh toán thành công!",
-  waitingPayment: "Đang chờ thanh toán...",
-  status: "Trạng thái",
-  paidAmount: "Đã thanh toán",
-  remainingAmount: "Còn lại",
-  timeoutError: "Hết thời gian chờ. Vui lòng kiểm tra lại hoặc liên hệ hỗ trợ.",
-  checkError: "Không thể kiểm tra trạng thái thanh toán",
-  confirmError: "Lỗi khi xác nhận thanh toán. Vui lòng thử lại.",
-  importantNote: "Lưu ý quan trọng",
-  note1: "Chuyển đúng số tiền và đúng nội dung",
-  note2: "Sau khi CK, nhấn \"Xác nhận đã thanh toán\"",
-  note3: "Hệ thống sẽ tự động kiểm tra thanh toán mỗi 10 giây",
-  note4: "Giao dịch được xác nhận trong vài phút",
-  cancel: "Hủy",
-  confirmPayment: "Xác nhận đã thanh toán",
-  processing: "Đang xử lý..."
+  "personal_info": "Thông tin cá nhân",
+  "security": "Bảo mật",
+  "personal_info_title": "Thông tin cá nhân",
+  "loading_personal_info": "Đang tải thông tin cá nhân...",
+  "edit": "Chỉnh sửa",
+  "change_avatar": "Thay đổi ảnh đại diện",
+  "no_name_yet": "Chưa có tên",
+  "full_name": "Họ và Tên",
+  "enter_full_name": "Nhập họ và tên",
+  "email_cannot_change": "Email không thể thay đổi",
+  "phone": "Số điện thoại",
+  "phone_placeholder": "0xxxxxxxxx (10 chữ số)",
+  "date_of_birth": "Ngày sinh",
+  "gender": "Giới tính",
+  "gender_male": "Nam",
+  "gender_female": "Nữ",
+  "gender_other": "Khác",
+  "address": "Địa chỉ",
+  "enter_address": "Nhập địa chỉ của bạn",
+  "security_title": "Bảo mật & Cài đặt",
+  "security_password": "Mật khẩu",
+  "security_password_desc": "Quản lý mật khẩu đăng nhập",
+  "security_change_password": "Đổi mật khẩu",
+  "security_2fa": "Xác thực hai lớp (2FA)",
+  "security_2fa_enabled_desc": "Tài khoản của bạn đang được bảo vệ bằng một lớp bảo mật bổ sung",
+  "security_2fa_disabled_desc": "Hãy bật tính năng này để tăng cường bảo mật",
+  "security_2fa_enabled_warning": "Bạn sẽ cần mã xác minh email mỗi lần đăng nhập",
+  "security_2fa_recommendation": "Chúng tôi khuyến nghị bạn bật 2FA",
+  "security_tips_title": "Mẹo bảo mật",
+  "security_tip_strong_password": "Sử dụng mật khẩu mạnh có ít nhất 12 ký tự",
+  "security_tip_no_share": "Không chia sẻ mật khẩu với bất kỳ ai",
+  "security_tip_change_regularly": "Hãy thay đổi mật khẩu mỗi 3-6 tháng",
+  "security_tip_enable_2fa": "Bật xác thực hai lớp",
+  "security_current_password": "Mật khẩu hiện tại",
+  "security_enter_current_password": "Nhập mật khẩu hiện tại",
+  "security_new_password": "Mật khẩu mới",
+  "security_enter_new_password": "Nhập mật khẩu mới",
+  "security_confirm_new_password": "Xác nhận mật khẩu mới",
+  "security_password_mismatch": "Mật khẩu mới và xác nhận không khớp.",
+  "security_password_changed_success": "Đổi mật khẩu thành công!",
+  "security_password_change_failed": "Đổi mật khẩu thất bại.",
+  "security_password_change_error": "Lỗi khi đổi mật khẩu",
+  "security_otp_title": "Xác minh OTP",
+  "security_otp_description": "Một mã OTP đã được gửi tới email của bạn.\nVui lòng nhập mã gồm 6 chữ số để bật 2FA.",
+  "security_otp_code": "Mã OTP",
+  "security_otp_invalid": "Mã OTP không hợp lệ. Vui lòng thử lại.",
+  "security_otp_invalid_length": "Vui lòng nhập mã OTP gồm 6 chữ số.",
+  "security_verifying": "Đang xác minh...",
+  "security_confirm_otp": "Xác nhận OTP",
+  "cancel": "Hủy",
 },
 login: {
   title: "Đăng nhập phòng khám",
@@ -1482,7 +1469,7 @@ reviewsManagement: {
   title: "Quản Lý Đánh Giá",
   createButton: "Tạo Đánh Giá",
   filterRating: "Lọc theo đánh giá",
-  filterReviewer: "Tìm theo người đánh giá",
+  filterReviewer: "Tìm kiếm ",
   clearFilters: "Xóa bộ lọc",
   allRatings: "Tất cả",
   table: {
@@ -1885,7 +1872,7 @@ doctorsPage: {
 
 },
 newsPage: {
-  title: "Daily Health News Updates",
+  title: "Articles",
   subtitle: "Stay updated with the latest in technology, treatment, and ENT healthcare.",
   searchPlaceholder: "Search by title...",
   allCategories: "All categories",
@@ -2039,8 +2026,8 @@ accountManagement: {
             adminSidebar: {
         statistics: "Statistics",
         clinic: "Clinic Information",
-        accounts: "Accounts",
-        articles: "News & Articles",
+        accounts: "Accounts Manangement",
+        articles: "Articles Manangement",
         services: "Services Management",
         appointments: "Appointment Management",
         rooms: "Examination Rooms",
@@ -2070,7 +2057,7 @@ accountManagement: {
       imageHint: "Max 10MB, JPG, PNG, WEBP formats"
     },
     filter: {
-      title: "Search title",
+      title: "Search ",
       titlePlaceholder: "Enter keyword...",
       category: "Category",
       allCategories: "All categories",
@@ -2468,37 +2455,61 @@ appointmentManagement: {
     }
   },
 medicalRecords: {
-  title: "Medical Record History",
-  allRecords: "All Records",
-  recordLabel: "records",
+        title: "Medical Record History",
+        allRecords: "All Records",
+        recordLabel: "records",
+        patientLabel: "patients",
+ 
+        // Patient History Modal
+        historyTitle: "Medical History",
+        patient: "Patient",
+        diagnosis: "Diagnosis",
+        treatmentNotes: "Treatment Notes",
+        doctor: "Doctor",
+        noHistory: "No medical history found",
+        viewHistory: "View History",
+ 
+        filters: {
+          search: "Search",
+          searchLabelDetail: "Search (Name, Phone, ID, Insurance, Diagnosis)",
+          searchPlaceholder: "Patient name or diagnosis...",
+          fromDate: "From Date",
+          toDate: "To Date",
+          clear: "Clear Filters"
+        },
+ 
+        table: {
+          stt: "No.",
+          examDate: "Examination Date",
+          patient: "Patient",
+          diagnosis: "Diagnosis",
+          treatmentNotes: "Treatment Notes",
+          phone: "Phone",
+          idNumber: "ID Number",
+          insurance: "Insurance",
+          visitCount: "Visits",
+          lastVisit: "Last Visit"
+        },
+ 
+        common: {
+          loading: "Loading...",
+          actions: "Actions",
+          close: "Close",
+          exportPdf: "Export PDF"
+        },
+ 
+        noResults: "No matching results found.",
+        noRecords: "No medical records yet.",
+        na: "N/A",
+        walkInPatient: "Walk-in Patient",
+ 
+        errors: {
+          loadFailed: "Failed to load medical history.",
+          startDateAfterEnd: "Start date must be before or equal to End date",
+          endDateBeforeStart: "End date must be after or equal to Start date"
+        }
+      },
 
-  filters: {
-    search: "Search",
-    searchPlaceholder: "Patient name or diagnosis...",
-    fromDate: "From Date",
-    toDate: "To Date",
-    clear: "Clear Filters"
-  },
-
-  table: {
-    stt: "No.",
-    examDate: "Examination Date",
-    patient: "Patient",
-    diagnosis: "Diagnosis",
-    treatmentNotes: "Treatment Notes"
-  },
-
-  noResults: "No matching results found.",
-  noRecords: "No medical records yet.",
-  na: "N/A",
-  walkInPatient: "Walk-in Patient",
-
-  errors: {
-    loadFailed: "Failed to load medical history.",
-    startDateAfterEnd: "Start date must be before or equal to End date",
-    endDateBeforeStart: "End date must be after or equal to Start date"
-  }
-},
 invoices: {
       label: "invoices",
       createButton: "Create Invoice",
