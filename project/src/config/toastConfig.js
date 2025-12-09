@@ -11,7 +11,6 @@ export const toastConfig = {
     
     success: {
       duration: 3000, // Success 3 giây
-      icon: '✅',
       style: {
         background: '#10B981',
         color: 'white',
@@ -27,7 +26,6 @@ export const toastConfig = {
     
     error: {
       duration: 5000, // Error 5 giây
-      icon: '❌',
       style: {
         background: '#EF4444',
         color: 'white',
@@ -42,7 +40,6 @@ export const toastConfig = {
     },
     
     loading: {
-      icon: '⏳',
       style: {
         background: '#3B82F6',
         color: 'white',

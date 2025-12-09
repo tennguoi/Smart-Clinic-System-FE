@@ -148,8 +148,8 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete, onViewHistory 
           ) : (
             <div className="flex items-center gap-2">
 
-               {/* Nút Xem Lịch Sử (MỚI) */}
-               {record.patientId && (
+               
+              {/* {record.patientId && (
                 <button
                   onClick={() => onViewHistory && onViewHistory(record.patientId, record.patientName)}
                   className="p-2.5 text-teal-600 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-900/30 rounded-full transition group relative"
@@ -160,7 +160,7 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete, onViewHistory 
                     {t('medicalRecords.viewHistory') || 'Xem lịch sử'}
                   </span>
                 </button>
-              )}
+              )} */}
 
               {/* Nút Xuất PDF */}
               <button
