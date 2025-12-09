@@ -1,113 +1,176 @@
+
+// PrescriptionForm.jsx
 import { Pill, Plus, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../contexts/ThemeContext';
 
-export default function PrescriptionForm({ 
-  prescriptionItems, 
-  onAdd, 
-  onRemove, 
-  onUpdate 
+export default function PrescriptionForm({
+  prescriptionItems,
+  onAdd,
+  onRemove,
+  onUpdate,
+  aiAssistantOpen, // để đồng bộ padding với trạng thái AI panel
 }) {
   const { t } = useTranslation();
+  const { theme } = useTheme();
 
   return (
-    <div className="bg-white p-4 lg:p-6 rounded-2xl shadow-lg border-2 border-blue-100">
-      <h3 className="text-lg lg:text-xl font-bold mb-4 lg:mb-6 flex items-center gap-3 text-slate-800">
-        <Pill size={24} className="lg:w-7 lg:h-7 text-blue-600" />
+    <div className="space-y-4">
+      {/* Tiêu đề */}
+      <h4
+        className={`flex items-center gap-2 font-bold text-lg ${
+          theme === 'dark' ? 'text-white' : 'text-gray-900'
+        }`}
+      >
+        <Pill size={22} className={theme === 'dark' ? 'text-blue-400' : 'text-blue-600'} />
         {t('prescriptionForm.title')}
-      </h3>
-      
-      <div className="space-y-4">
-        {/* Header - ẩn trên mobile */}
-        <div className="hidden lg:grid grid-cols-12 gap-4 font-semibold text-sm text-slate-600 mb-2 px-2">
-          <div className="col-span-1 text-center">{t('prescriptionForm.table.stt')}</div>
-          <div className="col-span-5">{t('prescriptionForm.table.drugName')}</div>
-          <div className="col-span-5">{t('prescriptionForm.table.instructions')}</div>
-          <div className="col-span-1 text-center">{t('prescriptionForm.table.delete')}</div>
-        </div>
+      </h4>
 
-        {prescriptionItems.map((item, index) => (
-          <div key={index} className="bg-blue-50 p-4 rounded-xl border border-blue-200 shadow-sm">
-            {/* Mobile Layout */}
-            <div className="lg:hidden space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-blue-600 text-lg">#{index + 1}</span>
-                <button 
-                  onClick={() => onRemove(index)} 
-                  className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-all"
-                  aria-label={t('prescriptionForm.deleteButton')}
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  {t('prescriptionForm.drugNameLabel')}
-                </label>
-                <input 
-                  type="text" 
-                  value={item.drugName} 
-                  onChange={e => onUpdate(index, 'drugName', e.target.value)} 
-                  className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 text-sm transition-all" 
-                  placeholder={t('prescriptionForm.drugNamePlaceholder')}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  {t('prescriptionForm.instructionsLabel')}
-                </label>
-                <input 
-                  type="text" 
-                  value={item.instructions} 
-                  onChange={e => onUpdate(index, 'instructions', e.target.value)} 
-                  className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 text-sm transition-all" 
-                  placeholder={t('prescriptionForm.instructionsPlaceholder')}
-                />
-              </div>
+      {/* Header bảng (ẩn trên mobile) */}
+      <div
+        className={`hidden md:grid grid-cols-12 gap-4 font-semibold text-sm rounded-xl px-4 py-3 ${
+          theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-blue-50 text-slate-600'
+        }`}
+      >
+        <div className="col-span-1 text-center">{t('prescriptionForm.table.stt')}</div>
+        <div className="col-span-5">{t('prescriptionForm.table.drugName')}</div>
+        <div className="col-span-5">{t('prescriptionForm.table.instructions')}</div>
+        <div className="col-span-1 text-center">{t('prescriptionForm.table.delete')}</div>
+      </div>
+
+      {/* Danh sách dòng */}
+      {prescriptionItems.map((item, index) => (
+        <div key={index} className="space-y-3">
+          {/* Mobile layout */}
+          <div
+            className={`md:hidden rounded-xl border p-3 ${
+              theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-blue-200'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+                #{index + 1}
+              </span>
+              <button
+                onClick={() => onRemove(index)}
+                className={`p-2 rounded-lg transition-all ${
+                  theme === 'dark'
+                    ? 'text-red-400 hover:bg-red-900/30'
+                    : 'text-red-500 hover:bg-red-50'
+                }`}
+                aria-label={t('prescriptionForm.deleteButton')}
+                title={t('prescriptionForm.deleteButton')}
+              >
+                <X size={18} />
+              </button>
             </div>
 
-            {/* Desktop Layout */}
-            <div className="hidden lg:grid grid-cols-12 gap-4 items-start">
-              <div className="col-span-1 flex items-center justify-center pt-3 font-bold text-blue-600">
-                {index + 1}
-              </div>
-              <div className="col-span-5">
-                <input 
-                  type="text" 
-                  value={item.drugName} 
-                  onChange={e => onUpdate(index, 'drugName', e.target.value)} 
-                  className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all" 
-                  placeholder={t('prescriptionForm.drugNamePlaceholder')}
-                />
-              </div>
-              <div className="col-span-5">
-                <input 
-                  type="text" 
-                  value={item.instructions} 
-                  onChange={e => onUpdate(index, 'instructions', e.target.value)} 
-                  className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all" 
-                  placeholder={t('prescriptionForm.instructionsPlaceholder')}
-                />
-              </div>
-              <div className="col-span-1 flex items-center justify-center">
-                <button 
-                  onClick={() => onRemove(index)} 
-                  className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-all"
-                  aria-label={t('prescriptionForm.deleteButton')}
-                >
-                  <X size={20} />
-                </button>
-              </div>
+            <label
+              className={`block text-xs font-semibold mb-1 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-slate-600'
+              }`}
+            >
+              {t('prescriptionForm.drugNameLabel')}
+            </label>
+            <input
+              value={item.drugName}
+              onChange={(e) => onUpdate(index, 'drugName', e.target.value)}
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-4 text-sm transition-all ${
+                theme === 'dark'
+                  ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-900/50 focus:border-blue-700'
+                  : 'bg-white border-blue-200 focus:ring-blue-100 focus:border-blue-500'
+              }`}
+              placeholder={t('prescriptionForm.drugNamePlaceholder')}
+            />
+
+            <label
+              className={`block text-xs font-semibold mb-1 mt-3 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-slate-600'
+              }`}
+            >
+              {t('prescriptionForm.instructionsLabel')}
+            </label>
+            <input
+              value={item.instructions}
+              onChange={(e) => onUpdate(index, 'instructions', e.target.value)}
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-4 text-sm transition-all ${
+                theme === 'dark'
+                  ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-900/50 focus:border-blue-700'
+                  : 'bg-white border-blue-200 focus:ring-blue-100 focus:border-blue-500'
+              }`}
+              placeholder={t('prescriptionForm.instructionsPlaceholder')}
+            />
+          </div>
+
+            {/* Desktop layout */}
+          <div
+            className={`hidden md:grid grid-cols-12 gap-4 items-start rounded-xl border px-4 py-3 ${
+              theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-blue-200'
+            }`}
+          >
+            <div
+              className={`col-span-1 flex items-center justify-center pt-3 font-semibold ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}
+            >
+              {index + 1}
+            </div>
+            <div className="col-span-5">
+              <input
+                value={item.drugName}
+                onChange={(e) => onUpdate(index, 'drugName', e.target.value)}
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-4 transition-all ${
+                  theme === 'dark'
+                    ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-900/50 focus:border-blue-700'
+                    : 'bg-white border-blue-200 focus:ring-blue-100 focus:border-blue-500'
+                }`}
+                placeholder={t('prescriptionForm.drugNamePlaceholder')}
+              />
+            </div>
+            <div className="col-span-5">
+              <input
+                value={item.instructions}
+                onChange={(e) => onUpdate(index, 'instructions', e.target.value)}
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-4 transition-all ${
+                  theme === 'dark'
+                    ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-900/50 focus:border-blue-700'
+                    : 'bg-white border-blue-200 focus:ring-blue-100 focus:border-blue-500'
+                }`}
+                placeholder={t('prescriptionForm.instructionsPlaceholder')}
+              />
+            </div>
+            <div className="col-span-1 flex items-center justify-center pt-2">
+              <button
+                onClick={() => onRemove(index)}
+                className={`p-2 rounded-lg transition-all ${
+                  theme === 'dark'
+                    ? 'text-red-400 hover:bg-red-900/30'
+                    : 'text-red-500 hover:bg-red-50'
+                }`}
+                aria-label={t('prescriptionForm.deleteButton')}
+                title={t('prescriptionForm.deleteButton')}
+              >
+                <X size={18} />
+              </button>
             </div>
           </div>
-        ))}
+        </div>
+      ))}
 
-        <button 
-          onClick={onAdd} 
-          className="w-full py-3 lg:py-4 border-2 border-dashed border-blue-300 rounded-xl text-blue-600 font-semibold hover:bg-blue-50 flex items-center justify-center gap-2 transition-all"
-        >
-          <Plus size={20} /> {t('prescriptionForm.addButton')}
-        </button>
-      </div>
+      {/* Nút thêm dòng */}
+      <button
+        onClick={onAdd}
+        className={`w-full py-3 border-2 border-dashed rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
+          theme === 'dark'
+            ? 'border-blue-800 text-blue-400 hover:bg-blue-900/30 hover:border-blue-600'
+            : 'border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-500'
+        } ${aiAssistantOpen ? 'px-3' : 'px-4'}`}
+        aria-label={t('prescriptionForm.addButton')}
+        title={t('prescriptionForm.addButton')}
+      >
+        <Plus size={18} />
+        {t('prescriptionForm.addButton')}
+      </button>
     </div>
   );
 }
