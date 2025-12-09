@@ -462,9 +462,9 @@ const StatisticsPage = () => {
                         <button onClick={() => setStatType('medical_record')} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${statType === 'medical_record' ? `${theme === 'dark' ? 'bg-gray-600 text-green-300' : 'bg-white text-green-600'} shadow-sm` : `${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}`}>
                             <FaStethoscope /> {t('statistics.byExamination', { defaultValue: 'Khám thật' })}
                         </button>
-                        <button onClick={() => setStatType('revenue')} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${statType === 'revenue' ? `${theme === 'dark' ? 'bg-gray-600 text-yellow-300' : 'bg-white text-yellow-600'} shadow-sm` : `${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}`}>
+                        {/* <button onClick={() => setStatType('revenue')} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${statType === 'revenue' ? `${theme === 'dark' ? 'bg-gray-600 text-yellow-300' : 'bg-white text-yellow-600'} shadow-sm` : `${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}`}>
                             <FaCoins /> {t('statistics.byRevenue', { defaultValue: 'Doanh thu' })}
-                        </button>
+                        </button> */}
                     </div>
                 </div>
 

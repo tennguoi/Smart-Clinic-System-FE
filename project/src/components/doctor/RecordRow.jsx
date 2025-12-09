@@ -1,6 +1,6 @@
 // src/components/doctor/RecordRow.jsx
 import { useState } from 'react';
-import { Pencil, Trash2, Pill, Download } from 'lucide-react';
+import { Pencil, Trash2, Pill, Download, Eye } from 'lucide-react';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import toast from 'react-hot-toast';
 import RecordDetailModal from './RecordDetailModal';
@@ -9,7 +9,7 @@ import { downloadPdf, getMedicalRecordFilename } from '../../utils/pdfDownload';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 
-const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
+const RecordRow = ({ index, record, onUpdated, onError, onDelete, onViewHistory }) => {
   const { t } = useTranslation();
   const { theme } = useTheme();
 
@@ -87,17 +87,17 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
     <>
       <tr className={`transition-colors ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
         {/* STT - w-16 */}
-        <td className={`px-4 py-4 text-sm text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+        <td className={`px-4 py-4 text-sm text-center align-middle ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
           {index}
         </td>
 
         {/* Tên bệnh nhân - w-1/5 */}
-        <td className={`px-4 py-4 text-sm text-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
+        <td className={`px-6 py-4 text-sm align-middle ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
           {record.patientName || record.patientId || '—'}
         </td>
 
         {/* Chẩn đoán - w-1/4 */}
-        <td className={`px-4 py-4 text-sm text-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
+        <td className={`px-6 py-4 text-sm align-middle ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
           {editing ? (
             <input
               type="text"
@@ -109,12 +109,12 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
               placeholder={t('modal.diagnosisPlaceholder')}
             />
           ) : (
-            record.diagnosis || '—'
+            <div className="line-clamp-2">{record.diagnosis || '—'}</div>
           )}
         </td>
 
         {/* Ghi chú điều trị - w-1/4 */}
-        <td className={`px-4 py-4 text-sm text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+        <td className={`px-6 py-4 text-sm align-middle ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
           {editing ? (
             <textarea
               value={localNotes}
@@ -126,12 +126,12 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
               placeholder={t('modal.treatmentNotesPlaceholder')}
             />
           ) : (
-            record.treatmentNotes || '—'
+            <div className="line-clamp-2">{record.treatmentNotes || '—'}</div>
           )}
         </td>
 
         {/* Thao tác - w-32 */}
-        <td className={`px-4 py-4 text-sm text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+        <td className={`px-6 py-4 text-sm text-center align-middle ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
           {editing ? (
             <div className="flex items-center justify-center gap-3">
               <button

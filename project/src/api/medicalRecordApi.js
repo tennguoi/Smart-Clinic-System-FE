@@ -1,27 +1,27 @@
 // src/api/medicalRecordApi.js
 import axiosInstance from '../utils/axiosConfig';
-
+ 
 export const medicalRecordApi = {
-	create: async ({ patientId, patientName, diagnosis, treatmentNotes }) => {
-		const payload = {
-			patientId: patientId || null,
-			patientName: patientName || null, // Gửi patientName lên backend
-			diagnosis,
-			treatmentNotes: treatmentNotes || '',
-		};
-		const { data } = await axiosInstance.post('/api/doctor/medical-records', payload);
-		return data;
-	},
-
-	// Backend tự động xử lý role:
-	// - Admin: Trả về TẤT CẢ records
-	// - Doctor: Trả về records của mình
-	listMine: async () => {
-		const { data } = await axiosInstance.get('/api/doctor/medical-records/mine');
-		return Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
-	},
-
-	search: async ({ keyword, startDate, endDate }) => {
+    create: async ({ patientId, patientName, diagnosis, treatmentNotes }) => {
+        const payload = {
+            patientId: patientId || null,
+            patientName: patientName || null, // Gửi patientName lên backend
+            diagnosis,
+            treatmentNotes: treatmentNotes || '',
+        };
+        const { data } = await axiosInstance.post('/api/doctor/medical-records', payload);
+        return data;
+    },
+ 
+    // Backend tự động xử lý role:
+    // - Admin: Trả về TẤT CẢ records
+    // - Doctor: Trả về records của mình
+    listMine: async () => {
+        const { data } = await axiosInstance.get('/api/doctor/medical-records/mine');
+        return Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
+    },
+ 
+    search: async ({ keyword, startDate, endDate }) => {
         const params = {
             keyword,
             startDate,
@@ -29,176 +29,200 @@ export const medicalRecordApi = {
         };
         // Backend endpoint: GET /api/doctor/medical-records/search?keyword=...&startDate=...
         const { data } = await axiosInstance.get('/api/doctor/medical-records/search', { params });
-        
+ 
         // Xử lý dữ liệu trả về an toàn giống như các hàm list khác
         return Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
     },
-
-	listByPatient: async (patientId) => {
-		const { data } = await axiosInstance.get(`/api/doctor/medical-records/patient/${patientId}`);
-		return Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
-	},
-
-	update: async (recordId, { patientId, patientName, diagnosis, treatmentNotes, prescription }) => {
-		const payload = {
-			patientId: patientId || null,
-			patientName: patientName || null,
-			diagnosis: diagnosis || null,
-			treatmentNotes: treatmentNotes || null,
-			prescription: prescription ? {
-				drugs: prescription.drugs || '',
-				instructions: prescription.instructions || ''
-			} : null
-		};
-		// Backend endpoint: PUT /api/doctor/medical-records/{recordId}
-		const { data } = await axiosInstance.put(`/api/doctor/medical-records/${recordId}`, payload);
-		return data;
-	},
-
-	remove: async (recordId) => {
-		// Giả định backend có endpoint DELETE /api/doctor/medical-records/{recordId}
-		const { data } = await axiosInstance.delete(`/api/doctor/medical-records/${recordId}`);
-		return data;
-	},
-	addPrescription: async ({ recordId, drugs, instructions }) => {
+ 
+    getHistorySummary: async ({ keyword, startDate, endDate }) => {
+        const params = {
+            keyword,
+            startDate,
+            endDate
+        };
+        const { data } = await axiosInstance.get('/api/doctor/medical-records/history-summary', { params });
+        return Array.isArray(data) ? data : [];
+    },
+ 
+    listByPatient: async (patientId) => {
+        const { data } = await axiosInstance.get(`/api/doctor/medical-records/patient/${patientId}`);
+        return Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
+    },
+ 
+    update: async (recordId, { patientId, patientName, diagnosis, treatmentNotes, prescription }) => {
+        const payload = {
+            patientId: patientId || null,
+            patientName: patientName || null,
+            diagnosis: diagnosis || null,
+            treatmentNotes: treatmentNotes || null,
+            prescription: prescription ? {
+                drugs: prescription.drugs || '',
+                instructions: prescription.instructions || ''
+            } : null
+        };
+        // Backend endpoint: PUT /api/doctor/medical-records/{recordId}
+        const { data } = await axiosInstance.put(`/api/doctor/medical-records/${recordId}`, payload);
+        return data;
+    },
+ 
+    remove: async (recordId) => {
+        // Giả định backend có endpoint DELETE /api/doctor/medical-records/{recordId}
+        const { data } = await axiosInstance.delete(`/api/doctor/medical-records/${recordId}`);
+        return data;
+    },
+    addPrescription: async ({ recordId, drugs, instructions }) => {
         const payload = { recordId, drugs, instructions };
-        
+ 
         // Gọi API endpoint MỚI của bạn
         const { data } = await axiosInstance.post(
-            '/api/doctor/medical-records/prescription', 
+            '/api/doctor/medical-records/prescription',
             payload
         );
         return data; // Trả về 201 Created
     },
-
-
-	getRecordDetail: async (recordId) => {
-		const { data } = await axiosInstance.get(`/api/doctor/medical-records/${recordId}`);
-		return data;
-	},
-
-	// Lưu ý: Backend trả về prescription (singular) trong getRecordDetail
-	// Nếu cần endpoint riêng để lấy danh sách đơn thuốc, thêm sau
-	getPrescriptions: async (recordId) => {
-		try {
-			const { data } = await axiosInstance.get(`/api/doctor/medical-records/${recordId}/prescriptions`);
-			return Array.isArray(data) ? data : [];
-		} catch (error) {
-			// Nếu endpoint chưa có, trả về empty array
-			return [];
-		}
-	},
-	exportAsPdf: async (recordId) => {
-		try {
-			const { data } = await axiosInstance.get(
-				`/api/doctor/medical-records/${recordId}/export-pdf`,
-				{ responseType: 'blob' }
-			);
-			return data;
-		} catch (error) {
-			throw new Error('Xuất PDF thất bại: ' + (error.response?.data?.message || error.message));
-		}
-	},
-
-	exportPrescriptionAsPdf: async (recordId) => {
-		try {
-			const { data } = await axiosInstance.get(
-				`/api/doctor/medical-records/${recordId}/export-prescription`,
-				{ responseType: 'blob' }
-			);
-			return data;
-		} catch (error) {
-			throw new Error('Xuất đơn thuốc thất bại: ' + (error.response?.data?.message || error.message));
-		}
-	},
-
-	getCompletedRecordsWithServices: async (startDate, endDate) => {
-		try {
-			const params = {};
-			if (startDate) params.startDate = startDate;
-			if (endDate) params.endDate = endDate;
-			
-			const { data } = await axiosInstance.get(
-				'/api/admin/dashboard/completed-records-with-services',
-				{ params }
-			);
-			return Array.isArray(data) ? data : [];
-		} catch (error) {
-			console.error('Lỗi khi lấy hồ sơ bệnh án hoàn thành:', error);
-			return [];
-		}
-	},
-
-	// ============ TOP 5 DỊCH VỤ - 3 LOẠI KHÁC NHAU ============
-
-	// A. Top dịch vụ theo lượt đặt lịch (Appointment) - Đo nhu cầu khách hàng
-	getTopServicesByAppointments: async (startDate, endDate) => {
-		try {
-			const params = {};
-			if (startDate) params.startDate = startDate;
-			if (endDate) params.endDate = endDate;
-			
-			const { data } = await axiosInstance.get(
-				'/api/admin/dashboard/top-services-by-appointments',
-				{ params }
-			);
-			return Array.isArray(data) ? data : [];
-		} catch (error) {
-			console.error('Lỗi khi lấy Top dịch vụ theo Appointment:', error);
-			return [];
-		}
-	},
-
-	// B. Top dịch vụ theo lượt khám thực tế (MedicalRecord) - Đo hiệu suất hoạt động
-	getTopServicesByMedicalRecords: async (startDate, endDate) => {
-		try {
-			const params = {};
-			if (startDate) params.startDate = startDate;
-			if (endDate) params.endDate = endDate;
-			
-			const { data } = await axiosInstance.get(
-				'/api/admin/dashboard/top-services-by-medical-records',
-				{ params }
-			);
-			return Array.isArray(data) ? data : [];
-		} catch (error) {
-			console.error('Lỗi khi lấy Top dịch vụ theo MedicalRecord:', error);
-			return [];
-		}
-	},
-	getAllForAdmin: async (keyword = '', startDate = null, endDate = null) => {
+ 
+ 
+    getRecordDetail: async (recordId) => {
+        const { data } = await axiosInstance.get(`/api/doctor/medical-records/${recordId}`);
+        return data;
+    },
+ 
+    // Lưu ý: Backend trả về prescription (singular) trong getRecordDetail
+    // Nếu cần endpoint riêng để lấy danh sách đơn thuốc, thêm sau
+    getPrescriptions: async (recordId) => {
+        try {
+            const { data } = await axiosInstance.get(`/api/doctor/medical-records/${recordId}/prescriptions`);
+            return Array.isArray(data) ? data : [];
+        } catch (error) {
+            // Nếu endpoint chưa có, trả về empty array
+            return [];
+        }
+    },
+    exportAsPdf: async (recordId) => {
+        try {
+            const { data } = await axiosInstance.get(
+                `/api/doctor/medical-records/${recordId}/export-pdf`,
+                { responseType: 'blob' }
+            );
+            return data;
+        } catch (error) {
+            throw new Error('Xuất PDF thất bại: ' + (error.response?.data?.message || error.message));
+        }
+    },
+ 
+    exportPrescriptionAsPdf: async (recordId) => {
+        try {
+            const { data } = await axiosInstance.get(
+                `/api/doctor/medical-records/${recordId}/export-prescription`,
+                { responseType: 'blob' }
+            );
+            return data;
+        } catch (error) {
+            throw new Error('Xuất đơn thuốc thất bại: ' + (error.response?.data?.message || error.message));
+        }
+    },
+ 
+    getCompletedRecordsWithServices: async (startDate, endDate) => {
+        try {
+            const params = {};
+            if (startDate) params.startDate = startDate;
+            if (endDate) params.endDate = endDate;
+ 
+            const { data } = await axiosInstance.get(
+                '/api/admin/dashboard/completed-records-with-services',
+                { params }
+            );
+            return Array.isArray(data) ? data : [];
+        } catch (error) {
+            console.error('Lỗi khi lấy hồ sơ bệnh án hoàn thành:', error);
+            return [];
+        }
+    },
+ 
+    // ============ TOP 5 DỊCH VỤ - 3 LOẠI KHÁC NHAU ============
+ 
+    // A. Top dịch vụ theo lượt đặt lịch (Appointment) - Đo nhu cầu khách hàng
+    getTopServicesByAppointments: async (startDate, endDate) => {
+        try {
+            const params = {};
+            if (startDate) params.startDate = startDate;
+            if (endDate) params.endDate = endDate;
+ 
+            const { data } = await axiosInstance.get(
+                '/api/admin/dashboard/top-services-by-appointments',
+                { params }
+            );
+            return Array.isArray(data) ? data : [];
+        } catch (error) {
+            console.error('Lỗi khi lấy Top dịch vụ theo Appointment:', error);
+            return [];
+        }
+    },
+ 
+    // B. Top dịch vụ theo lượt khám thực tế (MedicalRecord) - Đo hiệu suất hoạt động
+    getTopServicesByMedicalRecords: async (startDate, endDate) => {
+        try {
+            const params = {};
+            if (startDate) params.startDate = startDate;
+            if (endDate) params.endDate = endDate;
+ 
+            const { data } = await axiosInstance.get(
+                '/api/admin/dashboard/top-services-by-medical-records',
+                { params }
+            );
+            return Array.isArray(data) ? data : [];
+        } catch (error) {
+            console.error('Lỗi khi lấy Top dịch vụ theo MedicalRecord:', error);
+            return [];
+        }
+    },
+    getAllForAdmin: async (keyword = '', startDate = null, endDate = null) => {
         const params = new URLSearchParams();
         if (keyword) params.append('keyword', keyword);
         if (startDate) params.append('startDate', startDate);
         if (endDate) params.append('endDate', endDate);
-
+ 
         const { data } = await axiosInstance.get(
             `/api/admin/medical-records/all?${params.toString()}`
         );
         return Array.isArray(data) ? data : [];
     },
-
-	// C. Top dịch vụ theo doanh thu (Invoice) - Đo hiệu quả tài chính
-	getTopServicesByRevenue: async (startDate, endDate) => {
-		try {
-			const params = {};
-			if (startDate) params.startDate = startDate;
-			if (endDate) params.endDate = endDate;
-			
-			const { data } = await axiosInstance.get(
-				'/api/admin/dashboard/top-services-by-revenue',
-				{ params }
-			);
-			return Array.isArray(data) ? data : [];
-		} catch (error) {
-			console.error('Lỗi khi lấy Top dịch vụ theo Revenue:', error);
-			return [];
-		}
-	}
-	
+ 
+    // C. Top dịch vụ theo doanh thu (Invoice) - Đo hiệu quả tài chính
+    getTopServicesByRevenue: async (startDate, endDate) => {
+        try {
+            const params = {};
+            if (startDate) params.startDate = startDate;
+            if (endDate) params.endDate = endDate;
+ 
+            const { data } = await axiosInstance.get(
+                '/api/admin/dashboard/top-services-by-revenue',
+                { params }
+            );
+            return Array.isArray(data) ? data : [];
+        } catch (error) {
+            console.error('Lỗi khi lấy Top dịch vụ theo Revenue:', error);
+            return [];
+        }
+    },
+ 
+    // ============ TRA CỨU LỊCH SỬ KHÁM BỆNH THEO THÔNG TIN BỆNH NHÂN ============
+ 
+    /**
+     * Tra cứu lịch sử khám bệnh theo SĐT, CCCD hoặc số bảo hiểm y tế
+     * @param {Object} params - { phone, idNumber, insuranceNumber }
+     * @returns {Promise<Object>} - Thông tin bệnh nhân + danh sách lịch sử khám
+     */
+    searchPatientHistory: async ({ phone, idNumber, insuranceNumber }) => {
+        const params = {};
+        if (phone) params.phone = phone;
+        if (idNumber) params.idNumber = idNumber;
+        if (insuranceNumber) params.insuranceNumber = insuranceNumber;
+ 
+        const { data } = await axiosInstance.get('/api/doctor/medical-records/patient-history', { params });
+        return data;
+    }
+ 
 };
-
+ 
 export default medicalRecordApi;
-
-
-																								

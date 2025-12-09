@@ -274,9 +274,9 @@ export default function SecuritySection({
               </h3>
               <form onSubmit={handleChangePasswordSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('profilepage.security_current_password')}
-                  </label>
+                 <label className="block text-sm font-medium text-gray-700 mb-2">
+  {t('profilepage.security_current_password')} <span className="text-red-500">*</span>
+</label>
                   <input
                     type="password"
                     value={changePasswordData.oldPassword}
@@ -287,9 +287,9 @@ export default function SecuritySection({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('profilepage.security_new_password')}
-                  </label>
+                 <label className="block text-sm font-medium text-gray-700 mb-2">
+  {t('profilepage.security_new_password')} <span className="text-red-500">*</span>
+</label>
                   <input
                     type="password"
                     value={changePasswordData.newPassword}
@@ -300,9 +300,9 @@ export default function SecuritySection({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('profilepage.security_confirm_new_password')}
-                  </label>
+                 <label className="block text-sm font-medium text-gray-700 mb-2">
+  {t('profilepage.security_confirm_new_password')} <span className="text-red-500">*</span>
+</label>
                   <input
                     type="password"
                     value={changePasswordData.confirmPassword}
