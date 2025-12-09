@@ -14,9 +14,9 @@ import { toastConfig } from '../config/toastConfig';
 export default function DoctorPage() {
   const [activeMenu, setActiveMenu] = useState(() => {
     try {
-      return localStorage.getItem('doctor_active_menu') || 'current-patient';
+      return localStorage.getItem('doctor_active_menu') || 'stats';
     } catch {
-      return 'current-patient';
+      return 'stats';
     }
   });
 

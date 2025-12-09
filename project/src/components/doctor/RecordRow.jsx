@@ -172,7 +172,7 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete, onViewHistory 
                 </span>
               </button>
 
-              {/* Nút Chỉnh sửa (mở modal chi tiết) */}
+              {/* Nút Xem chi tiết (mặc định view mode, chỉnh sửa trong modal) */}
               <button
                 type="button"
                 onClick={async (e) => {
@@ -198,11 +198,11 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete, onViewHistory 
                   }
                 }}
                 className="p-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 active:scale-95 transition group relative"
-                aria-label={t('doctorRecords.common.edit')}
+                aria-label={t('doctorRecords.common.view')}
               >
-                <Pencil className="w-4 h-4" />
+                <Eye className="w-4 h-4" />
                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none z-10 shadow-lg">
-                  {t('doctorRecords.common.edit')}
+                  {t('doctorRecords.common.view')}
                 </span>
               </button>
 

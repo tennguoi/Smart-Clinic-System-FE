@@ -15,6 +15,13 @@ export default function StickyNavbar() {
   
   const clinicName = clinicInfo?.name?.trim() || '';
   const clinicPhone = clinicInfo?.phone?.trim() || '';
+
+  const formatTime = (time) => {
+    if (!time) return '';
+    const [hours, minutes] = time.split(':');
+    if (!hours || !minutes) return time;
+    return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+  };
   
   // Tính toán giờ làm việc
   const hasMorning = clinicInfo?.morningStartTime && clinicInfo?.morningEndTime;
@@ -96,9 +103,9 @@ export default function StickyNavbar() {
                       <div className="flex items-center gap-1 text-[11px] text-cyan-600 dark:text-cyan-400 leading-tight">
                         <Clock className="w-3 h-3 flex-shrink-0" />
                         <span className="whitespace-nowrap">
-                          {hasMorning && `${clinicInfo.morningStartTime}-${clinicInfo.morningEndTime}`}
+                          {hasMorning && `${formatTime(clinicInfo.morningStartTime)}-${formatTime(clinicInfo.morningEndTime)}`}
                           {hasMorning && hasAfternoon && ' | '}
-                          {hasAfternoon && `${clinicInfo.afternoonStartTime}-${clinicInfo.afternoonEndTime}`}
+                          {hasAfternoon && `${formatTime(clinicInfo.afternoonStartTime)}-${formatTime(clinicInfo.afternoonEndTime)}`}
                         </span>
                       </div>
                     )}

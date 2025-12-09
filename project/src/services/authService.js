@@ -23,6 +23,15 @@ export const authService = {
     localStorage.setItem(TOKEN_KEY, token);
     localStorage.setItem(USER_KEY, JSON.stringify(userInfo));
     localStorage.setItem(ROLES_KEY, JSON.stringify(normalizedRoles));
+
+    // Reset landing tab for doctor to statistics on fresh login
+    if (normalizedRoles.includes('ROLE_BAC_SI')) {
+      try {
+        localStorage.setItem('doctor_active_menu', 'stats');
+      } catch {
+        // ignore
+      }
+    }
   },
   logout: () => {
     localStorage.removeItem(TOKEN_KEY);

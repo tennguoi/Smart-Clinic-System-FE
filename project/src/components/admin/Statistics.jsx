@@ -23,6 +23,8 @@ const RANGE_OPTIONS = [
     { label: 'Tùy chỉnh', value: 'custom', en: 'Custom' },
 ];
 
+const RANGE_STORAGE_KEY = 'adminStatsRangeType';
+
 const StatisticsPage = () => {
     const { t, i18n } = useTranslation();
     const { theme } = useTheme();
@@ -47,7 +49,13 @@ const StatisticsPage = () => {
     const [exporting, setExporting] = useState(false);
     
     // Date filter states
-    const [rangeType, setRangeType] = useState('month');
+    const [rangeType, setRangeType] = useState(() => {
+        try {
+            return localStorage.getItem(RANGE_STORAGE_KEY) || 'day';
+        } catch {
+            return 'day';
+        }
+    });
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [customStartDate, setCustomStartDate] = useState(new Date());
     const [customEndDate, setCustomEndDate] = useState(new Date());
@@ -99,7 +107,30 @@ const StatisticsPage = () => {
         return { dateFormat: 'dd/MM/yyyy' };
     }, [rangeType, currentLang]);
 
+    useEffect(() => {
+        try {
+            localStorage.setItem(RANGE_STORAGE_KEY, rangeType);
+        } catch {
+            // ignore persistence errors
+        }
+    }, [rangeType]);
+
     const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+
+    // Process chart data with placeholder when empty
+    const appointmentTrendData = useMemo(() => {
+        if (!appointmentTrend || appointmentTrend.length === 0) {
+            return [{ date: t('statistics.empty.placeholder', { defaultValue: 'Chưa có dữ liệu' }), value: 0 }];
+        }
+        return appointmentTrend;
+    }, [appointmentTrend, t]);
+
+    const revenueTrendData = useMemo(() => {
+        if (!revenueTrend || revenueTrend.length === 0) {
+            return [{ date: t('statistics.empty.placeholder', { defaultValue: 'Chưa có dữ liệu' }), value: 0 }];
+        }
+        return revenueTrend;
+    }, [revenueTrend, t]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -398,7 +429,7 @@ const StatisticsPage = () => {
                     </h2>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={appointmentTrend}>
+                            <LineChart data={appointmentTrendData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
                                 <XAxis dataKey="date" tick={{fontSize: 12}} stroke={theme === 'dark' ? '#9ca3af' : '#4b5563'} />
                                 <YAxis tick={{fontSize: 12}} stroke={theme === 'dark' ? '#9ca3af' : '#4b5563'} />
@@ -423,7 +454,7 @@ const StatisticsPage = () => {
                     </h2>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={revenueTrend}>
+                            <BarChart data={revenueTrendData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
                                 <XAxis dataKey="date" tick={{fontSize: 12}} stroke={theme === 'dark' ? '#9ca3af' : '#4b5563'} />
                                 <YAxis 

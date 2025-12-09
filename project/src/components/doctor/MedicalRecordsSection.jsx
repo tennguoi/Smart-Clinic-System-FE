@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import CreateRecordForm from './CreateRecordForm';
 import RecordRow from './RecordRow';
-import { Plus, ClipboardList, Search, RotateCcw } from 'lucide-react';
+import { Plus, ClipboardList, Search } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import CountBadge from '../common/CountBadge';
 import Pagination from '../common/Pagination';
 import PatientHistoryModal from './PatientHistoryModal';
+import { authService } from '../../services/authService';
 
 // 🔥 Thêm import Toast vào component
 import toast, { Toaster } from "react-hot-toast";
@@ -181,17 +182,19 @@ const MedicalRecordsSection = () => {
           <CountBadge
             currentCount={paginatedRecords.length}
             totalCount={records.length}
-            label={t('doctorRecords.label')}
+            label="phiếu khám"
           />
         </h1>
 
-        <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2"
-        >
-          <Plus className="w-5 h-5" />
-          {t('doctorRecords.create.newRecord')}
-        </button>
+        {!authService.hasRole('ROLE_BAC_SI') && (
+          <button
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            {t('doctorRecords.create.newRecord')}
+          </button>
+        )}
       </div>
 
       {/* CREATE FORM */}
@@ -263,9 +266,8 @@ const MedicalRecordsSection = () => {
             <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>&nbsp;</label>
             <button
               onClick={handleResetSearch}
-              className={`w-full px-4 py-3 rounded-xl transition font-medium whitespace-nowrap flex items-center justify-center gap-2 ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
+              className={`w-full px-4 py-3 rounded-xl transition font-medium whitespace-nowrap ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
             >
-              <RotateCcw className="w-4 h-4" />
               {t('medicalRecords.filters.clear')}
             </button>
           </div>
