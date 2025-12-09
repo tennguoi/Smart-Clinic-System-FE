@@ -34,11 +34,12 @@ export default function NewsPage() {
   const getCategoryLabel = (cat) => {
     if (!cat) return '';
     const map = {
-      'Công nghệ': 'technology',
+      'Công Nghệ': 'technology',
       'Sức khỏe': 'health',
-      'Điều trị': 'treatment',
+      'Điều Trị': 'treatment',
       'Cảnh báo': 'warning',
-      'Tư vấn': 'advice',
+      'Tư Vấn': 'advice',
+  
     };
     const key = map[cat];
     return key ? t(`newsPage.categories.${key}`) : cat;
@@ -60,7 +61,7 @@ export default function NewsPage() {
       const response = await fetch(url);
       if (!response.ok) throw new Error('Load failed');
       const data = await response.json();
-
+console.log('Dữ liệu bài viết từ API:', data.content);
       let articles = data.content || [];
 
       if (keyword.trim() && category) {

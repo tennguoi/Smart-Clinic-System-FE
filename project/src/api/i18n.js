@@ -2591,7 +2591,7 @@ medicalRecords: {
  
         filters: {
           search: "Search",
-          searchLabelDetail: "Search (Name, Phone, ID, Insurance, Diagnosis)",
+          searchLabelDetail: "Search ",
           searchPlaceholder: "Patient name or diagnosis...",
           fromDate: "From Date",
           toDate: "To Date",
