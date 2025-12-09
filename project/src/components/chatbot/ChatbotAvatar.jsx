@@ -141,7 +141,7 @@ function ChatbotWindow({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-24 right-6 w-96 h-[500px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50 animate-slideUp">
+    <div className="fixed bottom-24 right-6 w-96 h-[500px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50 animate-slideUp">
       
       <div className="bg-gradient-to-br from-purple-700 via-blue-700 to-cyan-600 text-white p-4 flex items-center justify-between flex-shrink-0 shadow-xl">
         <div className="flex items-center gap-3">
@@ -166,14 +166,14 @@ function ChatbotWindow({ isOpen, onClose }) {
       <div className="flex-1 flex flex-col relative overflow-hidden">
         
         <div className={`absolute inset-0 flex flex-col transition-opacity duration-300 ${isFormOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 chat-messages-container">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900 chat-messages-container">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center p-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full flex items-center justify-center mb-4 animate-pulse-slow">
                   <Bot className="w-8 h-8 text-purple-600" />
                 </div>
-                <h3 className="font-semibold text-gray-800 mb-2">Xin chào! 👋</h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <h3 className="font-semibold text-gray-800 dark:text-white mb-2">Xin chào! 👋</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                   Em có thể giúp anh/chị đặt lịch khám, tư vấn dịch vụ. Hãy chọn câu hỏi hoặc nhắn tin!
                 </p>
                 
@@ -183,7 +183,7 @@ function ChatbotWindow({ isOpen, onClose }) {
                       setInputText('Tôi muốn đặt lịch khám');
                       setTimeout(() => handleSend(), 100);
                     }}
-                    className="w-full text-left px-4 py-3 bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 border border-purple-200 rounded-xl transition-all hover:shadow-md hover:scale-[1.02] group"
+                    className="w-full text-left px-4 py-3 bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 dark:from-gray-700 dark:to-gray-700 dark:hover:from-gray-600 dark:hover:to-gray-600 border border-purple-200 dark:border-gray-600 rounded-xl transition-all hover:shadow-md hover:scale-[1.02] group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
@@ -191,7 +191,7 @@ function ChatbotWindow({ isOpen, onClose }) {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                       </div>
-                      <span className="text-sm font-medium text-gray-700">Đặt lịch khám bệnh</span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Đặt lịch khám bệnh</span>
                     </div>
                   </button>
 
@@ -200,7 +200,7 @@ function ChatbotWindow({ isOpen, onClose }) {
                       setInputText('Giá dịch vụ khám là bao nhiêu?');
                       setTimeout(() => handleSend(), 100);
                     }}
-                    className="w-full text-left px-4 py-3 bg-gradient-to-r from-cyan-50 to-teal-50 hover:from-cyan-100 hover:to-teal-100 border border-cyan-200 rounded-xl transition-all hover:shadow-md hover:scale-[1.02] group"
+                    className="w-full text-left px-4 py-3 bg-gradient-to-r from-cyan-50 to-teal-50 hover:from-cyan-100 hover:to-teal-100 dark:from-gray-700 dark:to-gray-700 dark:hover:from-gray-600 dark:hover:to-gray-600 border border-cyan-200 dark:border-gray-600 rounded-xl transition-all hover:shadow-md hover:scale-[1.02] group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
@@ -208,7 +208,7 @@ function ChatbotWindow({ isOpen, onClose }) {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
-                      <span className="text-sm font-medium text-gray-700">Bảng giá dịch vụ</span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Bảng giá dịch vụ</span>
                     </div>
                   </button>
 
@@ -217,7 +217,7 @@ function ChatbotWindow({ isOpen, onClose }) {
                       setInputText('Phòng khám làm việc thời gian nào?');
                       setTimeout(() => handleSend(), 100);
                     }}
-                    className="w-full text-left px-4 py-3 bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 border border-orange-200 rounded-xl transition-all hover:shadow-md hover:scale-[1.02] group"
+                    className="w-full text-left px-4 py-3 bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 dark:from-gray-700 dark:to-gray-700 dark:hover:from-gray-600 dark:hover:to-gray-600 border border-orange-200 dark:border-gray-600 rounded-xl transition-all hover:shadow-md hover:scale-[1.02] group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
@@ -225,7 +225,7 @@ function ChatbotWindow({ isOpen, onClose }) {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
-                      <span className="text-sm font-medium text-gray-700">Giờ làm việc</span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Giờ làm việc</span>
                     </div>
                   </button>
 
@@ -234,7 +234,7 @@ function ChatbotWindow({ isOpen, onClose }) {
                       setInputText('Phòng khám ở đâu?');
                       setTimeout(() => handleSend(), 100);
                     }}
-                    className="w-full text-left px-4 py-3 bg-gradient-to-r from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100 border border-pink-200 rounded-xl transition-all hover:shadow-md hover:scale-[1.02] group"
+                    className="w-full text-left px-4 py-3 bg-gradient-to-r from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100 dark:from-gray-700 dark:to-gray-700 dark:hover:from-gray-600 dark:hover:to-gray-600 border border-pink-200 dark:border-gray-600 rounded-xl transition-all hover:shadow-md hover:scale-[1.02] group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-rose-500 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
@@ -243,7 +243,7 @@ function ChatbotWindow({ isOpen, onClose }) {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                       </div>
-                      <span className="text-sm font-medium text-gray-700">Địa chỉ phòng khám</span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Địa chỉ phòng khám</span>
                     </div>
                   </button>
                 </div>
@@ -260,11 +260,11 @@ function ChatbotWindow({ isOpen, onClose }) {
                   <div className={`rounded-2xl px-4 py-3 prose prose-sm max-w-none shadow-lg transition-all hover:shadow-xl ${
                     message.sender === 'user'
                       ? 'bg-gradient-to-br from-blue-600 to-cyan-500 text-white rounded-tr-none'
-                      : 'bg-gradient-to-br from-white to-gray-50 text-gray-800 rounded-tl-none border-2 border-purple-200'
+                      : 'bg-gradient-to-br from-white to-gray-50 text-gray-800 rounded-tl-none border-2 border-purple-200 dark:from-gray-700 dark:to-gray-800 dark:text-gray-100 dark:border-gray-600'
                   }`} style={{ wordBreak: 'break-word', overflowWrap: 'break-word', maxWidth: '100%', lineHeight: '1.6' }}>
                     <MarkdownRenderer onLinkClick={handleLinkClick}>{message.text}</MarkdownRenderer>
                   </div>
-                  <span className="text-xs text-gray-500 mt-1">{formatTime(message.timestamp)}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatTime(message.timestamp)}</span>
                 </div>
               </div>
             ))}
@@ -273,7 +273,7 @@ function ChatbotWindow({ isOpen, onClose }) {
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 flex items-center justify-center shadow-lg animate-pulse">
                   <Bot className="w-4 h-4 text-white" />
                 </div>
-                <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl rounded-tl-none px-4 py-3 shadow-lg border-2 border-purple-200">
+                <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-700 dark:to-gray-800 rounded-2xl rounded-tl-none px-4 py-3 shadow-lg border-2 border-purple-200 dark:border-gray-600">
                   <div className="flex gap-1.5">
                     <div className="w-2.5 h-2.5 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                     <div className="w-2.5 h-2.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
@@ -285,7 +285,7 @@ function ChatbotWindow({ isOpen, onClose }) {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="border-t bg-white p-3">
+          <div className="border-t bg-white dark:bg-gray-800 dark:border-gray-700 p-3">
             <div className="flex gap-2 items-end">
               <textarea
                 value={inputText}
@@ -293,7 +293,7 @@ function ChatbotWindow({ isOpen, onClose }) {
                 onKeyPress={handleKeyPress}
                 placeholder="Nhập tin nhắn..."
                 rows="1"
-                className="flex-1 px-4 py-2 text-sm border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none overflow-y-auto custom-scrollbar"
+                className="flex-1 px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none overflow-y-auto custom-scrollbar"
                 style={{ 
                   maxHeight: '72px',
                   minHeight: '40px',
@@ -316,7 +316,7 @@ function ChatbotWindow({ isOpen, onClose }) {
         </div>
 
         {isFormOpen && (
-          <div className="absolute inset-0 bg-white p-4 overflow-y-auto animate-fadeIn">
+          <div className="absolute inset-0 bg-white dark:bg-gray-900 p-4 overflow-y-auto animate-fadeIn">
             <AppointmentChatbotForm
               onClose={handleFormClose}
               initialUrl={formInitialUrl}
