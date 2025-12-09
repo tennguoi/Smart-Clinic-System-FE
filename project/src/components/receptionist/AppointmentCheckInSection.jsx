@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Calendar, CheckCircle, Clock, User, AlertCircle, Loader2, Search, X, Eye } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, User, AlertCircle, Loader2, Search, X, Eye, Plus } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import PatientForm from './PatientForm';
-import Pagination from '../common/Pagination'; // Đảm bảo đã có component này
+import Pagination from '../common/Pagination';
 import { queueApi } from '../../api/receptionApi';
 
 const emptyPatientForm = {
@@ -26,22 +26,18 @@ export default function AppointmentCheckInSection({ onOpenPatientForm }) {
   const [loading, setLoading] = useState(false);
   const [debugInfo, setDebugInfo] = useState(null);
   
-  // Form
   const [showForm, setShowForm] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [patientForm, setPatientForm] = useState(emptyPatientForm);
   const [formSubmitting, setFormSubmitting] = useState(false);
 
-  // Tìm kiếm
   const [searchName, setSearchName] = useState('');
   const [searchPhone, setSearchPhone] = useState('');
   const [filteredAppointments, setFilteredAppointments] = useState([]);
 
-  // Phân trang
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
-  // Kiểm tra token
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     const user = localStorage.getItem('user');
@@ -57,7 +53,6 @@ export default function AppointmentCheckInSection({ onOpenPatientForm }) {
     }
   }, []);
 
-  // Lọc + phân trang khi search hoặc dữ liệu thay đổi
   useEffect(() => {
     let result = [...appointments];
 
@@ -84,7 +79,7 @@ export default function AppointmentCheckInSection({ onOpenPatientForm }) {
     try {
       const data = await queueApi.getTodayAppointments();
       setAppointments(Array.isArray(data) ? data : []);
-      setCurrentPage(0); // reset về trang đầu khi refresh
+      setCurrentPage(0);
     } catch (error) {
       const msg = error.response?.data?.message || error.message || 'Không thể tải danh sách';
       toast.error(msg);
@@ -124,7 +119,6 @@ export default function AppointmentCheckInSection({ onOpenPatientForm }) {
     setShowForm(true);
   };
 
-  // Xem chi tiết bệnh nhân đã check-in
   const handleViewPatientDetail = (appointment) => {
     setSelectedAppointment(appointment);
     setPatientForm({
@@ -227,7 +221,6 @@ export default function AppointmentCheckInSection({ onOpenPatientForm }) {
         </h1>
       </div>
 
-      {/* Bộ lọc tìm kiếm - giữ nguyên như cũ */}
       <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex flex-col">
@@ -293,7 +286,6 @@ export default function AppointmentCheckInSection({ onOpenPatientForm }) {
         )}
       </div>
 
-      {/* Bảng danh sách */}
       {loading ? (
         <div className="bg-white rounded-lg shadow border border-gray-200 p-12 text-center">
           <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-blue-600" />
@@ -328,12 +320,12 @@ export default function AppointmentCheckInSection({ onOpenPatientForm }) {
                   const stt = currentPage * PAGE_SIZE + index + 1;
                   return (
                     <tr 
-                      // key={appointment.appointmentId}
-                      // className={`hover:bg-gray-50 transition-colors ${
-                      //   appointment.hasCheckedIn ? 'bg-green-50' : 
-                      //   isPast(appointment.appointmentTime) ? 'bg-red-50' :
-                      //   isUpcoming(appointment.appointmentTime) ? 'bg-amber-50' : ''
-                      // }`}
+                      key={appointment.appointmentId}
+                      className={`hover:bg-gray-50 transition-colors ${
+                        appointment.hasCheckedIn ? 'bg-green-50' : 
+                        isPast(appointment.appointmentTime) ? 'bg-red-50' :
+                        isUpcoming(appointment.appointmentTime) ? 'bg-amber-50' : ''
+                      }`}
                     >
                       <td className="px-4 py-4 text-center text-sm font-medium text-gray-700">{stt}</td>
                       <td className="px-4 py-4">
@@ -345,7 +337,6 @@ export default function AppointmentCheckInSection({ onOpenPatientForm }) {
                       <td className="px-4 py-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            {/* <User className="w-5 h-5 text-gray-400" /> */}
                             <span className="text-sm font-medium text-gray-900">
                               {appointment.patientName}
                             </span>
@@ -378,25 +369,25 @@ export default function AppointmentCheckInSection({ onOpenPatientForm }) {
                         )}
                       </td>
 
-                                         <td className="px-4 py-4 text-center">
-                      {!appointment.hasCheckedIn ? (
-                        <button
-                          onClick={() => handleAddPatientFromAppointment(appointment)}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium text-sm flex items-center gap-2 mx-auto"
-                        >
-                          <User className="w-4 h-4" />
-                          Thêm vào hàng chờ
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleViewPatientDetail(appointment)}
-                          className="text-blue-600 hover:bg-blue-100 p-2 rounded-full transition mx-auto"
-                          title="Xem chi tiết bệnh nhân"
-                        >
-                          <Eye className="w-6 h-6" />
-                        </button>
-                      )}
-                    </td>
+                      <td className="px-4 py-4 text-center">
+                        {!appointment.hasCheckedIn ? (
+                          <button
+                            onClick={() => handleAddPatientFromAppointment(appointment)}
+                            className="text-green-600 hover:text-green-700 p-2 transition mx-auto"
+                            title="Thêm vào hàng chờ"
+                          >
+                            <Plus className="w-6 h-6" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleViewPatientDetail(appointment)}
+                            className="text-blue-600 hover:bg-blue-100 p-2 rounded-full transition mx-auto"
+                            title="Xem chi tiết bệnh nhân"
+                          >
+                            <Eye className="w-6 h-6" />
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   );
                 })
@@ -404,7 +395,6 @@ export default function AppointmentCheckInSection({ onOpenPatientForm }) {
             </tbody>
           </table>
 
-          {/* Phân trang */}
           {totalPages > 1 && (
             <div className="border-t border-gray-200 px-6 py-4 bg-gray-50">
               <Pagination
@@ -417,11 +407,10 @@ export default function AppointmentCheckInSection({ onOpenPatientForm }) {
         </div>
       )}
 
-      {/* Form thêm / xem chi tiết */}
       {showForm && (
         <PatientForm
           patientForm={patientForm}
-          isEdit={selectedAppointment?.hasCheckedIn || false} // true = chỉ xem
+          isEdit={selectedAppointment?.hasCheckedIn || false}
           onChange={handleFormChange}
           onSubmit={handleSubmitForm}
           onCancel={handleCancelForm}
