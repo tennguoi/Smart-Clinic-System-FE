@@ -2,6 +2,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
+import ChatbotAvatar from '../components/chatbot/ChatbotAvatar';
 
 const resources = {
   vi: {
@@ -1148,6 +1149,8 @@ doctorStats: {
     subtitle: "Thống kê hiệu suất",
     title: "Bác sĩ – Báo cáo ca khám"
   },
+  noData: "Chưa có dữ liệu thống kê",
+  week:"Tuần",
   range: {
     day: "Ngày",
     week: "Tuần",
@@ -1174,6 +1177,8 @@ doctorStats: {
     visitsByPeriod: "Số ca khám theo {{#if (eq context 'hour')}}giờ{{else}}ngày{{/if}}",
     trend: "Xu hướng số ca khám",
     "visitsByHour": "Lượt khám theo giờ",
+    visitsByDay: "Lượt khám theo ngày",
+    visitsByMonth: "Lượt khám theo tháng"
 
   },
   table: {
@@ -1207,7 +1212,9 @@ doctorExamination: {
   // Tabs
   tabExamination: "Khám & Kê đơn",
   tabServices: "Chỉ định dịch vụ",
-  
+  "male": "Nam",
+  "female": "Nữ",
+  "years": "tuổi",
   // AI Assistant Button
   aiAssistantOn: "Đang bật AI",
   aiAssistantOff: "Bật AI Trợ lý",
@@ -1767,6 +1774,9 @@ appointmentCheckIn: {
   cancel: "Hủy",
   saveChanges: "Lưu thay đổi",
   processing: "Đang xử lý..."
+},
+ChatbotAvatar: {
+  "tooltip": "Cần hỗ trợ? Chat với  tôi!",
 },
 
     }
@@ -2894,6 +2904,8 @@ doctorStats: {
     subtitle: "Performance Statistics",
     title: "Doctor – Examination Report"
   },
+  noData: "No statistics data available",
+  week:"Week",
   range: {
     day: "Day",
     week: "Week",
@@ -2920,6 +2932,8 @@ doctorStats: {
     visitsByPeriod: "Examinations by {{#if (eq context 'hour')}}hour{{else}}day{{/if}}",
     trend: "Examination Trend",
     visitsByHour:"Visits By Hour",
+    visitsByDay: "Visits By Day",
+    visitsByMonth: "Visits By Month",
   },
   table: {
     title: "Statistics Table by Time Slot",
@@ -2956,7 +2970,9 @@ doctorExamination: {
   // AI Assistant Button
   aiAssistantOn: "AI On",
   aiAssistantOff: "Enable AI Assistant",
-  
+  "male": "Male",
+  "female": "Female",
+  "years": "years old",
   // Patient info
   queueNumber: "Queue No.",
   checkInTime: "Checked in at",
@@ -3424,31 +3440,31 @@ emailTemplates: {
   
 },
 },
-aiAssistant: {
-  title: "AI Medical Assistant",
-  statusThinking: "Thinking...",
-  statusReady: "Ready to assist",
-  welcomeMessage: "Hello doctor!\nI am your intelligent AI Medical Assistant.\nDo you need help with diagnosis, prescriptions, or explaining results?",
-  newConversation: "New conversation",
-  loadingHistory: "Loading...",
-  noHistory: "No conversation history",
-  conversationTitle: "Conversation",
-  applyPlan: "Apply this treatment plan to the form",
-  noPlanFound: "No treatment plan found in the response",
-  inputPlaceholder: "Ask AI about diagnosis, prescriptions, patient instructions...",
-  sendButton: "Send",
-  sending: "Sending...",
-  aiAnalyzing: "AI is analyzing...",
-  disclaimer: "AI is for support only • Always verify before applying",
-  errorLoginRequired: "Please log in again",
-  errorCreateConversation: "Unable to create a new conversation",
-  errorNoSession: "No sessionId available to call n8n",
-  errorAINoResponse: "AI did not respond",
-  errorConnection: "Unable to connect to AI",
-  errorLoadHistory: "Failed to load history",
-  errorLoadConversation: "Failed to load conversation",
-  errorPrefix: "AI connection error: "
-},
+// aiAssistant: {
+//   title: "AI Medical Assistant",
+//   statusThinking: "Thinking...",
+//   statusReady: "Ready to assist",
+//   welcomeMessage: "Hello doctor!\nI am your intelligent AI Medical Assistant.\nDo you need help with diagnosis, prescriptions, or explaining results?",
+//   newConversation: "New conversation",
+//   loadingHistory: "Loading...",
+//   noHistory: "No conversation history",
+//   conversationTitle: "Conversation",
+//   applyPlan: "Apply this treatment plan to the form",
+//   noPlanFound: "No treatment plan found in the response",
+//   inputPlaceholder: "Ask AI about diagnosis, prescriptions, patient instructions...",
+//   sendButton: "Send",
+//   sending: "Sending...",
+//   aiAnalyzing: "AI is analyzing...",
+//   disclaimer: "AI is for support only • Always verify before applying",
+//   errorLoginRequired: "Please log in again",
+//   errorCreateConversation: "Unable to create a new conversation",
+//   errorNoSession: "No sessionId available to call n8n",
+//   errorAINoResponse: "AI did not respond",
+//   errorConnection: "Unable to connect to AI",
+//   errorLoadHistory: "Failed to load history",
+//   errorLoadConversation: "Failed to load conversation",
+//   errorPrefix: "AI connection error: "
+// },
 appointmentCheckIn: {
   title: "Today's Appointments",
   loading: "Loading appointment list...",
@@ -3524,6 +3540,9 @@ appointmentCheckIn: {
   
   doctor: "Dr."
 },
+ChatbotAvatar: {
+  "tooltip": "Need help? Chat with me!",
+},
 "appointments": {
     "search": "Search",
     "searchPlaceholder": "Enter name or phone number",
@@ -3540,7 +3559,8 @@ appointmentCheckIn: {
     "filteringBy": "Filtering",
     "keyword": "Keyword",
     "removeKeyword": "Remove keyword"
-  }
+  },
+  
 }
   }
 };

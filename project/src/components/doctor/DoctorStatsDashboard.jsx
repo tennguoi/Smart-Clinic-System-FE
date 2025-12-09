@@ -34,15 +34,11 @@ const RANGE_OPTIONS = [
   { label: 'month', value: 'month' },
 ];
 
-const formatPercentage = (value) => {
-  if (value == null || value === 0) return 'Chưa có dữ liệu';
-  return `${Math.round(value * 100)}%`;
-};
 
 export default function DoctorStatsDashboard() {
   const { theme } = useTheme();
   const { t } = useTranslation();
-  
+   
   // Load saved preferences from localStorage
   const [rangeType, setRangeType] = useState(() => {
     try {
@@ -61,7 +57,10 @@ export default function DoctorStatsDashboard() {
       return new Date();
     }
   });
-  
+    const formatPercentage = (value) => {
+    if (value == null || value === 0) return t('doctorStats.noData');
+    return `${Math.round(value * 100)}%`;
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statsData, setStatsData] = useState(null);
@@ -167,7 +166,7 @@ export default function DoctorStatsDashboard() {
     if (rangeType === 'month')
       return { showMonthYearPicker: true, dateFormat: 'MM/yyyy' };
     if (rangeType === 'week')
-      return { showWeekNumbers: true, dateFormat: "'Tuần' ww, yyyy" };
+      return { showWeekNumbers: true, dateFormat: `'${t('doctorStats.week')}' ww, yyyy` };
     return { dateFormat: 'dd/MM/yyyy' };
   }, [rangeType]);
 
@@ -297,12 +296,14 @@ export default function DoctorStatsDashboard() {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Bar Chart */}
         <div className={`rounded-2xl border p-6 shadow-sm transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
-          <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-            {rangeType === 'day' 
-              ? t('doctorStats.chart.visitsByHour')
-              : t('doctorStats.chart.visitsByDay')
-            }
-          </h3>
+              <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                {rangeType === 'day' 
+                  ? t('doctorStats.chart.visitsByHour')
+                  : rangeType === 'week'
+                  ? t('doctorStats.chart.visitsByDay')
+                  : t('doctorStats.chart.visitsByMonth')
+                }
+              </h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartDisplayData}>

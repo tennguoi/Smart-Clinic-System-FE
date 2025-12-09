@@ -182,7 +182,7 @@ const MedicalRecordsSection = () => {
           <CountBadge
             currentCount={paginatedRecords.length}
             totalCount={records.length}
-            label="phiếu khám"
+           label={t('doctorRecords.label')}
           />
         </h1>
 

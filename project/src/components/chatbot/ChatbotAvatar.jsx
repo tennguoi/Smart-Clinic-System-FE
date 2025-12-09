@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, User, X, MessageCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import AppointmentChatbotForm from './AppointmentChatbotForm';
-
+import { useTranslation } from 'react-i18next';
 function MarkdownRenderer({ children, onLinkClick }) {
   const components = {
     a: ({ node, ...props }) => {
@@ -331,6 +331,7 @@ function ChatbotWindow({ isOpen, onClose }) {
 }
 
 export default function ChatbotAvatar() {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [hasNotification, setHasNotification] = useState(true);
 
@@ -356,7 +357,7 @@ export default function ChatbotAvatar() {
 
       {!isOpen && (
         <div className="fixed bottom-24 right-6 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg text-sm whitespace-nowrap z-40 animate-fadeIn">
-          Cần hỗ trợ? Chat với chúng tôi!
+         {t('ChatbotAvatar.tooltip')}
           <div className="absolute bottom-0 right-6 transform translate-y-1/2 rotate-45 w-2 h-2 bg-gray-800"></div>
         </div>
       )}

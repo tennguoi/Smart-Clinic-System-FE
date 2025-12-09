@@ -16,7 +16,7 @@ export default function PatientSidebar({ currentPatient, waitingQueue = [] /* ai
     rawGender.includes('male') ||
     rawGender.includes('nam') ||
     rawGender === 'm';
-  const displayGender = isMale ? t('common.male') : t('common.female');
+  const displayGender = isMale ? t('doctorExamination.male') : t('doctorExamination.female');
 
   return (
     <aside
@@ -49,7 +49,7 @@ export default function PatientSidebar({ currentPatient, waitingQueue = [] /* ai
         <div className={`mt-4 space-y-2 ${theme === 'dark' ? 'text-gray-300' : 'text-slate-700'}`}>
           <div>
             <Calendar className="inline w-5 h-5 mr-2" />
-            {displayGender} • {currentPatient.age} {t('common.years')}
+            {displayGender} • {currentPatient.age} {t('doctorExamination.years')}
           </div>
           <div>
             <Clock className="inline w-5 h-5 mr-2" />
