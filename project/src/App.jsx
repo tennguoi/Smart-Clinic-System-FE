@@ -159,7 +159,7 @@ function App() {
           <Route path="appointments" element={<AppointmentsSection />} />
           <Route path="check-in" element={<AppointmentCheckInSection/>} />
           <Route path="records" element={<PatientRecordsSection />} />
-        <Route path="rooms" element={<ClinicRoomManagement isAdminView={false} />} />
+          <Route path="rooms" element={<ClinicRoomManagement isAdminView={false} />} />
           <Route path="invoices" element={<InvoicesSection />} />
           <Route path="payment/:billId" element={<PaymentPage />} />
         </Route>
