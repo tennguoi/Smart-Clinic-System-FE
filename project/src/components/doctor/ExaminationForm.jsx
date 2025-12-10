@@ -320,7 +320,7 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`,
           {isLoading ? (
             <>
               <Loader2 className="animate-spin" size={20} />
-              {t('common.processing') ?? 'Đang xử lý...'}
+              {t('doctorExamination.processing') ?? 'Đang xử lý...'}
             </>
           ) : (
             <>

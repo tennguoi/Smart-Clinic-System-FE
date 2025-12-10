@@ -465,7 +465,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
               >
                 {t('invoices.common.close')}
               </button>
-              {invoice.paymentStatus === 'Pending' && !isEditing && (
+              {/* {invoice.paymentStatus === 'Pending' && !isEditing && (
                 <button
                   onClick={() => onPay?.(invoice)}
                   className="px-12 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold text-xl shadow-2xl flex items-center gap-3 hover:shadow-green-500/50 transition"
@@ -473,7 +473,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                   <CreditCard className="w-7 h-7" />
                   {t('invoices.modal.payNow')}
                 </button>
-              )}
+              )} */}
             </div>
           </div>
         </div>

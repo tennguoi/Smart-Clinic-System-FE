@@ -485,11 +485,15 @@ const handleConfirmFromModal = async () => {
                   return (
                     <tr key={a.appointmentId} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}>
                       <td className={`px-4 py-4 text-center text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{stt}</td>
-                      <td className="px-4 py-4">
-                        <span className="inline-flex px-4 py-2 rounded-md text-base font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200">
-  {a.appointmentCode}
-</span>
-                      </td>
+<td className="px-4 py-4">
+  <span className={`inline-flex px-4 py-2 rounded-md text-base font-mono font-bold border ${
+    theme === 'dark' 
+      ? 'bg-blue-900/20 text-blue-300 border-blue-800' 
+      : 'bg-blue-50 text-blue-700 border-blue-200'
+  }`}>
+    {a.appointmentCode}
+  </span>
+</td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
                      

@@ -185,6 +185,16 @@ checkInFromAppointmentWithInfo: async (appointmentId, additionalInfo) => {
     return data;
   },
 
+  // Thêm bệnh nhân với xác nhận dùng thông tin cũ hay cập nhật mới
+  addPatientWithExisting: async (patientData, useExistingInfo) => {
+    const { data } = await axiosInstance.post(
+      '/api/reception/queue/add-with-existing',
+      patientData,
+      { params: { useExistingInfo } }
+    );
+    return data;
+  },
+
   // Cập nhật thông tin bệnh nhân
   updatePatient: async (queueId, patientData) => {
     const { data } = await axiosInstance.put(`/api/reception/queue/${queueId}`, patientData);
