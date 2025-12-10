@@ -1118,6 +1118,32 @@ patientRecords: {
   
   confirmDelete: "Bạn có chắc chắn muốn xóa bệnh nhân này?",
   
+  // Duplicate patient dialog
+  duplicateDialog: {
+    title: " Phát hiện bệnh nhân đã tồn tại",
+    subtitle: "đã được đăng ký trong hệ thống",
+    duplicateFieldLabels: {
+      phone: "Số điện thoại",
+      idNumber: "CCCD/CMND", 
+      insuranceNumber: "Số BHYT"
+    },
+    existingPatientTitle: "Thông tin bệnh nhân đã có:",
+    newPatientTitle: "Thông tin bạn vừa nhập:",
+    labelName: "Họ tên",
+    labelPhone: "SĐT",
+    labelDob: "Ngày sinh",
+    labelIdNumber: "CCCD",
+    labelInsurance: "BHYT",
+    question: "Bạn muốn làm gì?",
+    useExistingBtn: "Dùng thông tin CŨ",
+    useExistingDesc: "Thêm vào hàng chờ với thông tin bệnh nhân đã có",
+    updateNewBtn: "Cập nhật thông tin MỚI",
+    updateNewDesc: "Cập nhật hồ sơ bệnh nhân với thông tin mới nhập",
+    cancelBtn: "Hủy bỏ",
+    successUseExisting: "Đã thêm vào hàng chờ (dùng thông tin cũ của {{name}})",
+    successUpdateNew: "Đã thêm và cập nhật thông tin cho {{name}}"
+  },
+  
   toast: {
     deleteSuccess: "Đã xóa bệnh nhân thành công!",
     deleteFailed: "Không thể xóa bệnh nhân!",
@@ -2872,6 +2898,32 @@ patientRecords: {
   },
   
   confirmDelete: "Are you sure you want to delete this patient?",
+  
+  // Duplicate patient dialog
+  duplicateDialog: {
+    title: " Duplicate Patient Detected",
+    subtitle: "is already registered in the system",
+    duplicateFieldLabels: {
+      phone: "Phone number",
+      idNumber: "ID/Citizen ID", 
+      insuranceNumber: "Insurance number"
+    },
+    existingPatientTitle: "Existing patient information:",
+    newPatientTitle: "Information you just entered:",
+    labelName: "Name",
+    labelPhone: "Phone",
+    labelDob: "Date of birth",
+    labelIdNumber: "ID Number",
+    labelInsurance: "Insurance",
+    question: "What would you like to do?",
+    useExistingBtn: "Use EXISTING info",
+    useExistingDesc: "Add to queue with existing patient information",
+    updateNewBtn: "Update with NEW info",
+    updateNewDesc: "Update patient record with newly entered information",
+    cancelBtn: "Cancel",
+    successUseExisting: "Added to queue (using existing info of {{name}})",
+    successUpdateNew: "Added and updated info for {{name}}"
+  },
   
   toast: {
     deleteSuccess: "Patient deleted successfully!",

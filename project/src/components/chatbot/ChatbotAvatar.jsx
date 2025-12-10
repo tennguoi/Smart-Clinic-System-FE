@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, User, X, Camera } from 'lucide-react';
-
+import { useTranslation } from 'react-i18next';
 function MarkdownRenderer({ children }) {
   const processText = (text) => {
     text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
