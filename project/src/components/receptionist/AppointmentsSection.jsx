@@ -280,7 +280,7 @@ export default function AppointmentsSection() {
     }
   };
 
-  const handleConfirmFromModal = async () => {
+const handleConfirmFromModal = async () => {
     if (!editingAppointment || confirmLoading) return;
     setConfirmLoading(true);
     try {
@@ -290,14 +290,26 @@ export default function AppointmentsSection() {
         { params: { status: 'Confirmed' } }
       );
       toast.success(t('appointmentManagement.confirmSuccess', 'Đã xác nhận lịch hẹn thành công!'));
-      setAppointments(prev =>
-        prev.map(a =>
-          a.appointmentId === editingAppointment.appointmentId
-            ? { ...a, status: 'Confirmed' }
-            : a
-        )
-      );
-      setEditingAppointment(prev => ({ ...prev, status: 'Confirmed' }));
+      
+      // Nếu đang ở tab "Chờ xác nhận", loại bỏ lịch hẹn khỏi danh sách
+      if (selectedStatus === 'Pending') {
+        setAppointments(prev =>
+          prev.filter(a => a.appointmentId !== editingAppointment.appointmentId)
+        );
+        setTotalElements(prev => prev - 1);
+      } else {
+        // Nếu đang ở tab khác, cập nhật trạng thái
+        setAppointments(prev =>
+          prev.map(a =>
+            a.appointmentId === editingAppointment.appointmentId
+              ? { ...a, status: 'Confirmed' }
+              : a
+          )
+        );
+      }
+      
+      setShowForm(false);
+      setEditingAppointment(null);
     } catch (err) {
       toast.error(err.response?.data?.message || t('appointmentManagement.confirmFailed', 'Xác nhận thất bại'));
     } finally {
@@ -474,25 +486,25 @@ export default function AppointmentsSection() {
                     <tr key={a.appointmentId} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}>
                       <td className={`px-4 py-4 text-center text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{stt}</td>
                       <td className="px-4 py-4">
-                        <span className="inline-flex px-3 py-1.5 rounded-md text-xs font-mono bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">
-                          {a.appointmentCode}
-                        </span>
+                        <span className="inline-flex px-4 py-2 rounded-md text-base font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200">
+  {a.appointmentCode}
+</span>
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          <User className="w-5 h-5 text-gray-400" />
+                     
                           <div className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{a.patientName}</div>
                         </div>
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          <Phone className="w-4 h-4 text-gray-400" />
+                         
                           <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{a.phone}</span>
                         </div>
                       </td>
                       <td className={`px-4 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                         <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-gray-400" />
+                          
                           {formatDateTime(a.appointmentTime)}
                         </div>
                       </td>

@@ -119,7 +119,7 @@ export default function QueueTable({
 
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    
                     <span className="text-sm font-medium text-gray-900 dark:text-white">
                       {q.patientName || '—'}
                     </span>
@@ -131,8 +131,7 @@ export default function QueueTable({
                 </td>
 
                 <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                  <div>{q.phone || '—'}</div>
-                  {q.email && <div className="text-xs text-blue-600 dark:text-blue-400">{q.email}</div>}
+                  {q.phone || '—'}
                 </td>
 
                 <td className="px-4 py-3 text-sm">

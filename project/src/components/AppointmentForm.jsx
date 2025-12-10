@@ -249,7 +249,7 @@ export default function AppointmentForm() {
             {/* NAME + PHONE */}
             <div className="grid md:grid-cols-2 gap-6">
               <div className="group">
-                <label htmlFor="fullName" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="fullName" className="block text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   {t('appointment.fullName')} <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -259,13 +259,13 @@ export default function AppointmentForm() {
                   required
                   value={formData.fullName}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:bg-white dark:focus:bg-gray-600 transition-all duration-300 text-sm outline-none text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:bg-white dark:focus:bg-gray-600 transition-all duration-300 text-base outline-none text-gray-900 dark:text-white"
                   placeholder={t('appointment.fullNamePlaceholder')}
                 />
               </div>
 
               <div className="group">
-                <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="phone" className="block text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   {t('appointment.phone')} <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -278,7 +278,7 @@ export default function AppointmentForm() {
                   maxLength={11}
                   value={formData.phone}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:bg-white dark:focus:bg-gray-600 transition-all duration-300 text-sm outline-none text-gray-900 dark:text-white ${
+                  className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:bg-white dark:focus:bg-gray-600 transition-all duration-300 text-base outline-none text-gray-900 dark:text-white ${
                     phoneError ? 'border-red-300 dark:border-red-500 bg-red-50 dark:bg-red-900/20' : 'border-gray-200 dark:border-gray-600'
                   }`}
                   placeholder="0123456789"
@@ -294,7 +294,7 @@ export default function AppointmentForm() {
 
             {/* EMAIL */}
             <div className="group">
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="email" className="block text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 {t('appointment.email')} <span className="text-red-500">*</span>
               </label>
               <input
@@ -304,7 +304,7 @@ export default function AppointmentForm() {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:bg-white dark:focus:bg-gray-600 transition-all duration-300 text-sm outline-none text-gray-900 dark:text-white"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:bg-white dark:focus:bg-gray-600 transition-all duration-300 text-base outline-none text-gray-900 dark:text-white"
                 placeholder="email@example.com"
               />
             </div>
@@ -312,7 +312,7 @@ export default function AppointmentForm() {
             {/* DATE & TIME */}
             <div className="grid md:grid-cols-2 gap-6">
               <div className="group">
-                <label htmlFor="date" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="date" className="block text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   {t('appointment.date')} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -326,13 +326,13 @@ export default function AppointmentForm() {
                     onChange={handleChange}
                     min={minDate}
                     max={maxDate}
-                    className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:bg-white dark:focus:bg-gray-600 transition-all duration-300 text-sm outline-none text-gray-900 dark:text-white"
+                    className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:bg-white dark:focus:bg-gray-600 transition-all duration-300 text-base outline-none text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
 
               <div className="group">
-                <label htmlFor="time" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="time" className="block text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   {t('appointment.time')} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -344,7 +344,7 @@ export default function AppointmentForm() {
                     required
                     value={formData.time}
                     onChange={handleTimeChange}
-                    className={`w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:bg-white dark:focus:bg-gray-600 transition-all duration-300 text-sm outline-none text-gray-900 dark:text-white ${
+                    className={`w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:bg-white dark:focus:bg-gray-600 transition-all duration-300 text-base outline-none text-gray-900 dark:text-white ${
                       timeError ? 'border-red-300 dark:border-red-500 bg-red-50 dark:bg-red-900/20' : 'border-gray-200 dark:border-gray-600'
                     }`}
                   />
@@ -364,7 +364,7 @@ export default function AppointmentForm() {
 
             {/* SYMPTOMS */}
             <div className="group">
-              <label htmlFor="symptoms" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="symptoms" className="block text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 {t('appointment.symptomsLabel')}
               </label>
               <textarea
@@ -373,21 +373,21 @@ export default function AppointmentForm() {
                 rows={4}
                 value={formData.symptoms}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:bg-white dark:focus:bg-gray-600 transition-all duration-300 resize-none text-sm outline-none text-gray-900 dark:text-white"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:bg-white dark:focus:bg-gray-600 transition-all duration-300 resize-none text-base outline-none text-gray-900 dark:text-white"
                 placeholder={t('appointment.symptomsPlaceholder')}
               />
             </div>
 
             {/* SERVICES DROPDOWN */}
             <div className="services-dropdown group">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 {t('appointment.servicesLabel')}
               </label>
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setIsServicesOpen(!isServicesOpen)}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:bg-white dark:focus:bg-gray-600 transition-all duration-300 text-sm flex items-center justify-between hover:border-cyan-300 dark:hover:border-cyan-500 outline-none"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:bg-white dark:focus:bg-gray-600 transition-all duration-300 text-base flex items-center justify-between hover:border-cyan-300 dark:hover:border-cyan-500 outline-none"
                 >
                   <span className={formData.serviceIds.length === 0 ? 'text-gray-400' : 'text-gray-900 dark:text-white font-medium'}>
                     {formData.serviceIds.length === 0
@@ -408,7 +408,7 @@ export default function AppointmentForm() {
                           placeholder={t('appointment.searchPlaceholder')}
                           value={serviceSearch}
                           onChange={(e) => setServiceSearch(e.target.value)}
-                          className="w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-sm outline-none bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
+                          className="w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-base outline-none bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                           onClick={(e) => e.stopPropagation()}
                         />
                       </div>
@@ -424,7 +424,7 @@ export default function AppointmentForm() {
                         services.map((svc) => (
                           <label
                             key={svc.serviceId}
-                            className="flex items-center gap-3 px-4 py-3 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 dark:hover:from-cyan-900/20 dark:hover:to-blue-900/20 cursor-pointer text-sm transition-all duration-200 border-b border-gray-50 dark:border-gray-700 last:border-0"
+                            className="flex items-center gap-3 px-4 py-3 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 dark:hover:from-cyan-900/20 dark:hover:to-blue-900/20 cursor-pointer text-base transition-all duration-200 border-b border-gray-50 dark:border-gray-700 last:border-0"
                           >
                             <div className="relative flex items-center justify-center">
                               <input
@@ -485,7 +485,7 @@ export default function AppointmentForm() {
               <button
                 type="submit"
                 disabled={isSubmitting || !!timeError || !!phoneError}
-                className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white py-4 rounded-xl transition-all duration-300 font-bold text-base flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
+                className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white py-4 rounded-xl transition-all duration-300 font-bold text-lg flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
               >
                 {isSubmitting ? (
                   <>

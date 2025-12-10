@@ -1,6 +1,6 @@
 // src/components/doctor/RecordRow.jsx
 import { useState } from 'react';
-import { Pencil, Trash2, Pill, Download } from 'lucide-react';
+import { Pencil, Trash2, Pill, Download, Eye } from 'lucide-react';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import toast from 'react-hot-toast';
 import RecordDetailModal from './RecordDetailModal';
@@ -9,7 +9,7 @@ import { downloadPdf, getMedicalRecordFilename } from '../../utils/pdfDownload';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 
-const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
+const RecordRow = ({ index, record, onUpdated, onError, onDelete, onViewHistory }) => {
   const { t } = useTranslation();
   const { theme } = useTheme();
 
@@ -86,11 +86,18 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
   return (
     <>
       <tr className={`transition-colors ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
-        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{index}</td>
-        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
+        {/* STT - w-16 */}
+        <td className={`px-4 py-4 text-sm text-center align-middle ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+          {index}
+        </td>
+
+        {/* Tên bệnh nhân - w-1/5 */}
+        <td className={`px-6 py-4 text-sm align-middle ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
           {record.patientName || record.patientId || '—'}
         </td>
-        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
+
+        {/* Chẩn đoán - w-1/4 */}
+        <td className={`px-6 py-4 text-sm align-middle ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
           {editing ? (
             <input
               type="text"
@@ -102,10 +109,12 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
               placeholder={t('modal.diagnosisPlaceholder')}
             />
           ) : (
-            record.diagnosis || '—'
+            <div className="line-clamp-2">{record.diagnosis || '—'}</div>
           )}
         </td>
-        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+
+        {/* Ghi chú điều trị - w-1/4 */}
+        <td className={`px-6 py-4 text-sm align-middle ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
           {editing ? (
             <textarea
               value={localNotes}
@@ -117,12 +126,14 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
               placeholder={t('modal.treatmentNotesPlaceholder')}
             />
           ) : (
-            record.treatmentNotes || '—'
+            <div className="line-clamp-2">{record.treatmentNotes || '—'}</div>
           )}
         </td>
-        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+
+        {/* Thao tác - w-32 */}
+        <td className={`px-6 py-4 text-sm text-center align-middle ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
           {editing ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center gap-3">
               <button
                 onClick={handleSave}
                 disabled={saving}
@@ -146,7 +157,7 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2">
 
               {/* Nút Xuất PDF */}
               <button
@@ -161,7 +172,7 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
                 </span>
               </button>
 
-              {/* Nút Chỉnh sửa (mở modal chi tiết) */}
+              {/* Nút Xem chi tiết (mặc định view mode, chỉnh sửa trong modal) */}
               <button
                 type="button"
                 onClick={async (e) => {
@@ -187,25 +198,13 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete }) => {
                   }
                 }}
                 className="p-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 active:scale-95 transition group relative"
-                aria-label={t('doctorRecords.common.edit')}
+                aria-label={t('doctorRecords.common.view')}
               >
-                <Pencil className="w-4 h-4" />
+                <Eye className="w-4 h-4" />
                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none z-10 shadow-lg">
-                  {t('doctorRecords.common.edit')}
+                  {t('doctorRecords.common.view')}
                 </span>
               </button>
-
-              {/* Có thể bật lại sau nếu cần */}
-              {/* <button
-                onClick={() => setShowPrescriptionModal(true)}
-                className="p-2.5 bg-green-600 text-white rounded-full hover:bg-green-700 transition group relative"
-                aria-label={t('modal.prescriptionTitle')}
-              >
-                <Pill className="w-4 h-4" />
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none z-10">
-                  {t('modal.prescriptionTitle')}
-                </span>
-              </button> */}
 
             </div>
           )}

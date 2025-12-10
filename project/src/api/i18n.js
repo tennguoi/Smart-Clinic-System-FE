@@ -2,6 +2,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
+import ChatbotAvatar from '../components/chatbot/ChatbotAvatar';
 
 const resources = {
   vi: {
@@ -221,7 +222,7 @@ doctorsPage: {
 
 },
 newsPage: {
-  title: "Bản Tin Sức Khỏe Cập Nhật Mỗi Ngày",
+  title: " Tin Tức ",
   subtitle: "Theo dõi thông tin mới nhất về công nghệ, điều trị và chăm sóc sức khỏe Tai-Mũi-Họng.",
   searchPlaceholder: "Tìm kiếm theo tiêu đề...",
   allCategories: "Tất cả chuyên mục",
@@ -265,7 +266,7 @@ appointment: {
   time: "Giờ Mong Muốn",
   symptomsLabel: "Mô tả Triệu chứng (không bắt buộc)",
   symptomsPlaceholder: "Bạn có thể mô tả tình trạng (tuỳ chọn)",
-  servicesLabel: "Chọn dịch vụ (tùy chọn)",
+  servicesLabel: "Chọn dịch vụ ",
   selectServicePlaceholder: "Chọn dịch vụ...",
   selectedServices: "Đã chọn {{count}} dịch vụ",
   selectedLabel: "Dịch vụ đã chọn:",
@@ -373,12 +374,12 @@ accountManagement: {
       adminSidebar: {
         statistics: "Thống kê",
         clinic: "Thông Tin Phòng Khám",
-        accounts: "Tài Khoản",
+        accounts: "Quản Lý Tài Khoản",
         articles: "Quản Lý Tin Tức",
         services: "Quản Lý Dịch Vụ",
         appointments: "Quản Lý Lịch Hẹn",
         rooms: "Quản Lý Phòng Khám",
-        medicalRecords: "Lịch Sử Khám Bệnh",
+        medicalRecords: "Quản Lý Hồ Sơ",
         invoices: "Quản Lý Hóa Đơn",
         reviews: "Quản Lý Đánh Giá",
         emailTemplates: "Quản Lý Mẫu Email",
@@ -404,7 +405,7 @@ accountManagement: {
       imageHint: "Kích thước tối đa 10MB, định dạng JPG, PNG, WEBP"
     },
     filter: {
-      title: "Tìm kiếm tiêu đề",
+      title: "Tìm kiếm ",
       titlePlaceholder: "Nhập từ khóa...",
       category: "Danh mục",
       allCategories: "Tất cả danh mục",
@@ -436,13 +437,16 @@ accountManagement: {
       actions: "Thao tác"
     },
     noArticles: "Không tìm thấy tin tức nào",
-    categories: {
-      health: "Sức khỏe",
-      advice: "Tư vấn",
-      treatment: "Điều trị",
-      warning: "Cảnh báo",
-      technology: "Công nghệ"
-    },
+  categories: {
+    health: "Sức khỏe",
+    advice: "Tư vấn",
+    treatment: "Điều trị",
+    warning: "Cảnh báo",
+    technology: "Công nghệ",
+    news: "Tin tức",
+    research: "Nghiên cứu",
+    prevention: "Phòng bệnh"
+  },
     toast: {
       createSuccess: "Tạo tin tức thành công!",
       updateSuccess: "Cập nhật tin tức thành công!",
@@ -534,7 +538,7 @@ accountManagement: {
 servicesManagement: {
   title: "Quản Lý Dịch Vụ",
   createButton: "Tạo dịch vụ",
-  searchLabel: "Tìm kiếm dịch vụ",
+  searchLabel: "Tìm kiếm ",
   searchPlaceholder: "Nhập tên dịch vụ...",
   category: "Danh mục",
   status: "Trạng thái",
@@ -568,6 +572,7 @@ servicesManagement: {
        confirm: "Xác nhận",
 view: "Xem chi tiết",
 save: "Lưu",
+no: "STT",
   },
   modal: {
     createTitle: "Tạo dịch vụ mới",
@@ -677,7 +682,7 @@ appointmentManagement: {
   phonePlaceholder: "0901234567",
   phoneRequired: "Vui lòng nhập số điện thoại",
   phoneLength: "Số điện thoại phải đúng 10 chữ số",
-  email: "Email (tùy chọn)",
+  email: "Email ",
   emailPlaceholder: "example@gmail.com",
   date: "Ngày hẹn",
   datePlaceholder: "Chọn ngày",
@@ -686,11 +691,11 @@ appointmentManagement: {
   timeError: "Chỉ được chọn giờ từ 08:00–12:00 hoặc 14:00–18:00",
   timeInvalid: "Giờ không hợp lệ",
   pastTime: "Không thể đặt lịch vào thời gian đã qua. Vui lòng chọn giờ trong tương lai.",
-  servicesLabel: "Dịch vụ (tùy chọn)",
+  servicesLabel: "Dịch vụ ",
   searchServices: "Tìm kiếm dịch vụ...",
   loadingServices: "Đang tải danh sách dịch vụ...",
   noServicesFound: "Không tìm thấy dịch vụ nào",
-  notes: "Ghi chú (tùy chọn)",
+  notes: "Ghi chú ",
   notesPlaceholder: "Triệu chứng, yêu cầu đặc biệt...",
   confirming: "Đang xác nhận...",
   confirm: "Xác nhận",
@@ -739,96 +744,127 @@ appointmentManagement: {
 
 
 // === THÊM VÀO resources.en.translation ===
-roomManagement: {
-  title: "Quản Lý Phòng Khám",
-  createButton: "Thêm phòng mới",
-  updateButton: "Cập nhật",           // ← mới thêm
-  room: "phòng",
-  searchPlaceholder: "Tên phòng hoặc tên bác sĩ...",
-  statusLabel: "Trạng thái",
-  statusAvailable: "Sẵn sàng",
-  statusOccupied: "Đang sử dụng",
-  activeLabel: "Hoạt động",
-  active: "Hoạt động",
-  inactive: "Ngưng hoạt động",
-  loading: "Đang tải danh sách phòng khám...",
-  noRooms: "Chưa có phòng khám nào",
-  noDoctor: "Chưa gán bác sĩ",
-  noDoctorSelect: "-- Chưa gán bác sĩ --",
-  loadingDoctors: "Đang tải danh sách bác sĩ...",
-  roomName: "Tên phòng",
-  roomNamePlaceholder: "VD: Phòng khám Tai-Mũi-Họng số 1",
-  doctorLabel: "Bác sĩ phụ trách (Tùy chọn)",
-  activeCheckbox: "Phòng đang hoạt động",
-  nameRequired: "Vui lòng nhập tên phòng",
-  createSuccess: "Tạo phòng khám thành công!",
-  updateSuccess: "Cập nhật phòng khám thành công!",
-  deleteSuccess: "Xóa phòng khám thành công!",
-  deleteError: "Không thể xóa phòng khám",
-  loadError: "Không thể tải danh sách phòng khám",
-  loadDoctorsError: "Không thể tải danh sách bác sĩ",
-  modal: {
-    create: "Thêm phòng khám mới",
-    view: "Chi tiết phòng khám",
-    edit: "Chỉnh sửa phòng khám"
+"roomManagement": {
+    "title": "Quản Lý Phòng Khám",
+    "createButton": "Thêm phòng mới",
+    "updateButton": "Cập nhật",
+    "room": "phòng",
+    "searchPlaceholder": "Tên phòng hoặc tên bác sĩ...",
+    "statusLabel": "Trạng thái",
+    "statusAvailable": "Sẵn sàng",
+    "statusOccupied": "Đang sử dụng",
+    "activeLabel": "Hoạt động",
+    "active": "Hoạt động",
+    "inactive": "Ngưng hoạt động",
+    "loading": "Đang tải danh sách phòng khám...",
+    "noRooms": "Chưa có phòng khám nào",
+    "noDoctor": "Chưa gán bác sĩ",
+    "noDoctorSelect": "-- Chưa gán bác sĩ --",
+    "loadingDoctors": "Đang tải danh sách bác sĩ...",
+    "roomName": "Tên phòng",
+    "roomNamePlaceholder": "VD: Phòng khám Tai-Mũi-Họng số 1",
+    "doctorLabel": "Bác sĩ phụ trách (Tùy chọn)",
+    "activeStatus": "Trạng thái hoạt động",
+    "activeCheckbox": "Phòng đang hoạt động",
+    "nameRequired": "Vui lòng nhập tên phòng",
+    "createSuccess": "Tạo phòng khám thành công!",
+    "updateSuccess": "Cập nhật phòng khám thành công!",
+    "activateSuccess": "Đã kích hoạt phòng khám!",
+    "deactivateSuccess": "Đã vô hiệu hóa phòng khám!",
+    "toggleError": "Không thể thay đổi trạng thái phòng khám",
+    "noPermission": "Bạn không có quyền thực hiện thao tác này",
+    "loadError": "Không thể tải danh sách phòng khám",
+    "loadDoctorsError": "Không thể tải danh sách bác sĩ",
+    "modal": {
+      "create": "Thêm phòng khám mới",
+      "view": "Chi tiết phòng khám",
+      "edit": "Chỉnh sửa phòng khám"
+    },
+    "table": {
+      "roomName": "Tên phòng",
+      "doctor": "Bác sĩ",
+      "status": "Trạng thái",
+      "active": "Hoạt động"
+    },
+    "confirmDeactivate": {
+      "title": "Vô hiệu hóa phòng khám?",
+      "text": "Bạn có chắc muốn vô hiệu hóa phòng",
+      "confirm": "Vô hiệu hóa"
+    },
+    "confirmActivate": {
+      "title": "Kích hoạt phòng khám?",
+      "text": "Bạn có chắc muốn kích hoạt phòng",
+      "confirm": "Kích hoạt"
+    },
+    "common": {
+      "stt": "STT",
+      "actions": "Thao tác",
+      "view": "Xem chi tiết",
+      "edit": "Chỉnh sửa",
+      "activate": "Kích hoạt",
+      "deactivate": "Vô hiệu hóa",
+      "cancel": "Hủy",
+      "all": "Tất cả",
+      "clearFilter": "Xóa lọc",
+      "search": "Tìm kiếm"
+    }
   },
-  table: {
-    roomName: "Tên phòng",
-    doctor: "Bác sĩ",
-    status: "Trạng thái",
-    active: "Hoạt động"
-  },
-  confirmDelete: {
-    title: "Xóa phòng khám?",
-    text1: "Bạn có chắc chắn muốn xóa phòng khám",
-    warning: "Hành động này không thể hoàn tác.",
-    confirm: "Xóa"
-  },
-  common: {
-  // ... các key hiện tại ...
-  stt: "STT",
-  actions: "Thao tác",
-  view: "Xem chi tiết",
-  edit: "Chỉnh sửa",
-  delete: "Xóa",
-  cancel: "Hủy",
-  all: "Tất cả",
-  clearFilter: "Xóa lọc",
-  search: "Tìm kiếm"
-},
-},
 medicalRecords: {
-  title: "Lịch Sử Khám Bệnh",
-  allRecords: "Tất cả",
-  recordLabel: "hồ sơ",
-
-  filters: {
-    search: "Tìm kiếm",
-    searchPlaceholder: "Tên bệnh nhân hoặc chẩn đoán...",
-    fromDate: "Từ ngày",
-    toDate: "Đến ngày",
-    clear: "Xóa lọc"
-  },
-
-  table: {
-    stt: "STT",
-    examDate: "Ngày khám",
-    patient: "Bệnh nhân",
-    diagnosis: "Chẩn đoán",
-    treatmentNotes: "Ghi chú điều trị"
-  },
-
-  noResults: "Không tìm thấy kết quả phù hợp.",
-  noRecords: "Chưa có lịch sử khám bệnh nào.",
-  na: "N/A",
-  walkInPatient: "Khách vãng lai",
-
-  errors: {
-    loadFailed: "Không thể tải lịch sử khám bệnh.",
-    startDateAfterEnd: "Từ ngày phải nhỏ hơn hoặc bằng Đến ngày",
-    endDateBeforeStart: "Đến ngày phải lớn hơn hoặc bằng Từ ngày"
-  }
-},
+        title: "Quản Lý Hồ Sơ",
+        allRecords: "Tất cả",
+        recordLabel: "hồ sơ",
+        patientLabel: "hồ sơ",
+ 
+        // Patient History Modal
+        historyTitle: "Lịch sử khám bệnh",
+        patient: "Bệnh nhân",
+        diagnosis: "Chẩn đoán",
+        treatmentNotes: "Ghi chú điều trị",
+        doctor: "Bác sĩ",
+        noHistory: "Chưa có lịch sử khám bệnh nào",
+        viewHistory: "Xem lịch sử",
+ 
+        filters: {
+          search: "Tìm kiếm",
+          searchLabelDetail: "Tìm kiếm ",
+          searchPlaceholder: "Tìm kiếm (Tên, SĐT, CCCD, BHYT, Chẩn đoán)",
+          fromDate: "Từ ngày",
+          toDate: "Đến ngày",
+          clear: "Xóa lọc"
+        },
+ 
+        table: {
+          stt: "STT",
+          examDate: "Ngày khám",
+          patient: "Bệnh nhân",
+          diagnosis: "Chẩn đoán",
+          treatmentNotes: "Ghi chú điều trị",
+          phone: "SĐT",
+          idNumber: "CCCD",
+          insurance: "BHYT",
+          visitCount: "Số lần khám",
+          lastVisit: "Lần cuối"
+        },
+ 
+        common: {
+          loading: "Đang tải...",
+          actions: "Thao tác",
+          close: "Đóng",
+          exportPdf: "Xuất PDF"
+        },
+ 
+        noResults: "Không tìm thấy kết quả phù hợp.",
+        noRecords: "Chưa có lịch sử khám bệnh nào.",
+        na: "N/A",
+        walkInPatient: "Khách vãng lai",
+ 
+        errors: {
+          loadFailed: "Không thể tải lịch sử khám bệnh.",
+          startDateAfterEnd: "Từ ngày phải nhỏ hơn hoặc bằng Đến ngày",
+          endDateBeforeStart: "Đến ngày phải lớn hơn hoặc bằng Từ ngày"
+        }
+      },
+ 
 invoices: {
       label: "hóa đơn",
       createButton: "Tạo hóa đơn",
@@ -858,7 +894,7 @@ invoices: {
       "1": "Chỉ định dịch vụ",
       "2": "Thanh toán"
     },
-    reateFirstInvoice: "Vui lòng tạo hóa đơn mới",
+    createFirstInvoice: "Vui lòng tạo hóa đơn mới",
 
       status: {
         search: "Tìm kiếm",
@@ -922,6 +958,7 @@ modal: {
     "processing": "Đang xử lý...",
     "success": "Thành công!",
     "error": "Có lỗi xảy ra",
+    "backToList":"Quay lại danh sách hóa đơn",
   // ...
 },
       table: {
@@ -1001,7 +1038,7 @@ queueManagement: {
     queueCode: "Mã hàng đợi",
     patient: "Bệnh nhân",
     dob: "Ngày sinh",
-    contact: "Liên hệ",
+    contact: "Số điện thoại ",
     room: "Phòng khám",
     priority: "Ưu tiên",
     status: "Trạng thái",
@@ -1070,7 +1107,7 @@ queueManagement: {
   doctor: "BS: {{name}}"
 },
 patientRecords: {
-  title: "Quản Lý Bệnh Nhân",
+  title: "Danh Sách Bệnh Nhân",
   label: "bệnh nhân",
   addButton: "Thêm bệnh nhân",
   loading: "Đang tải danh sách bệnh nhân...",
@@ -1104,13 +1141,16 @@ receptionSidebar: {
   appointments: "Lịch Hẹn",
   records: "Danh Sách Bệnh Nhân",
   rooms: "Quản Lý Phòng",
-  invoices: "Hóa Đơn"
+  invoices: "Hóa Đơn",
+  appointmentstoday: "Lịch Hẹn Hôm Nay",
 },
 doctorStats: {
   header: {
     subtitle: "Thống kê hiệu suất",
     title: "Bác sĩ – Báo cáo ca khám"
   },
+  noData: "Chưa có dữ liệu thống kê",
+  week:"Tuần",
   range: {
     day: "Ngày",
     week: "Tuần",
@@ -1137,6 +1177,8 @@ doctorStats: {
     visitsByPeriod: "Số ca khám theo {{#if (eq context 'hour')}}giờ{{else}}ngày{{/if}}",
     trend: "Xu hướng số ca khám",
     "visitsByHour": "Lượt khám theo giờ",
+    visitsByDay: "Lượt khám theo ngày",
+    visitsByMonth: "Lượt khám theo tháng"
 
   },
   table: {
@@ -1162,15 +1204,17 @@ doctorStats: {
 doctorSidebar: {
   stats: "Thống kê",
   currentPatient: "Bệnh nhân hiện tại",
-  records: "Quản lý Hồ sơ",
-  history: "Lịch sử khám",
+  records: "Quản lý phiếu khám ",
+  history: "Quản lý hồ sơ",
   invoices: "Hóa đơn"
 },
 doctorExamination: {
   // Tabs
   tabExamination: "Khám & Kê đơn",
   tabServices: "Chỉ định dịch vụ",
-  
+  "male": "Nam",
+  "female": "Nữ",
+  "years": "tuổi",
   // AI Assistant Button
   aiAssistantOn: "Đang bật AI",
   aiAssistantOff: "Bật AI Trợ lý",
@@ -1185,7 +1229,7 @@ doctorExamination: {
   waitingQueueTitle: "Hàng đợi tiếp theo",
   nextPatientBadge: "Tiếp theo",
   noPatientsInQueue: "Không còn bệnh nhân nào",
-
+close:"Đóng",
   // Examination tab
   diagnosisLabel: "Chẩn đoán",
   diagnosisRequired: "Vui lòng nhập chẩn đoán",
@@ -1238,10 +1282,12 @@ doctorExamination: {
   aiHint: 'Nhập chẩn đoán → Nhấn "AI Sinh Phác Đồ" để tự động tạo ghi chú và thuốc',
   aiSuggestedDrugs: "AI Đề Xuất {{count}} Thuốc",
   applyAll: "Áp dụng tất cả",
-  selectDrugsHint: "Tick chọn thuốc cần dùng hoặc áp dụng tất cả"
+  selectDrugsHint: "Tick chọn thuốc cần dùng hoặc áp dụng tất cả",
+    aiAssistantOn: "Đang bật AI",
+  aiAssistantOff: "Bật AI Trợ lý",
 },
 doctorRecords: {
-  title: "Quản lý Hồ sơ & Hoàn thành khám",
+  title: "Quản lý phiếu khám",
   listTitle: "Danh sách hồ sơ đã tạo",
   noRecords: "Chưa có hồ sơ nào. Hãy nhấn \"Tạo hồ sơ mới\" để hoàn thành ca khám.",
   noResults: "Không tìm thấy hồ sơ nào phù hợp với bộ lọc.",
@@ -1250,7 +1296,7 @@ doctorRecords: {
   },
  label: "hồ sơ",
   filters: {
-    keyword: "Từ khóa tìm kiếm",
+    keyword: "Tìm kiếm",
     keywordPlaceholder: "Nhập tên bệnh nhân, SĐT...",
     fromDate: "Từ ngày",
     toDate: "Đến ngày",
@@ -1317,95 +1363,58 @@ modal: {
   },
 },
 profilepage: {
-  "settings": "Cài Đặt",
+ "settings": "Cài đặt",
   "back": "Quay lại",
-  "personal_info": "Thông Tin Cá Nhân",
-  "security": "Bảo Mật",
-  "personal_info_title": "Thông Tin Cá Nhân",
-    "loading_personal_info": "Đang tải thông tin cá nhân...",
-    "edit": "Chỉnh sửa",
-    "change_avatar": "Thay đổi ảnh đại diện",
-    "no_name_yet": "Chưa có tên",
-    "full_name": "Tên đầy đủ",
-    "enter_full_name": "Nhập tên đầy đủ",
-    "email_cannot_change": "Email không thể thay đổi",
-    "phone": "Số điện thoại",
-    "phone_placeholder": "0xxxxxxxxx (10 số)",
-    "date_of_birth": "Ngày sinh",
-    "gender": "Giới tính",
-    "gender_male": "Nam",
-    "gender_female": "Nữ",
-    "gender_other": "Khác",
-    "address": "Địa chỉ",
-    "enter_address": "Nhập địa chỉ của bạn",
-    "security_title": "Bảo Mật & Cài Đặt",
-    "security_password": "Mật khẩu",
-    "security_password_desc": "Quản lý mật khẩu đăng nhập của bạn",
-    "security_change_password": "Đổi Mật Khẩu",
-    "security_2fa": "Xác Thực 2 Yếu Tố (2FA)",
-    "security_2fa_enabled": "Tài khoản của bạn được bảo vệ với lớp bảo mật bổ sung",
-    "security_2fa_disabled": "Bật tính năng này để tăng cường bảo mật tài khoản",
-    "security_2fa_warning": "Bạn sẽ cần mã xác thực từ email mỗi khi đăng nhập",
-    "security_2fa_recommend": "Khuyến nghị bật 2FA để bảo vệ tài khoản",
-    "security_tips": "Lời Khuyên Bảo Mật",
-    "security_tip1": "Sử dụng mật khẩu mạnh với ít nhất 12 ký tự",
-    "security_tip2": "Không chia sẻ mật khẩu với bất kỳ ai",
-    "security_tip3": "Đổi mật khẩu định kỳ mỗi 3-6 tháng",
-    "security_tip4": "Bật xác thực 2 yếu tố để tăng cường bảo mật",
-    "security_current_pw": "Mật khẩu hiện tại",
-    "security_new_pw": "Mật khẩu mới",
-    "security_confirm_pw": "Xác nhận mật khẩu mới",
-    "security_pw_mismatch": "Mật khẩu mới và xác nhận không khớp.",
-    "security_pw_success": "Đổi mật khẩu thành công!",
-    "security_otp_title": "Xác Thực OTP",
-    "security_otp_desc": "Mã OTP đã được gửi đến email của bạn.<br>Vui lòng nhập mã 6 số để bật 2FA.",
-    "security_otp_code": "Mã OTP",
-    "security_otp_invalid": "OTP không hợp lệ. Vui lòng thử lại.",
-    "security_otp_length": "Vui lòng nhập mã OTP 6 số.",
-    "security_verifying": "Đang xác thực...",
-    "security_confirm_otp": "Xác nhận OTP",
-    "cancel": "Hủy"
-},
-profileManager: {
-  loading: "Đang tải thông tin...",
-  updateSuccess: "Cập nhật thông tin thành công!",
-  updateFailed: "Cập nhật thất bại",
-  uploadPhoto: "Đang tải ảnh lên...",
-  uploadSuccess: "Cập nhật ảnh đại diện thành công!",
-  uploadFailed: "Tải ảnh thất bại",
-  fileTooLarge: "Kích thước ảnh không được vượt quá 5MB",
-  cancel: "Hủy",
-  saveChanges: "Cập Nhật Thông Tin",
-  processing: "Đang xử lý..."
-},
-bankQRModal: {
-  title: "Quét mã QR thanh toán",
-  billId: "Mã HĐ",
-  amountToPay: "Số tiền thanh toán",
-  scanQR: "Mở app ngân hàng và quét mã QR",
-  downloadQR: "Tải xuống",
-  manualTransfer: "Hoặc chuyển khoản thủ công",
-  bank: "Ngân hàng",
-  accountHolder: "Chủ TK",
-  accountNumber: "Số tài khoản",
-  amount: "Số tiền",
-  transferContent: "Nội dung CK",
-  paymentSuccess: "Thanh toán thành công!",
-  waitingPayment: "Đang chờ thanh toán...",
-  status: "Trạng thái",
-  paidAmount: "Đã thanh toán",
-  remainingAmount: "Còn lại",
-  timeoutError: "Hết thời gian chờ. Vui lòng kiểm tra lại hoặc liên hệ hỗ trợ.",
-  checkError: "Không thể kiểm tra trạng thái thanh toán",
-  confirmError: "Lỗi khi xác nhận thanh toán. Vui lòng thử lại.",
-  importantNote: "Lưu ý quan trọng",
-  note1: "Chuyển đúng số tiền và đúng nội dung",
-  note2: "Sau khi CK, nhấn \"Xác nhận đã thanh toán\"",
-  note3: "Hệ thống sẽ tự động kiểm tra thanh toán mỗi 10 giây",
-  note4: "Giao dịch được xác nhận trong vài phút",
-  cancel: "Hủy",
-  confirmPayment: "Xác nhận đã thanh toán",
-  processing: "Đang xử lý..."
+  "personal_info": "Thông tin cá nhân",
+  "security": "Bảo mật",
+  "personal_info_title": "Thông tin cá nhân",
+  "loading_personal_info": "Đang tải thông tin cá nhân...",
+  "edit": "Chỉnh sửa",
+  "change_avatar": "Thay đổi ảnh đại diện",
+  "no_name_yet": "Chưa có tên",
+  "full_name": "Họ và Tên",
+  "enter_full_name": "Nhập họ và tên",
+  "email_cannot_change": "Email không thể thay đổi",
+  "phone": "Số điện thoại",
+  "phone_placeholder": "0xxxxxxxxx (10 chữ số)",
+  "date_of_birth": "Ngày sinh",
+  "gender": "Giới tính",
+  "gender_male": "Nam",
+  "gender_female": "Nữ",
+  "gender_other": "Khác",
+  "address": "Địa chỉ",
+  "enter_address": "Nhập địa chỉ của bạn",
+  "security_title": "Bảo mật & Cài đặt",
+  "security_password": "Mật khẩu",
+  "security_password_desc": "Quản lý mật khẩu đăng nhập",
+  "security_change_password": "Đổi mật khẩu",
+  "security_2fa": "Xác thực hai lớp (2FA)",
+  "security_2fa_enabled_desc": "Tài khoản của bạn đang được bảo vệ bằng một lớp bảo mật bổ sung",
+  "security_2fa_disabled_desc": "Hãy bật tính năng này để tăng cường bảo mật",
+  "security_2fa_enabled_warning": "Bạn sẽ cần mã xác minh email mỗi lần đăng nhập",
+  "security_2fa_recommendation": "Chúng tôi khuyến nghị bạn bật 2FA",
+  "security_tips_title": "Mẹo bảo mật",
+  "security_tip_strong_password": "Sử dụng mật khẩu mạnh có ít nhất 12 ký tự",
+  "security_tip_no_share": "Không chia sẻ mật khẩu với bất kỳ ai",
+  "security_tip_change_regularly": "Hãy thay đổi mật khẩu mỗi 3-6 tháng",
+  "security_tip_enable_2fa": "Bật xác thực hai lớp",
+  "security_current_password": "Mật khẩu hiện tại",
+  "security_enter_current_password": "Nhập mật khẩu hiện tại",
+  "security_new_password": "Mật khẩu mới",
+  "security_enter_new_password": "Nhập mật khẩu mới",
+  "security_confirm_new_password": "Xác nhận mật khẩu mới",
+  "security_password_mismatch": "Mật khẩu mới và xác nhận không khớp.",
+  "security_password_changed_success": "Đổi mật khẩu thành công!",
+  "security_password_change_failed": "Đổi mật khẩu thất bại.",
+  "security_password_change_error": "Lỗi khi đổi mật khẩu",
+  "security_otp_title": "Xác minh OTP",
+  "security_otp_description": "Một mã OTP đã được gửi tới email của bạn.\nVui lòng nhập mã gồm 6 chữ số để bật 2FA.",
+  "security_otp_code": "Mã OTP",
+  "security_otp_invalid": "Mã OTP không hợp lệ. Vui lòng thử lại.",
+  "security_otp_invalid_length": "Vui lòng nhập mã OTP gồm 6 chữ số.",
+  "security_verifying": "Đang xác minh...",
+  "security_confirm_otp": "Xác nhận OTP",
+  "cancel": "Hủy",
 },
 login: {
   title: "Đăng nhập phòng khám",
@@ -1470,7 +1479,7 @@ reviewsManagement: {
   title: "Quản Lý Đánh Giá",
   createButton: "Tạo Đánh Giá",
   filterRating: "Lọc theo đánh giá",
-  filterReviewer: "Tìm theo người đánh giá",
+  filterReviewer: "Tìm kiếm ",
   clearFilters: "Xóa bộ lọc",
   allRatings: "Tất cả",
   table: {
@@ -1607,6 +1616,169 @@ serviceSelection: {
   loading: "Đang tải dịch vụ...",
   noResults: "Không tìm thấy dịch vụ phù hợp"
 },
+emailTemplates: {
+  title: "Quản Lý Mẫu Email",
+  subject: "Tiêu đề",
+  subjectLabel: "Tiêu đề",
+  contentLabel: "Nội dung Email",
+  saveButton: "Lưu Thay Đổi",
+  
+  errors: {
+    loadFailed: "Không thể tải danh sách email templates",
+    fillRequired: "Vui lòng điền đầy đủ thông tin",
+    updateFailed: "Có lỗi xảy ra"
+  },
+  
+  toast: {
+    updateSuccess: "Cập nhật template thành công"
+  },
+      common: {
+  // ... các key hiện tại ...
+  stt: "STT",
+  actions: "Thao tác",
+  view: "Xem chi tiết",
+  edit: "Chỉnh sửa",
+  delete: "Xóa",
+  cancel: "Hủy",
+  all: "Tất cả",
+  clearFilter: "Xóa lọc",
+  search: "Tìm kiếm"
+},
+},
+// Trong resources.vi.translation
+aiAssistant: {
+  title: "AI Trợ Lý Y Tế",
+  statusThinking: "Đang suy nghĩ...",
+  statusReady: "Sẵn sàng hỗ trợ",
+  welcomeMessage: "Xin chào bác sĩ!\nTôi là AI Trợ Lý Y Tế thông minh.\nBạn cần hỗ trợ chẩn đoán, kê đơn hay giải thích kết quả?",
+  newConversation: "Cuộc trò chuyện mới",
+  loadingHistory: "Đang tải...",
+  noHistory: "Chưa có lịch sử trò chuyện",
+  conversationTitle: "Cuộc trò chuyện",
+  applyPlan: "Áp dụng phác đồ này vào form",
+  noPlanFound: "Không tìm thấy phác đồ trong response",
+  inputPlaceholder: "Hỏi AI về chẩn đoán, đơn thuốc, hướng dẫn bệnh nhân...",
+  sendButton: "Gửi",
+  sending: "Đang gửi...",
+  aiAnalyzing: "AI đang phân tích...",
+  disclaimer: "AI chỉ mang tính hỗ trợ • Luôn kiểm tra lại trước khi áp dụng",
+  errorLoginRequired: "Vui lòng đăng nhập lại",
+  errorCreateConversation: "Không tạo được cuộc trò chuyện mới",
+  errorNoSession: "Không có sessionId để gọi n8n",
+  errorAINoResponse: "AI không trả lời",
+  errorConnection: "Không kết nối được với AI",
+  errorLoadHistory: "Không tải được lịch sử",
+  errorLoadConversation: "Không tải được cuộc trò chuyện",
+  errorPrefix: "Lỗi kết nối AI: "
+},
+appointmentCheckIn: {
+  title: "Lịch hẹn hôm nay",
+  loading: "Đang tải danh sách lịch hẹn...",
+  noResults: "Không tìm thấy lịch hẹn phù hợp",
+  noAppointments: "Không có lịch hẹn nào hôm nay",
+  
+  table: {
+    stt: "STT",
+    code: "Mã lịch",
+    patient: "Bệnh nhân",
+    phone: "Số điện thoại",
+    time: "Thời gian",
+    services: "Dịch vụ",
+    status: "Trạng thái",
+    actions: "Thao tác"
+  },
+  
+  status: {
+    added: "Đã thêm",
+    upcoming: "Sắp tới",
+    overdue: "Quá giờ",
+    waiting: "Chờ check-in"
+  },
+  
+  actions: {
+    addToQueue: "Thêm vào hàng chờ",
+    viewDetail: "Xem chi tiết lịch hẹn"
+  },
+  
+  gender: {
+    male: "Nam",
+    female: "Nữ",
+    other: "Khác"
+  },
+  
+  priority: {
+    emergency: "Khẩn cấp",
+    urgent: "Ưu tiên",
+    normal: "Thường"
+  },
+  
+  modal: {
+    title: "Chi tiết lịch hẹn",
+    code: "Mã lịch hẹn",
+    time: "Thời gian hẹn",
+    patientInfo: "Thông tin bệnh nhân",
+    name: "Họ tên",
+    phone: "Số điện thoại",
+    email: "Email",
+    gender: "Giới tính",
+    notes: "Ghi chú",
+    priority: "Mức độ ưu tiên",
+    idNumber: "CCCD/CMND",
+    insurance: "Số BHYT",
+    address: "Địa chỉ",
+    services: "Dịch vụ đã chọn",
+    checkedIn: "Đã được thêm vào hàng chờ"
+  },
+  label: "lịch hẹn",
+  errors: {
+    loadFailed: "Không thể tải danh sách",
+    noAppointment: "Không tìm thấy lịch hẹn!",
+    phoneInvalid: "Số điện thoại phải đúng 10 chữ số!",
+    nameRequired: "Vui lòng nhập tên bệnh nhân!",
+    dobRequired: "Vui lòng chọn ngày sinh!",
+    checkInFailed: "Check-in thất bại"
+  },
+  
+  success: {
+    added: "Đã thêm vào hàng chờ thành công!",
+    addedWithRoom: "Đã thêm – Phòng: {{room}}{{doctor}}"
+  },
+  
+  doctor: "BS"
+},
+ "appointments": {
+    "search": "Tìm kiếm",
+    "searchPlaceholder": "Nhập tên hoặc số điện thoại",
+    "clearSearch": "Xóa nội dung tìm kiếm",
+    "status": "Trạng thái",
+    "statusOptions": {
+      "all": "Tất cả",
+      "checkedIn": "Đã thêm",
+      "upcoming": "Sắp tới",
+      "past": "Quá giờ",
+      "waiting": "Chờ check-in"
+    },
+    "clearFilters": "Xóa bộ lọc",
+    "filteringBy": "Đang lọc",
+    "keyword": "Từ khóa",
+    "removeKeyword": "Bỏ từ khóa"
+  },
+  profileManager: {
+  loading: "Đang tải thông tin hồ sơ...",
+  updateSuccess: "Cập nhật hồ sơ thành công!",
+  updateFailed: "Cập nhật thất bại",
+  uploadPhoto: "Đang tải ảnh lên...",
+  uploadSuccess: "Cập nhật ảnh đại diện thành công!",
+  uploadFailed: "Tải ảnh lên thất bại",
+  fileTooLarge: "Kích thước ảnh không được vượt quá 5MB",
+  cancel: "Hủy",
+  saveChanges: "Lưu thay đổi",
+  processing: "Đang xử lý..."
+},
+ChatbotAvatar: {
+  "tooltip": "Cần hỗ trợ? Chat với  tôi!",
+},
+
     }
   },
 
@@ -1817,7 +1989,7 @@ doctorsPage: {
 
 },
 newsPage: {
-  title: "Daily Health News Updates",
+  title: "Articles",
   subtitle: "Stay updated with the latest in technology, treatment, and ENT healthcare.",
   searchPlaceholder: "Search by title...",
   allCategories: "All categories",
@@ -1971,8 +2143,8 @@ accountManagement: {
             adminSidebar: {
         statistics: "Statistics",
         clinic: "Clinic Information",
-        accounts: "Accounts",
-        articles: "News & Articles",
+        accounts: "Accounts Manangement",
+        articles: "Articles Manangement",
         services: "Services Management",
         appointments: "Appointment Management",
         rooms: "Examination Rooms",
@@ -2002,7 +2174,7 @@ accountManagement: {
       imageHint: "Max 10MB, JPG, PNG, WEBP formats"
     },
     filter: {
-      title: "Search title",
+      title: "Search ",
       titlePlaceholder: "Enter keyword...",
       category: "Category",
       allCategories: "All categories",
@@ -2020,13 +2192,16 @@ accountManagement: {
       actions: "Actions"
     },
     noArticles: "No articles found",
-    categories: {
-      health: "Health",
-      advice: "Advice",
-      treatment: "Treatment",
-      warning: "Warning",
-      technology: "Technology"
-    },
+   categories: {
+    health: "Health",
+    advice: "Advice",
+    treatment: "Treatment",
+    warning: "Warning",
+    technology: "Technology",
+    news: "News",
+    research: "Research",
+    prevention: "Prevention"
+  },
                 common: {
   // ... existing keys ...
   stt: "No.",
@@ -2175,6 +2350,7 @@ common: {
        confirm: "Confirm",
       view: "View Details",
       save: "Save",
+      no: "No.",
   },
   toast: {
     createSuccess: "Service created successfully!",
@@ -2272,7 +2448,7 @@ appointmentManagement: {
   phonePlaceholder: "0901234567",
   phoneRequired: "Please enter phone number",
   phoneLength: "Phone number must be exactly 10 digits",
-  email: "Email (optional)",
+  email: "Email ",
   emailPlaceholder: "example@gmail.com",
   date: "Appointment Date",
   datePlaceholder: "Select date",
@@ -2281,11 +2457,11 @@ appointmentManagement: {
   timeError: "Only time between 08:00–12:00 or 14:00–18:00 is allowed",
   timeInvalid: "Invalid time",
   pastTime: "Cannot book in the past. Please select a future time.",
-  servicesLabel: "Services (optional)",
+  servicesLabel: "Services ",
   searchServices: "Search services...",
   loadingServices: "Loading service list...",
   noServicesFound: "No services found",
-  notes: "Notes (optional)",
+  notes: "Notes ",
   notesPlaceholder: "Symptoms, special requests...",
   confirming: "Confirming...",
   confirm: "Confirm",
@@ -2333,100 +2509,127 @@ appointmentManagement: {
 
 
 },
-roomManagement: {
-  title: "Examination Room Management",
-  "appointment": "appointment",
-  "appointments": "appointments",
-  createButton: "Add New Room",
-   updateButton: "Update",
-  room: "rooms",
-  searchPlaceholder: "Room name or doctor name...",
-  statusLabel: "Status",
-  statusAvailable: "Available",
-  statusOccupied: "Occupied",
-  activeLabel: "Active",
-  active: "Active",
-  inactive: "Inactive",
-  loading: "Loading room list...",
-  noRooms: "No examination rooms yet",
-  noDoctor: "No doctor assigned",
-  noDoctorSelect: "-- No doctor assigned --",
-  loadingDoctors: "Loading doctor list...",
-  roomName: "Room Name",
-  roomNamePlaceholder: "E.g: ENT Examination Room 1",
-  doctorLabel: "Assigned Doctor (Optional)",
-  activeCheckbox: "Room is active",
-  nameRequired: "Please enter room name",
-  createSuccess: "Room created successfully!",
-  updateSuccess: "Room updated successfully!",
-  deleteSuccess: "Room deleted successfully!",
-  deleteError: "Cannot delete room",
-  deleteConfirm: "Are you sure you want to delete this room?",
-  loadError: "Unable to load room list",
-  loadDoctorsError: "Unable to load doctor list",
-  modal: {
-    create: "Add New Examination Room",
-    view: "Room Details",
-    edit: "Edit Room"
+"roomManagement": {
+    "title": "Examination Room Management",
+    "createButton": "Add New Room",
+    "updateButton": "Update",
+    "room": "rooms",
+    "searchPlaceholder": "Room name or doctor name...",
+    "statusLabel": "Status",
+    "statusAvailable": "Available",
+    "statusOccupied": "Occupied",
+    "activeLabel": "Active",
+    "active": "Active",
+    "inactive": "Inactive",
+    "loading": "Loading room list...",
+    "noRooms": "No examination rooms yet",
+    "noDoctor": "No doctor assigned",
+    "noDoctorSelect": "-- No doctor assigned --",
+    "loadingDoctors": "Loading doctor list...",
+    "roomName": "Room Name",
+    "roomNamePlaceholder": "E.g: ENT Examination Room 1",
+    "doctorLabel": "Assigned Doctor (Optional)",
+    "activeStatus": "Active Status",
+    "activeCheckbox": "Room is active",
+    "nameRequired": "Please enter room name",
+    "createSuccess": "Room created successfully!",
+    "updateSuccess": "Room updated successfully!",
+    "activateSuccess": "Room activated successfully!",
+    "deactivateSuccess": "Room deactivated successfully!",
+    "toggleError": "Cannot change room status",
+    "noPermission": "You do not have permission to perform this action",
+    "loadError": "Unable to load room list",
+    "loadDoctorsError": "Unable to load doctor list",
+    "modal": {
+      "create": "Add New Examination Room",
+      "view": "Room Details",
+      "edit": "Edit Room"
+    },
+    "table": {
+      "roomName": "Room Name",
+      "doctor": "Doctor",
+      "status": "Status",
+      "active": "Active"
+    },
+    "confirmDeactivate": {
+      "title": "Deactivate Room?",
+      "text": "Are you sure you want to deactivate the room",
+      "confirm": "Deactivate"
+    },
+    "confirmActivate": {
+      "title": "Activate Room?",
+      "text": "Are you sure you want to activate the room",
+      "confirm": "Activate"
+    },
+    "common": {
+      "stt": "No.",
+      "actions": "Actions",
+      "view": "View Details",
+      "edit": "Edit",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "cancel": "Cancel",
+      "all": "All",
+      "clearFilter": "Clear Filters",
+      "search": "Search"
+    }
   },
-  table: {
-    roomName: "Room Name",
-    doctor: "Doctor",
-    status: "Status",
-    active: "Active"
-  },
-  confirmDelete: {
-    title: "Delete Room?",
-    text1: "Are you sure you want to delete the room",
-    warning: "This action cannot be undone.",
-    confirm: "Delete"
-  },
-  common: {
-  // ... existing keys ...
-  stt: "No.",
-  actions: "Actions",
-  view: "View Details",
-  edit: "Edit",
-  delete: "Delete",
-  cancel: "Cancel",
-  all: "All",
-  clearFilter: "Clear Filters",
-  search: "Search",
-  
-},
-},
 medicalRecords: {
-  title: "Medical Record History",
-  allRecords: "All Records",
-  recordLabel: "records",
+        title: "Medical Record History",
+        allRecords: "All Records",
+        recordLabel: "records",
+        patientLabel: "records",
+ 
+        // Patient History Modal
+        historyTitle: "Medical History",
+        patient: "Patient",
+        diagnosis: "Diagnosis",
+        treatmentNotes: "Treatment Notes",
+        doctor: "Doctor",
+        noHistory: "No medical history found",
+        viewHistory: "View History",
+ 
+        filters: {
+          search: "Search",
+          searchLabelDetail: "Search ",
+          searchPlaceholder: "Patient name or diagnosis...",
+          fromDate: "From Date",
+          toDate: "To Date",
+          clear: "Clear Filters"
+        },
+ 
+        table: {
+          stt: "No.",
+          examDate: "Examination Date",
+          patient: "Patient",
+          diagnosis: "Diagnosis",
+          treatmentNotes: "Treatment Notes",
+          phone: "Phone",
+          idNumber: "ID Number",
+          insurance: "Insurance",
+          visitCount: "Visits",
+          lastVisit: "Last Visit"
+        },
+ 
+        common: {
+          loading: "Loading...",
+          actions: "Actions",
+          close: "Close",
+          exportPdf: "Export PDF"
+        },
+ 
+        noResults: "No matching results found.",
+        noRecords: "No medical records yet.",
+        na: "N/A",
+        walkInPatient: "Walk-in Patient",
+ 
+        errors: {
+          loadFailed: "Failed to load medical history.",
+          startDateAfterEnd: "Start date must be before or equal to End date",
+          endDateBeforeStart: "End date must be after or equal to Start date"
+        }
+      },
 
-  filters: {
-    search: "Search",
-    searchPlaceholder: "Patient name or diagnosis...",
-    fromDate: "From Date",
-    toDate: "To Date",
-    clear: "Clear Filters"
-  },
-
-  table: {
-    stt: "No.",
-    examDate: "Examination Date",
-    patient: "Patient",
-    diagnosis: "Diagnosis",
-    treatmentNotes: "Treatment Notes"
-  },
-
-  noResults: "No matching results found.",
-  noRecords: "No medical records yet.",
-  na: "N/A",
-  walkInPatient: "Walk-in Patient",
-
-  errors: {
-    loadFailed: "Failed to load medical history.",
-    startDateAfterEnd: "Start date must be before or equal to End date",
-    endDateBeforeStart: "End date must be after or equal to Start date"
-  }
-},
 invoices: {
       label: "invoices",
       createButton: "Create Invoice",
@@ -2532,6 +2735,7 @@ pdfDownloadSuccess: "Invoice PDF downloaded successfully!",
     "processing": "Processing...",
     "success": "Success!",
     "error": "An error occurred",
+     "backToList":"Return to invoices list",
   // ...
 },
       errors: {
@@ -2589,7 +2793,7 @@ queueManagement: {
     queueCode: "Queue Code",
     patient: "Patient",
     dob: "Date of Birth",
-    contact: "Contact",
+    contact: "Phone number",
     room: "Examination Room",
     priority: "Priority",
     status: "Status",
@@ -2692,13 +2896,16 @@ receptionSidebar: {
   appointments: "Appointments",
   records: "Patient Records",
   rooms: "Room Management",
-  invoices: "Invoices"
+  invoices: "Invoices",
+  appointmentstoday: "Today's Appointments"
 },
 doctorStats: {
   header: {
     subtitle: "Performance Statistics",
     title: "Doctor – Examination Report"
   },
+  noData: "No statistics data available",
+  week:"Week",
   range: {
     day: "Day",
     week: "Week",
@@ -2725,6 +2932,8 @@ doctorStats: {
     visitsByPeriod: "Examinations by {{#if (eq context 'hour')}}hour{{else}}day{{/if}}",
     trend: "Examination Trend",
     visitsByHour:"Visits By Hour",
+    visitsByDay: "Visits By Day",
+    visitsByMonth: "Visits By Month",
   },
   table: {
     title: "Statistics Table by Time Slot",
@@ -2757,11 +2966,13 @@ doctorExamination: {
   // Tabs
   tabExamination: "Examination & Prescription",
   tabServices: "Service Indications",
-  
+  close:"Close",
   // AI Assistant Button
   aiAssistantOn: "AI On",
   aiAssistantOff: "Enable AI Assistant",
-  
+  "male": "Male",
+  "female": "Female",
+  "years": "years old",
   // Patient info
   queueNumber: "Queue No.",
   checkInTime: "Checked in at",
@@ -2825,11 +3036,13 @@ doctorExamination: {
   aiHint: 'Enter diagnosis → Click "AI Generate Plan" to auto-create notes and drugs',
   aiSuggestedDrugs: "AI Suggested {{count}} Drugs",
   applyAll: "Apply All",
-  selectDrugsHint: "Check drugs to use or apply all"
+  selectDrugsHint: "Check drugs to use or apply all",
+   aiAssistantOn: "AI On",
+  aiAssistantOff: "Enable AI Assistant",
 },
 doctorRecords: {
   totalRecords: "Total Records: ",
-  title: "Medical Records & Complete Examination",
+  title: "Medical Records Manangement",
   listTitle: "Created Records",
   noRecords: "No records yet. Click \"Create New Record\" to complete an examination.",
   noResults: "No records match the current filters.",
@@ -2838,7 +3051,7 @@ doctorRecords: {
   },
   label: " records",
   filters: {
-    keyword: "Search Keyword",
+    keyword: "Search ",
     keywordPlaceholder: "Enter patient name, phone...",
     fromDate: "From Date",
     toDate: "To Date",
@@ -3197,6 +3410,157 @@ serviceSelection: {
   loading: "Loading services...",
   noResults: "No matching services found"
 },
+emailTemplates: {
+  title: "Email Template Management",
+  subject: "Subject",
+  subjectLabel: "Subject",
+  contentLabel: "Email Content",
+  saveButton: "Save Changes",
+  
+  errors: {
+    loadFailed: "Failed to load email templates",
+    fillRequired: "Please fill in all required fields",
+    updateFailed: "An error occurred"
+  },
+  
+  toast: {
+    updateSuccess: "Template updated successfully"
+  },
+              common: {
+  // ... existing keys ...
+  stt: "No.",
+  actions: "Actions",
+  view: "View Details",
+  edit: "Edit",
+  delete: "Delete",
+  cancel: "Cancel",
+  all: "All",
+  clearFilter: "Clear Filters",
+  search: "Search",
+  
+},
+},
+// aiAssistant: {
+//   title: "AI Medical Assistant",
+//   statusThinking: "Thinking...",
+//   statusReady: "Ready to assist",
+//   welcomeMessage: "Hello doctor!\nI am your intelligent AI Medical Assistant.\nDo you need help with diagnosis, prescriptions, or explaining results?",
+//   newConversation: "New conversation",
+//   loadingHistory: "Loading...",
+//   noHistory: "No conversation history",
+//   conversationTitle: "Conversation",
+//   applyPlan: "Apply this treatment plan to the form",
+//   noPlanFound: "No treatment plan found in the response",
+//   inputPlaceholder: "Ask AI about diagnosis, prescriptions, patient instructions...",
+//   sendButton: "Send",
+//   sending: "Sending...",
+//   aiAnalyzing: "AI is analyzing...",
+//   disclaimer: "AI is for support only • Always verify before applying",
+//   errorLoginRequired: "Please log in again",
+//   errorCreateConversation: "Unable to create a new conversation",
+//   errorNoSession: "No sessionId available to call n8n",
+//   errorAINoResponse: "AI did not respond",
+//   errorConnection: "Unable to connect to AI",
+//   errorLoadHistory: "Failed to load history",
+//   errorLoadConversation: "Failed to load conversation",
+//   errorPrefix: "AI connection error: "
+// },
+appointmentCheckIn: {
+  title: "Today's Appointments",
+  loading: "Loading appointment list...",
+  noResults: "No matching appointments found",
+  noAppointments: "No appointments today",
+  
+  table: {
+    stt: "No.",
+    code: "Code",
+    patient: "Patient",
+    phone: "Phone",
+    time: "Time",
+    services: "Services",
+    status: "Status",
+    actions: "Actions"
+  },
+  
+  status: {
+    added: "Added",
+    upcoming: "Upcoming",
+    overdue: "Overdue",
+    waiting: "Waiting"
+  },
+  
+  actions: {
+    addToQueue: "Add to queue",
+    viewDetail: "View appointment details"
+  },
+  
+  gender: {
+    male: "Male",
+    female: "Female",
+    other: "Other"
+  },
+  
+  priority: {
+    emergency: "Emergency",
+    urgent: "Urgent",
+    normal: "Normal"
+  },
+  label: " appointments",
+  modal: {
+    title: "Appointment Details",
+    code: "Appointment Code",
+    time: "Appointment Time",
+    patientInfo: "Patient Information",
+    name: "Full Name",
+    phone: "Phone Number",
+    email: "Email",
+    gender: "Gender",
+    notes: "Notes",
+    priority: "Priority Level",
+    idNumber: "ID Number",
+    insurance: "Insurance Number",
+    address: "Address",
+    services: "Selected Services",
+    checkedIn: "Added to queue"
+  },
+  
+  errors: {
+    loadFailed: "Failed to load list",
+    noAppointment: "Appointment not found!",
+    phoneInvalid: "Phone number must be exactly 10 digits!",
+    nameRequired: "Please enter patient name!",
+    dobRequired: "Please select date of birth!",
+    checkInFailed: "Check-in failed"
+  },
+  
+  success: {
+    added: "Successfully added to queue!",
+    addedWithRoom: "Added – Room: {{room}}{{doctor}}"
+  },
+  
+  doctor: "Dr."
+},
+ChatbotAvatar: {
+  "tooltip": "Need help? Chat with me!",
+},
+"appointments": {
+    "search": "Search",
+    "searchPlaceholder": "Enter name or phone number",
+    "clearSearch": "Clear search",
+    "status": "Status",
+    "statusOptions": {
+      "all": "All",
+      "checkedIn": "Added",
+      "upcoming": "Upcoming",
+      "past": "Overdue",
+      "waiting": "Waiting for check-in"
+    },
+    "clearFilters": "Clear filters",
+    "filteringBy": "Filtering",
+    "keyword": "Keyword",
+    "removeKeyword": "Remove keyword"
+  },
+  
 }
   }
 };

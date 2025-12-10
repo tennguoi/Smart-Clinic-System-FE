@@ -1,6 +1,6 @@
 // src/components/admin/ClinicRoomManagement.jsx
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Edit, Trash2, X, Building2, DoorOpen, Eye, Loader2, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Power, X, Building2, DoorOpen, Eye, Loader2, AlertCircle } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import { roomApi } from '../../api/roomApi';
@@ -21,8 +21,8 @@ export default function ClinicRoomManagement({ isAdminView = true }) {
   const [modalMode, setModalMode] = useState('create');
   const [selectedRoom, setSelectedRoom] = useState(null);
 
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [roomToDelete, setRoomToDelete] = useState(null);
+  const [showToggleConfirm, setShowToggleConfirm] = useState(false);
+  const [roomToToggle, setRoomToToggle] = useState(null);
 
   const [formData, setFormData] = useState({
     roomName: '',
@@ -92,8 +92,14 @@ export default function ClinicRoomManagement({ isAdminView = true }) {
       const data = await roomApi.getAllRooms(params);
       let roomsArray = Array.isArray(data) ? data : [];
 
-      if (filterActive === 'active') roomsArray = roomsArray.filter(r => r.isActive);
-      if (filterActive === 'inactive') roomsArray = roomsArray.filter(r => !r.isActive);
+      // Lễ tân chỉ thấy phòng đang hoạt động
+      if (!isAdminView) {
+        roomsArray = roomsArray.filter(r => r.isActive);
+      } else {
+        // Chỉ admin mới dùng được filter Hoạt động
+        if (filterActive === 'active') roomsArray = roomsArray.filter(r => r.isActive);
+        if (filterActive === 'inactive') roomsArray = roomsArray.filter(r => !r.isActive);
+      }
 
       if (searchKeyword.trim()) {
         const kw = searchKeyword.trim().toLowerCase();
@@ -116,7 +122,6 @@ export default function ClinicRoomManagement({ isAdminView = true }) {
   };
 
   const handleOpenModal = (mode, room = null) => {
-    // Chặn nếu không phải Admin và đang cố sửa/tạo
     if (!isAdminView && (mode === 'create' || mode === 'edit')) {
       toast.error(t('roomManagement.noPermission', 'Bạn không có quyền thực hiện thao tác này'));
       return;
@@ -206,26 +211,39 @@ export default function ClinicRoomManagement({ isAdminView = true }) {
     }
   };
 
-  const openDeleteConfirm = (room) => {
+  const openToggleConfirm = (room) => {
     if (!isAdminView) {
-      toast.error(t('roomManagement.noPermission', 'Bạn không có quyền xóa phòng'));
+      toast.error(t('roomManagement.noPermission', 'Bạn không có quyền thay đổi trạng thái phòng'));
       return;
     }
-    setRoomToDelete(room);
-    setShowDeleteConfirm(true);
+    setRoomToToggle(room);
+    setShowToggleConfirm(true);
   };
 
-  const confirmDelete = async () => {
-    if (!roomToDelete || !isAdminView) return;
+  const confirmToggle = async () => {
+    if (!roomToToggle || !isAdminView) return;
     setLoading(true);
     try {
-      await roomApi.deleteRoom(roomToDelete.roomId);
-      toast.success(t('roomManagement.deleteSuccess', 'Xóa phòng khám thành công!'));
-      setShowDeleteConfirm(false);
-      setRoomToDelete(null);
+      const newActiveStatus = !roomToToggle.isActive;
+      const payload = {
+        roomName: roomToToggle.roomName,
+        status: roomToToggle.status,
+        isActive: newActiveStatus,
+        ...(roomToToggle.doctorId && { doctorId: roomToToggle.doctorId }),
+        ...(roomToToggle.currentQueueId && { currentQueueId: roomToToggle.currentQueueId }),
+      };
+
+      await roomApi.updateRoom(roomToToggle.roomId, payload);
+      toast.success(
+        newActiveStatus 
+          ? t('roomManagement.activateSuccess', 'Đã kích hoạt phòng khám!')
+          : t('roomManagement.deactivateSuccess', 'Đã vô hiệu hóa phòng khám!')
+      );
+      setShowToggleConfirm(false);
+      setRoomToToggle(null);
       fetchRooms();
     } catch (err) {
-      toast.error(err.response?.data?.message || t('roomManagement.deleteError', 'Không thể xóa phòng khám'));
+      toast.error(err.response?.data?.message || t('roomManagement.toggleError', 'Không thể thay đổi trạng thái phòng khám'));
     } finally {
       setLoading(false);
     }
@@ -258,7 +276,6 @@ export default function ClinicRoomManagement({ isAdminView = true }) {
           <CountBadge currentCount={currentPageRooms.length} totalCount={rooms.length} label={t('roomManagement.room', 'phòng')} />
         </h1>
         
-        {/* Chỉ hiện nút Thêm nếu là Admin */}
         {isAdminView && (
           <button onClick={() => handleOpenModal('create')}
             className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2">
@@ -299,19 +316,24 @@ export default function ClinicRoomManagement({ isAdminView = true }) {
               ))}
             </select>
           </div>
-          <div className="lg:col-span-3">
-            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('roomManagement.activeLabel', 'Hoạt động')}</label>
-            <select
-              value={filterActive}
-              onChange={(e) => setFilterActive(e.target.value)}
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-            >
-              <option value="">{t('roomManagement.common.all', 'Tất cả')}</option>
-              <option value="active">{t('roomManagement.active', 'Hoạt động')}</option>
-              <option value="inactive">{t('roomManagement.inactive', 'Ngưng hoạt động')}</option>
-            </select>
-          </div>
-          <div className="lg:col-span-1">
+
+          {/* Chỉ admin mới thấy filter Hoạt động */}
+          {isAdminView && (
+            <div className="lg:col-span-3">
+              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('roomManagement.activeLabel', 'Hoạt động')}</label>
+              <select
+                value={filterActive}
+                onChange={(e) => setFilterActive(e.target.value)}
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+              >
+                <option value="">{t('roomManagement.common.all', 'Tất cả')}</option>
+                <option value="active">{t('roomManagement.active', 'Hoạt động')}</option>
+                <option value="inactive">{t('roomManagement.inactive', 'Ngưng hoạt động')}</option>
+              </select>
+            </div>
+          )}
+
+          <div className={`lg:col-span-${isAdminView ? '1' : '4'}`}>
             <label className="block text-sm font-medium text-gray-700 mb-2">&nbsp;</label>
             <button
               onClick={() => {
@@ -376,7 +398,6 @@ export default function ClinicRoomManagement({ isAdminView = true }) {
 
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
-                        <Building2 className="w-5 h-5 text-gray-400" />
                         <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{room.roomName || 'N/A'}</span>
                       </div>
                     </td>
@@ -404,12 +425,13 @@ export default function ClinicRoomManagement({ isAdminView = true }) {
                       </span>
                     </td>
 
+                    {/* Cột Hoạt động: Xanh lá = active, Đỏ = inactive */}
                     <td className="px-4 py-4 text-sm">
                       <span
                         className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
                           room.isActive
-                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
                         }`}
                       >
                         {room.isActive ? t('roomManagement.active', 'Hoạt động') : t('roomManagement.inactive', 'Ngưng hoạt động')}
@@ -426,11 +448,13 @@ export default function ClinicRoomManagement({ isAdminView = true }) {
                           <Eye className="w-5 h-5" />
                         </button>
                         
-                        {/* Chỉ hiện nút Xóa nếu là Admin */}
                         {isAdminView && (
-                          <button onClick={() => openDeleteConfirm(room)} title={t('roomManagement.common.delete', 'Xóa')}
-                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors">
-                            <Trash2 className="w-5 h-5" />
+                          <button 
+                            onClick={() => openToggleConfirm(room)} 
+                            title={room.isActive ? t('roomManagement.confirmDeactivate.confirm', 'Vô hiệu hóa') : t('roomManagement.confirmActivate.confirm', 'Kích hoạt')}
+                            className="transition-all transform hover:scale-110"
+                          >
+                            <Power className={`w-5 h-5 ${room.isActive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} />
                           </button>
                         )}
                       </div>
@@ -455,7 +479,6 @@ export default function ClinicRoomManagement({ isAdminView = true }) {
                  t('roomManagement.modal.edit', 'Chỉnh sửa phòng khám')}
               </h2>
               <div className="flex items-center gap-3">
-                {/* Chỉ hiện nút Chỉnh sửa nếu là Admin và đang ở mode view */}
                 {modalMode === 'view' && isAdminView && (
                   <button onClick={handleSwitchToEdit}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
@@ -585,30 +608,40 @@ export default function ClinicRoomManagement({ isAdminView = true }) {
         </div>
       )}
 
-      {/* MODAL XÁC NHẬN XÓA – CHỈ HIỆN CHO ADMIN */}
-      {showDeleteConfirm && roomToDelete && isAdminView && (
+      {/* MODAL XÁC NHẬN TOGGLE TRẠNG THÁI */}
+      {showToggleConfirm && roomToToggle && isAdminView && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl max-w-sm w-full p-6 text-center transition-colors duration-300`}>
-            <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
+            <Power className={`w-12 h-12 mx-auto mb-4 ${roomToToggle.isActive ? 'text-red-500' : 'text-green-500'}`} />
             <h3 className={`text-xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-              {t('roomManagement.confirmDelete.title', 'Xóa phòng khám?')}
+              {roomToToggle.isActive 
+                ? t('roomManagement.confirmDeactivate.title', 'Vô hiệu hóa phòng khám?')
+                : t('roomManagement.confirmActivate.title', 'Kích hoạt phòng khám?')
+              }
             </h3>
             <p className={`text-gray-600 mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-              {t('roomManagement.confirmDelete.text1', 'Bạn có chắc chắn muốn xóa phòng khám')}
+              {roomToToggle.isActive
+                ? t('roomManagement.confirmDeactivate.text', 'Bạn có chắc muốn vô hiệu hóa phòng')
+                : t('roomManagement.confirmActivate.text', 'Bạn có chắc muốn kích hoạt phòng')
+              }
             </p>
             <p className={`font-semibold mb-6 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
-              "{roomToDelete.roomName}"
-            </p>
-            <p className={`text-sm mb-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-              {t('roomManagement.confirmDelete.warning', 'Hành động này không thể hoàn tác.')}
+              "{roomToToggle.roomName}"
             </p>
             <div className="flex gap-3">
-              <button onClick={confirmDelete} disabled={loading}
-                className="flex-1 py-2 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-70 flex items-center justify-center gap-2">
+              <button onClick={confirmToggle} disabled={loading}
+                className={`flex-1 py-2 rounded-lg font-semibold text-white ${
+                  roomToToggle.isActive 
+                    ? 'bg-red-600 hover:bg-red-700' 
+                    : 'bg-green-600 hover:bg-green-700'
+                } disabled:opacity-70 flex items-center justify-center gap-2`}>
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
-                {t('roomManagement.confirmDelete.confirm', 'Xóa')}
+                {roomToToggle.isActive 
+                  ? t('roomManagement.confirmDeactivate.confirm', 'Vô hiệu hóa')
+                  : t('roomManagement.confirmActivate.confirm', 'Kích hoạt')
+                }
               </button>
-              <button onClick={() => { setShowDeleteConfirm(false); setRoomToDelete(null); }}
+              <button onClick={() => { setShowToggleConfirm(false); setRoomToToggle(null); }}
                 className={`flex-1 py-2 rounded-lg hover:bg-gray-400 font-medium ${theme === 'dark' ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}>
                 {t('roomManagement.common.cancel', 'Hủy')}
               </button>

@@ -34,21 +34,56 @@ const RANGE_OPTIONS = [
   { label: 'month', value: 'month' },
 ];
 
-const formatPercentage = (value) => {
-  if (value == null || value === 0) return 'N/A';
-  return `${Math.round(value * 100)}%`;
-};
 
 export default function DoctorStatsDashboard() {
   const { theme } = useTheme();
   const { t } = useTranslation();
-  const [rangeType, setRangeType] = useState('day');
-  const [selectedDate, setSelectedDate] = useState(new Date());
+   
+  // Load saved preferences from localStorage
+  const [rangeType, setRangeType] = useState(() => {
+    try {
+      const saved = localStorage.getItem('doctorStatsRangeType');
+      return saved || 'day';
+    } catch {
+      return 'day';
+    }
+  });
+  
+  const [selectedDate, setSelectedDate] = useState(() => {
+    try {
+      const saved = localStorage.getItem('doctorStatsSelectedDate');
+      return saved ? new Date(saved) : new Date();
+    } catch {
+      return new Date();
+    }
+  });
+    const formatPercentage = (value) => {
+    if (value == null || value === 0) return t('doctorStats.noData');
+    return `${Math.round(value * 100)}%`;
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statsData, setStatsData] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isForceRefresh, setIsForceRefresh] = useState(false);
+  
+  // Save rangeType to localStorage when it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('doctorStatsRangeType', rangeType);
+    } catch (err) {
+      console.error('Failed to save rangeType:', err);
+    }
+  }, [rangeType]);
+  
+  // Save selectedDate to localStorage when it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('doctorStatsSelectedDate', selectedDate.toISOString());
+    } catch (err) {
+      console.error('Failed to save selectedDate:', err);
+    }
+  }, [selectedDate]);
 
   const doctorId = useMemo(() => {
     const userInfo = authService.getUserInfo();
@@ -103,6 +138,15 @@ export default function DoctorStatsDashboard() {
     }));
   }, [statsData]);
 
+  // Dữ liệu hiển thị cho chart: nếu rỗng, thêm một cột placeholder để không bị trống khung
+  const chartDisplayData = useMemo(() => {
+    if (chartData.length > 0) return chartData;
+    const placeholderLabel =
+      t('doctorStats.empty.placeholder', { defaultValue: 'Chưa có dữ liệu' }) ||
+      t('doctorStats.empty.title', { defaultValue: 'Chưa có dữ liệu' });
+    return [{ label: placeholderLabel, visits: 0 }];
+  }, [chartData, t]);
+
   const totals = useMemo(() => {
     if (!statsData?.kpis) return { visits: 0, avgTime: 0, completion: 0 };
     return {
@@ -112,13 +156,17 @@ export default function DoctorStatsDashboard() {
     };
   }, [statsData]);
 
-  const isEmpty = !loading && statsData && (!statsData.series || statsData.series.length === 0);
+  const isEmpty = useMemo(() => {
+    if (loading) return false;
+    if (!statsData) return true;
+    return !statsData.series || statsData.series.length === 0;
+  }, [loading, statsData]);
 
   const datePickerConfig = useMemo(() => {
     if (rangeType === 'month')
       return { showMonthYearPicker: true, dateFormat: 'MM/yyyy' };
     if (rangeType === 'week')
-      return { showWeekNumbers: true, dateFormat: "'Tuần' ww, yyyy" };
+      return { showWeekNumbers: true, dateFormat: `'${t('doctorStats.week')}' ww, yyyy` };
     return { dateFormat: 'dd/MM/yyyy' };
   }, [rangeType]);
 
@@ -198,148 +246,144 @@ export default function DoctorStatsDashboard() {
         </div>
       </header>
 
-      {/* KPI Cards */}
-      {!isEmpty && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            {
-              title: t('doctorStats.kpi.totalVisits.title'),
-              value: `${totals.visits} ${t('doctorStats.kpi.totalVisits.unit')}`,
-              subtitle: t('doctorStats.kpi.totalVisits.subtitle'),
-              icon: Stethoscope,
-              accent: 'from-cyan-500 to-emerald-500',
-            },
-            {
-              title: t('doctorStats.kpi.avgTime.title'),
-              value: totals.avgTime > 0 ? `${totals.avgTime} ${t('doctorStats.kpi.avgTime.unit')}` : t('doctorStats.kpi.avgTime.noData'),
-              subtitle: t('doctorStats.kpi.avgTime.subtitle'),
-              icon: Clock3,
-              accent: 'from-amber-400 to-orange-500',
-            },
-            {
-              title: t('doctorStats.kpi.completionRate.title'),
-              value: formatPercentage(totals.completion),
-              subtitle: t('doctorStats.kpi.completionRate.subtitle'),
-              icon: CheckCircle2,
-              accent: 'from-violet-500 to-indigo-500',
-            },
-          ].map((card) => {
-            const Icon = card.icon;
-            return (
-              <article
-                key={card.title}
-                className={`rounded-2xl border p-5 shadow-sm transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{card.title}</p>
-                    <p className={`mt-2 text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{card.value}</p>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>{card.subtitle}</p>
-                  </div>
-                  <div className={`rounded-full bg-gradient-to-br ${card.accent} p-3 text-white`}>
-                    <Icon className="h-6 w-6" />
-                  </div>
+      {/* KPI Cards (always visible) */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[
+          {
+            title: t('doctorStats.kpi.totalVisits.title'),
+            value: `${totals.visits} ${t('doctorStats.kpi.totalVisits.unit')}`,
+            subtitle: t('doctorStats.kpi.totalVisits.subtitle'),
+            icon: Stethoscope,
+            accent: 'from-cyan-500 to-emerald-500',
+          },
+          {
+            title: t('doctorStats.kpi.avgTime.title'),
+            value: totals.avgTime > 0 ? `${totals.avgTime} ${t('doctorStats.kpi.avgTime.unit')}` : t('doctorStats.kpi.avgTime.noData'),
+            subtitle: t('doctorStats.kpi.avgTime.subtitle'),
+            icon: Clock3,
+            accent: 'from-amber-400 to-orange-500',
+          },
+          {
+            title: t('doctorStats.kpi.completionRate.title'),
+            value: formatPercentage(totals.completion),
+            subtitle: t('doctorStats.kpi.completionRate.subtitle'),
+            icon: CheckCircle2,
+            accent: 'from-violet-500 to-indigo-500',
+          },
+        ].map((card) => {
+          const Icon = card.icon;
+          return (
+            <article
+              key={card.title}
+              className={`rounded-2xl border p-5 shadow-sm transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{card.title}</p>
+                  <p className={`mt-2 text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{card.value}</p>
+                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>{card.subtitle}</p>
                 </div>
-              </article>
-            );
-          })}
-        </div>
-      )}
+                <div className={`rounded-full bg-gradient-to-br ${card.accent} p-3 text-white`}>
+                  <Icon className="h-6 w-6" />
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
 
-      {/* Charts */}
+      {/* Charts (always visible) */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {isEmpty ? (
-          <div className="col-span-2 flex flex-col items-center justify-center min-h-[300px] py-10 text-center">
-            <Activity className="h-16 w-16 text-gray-300 mb-4" />
-            <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('doctorStats.empty.title')}</p>
-            <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>{t('doctorStats.empty.message')}</p>
-          </div>
-        ) : (
-          <>
-            {/* Bar Chart */}
-            <div className={`rounded-2xl border p-6 shadow-sm transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+        {/* Bar Chart */}
+        <div className={`rounded-2xl border p-6 shadow-sm transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
               <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 {rangeType === 'day' 
                   ? t('doctorStats.chart.visitsByHour')
-                  : t('doctorStats.chart.visitsByDay')
+                  : rangeType === 'week'
+                  ? t('doctorStats.chart.visitsByDay')
+                  : t('doctorStats.chart.visitsByMonth')
                 }
               </h3>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
-                    <XAxis dataKey="label" tick={{ fill: theme === 'dark' ? '#9ca3af' : '#6b7280' }} />
-                    <YAxis tick={{ fill: theme === 'dark' ? '#9ca3af' : '#6b7280' }} allowDecimals={false} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: theme === 'dark' ? '#1f2937' : '#fff', 
-                        borderColor: theme === 'dark' ? '#374151' : '#e5e7eb',
-                        color: theme === 'dark' ? '#fff' : '#000'
-                      }} 
-                    />
-                    <Bar dataKey="visits" fill="#06b6d4" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartDisplayData}>
+                <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
+                <XAxis dataKey="label" tick={{ fill: theme === 'dark' ? '#9ca3af' : '#6b7280' }} />
+                <YAxis tick={{ fill: theme === 'dark' ? '#9ca3af' : '#6b7280' }} allowDecimals={false} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: theme === 'dark' ? '#1f2937' : '#fff', 
+                    borderColor: theme === 'dark' ? '#374151' : '#e5e7eb',
+                    color: theme === 'dark' ? '#fff' : '#000'
+                  }} 
+                />
+                <Bar dataKey="visits" fill="#06b6d4" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
-            {/* Line Chart */}
-            <div className={`rounded-2xl border p-6 shadow-sm transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
-              <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                {t('doctorStats.chart.trend')}
-              </h3>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
-                    <XAxis dataKey="label" tick={{ fill: theme === 'dark' ? '#9ca3af' : '#6b7280' }} />
-                    <YAxis tick={{ fill: theme === 'dark' ? '#9ca3af' : '#6b7280' }} allowDecimals={false} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: theme === 'dark' ? '#1f2937' : '#fff', 
-                        borderColor: theme === 'dark' ? '#374151' : '#e5e7eb',
-                        color: theme === 'dark' ? '#fff' : '#000'
-                      }}
-                    />
-                    <Line type="monotone" dataKey="visits" stroke="#0ea5e9" strokeWidth={3} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Table */}
-      {!isEmpty && (
+        {/* Line Chart */}
         <div className={`rounded-2xl border p-6 shadow-sm transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
           <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-            {t('doctorStats.table.title')}
+            {t('doctorStats.chart.trend')}
           </h3>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className={theme === 'dark' ? 'bg-gray-700 text-gray-200' : 'bg-gray-50 text-gray-700'}>
-                <tr>
-                  <th className="px-4 py-2 text-left">{t('doctorStats.table.time')}</th>
-                  <th className="px-4 py-2 text-left">{t('doctorStats.table.visits')}</th>
-                  <th className="px-4 py-2 text-left">{t('doctorStats.table.change')}</th>
-                  <th className="px-4 py-2 text-left">{t('doctorStats.table.note')}</th>
-                </tr>
-              </thead>
-              <tbody className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
-                {chartData.map((row) => (
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartDisplayData}>
+                <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
+                <XAxis dataKey="label" tick={{ fill: theme === 'dark' ? '#9ca3af' : '#6b7280' }} />
+                <YAxis tick={{ fill: theme === 'dark' ? '#9ca3af' : '#6b7280' }} allowDecimals={false} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: theme === 'dark' ? '#1f2937' : '#fff', 
+                    borderColor: theme === 'dark' ? '#374151' : '#e5e7eb',
+                    color: theme === 'dark' ? '#fff' : '#000'
+                  }}
+                />
+                <Line type="monotone" dataKey="visits" stroke="#0ea5e9" strokeWidth={3} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Table (always visible, even when empty) */}
+      <div className={`rounded-2xl border p-6 shadow-sm transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+        <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+          {t('doctorStats.table.title')}
+        </h3>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead className={theme === 'dark' ? 'bg-gray-700 text-gray-200' : 'bg-gray-50 text-gray-700'}>
+              <tr>
+                <th className="px-4 py-2 text-left">{t('doctorStats.table.time')}</th>
+                <th className="px-4 py-2 text-left">{t('doctorStats.table.visits')}</th>
+                <th className="px-4 py-2 text-left">{t('doctorStats.table.change')}</th>
+                <th className="px-4 py-2 text-left">{t('doctorStats.table.note')}</th>
+              </tr>
+            </thead>
+            <tbody className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
+              {chartData.length > 0 ? (
+                chartData.map((row) => (
                   <tr key={row.label} className={`border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
                     <td className="px-4 py-2">{row.label}</td>
                     <td className="px-4 py-2">{row.visits}</td>
                     <td className="px-4 py-2">—</td>
                     <td className="px-4 py-2">{row.note || '—'}</td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="px-4 py-6 text-center text-gray-500">
+                    {t('doctorStats.empty.message')}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
     </section>
   );
 }

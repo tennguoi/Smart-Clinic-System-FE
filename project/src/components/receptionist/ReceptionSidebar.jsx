@@ -26,7 +26,7 @@ export default function ReceptionSidebar() {
   // Menu items với i18n
   const receptionMenuItems = [
     { id: 'appointments', label: t('receptionSidebar.appointments'), icon: CalendarCheck },
-    { id: 'check-in',     label: 'Lịch Hẹn Hôm Nay', icon: CalendarCheck },
+    { id: 'check-in',     label: t('receptionSidebar.appointmentstoday'), icon: CalendarCheck },
     { id: 'records',      label: t('receptionSidebar.records'),      icon: Users },
     { id: 'rooms',        label: t('receptionSidebar.rooms'),        icon: BedDouble },
     { id: 'invoices',     label: t('receptionSidebar.invoices'),     icon: FileText },

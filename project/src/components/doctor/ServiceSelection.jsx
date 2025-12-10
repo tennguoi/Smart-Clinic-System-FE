@@ -1,6 +1,9 @@
+
+// ServiceSelection.jsx
 import { Search, Check, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { formatPrice } from '../../utils/helpers';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function ServiceSelection({
   services,
@@ -9,143 +12,156 @@ export default function ServiceSelection({
   onSearchChange,
   onToggleService,
   loadingServices,
-  aiAssistantOpen
+  aiAssistantOpen,
 }) {
   const { t } = useTranslation();
-  
-  const filteredServices = services.filter(s => 
+  const { theme } = useTheme();
+
+  const filteredServices = services.filter(s =>
     s.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
   const totalAmount = selectedServices.reduce(
-    (sum, srv) => sum + srv.price * srv.quantity, 
+    (sum, srv) => sum + srv.price * srv.quantity,
     0
   );
 
   return (
-    <div className={aiAssistantOpen ? 'space-y-4 lg:space-y-5' : 'space-y-6 lg:space-y-8'}>
-      {/* Tìm kiếm */}
-      <div className="relative bg-white p-2 rounded-2xl shadow-lg border border-blue-200">
-        <Search className={`absolute left-4 lg:left-6 top-1/2 -translate-y-1/2 text-slate-400 ${
-          aiAssistantOpen ? 'w-4 h-4' : 'w-5 h-5'
-        }`} />
+    <div className="space-y-8">
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
         <input
           value={searchQuery}
           onChange={e => onSearchChange(e.target.value)}
           placeholder={t('serviceSelection.searchPlaceholder')}
-          className={`w-full border-2 border-transparent rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 text-sm lg:text-base transition-all ${
-            aiAssistantOpen ? 'pl-10 pr-3 py-2.5' : 'pl-12 pr-4 py-3.5'
+          className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-4 ${
+            theme === 'dark'
+              ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-900/50'
+              : 'bg-white border-blue-200 focus:ring-blue-100'
           }`}
         />
       </div>
 
-      {/* Dịch vụ đã chọn */}
+      {/* Selected services summary */}
       {selectedServices.length > 0 && (
-        <div className={`bg-gradient-to-r from-blue-50 to-sky-50 rounded-2xl border border-blue-200 shadow-lg ${
-          aiAssistantOpen ? 'p-3 lg:p-4' : 'p-4 lg:p-6'
-        }`}>
-          <h3 className={`font-bold flex items-center gap-2 text-slate-800 ${
-            aiAssistantOpen ? 'text-sm lg:text-base mb-2 lg:mb-3' : 'text-base lg:text-lg mb-4'
-          }`}>
-            <Check className="text-blue-600" size={aiAssistantOpen ? 18 : 20} />
+        <div
+          className={`p-6 rounded-xl border mb-6 ${
+            theme === 'dark'
+              ? 'bg-blue-900/20 border-blue-800'
+              : 'bg-gradient-to-r from-blue-50 to-sky-50 border-blue-200'
+          }`}
+        >
+          <h3
+            className={`font-bold text-lg mb-4 flex items-center gap-2 ${
+              theme === 'dark' ? 'text-white' : 'text-gray-900'
+            }`}
+          >
             {t('serviceSelection.selectedTitle', { count: selectedServices.length })}
           </h3>
-          <div className={aiAssistantOpen ? 'space-y-2' : 'space-y-2 lg:space-y-3'}>
+          <div className="space-y-3">
             {selectedServices.map((s, i) => (
-              <div 
-                key={i} 
-                className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-white rounded-xl shadow-sm border border-blue-100 ${
-                  aiAssistantOpen ? 'p-3' : 'p-4'
+              <div
+                key={i}
+                className={`flex justify-between items-center p-4 rounded-lg shadow-sm ${
+                  theme === 'dark' ? 'bg-gray-800' : 'bg-white'
                 }`}
               >
-                <div className="flex-1">
-                  <div className={`font-semibold text-slate-800 ${
-                    aiAssistantOpen ? 'text-xs lg:text-sm' : 'text-sm lg:text-base'
-                  }`}>
+                <div>
+                  <div
+                    className={`font-semibold ${
+                      theme === 'dark' ? 'text-white' : 'text-slate-900'
+                    }`}
+                  >
                     {s.name}
                   </div>
-                  <div className="text-xs text-slate-600">
+                  <div
+                    className={`text-sm ${
+                      theme === 'dark' ? 'text-gray-400' : 'text-slate-600'
+                    }`}
+                  >
                     {t('serviceSelection.quantity')}: {s.quantity}
                   </div>
                 </div>
-                <div className={`font-bold text-blue-600 ${
-                  aiAssistantOpen ? 'text-sm lg:text-base' : 'text-base lg:text-lg'
-                }`}>
+                <div
+                  className={`text-lg font-bold ${
+                    theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                  }`}
+                >
                   {formatPrice(s.price * s.quantity)}
                 </div>
               </div>
             ))}
           </div>
-          <div className={`text-right border-t border-blue-200 ${
-            aiAssistantOpen ? 'mt-2 pt-2' : 'mt-4 pt-4'
-          }`}>
-            <span className={`font-bold text-blue-700 ${
-              aiAssistantOpen ? 'text-base lg:text-lg' : 'text-xl lg:text-2xl'
-            }`}>
-              {t('serviceSelection.total')}: {formatPrice(totalAmount)}
+          <div
+            className={`mt-4 pt-4 border-t text-right ${
+              theme === 'dark' ? 'border-blue-800' : 'border-blue-200'
+            }`}
+          >
+            <span
+              className={`text-2xl font-bold ${
+                theme === 'dark' ? 'text-blue-400' : 'text-blue-700'
+              }`}
+            >
+              {t('serviceSelection.total')} {formatPrice(totalAmount)}
             </span>
           </div>
         </div>
       )}
 
-      {/* Danh sách dịch vụ */}
-      <div className="bg-white rounded-2xl shadow-lg border border-blue-200 overflow-hidden">
-        <div className={`bg-gradient-to-r from-blue-600 to-sky-600 px-4 lg:px-6 ${
-          aiAssistantOpen ? 'py-2.5 lg:py-3' : 'py-3 lg:py-4'
-        }`}>
-          <h3 className={`font-bold text-white ${
-            aiAssistantOpen ? 'text-sm lg:text-base' : 'text-base lg:text-lg'
-          }`}>
-            {t('serviceSelection.listTitle')}
-          </h3>
-        </div>
-        <div className={aiAssistantOpen ? 'max-h-64 lg:max-h-80 overflow-y-auto' : 'max-h-96 lg:max-h-[500px] overflow-y-auto'}>
-          {loadingServices ? (
-            <div className={aiAssistantOpen ? 'p-8 text-center' : 'p-12 lg:p-16 text-center'}>
-              <Loader2 className={`animate-spin mx-auto text-blue-600 ${
-                aiAssistantOpen ? 'w-8 h-8' : 'w-10 h-10 lg:w-12 lg:h-12'
-              }`} />
-              <p className="mt-4 text-slate-600">{t('serviceSelection.loading')}</p>
-            </div>
-          ) : filteredServices.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">
-              {t('serviceSelection.noResults')}
-            </div>
-          ) : filteredServices.map(svc => {
+      {/* Services list */}
+      <div
+        className={`max-h-96 overflow-y-auto border rounded-xl ${
+          theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-blue-200'
+        }`}
+      >
+        {loadingServices ? (
+          <div className="p-16 text-center">
+            <Loader2 className="w-12 h-12 animate-spin mx-auto" />
+          </div>
+        ) : filteredServices.length === 0 ? (
+          <div className="p-16 text-center text-slate-500">
+            {t('serviceSelection.noResults')}
+          </div>
+        ) : (
+          filteredServices.map(svc => {
             const selected = selectedServices.some(s => s.id === svc.id);
             return (
               <div
                 key={svc.id}
                 onClick={() => onToggleService(svc)}
-                className={`cursor-pointer hover:bg-blue-50 border-b border-blue-100 last:border-0 transition-all ${
-                  selected ? 'bg-blue-50 border-l-4 border-l-blue-600' : ''
-                } ${aiAssistantOpen ? 'p-3 lg:p-4' : 'p-4 lg:p-5'}`}
+                className={`p-5 cursor-pointer border-b last:border-0 transition-all ${
+                  selected
+                    ? (theme === 'dark'
+                        ? 'bg-blue-900/30 border-l-4 border-l-blue-500 border-b-gray-700'
+                        : 'bg-blue-50 border-l-4 border-l-blue-600 border-b-blue-100')
+                    : (theme === 'dark'
+                        ? 'hover:bg-gray-700 border-gray-700'
+                        : 'hover:bg-blue-50 border-blue-100')
+                }`}
               >
                 <div className="flex justify-between items-center">
-                  <div className="flex-1">
-                    <div className={`font-semibold text-slate-900 ${
-                      aiAssistantOpen ? 'text-xs lg:text-sm' : 'text-sm lg:text-base'
-                    }`}>
+                  <div>
+                    <div
+                      className={`font-semibold ${
+                        theme === 'dark' ? 'text-white' : 'text-slate-900'
+                      }`}
+                    >
                       {svc.name}
                     </div>
-                    <div className={`text-slate-600 mt-1 ${
-                      aiAssistantOpen ? 'text-xs' : 'text-xs lg:text-sm'
-                    }`}>
+                    <div
+                      className={`text-sm ${
+                        theme === 'dark' ? 'text-gray-400' : 'text-slate-600'
+                      }`}
+                    >
                       {formatPrice(svc.price)}
                     </div>
                   </div>
-                  {selected && (
-                    <div className="ml-3">
-                      <Check className={`text-blue-600 ${
-                        aiAssistantOpen ? 'w-5 h-5' : 'w-6 h-6 lg:w-7 lg:h-7'
-                      }`} />
-                    </div>
-                  )}
+                  {selected && <Check className="w-7 h-7 text-blue-600" />}
                 </div>
               </div>
             );
-          })}
-        </div>
+          })
+        )}
       </div>
     </div>
   );

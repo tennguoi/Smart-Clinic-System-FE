@@ -1,6 +1,17 @@
 import { User, Mail, Phone, Calendar, MapPin, Loader, Edit } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8082';
+
+const getPhotoSrc = (photoUrl) => {
+  if (!photoUrl) return '';
+  // Nếu backend trả full URL thì giữ nguyên
+  if (photoUrl.startsWith('http')) return photoUrl;
+  // Nếu thiếu dấu "/" đầu, thêm vào
+  const normalized = photoUrl.startsWith('/') ? photoUrl : `/${photoUrl}`;
+  return `${API_BASE_URL}${normalized}`;
+};
+
 export default function ProfileSection({
   fullName,
   email,
@@ -55,9 +66,13 @@ export default function ProfileSection({
           <div className="w-24 h-24 rounded-full bg-gray-200 overflow-hidden">
             {photoUrl ? (
               <img
-                src={`http://localhost:8082${photoUrl}`}
+                src={getPhotoSrc(photoUrl)}
                 alt="Profile"
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Ẩn ảnh hỏng và fallback icon
+                  e.currentTarget.style.display = 'none';
+                }}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">

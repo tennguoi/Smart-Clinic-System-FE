@@ -1,7 +1,7 @@
 // src/components/doctor/RecordDetailModal.jsx
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Pencil, Download } from 'lucide-react';
+import { X, Pencil, Download, Eye } from 'lucide-react';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import toast from 'react-hot-toast';
 import { downloadPdf, getMedicalRecordFilename } from '../../utils/pdfDownload';
@@ -26,6 +26,7 @@ const RecordDetailModal = ({
   const { t } = useTranslation();
   const { theme } = useTheme();
   const [exporting, setExporting] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   if (!record) return null;
 
@@ -66,18 +67,19 @@ const RecordDetailModal = ({
           </h3>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={handleExportPdf}
-              disabled={exporting}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition disabled:opacity-60 ${
-                isDark
-                  ? 'bg-purple-700 hover:bg-purple-600 text-white'
-                  : 'bg-purple-600 hover:bg-purple-700 text-white'
-              }`}
-            >
-              <Download className="w-5 h-5" />
-              {exporting ? 'Đang xuất...' : t('doctorRecords.modal.pdfButton', 'Xuất PDF')}
-            </button>
+            {!isEditMode && (
+              <button
+                onClick={() => setIsEditMode(true)}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold transition shadow-sm ${
+                  isDark
+                    ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
+              >
+                <Pencil className="w-4 h-4" />
+                {t('doctorRecords.common.edit', 'Chỉnh sửa')}
+              </button>
+            )}
 
             <button
               onClick={onClose}
@@ -102,26 +104,33 @@ const RecordDetailModal = ({
           ) : (
             <>
               {/* Patient & Diagnosis */}
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className={`p-5 rounded-lg border ${isDark ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200'}`}>
-                  <label className={`block text-xs font-bold uppercase mb-2 ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
                     {t('doctorRecords.modal.patientName', 'Tên bệnh nhân')}
                   </label>
-                  <p className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>
+                  <div
+                    className={`w-full px-3 py-2 rounded-lg border break-words ${
+                      isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  >
                     {record.patientName || record.patientId || '—'}
-                  </p>
+                  </div>
                 </div>
 
-                <div className={`p-5 rounded-lg border ${isDark ? 'bg-purple-900/20 border-purple-800' : 'bg-purple-50 border-purple-200'}`}>
-                  <label className={`block text-xs font-bold uppercase mb-2 ${isDark ? 'text-purple-400' : 'text-purple-700'}`}>
+                <div className="space-y-2">
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
                     {t('doctorRecords.modal.diagnosis', 'Chẩn đoán')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={localDiagnosis}
                     onChange={(e) => setLocalDiagnosis(e.target.value)}
-                    className={`mt-2 w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                      isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
+                    disabled={!isEditMode}
+                    className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 break-words ${
+                      isDark
+                        ? `bg-gray-800 border-gray-700 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
+                        : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
                     }`}
                     placeholder={t('doctorRecords.modal.diagnosisPlaceholder')}
                   />
@@ -129,58 +138,67 @@ const RecordDetailModal = ({
               </div>
 
               {/* Treatment notes */}
-              <div className={`p-5 rounded-lg border ${isDark ? 'bg-gray-700/50 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
-                <label className={`block text-xs font-bold uppercase mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+              <div className="space-y-2">
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
                   {t('doctorRecords.modal.treatmentNotes', 'Ghi chú điều trị')}
                 </label>
                 <textarea
-                  rows={5}
+                  rows={3}
                   value={localNotes}
                   onChange={(e) => setLocalNotes(e.target.value)}
-                  className={`mt-2 w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-gray-500 resize-y ${
-                    isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
+                  disabled={!isEditMode}
+                  className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y break-words whitespace-pre-wrap ${
+                    isDark
+                      ? `bg-gray-800 border-gray-700 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
+                      : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
                   }`}
                   placeholder={t('doctorRecords.modal.treatmentNotesPlaceholder')}
                 />
               </div>
 
               {/* Prescription */}
-              <div className={`p-5 rounded-lg border ${isDark ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'}`}>
-                <label className={`block text-xs font-bold uppercase mb-4 ${isDark ? 'text-green-400' : 'text-green-700'}`}>
+              <div className="space-y-3">
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
                   {t('doctorRecords.modal.prescriptionTitle', 'Đơn thuốc')}
                 </label>
                 <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className={`block text-xs font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                  <div className="space-y-2">
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                       {t('doctorRecords.modal.prescriptionDrugs', 'Toa thuốc')}
                     </label>
                     <textarea
-                      rows={6}
+                      rows={3}
                       value={localPrescriptionDrugs}
                       onChange={(e) => setLocalPrescriptionDrugs(e.target.value)}
-                      className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-500 resize-y ${
-                        isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
+                      disabled={!isEditMode}
+                      className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y break-words whitespace-pre-wrap ${
+                        isDark
+                          ? `bg-gray-800 border-gray-700 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
+                          : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
                       }`}
                       placeholder={t('doctorRecords.modal.prescriptionDrugsPlaceholder')}
                     />
                   </div>
-                  <div>
-                    <label className={`block text-xs font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                  <div className="space-y-2">
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                       {t('doctorRecords.modal.prescriptionInstructions', 'Hướng dẫn sử dụng')}
                     </label>
                     <textarea
-                      rows={6}
+                      rows={3}
                       value={localPrescriptionInstructions}
                       onChange={(e) => setLocalPrescriptionInstructions(e.target.value)}
-                      className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-500 resize-y ${
-                        isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
+                      disabled={!isEditMode}
+                      className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y break-words whitespace-pre-wrap ${
+                        isDark
+                          ? `bg-gray-800 border-gray-700 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
+                          : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
                       }`}
                       placeholder={t('doctorRecords.modal.prescriptionInstructionsPlaceholder')}
                     />
                   </div>
                 </div>
                 {prescriptions[0]?.issuedAt && (
-                  <p className={`mt-4 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     {t('doctorRecords.modal.prescriptionIssuedAt', 'Ngày kê đơn: {{date}}', {
                       date: new Date(prescriptions[0].issuedAt).toLocaleString('vi-VN'),
                     })}
@@ -200,41 +218,45 @@ const RecordDetailModal = ({
         </div>
 
         {/* Footer */}
-        <div
-          className={`flex justify-end gap-4 p-6 border-t ${
-            isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
-          }`}
-        >
-          <button
-            onClick={onClose}
-            disabled={saving}
-            className={`px-6 py-2.5 rounded-lg font-medium transition disabled:opacity-60 ${
-              isDark
-                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+        {isEditMode && (
+          <div
+            className={`flex justify-end gap-4 p-6 border-t ${
+              isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
             }`}
           >
-            {t('doctorRecords.common.cancel', 'Hủy')}
-          </button>
+            <button
+              onClick={() => setIsEditMode(false)}
+              disabled={saving}
+              className={`px-6 py-2.5 rounded-lg font-medium transition disabled:opacity-60 ${
+                isDark
+                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+              }`}
+            >
+              {t('doctorRecords.common.cancel', 'Hủy')}
+            </button>
 
-          <button
-            onClick={onSave}
-            disabled={saving}
-            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2 disabled:opacity-60 transition"
-          >
-            {saving ? (
-              <>
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                {t('doctorRecords.common.saving', 'Đang lưu...')}
-              </>
-            ) : (
-              <>
-                <Pencil className="w-4 h-4" />
-                {t('doctorRecords.modal.saveButton', 'Lưu thay đổi')}
-              </>
-            )}
-          </button>
-        </div>
+            <button
+              onClick={onSave}
+              disabled={saving}
+              className={`px-6 py-2.5 rounded-lg font-medium flex items-center gap-2 transition ${
+                saving ? 'bg-blue-400 text-white cursor-not-allowed opacity-70' : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
+              {saving ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  {t('doctorRecords.common.saving', 'Đang lưu...')}
+                </>
+              ) : (
+                <>
+                  <Pencil className="w-4 h-4" />
+                  {t('doctorRecords.modal.saveButton', 'Lưu thay đổi')}
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

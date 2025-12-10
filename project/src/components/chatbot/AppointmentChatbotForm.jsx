@@ -67,14 +67,14 @@ export default function AppointmentChatbotForm({ onClose, initialUrl }) {
 
   return (
     // Bỏ các class căn giữa (max-w-2xl mx-auto) vì nó là Modal bên trong cửa sổ chat
-    <div className="h-full flex flex-col"> 
+    <div className="h-full flex flex-col dark:bg-gray-900 dark:text-gray-100"> 
       {/* Header + Nút quay lại */}
       <div className="flex justify-between items-center mb-4 flex-shrink-0">
-        <h2 className="text-xl font-bold">Đặt lịch khám Tai Mũi Họng</h2>
+        <h2 className="text-xl font-bold dark:text-white">Đặt lịch khám Tai Mũi Họng</h2>
         <button
           // Sử dụng prop onClose để đóng Modal
           onClick={onClose} 
-          className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 transition"
+          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium flex items-center gap-1 transition"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -83,7 +83,7 @@ export default function AppointmentChatbotForm({ onClose, initialUrl }) {
         </button>
       </div>
 
-      <p className="text-center text-gray-600 mb-6 flex-shrink-0">Vui lòng điền thông tin để đặt lịch</p>
+      <p className="text-center text-gray-600 dark:text-gray-400 mb-6 flex-shrink-0">Vui lòng điền thông tin để đặt lịch</p>
 
       {/* Form (Cuộn nếu cần) */}
       <div className="flex-1 overflow-y-auto pr-2">
@@ -94,35 +94,73 @@ export default function AppointmentChatbotForm({ onClose, initialUrl }) {
           {/* (Họ tên, SĐT, Email, Thời gian khám, Ghi chú) */}
           
           <div>
-            <label className="block text-sm font-medium mb-1">Họ và tên <span className="text-red-500">*</span></label>
-            <input type="text" name="patient_name" required value={formData.patient_name} onChange={handleChange} placeholder="Nguyễn Văn A" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
+            <label className="block text-base font-medium mb-2 dark:text-gray-300">Họ và tên <span className="text-red-500">*</span></label>
+            <input 
+              type="text" 
+              name="patient_name" 
+              required 
+              value={formData.patient_name} 
+              onChange={handleChange} 
+              placeholder="Nguyễn Văn A" 
+              className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white dark:focus:ring-blue-400"
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Số điện thoại <span className="text-red-500">*</span></label>
-            <input type="tel" name="phone" required pattern="[0-9]{10}" value={formData.phone} onChange={handleChange} placeholder="0901234567" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"/>
+            <label className="block text-base font-medium mb-2 dark:text-gray-300">Số điện thoại <span className="text-red-500">*</span></label>
+            <input 
+              type="tel" 
+              name="phone" 
+              required 
+              pattern="[0-9]{10}" 
+              value={formData.phone} 
+              onChange={handleChange} 
+              placeholder="0901234567" 
+              className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:focus:ring-blue-400"
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Email <span className="text-red-500">*</span></label>
-            <input type="email" name="email" required value={formData.email} onChange={handleChange} placeholder="example@email.com" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"/>
+            <label className="block text-base font-medium mb-2 dark:text-gray-300">Email <span className="text-red-500">*</span></label>
+            <input 
+              type="email" 
+              name="email" 
+              required 
+              value={formData.email} 
+              onChange={handleChange} 
+              placeholder="example@email.com" 
+              className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:focus:ring-blue-400"
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Thời gian khám mong muốn <span className="text-red-500">*</span></label>
-            <input type="datetime-local" name="appointment_time" required value={formData.appointment_time} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"/>
+            <label className="block text-base font-medium mb-2 dark:text-gray-300">Thời gian khám mong muốn <span className="text-red-500">*</span></label>
+            <input 
+              type="datetime-local" 
+              name="appointment_time" 
+              required 
+              value={formData.appointment_time} 
+              onChange={handleChange} 
+              className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:focus:ring-blue-400"
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Ghi chú (tình trạng bệnh, yêu cầu bác sĩ...)</label>
-            <textarea name="notes" rows="3" value={formData.notes} onChange={handleChange} placeholder="Mô tả triệu chứng hoặc yêu cầu cụ thể..." className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"/>
+            <label className="block text-base font-medium mb-2 dark:text-gray-300">Ghi chú (tình trạng bệnh, yêu cầu bác sĩ...)</label>
+            <textarea 
+              name="notes" 
+              rows="3" 
+              value={formData.notes} 
+              onChange={handleChange} 
+              placeholder="Mô tả triệu chứng hoặc yêu cầu cụ thể..." 
+              className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:focus:ring-blue-400"
+            />
           </div>
-
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition disabled:bg-gray-400"
+            className="w-full bg-blue-600 dark:bg-blue-700 text-white py-3 rounded-md font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:bg-gray-400 dark:disabled:bg-gray-600 text-base"
           >
             {loading ? 'Đang gửi...' : 'Gửi đặt lịch'}
           </button>
@@ -131,14 +169,18 @@ export default function AppointmentChatbotForm({ onClose, initialUrl }) {
 
       {/* Kết quả */}
       {result && (
-        <div className={`mt-6 p-4 rounded-md text-center font-medium flex-shrink-0 ${result.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+        <div className={`mt-6 p-4 rounded-md text-center font-medium flex-shrink-0 text-base ${
+          result.success 
+            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' 
+            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+        }`}>
           {result.success ? (
             <>
               <p>Đặt lịch thành công! Mã lịch: <strong>{result.code}</strong></p>
               <button
                 // Sử dụng prop onClose để đóng Modal
                 onClick={onClose} 
-                className="mt-3 w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+                className="mt-3 w-full bg-blue-600 dark:bg-blue-700 text-white py-2 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition text-base"
               >
                 Quay lại chat
               </button>

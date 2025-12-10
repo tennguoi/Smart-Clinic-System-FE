@@ -252,41 +252,42 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
 
         <div className="p-6 space-y-6">
           {/* Patient & invoice info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className={`rounded-xl p-6 border ${theme === 'dark' ? 'bg-blue-900/20 border-blue-800' : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200'}`}>
-              <div className="flex items-center gap-3 mb-4">
-                <User className={`w-5 h-5 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-                <span className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('invoices.modal.patient')}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+                {t('invoices.modal.patient')}
+              </label>
+              <div className={`w-full px-3 py-2 rounded-lg border break-words ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}>
+                <p className="font-semibold">{invoice.patientName || t('invoices.modal.noPatientName')}</p>
+                <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{invoice.patientPhone || t('invoices.modal.noPhone')}</p>
               </div>
-              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{invoice.patientName || t('invoices.modal.noPatientName')}</p>
-              <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>{invoice.patientPhone || t('invoices.modal.noPhone')}</p>
             </div>
 
-            <div className={`rounded-xl p-6 border ${theme === 'dark' ? 'bg-purple-900/20 border-purple-800' : 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200'}`}>
-              <div className="flex items-center gap-3 mb-4">
-                <Calendar className={`w-5 h-5 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
-                <span className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('invoices.modal.invoiceInfo')}</span>
+            <div className="space-y-2">
+              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+                {t('invoices.modal.invoiceInfo')}
+              </label>
+              <div className={`w-full px-3 py-2 rounded-lg border break-words ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}>
+                <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}>
+                  {t('invoices.modal.createdDate')}: {invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
+                </p>
+                <p className="mt-2">
+                  {t('invoices.modal.status')}: <span className={`ml-2 px-3 py-1 rounded-full text-xs font-bold ${status.color}`}>
+                    {t(status.label)}
+                  </span>
+                </p>
               </div>
-              <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}>
-                {t('invoices.modal.createdDate')}: {invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
-              </p>
-              <p className="mt-2">
-                {t('invoices.modal.status')}: <span className={`ml-2 px-3 py-1 rounded-full text-xs font-bold ${status.color}`}>
-                  {t(status.label)}
-                </span>
-              </p>
             </div>
           </div>
 
           {/* Danh sách dịch vụ */}
-          <div className={`rounded-xl p-6 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className={`text-xl font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                <DollarSign className="w-6 h-6 text-green-600" />
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
                 {t('invoices.modal.servicesAndCosts')}
-              </h3>
+              </label>
 
-              {canEdit && !isEditing && (
+              {/* {canEdit && !isEditing && (
                 <button
                   onClick={() => setIsEditing(true)}
                   className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition"
@@ -294,7 +295,7 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
                   <Edit2 className="w-5 h-5" />
                   {t('invoices.common.edit')}
                 </button>
-              )}
+              )} */}
 
               {isEditing && (
                 <div className="flex gap-3">
@@ -430,12 +431,18 @@ export default function InvoiceDetailModal({ invoice, onClose, onUpdate, onPay }
           </div>
 
           {/* Summary */}
-          <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl p-8 text-center shadow-2xl">
-            <div className="text-4xl font-bold">
-              {t('invoices.modal.remaining')}: {formatPrice(totalAmount - (invoice.amountPaid || 0))}
+          <div className={`space-y-2 border-t pt-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className="flex justify-between items-center">
+              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+                {t('invoices.modal.remaining')}
+              </label>
+              <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                {formatPrice(totalAmount - (invoice.amountPaid || 0))}
+              </div>
             </div>
-            <div className="mt-4 text-xl opacity-90">
-              {t('invoices.modal.total')}: {formatPrice(totalAmount)} • {t('invoices.modal.paid')}: {formatPrice(invoice.amountPaid || 0)}
+            <div className={`flex justify-between items-center text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+              <span>{t('invoices.modal.total')}: {formatPrice(totalAmount)}</span>
+              <span>{t('invoices.modal.paid')}: {formatPrice(invoice.amountPaid || 0)}</span>
             </div>
           </div>
 

@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import CreateRecordForm from './CreateRecordForm';
 import RecordRow from './RecordRow';
-import { Plus, ClipboardList, Search, RotateCcw } from 'lucide-react';
+import { Plus, ClipboardList, Search } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import CountBadge from '../common/CountBadge';
 import Pagination from '../common/Pagination';
+import PatientHistoryModal from './PatientHistoryModal';
+import { authService } from '../../services/authService';
 
 // 🔥 Thêm import Toast vào component
 import toast, { Toaster } from "react-hot-toast";
@@ -31,6 +33,11 @@ const MedicalRecordsSection = () => {
   const patientNameMapRef = useRef(new Map());
   const today = new Date().toISOString().split('T')[0];
 
+  // History Modal State
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+
+  // Pagination
   const [currentPage, setCurrentPage] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
 
@@ -73,7 +80,7 @@ const MedicalRecordsSection = () => {
       setRecordsError(msg);
       setRecords([]);
       setTotalRecords(0);
-      toast.error(msg);    // 🔥 dùng toast
+      toast.error(msg);
     } finally {
       setRecordsLoading(false);
     }
@@ -114,7 +121,7 @@ const MedicalRecordsSection = () => {
 
     if (!formData.diagnosis?.trim()) {
       setFormError(t('doctorRecords.create.diagnosisRequired'));
-      toast.error(t('doctorRecords.create.diagnosisRequired')); // 🔥 toast
+      toast.error(t('doctorRecords.create.diagnosisRequired'));
       return;
     }
     if (!formData.treatmentNotes?.trim()) {
@@ -133,7 +140,7 @@ const MedicalRecordsSection = () => {
       });
 
       setFormSuccess(t('doctorRecords.create.success'));
-      toast.success(t('doctorRecords.create.success')); // 🔥 toast
+      toast.success(t('doctorRecords.create.success'));
 
       const patientNameValue = created.patientName || formData.patientName?.trim() || null;
       if (patientNameValue && created.recordId && !created.patientName) {
@@ -148,9 +155,16 @@ const MedicalRecordsSection = () => {
     } catch (error) {
       const msg = error.response?.data?.message || error.message || t('doctorRecords.create.failed');
       setFormError(msg);
-      toast.error(msg);  // 🔥 toast
+      toast.error(msg);
     } finally {
       setFormSubmitting(false);
+    }
+  };
+
+  const handleViewHistory = (patientId, patientName) => {
+    if (patientId) {
+      setSelectedPatient({ patientId, patientName });
+      setShowHistoryModal(true);
     }
   };
 
@@ -165,20 +179,22 @@ const MedicalRecordsSection = () => {
         <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 transition-colors duration-300`}>
           <ClipboardList className="w-9 h-9 text-blue-600" />
           <span>{t('doctorRecords.title')}</span>
-          <CountBadge 
-            currentCount={paginatedRecords.length} 
-            totalCount={records.length} 
-            label={t('doctorRecords.label')}
+          <CountBadge
+            currentCount={paginatedRecords.length}
+            totalCount={records.length}
+           label={t('doctorRecords.label')}
           />
         </h1>
-        
-        <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2"
-        >
-          <Plus className="w-5 h-5" />
-          {t('doctorRecords.create.newRecord')}
-        </button>
+
+        {!authService.hasRole('ROLE_BAC_SI') && (
+          <button
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            {t('doctorRecords.create.newRecord')}
+          </button>
+        )}
       </div>
 
       {/* CREATE FORM */}
@@ -193,20 +209,20 @@ const MedicalRecordsSection = () => {
           />
         </div>
       )}
-
-      {/* FILTERS */}
+ {/* FILTERS */}
       <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-md border p-6 mb-6 transition-colors duration-300`}>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Search */}
+          <div>
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-              {t('doctorRecords.filters.keyword')}
+              {t('medicalRecords.filters.search')}
             </label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 name="keyword"
-                placeholder={t('doctorRecords.filters.keywordPlaceholder')}
+                placeholder={t('medicalRecords.filters.searchPlaceholder')}
                 className={`w-full pl-9 pr-4 px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'}`}
                 value={searchParams.keyword}
                 onChange={handleSearchChange}
@@ -214,44 +230,45 @@ const MedicalRecordsSection = () => {
             </div>
           </div>
 
-          <div className="lg:col-span-5 flex gap-2 items-end">
-            <div className="flex-1">
-              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                {t('doctorRecords.filters.fromDate')}
-              </label>
-              <input 
-                type="date" 
-                name="startDate" 
-                className={`w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                value={searchParams.startDate} 
-                onChange={handleSearchChange}
-                max={searchParams.endDate || today}
-              />
-            </div>
-            <span className={`mb-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>-</span>
-            <div className="flex-1">
-              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                {t('doctorRecords.filters.toDate')}
-              </label>
-              <input 
-                type="date" 
-                name="endDate" 
-                className={`w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                value={searchParams.endDate} 
-                onChange={handleSearchChange}
-                min={searchParams.startDate}
-                max={today}
-              />
-            </div>
+          {/* Start Date */}
+          <div>
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+              {t('medicalRecords.filters.fromDate')}
+            </label>
+            <input
+              type="date"
+              name="startDate"
+              className={`w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+              value={searchParams.startDate}
+              onChange={handleSearchChange}
+              max={searchParams.endDate || today}
+            />
           </div>
 
-          <div className="lg:col-span-2 flex items-end">
+          {/* End Date */}
+          <div>
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+              {t('medicalRecords.filters.toDate')}
+            </label>
+            <input
+              type="date"
+              name="endDate"
+              className={`w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+              value={searchParams.endDate}
+              onChange={handleSearchChange}
+              min={searchParams.startDate}
+              max={today}
+            />
+          </div>
+
+          {/* Clear button */}
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>&nbsp;</label>
             <button
               onClick={handleResetSearch}
-              className={`w-full px-4 py-3 rounded-xl transition font-medium flex items-center justify-center gap-2 ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
+              className={`w-full px-4 py-3 rounded-xl transition font-medium whitespace-nowrap ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
             >
-              <RotateCcw className="w-4 h-4" />
-              {t('doctorRecords.filters.clear')}
+              {t('medicalRecords.filters.clear')}
             </button>
           </div>
         </div>
@@ -284,23 +301,23 @@ const MedicalRecordsSection = () => {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed">
                 <thead className={`${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} border-b`}>
                   <tr>
                     <th className={`text-center px-4 py-3 text-xs font-bold uppercase tracking-wider w-20 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {t('doctorRecords.common.stt')}
+                      {t('medicalRecords.table.stt')}
                     </th>
                     <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {t('doctorRecords.table.patient')}
+                      {t('medicalRecords.table.patient')}
                     </th>
                     <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {t('doctorRecords.table.diagnosis')}
+                      {t('medicalRecords.table.diagnosis')}
                     </th>
                     <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {t('doctorRecords.table.treatmentNotes')}
+                      {t('medicalRecords.table.treatmentNotes')}
                     </th>
                     <th className={`text-center px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {t('doctorRecords.common.actions')}
+                      {t('medicalRecords.common.actions')}
                     </th>
                   </tr>
                 </thead>
@@ -311,8 +328,9 @@ const MedicalRecordsSection = () => {
                       index={currentPage * ITEMS_PER_PAGE + idx + 1}
                       record={r}
                       onUpdated={fetchMyRecords}
-                      onError={(msg) => toast.error(msg)}  // 🔥 dùng toast
+                      onError={(msg) => toast.error(msg)}
                       onDelete={(recordId) => patientNameMapRef.current.delete(recordId)}
+                      onViewHistory={handleViewHistory}
                     />
                   ))}
                 </tbody>
@@ -329,6 +347,18 @@ const MedicalRecordsSection = () => {
           </>
         )}
       </div>
+
+      {/* History Modal */}
+      {showHistoryModal && selectedPatient && (
+        <PatientHistoryModal
+          patientId={selectedPatient.patientId}
+          patientName={selectedPatient.patientName}
+          onClose={() => {
+            setShowHistoryModal(false);
+            setSelectedPatient(null);
+          }}
+        />
+      )}
     </div>
   );
 };

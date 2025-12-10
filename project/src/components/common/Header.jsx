@@ -50,8 +50,8 @@ export default function Header() {
         <div className="flex items-center gap-4">
           {/* Notification */}
           <button className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
-            <Bell className="w-6 h-6 text-gray-600 dark:text-gray-300" />
-            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
+            {/* <Bell className="w-6 h-6 text-gray-600 dark:text-gray-300" /> */}
+            {/* <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full"></span> */}
           </button>
 
           {/* Language Switcher */}
