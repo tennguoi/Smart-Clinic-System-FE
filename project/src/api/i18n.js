@@ -600,12 +600,12 @@ no: "STT",
 
   confirm: {
     deleteText: "Xóa dịch vụ \"{{name}}\"? Thao tác này không thể hoàn tác.",
-    deactivateTitle: "Ngưng hoạt động dịch vụ?",
+    deactivateTitle: "Ngừng cung cấp  dịch vụ?",
     activateTitle: "Kích hoạt dịch vụ?",
     toggleText: "Dịch vụ: {{name}}"
   },
 
-  deactivate: "Ngưng hoạt động",
+  deactivate: "Ngừng cung cấp",
   activate: "Kích hoạt",
    priceRanges: {
     "under500k": "Dưới 500.000 ₫",
@@ -650,7 +650,9 @@ common: {
   fromDate: "Từ ngày",
   toDate: "Đến ngày",
   sessionExpired: "Phiên đăng nhập hết hạn",
-  loadError: "Không thể tải dữ liệu thống kê",
+  loadError: "Không thể tải dữ liệu ",
+  error:"Lỗi",
+  loading:"Đang tải",
 },
 appointmentManagement: {
   appointment: "lịch hẹn",
@@ -912,7 +914,7 @@ invoices: {
   status: "Trạng thái",
   allStatus: "Tất cả trạng thái",
   paid: "Đã thanh toán",
-  pending: "Đang chờ / Thanh toán một phần",
+  pending: "Chưa thanh toán",
   unpaidOnly: "Chỉ chưa thanh toán",
   clear: "Xóa bộ lọc"
 },
@@ -1354,8 +1356,10 @@ doctorRecords: {
   clearFilter: "Xóa lọc",
   search: "Tìm kiếm",
   "deleteConfirm": "Bạn có chắc muốn xóa hồ sơ này? Hành động này không thể hoàn tác.",
+   loading:"Đang tải",
   "errors": {
     "loadFailed": "Không thể tải chi tiết hồ sơ"
+   
   }
 },
 modal: {
@@ -2442,7 +2446,9 @@ common: {
   fromDate: "From",
   toDate: "To",
   sessionExpired: "Session expired",
-  loadError: "Unable to load statistics data",
+  loadError: "Unable to load  data",
+   error:"Error",
+   loading:"Loading",
 },
 appointmentManagement: {
   "appointment": "appointment",
@@ -3123,6 +3129,7 @@ doctorRecords: {
     treatmentNotesRequired: "Treatment notes are required"
   },
   common: {
+    loading:"Loading",
     total: "Total records: ",
   // ... existing keys ...
   stt: "No.",
