@@ -266,7 +266,7 @@ const RecordDetailModal = ({
               )}
 
 
-              {/* Prescription - Paired Layout with Auto-resize */}
+             {/* Prescription - Vertical Layout */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
@@ -307,9 +307,10 @@ const RecordDetailModal = ({
                           </div>
 
 
-                          <div className="flex-1 grid md:grid-cols-3 gap-3">
-                            {/* Drug name - 1/3 width */}
-                            <div className="space-y-1 md:col-span-1">
+                          {/* Changed from grid to flex-col for vertical layout */}
+                          <div className="flex-1 space-y-3">
+                            {/* Drug name - Full width on top */}
+                            <div className="space-y-1">
                               <label className={`block text-sm font-medium ${
                                 isDark ? 'text-gray-300' : 'text-gray-700'
                               }`}>
@@ -333,8 +334,8 @@ const RecordDetailModal = ({
                             </div>
 
 
-                            {/* Instructions - 2/3 width */}
-                            <div className="space-y-1 md:col-span-2">
+                            {/* Instructions - Full width on bottom */}
+                            <div className="space-y-1">
                               <label className={`block text-sm font-medium ${
                                 isDark ? 'text-gray-300' : 'text-gray-700'
                               }`}>
@@ -363,7 +364,7 @@ const RecordDetailModal = ({
                             <button
                               onClick={() => removePrescriptionItem(index)}
                               className="flex-shrink-0 p-2 rounded-lg hover:bg-red-100 text-red-600 transition"
-                               title={t('doctorRecords.modal.deleteDrug', 'Xóa')}
+                              title={t('doctorRecords.modal.deleteDrug', 'Xóa')}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
