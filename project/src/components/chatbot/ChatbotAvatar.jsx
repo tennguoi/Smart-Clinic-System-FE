@@ -1,10 +1,12 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, X, Camera } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-function MarkdownRenderer({ children }) {
+import { useTheme } from '../../contexts/ThemeContext';
+
+function MarkdownRenderer({ children, isDark }) {
   const processText = (text) => {
     text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    text = text.replace(/`(.*?)`/g, '<code class="bg-gray-100 px-1 rounded">$1</code>');
+    text = text.replace(/`(.*?)`/g, `<code class="${isDark ? 'bg-gray-700 text-cyan-300' : 'bg-gray-100 text-gray-800'} px-1 rounded">$1</code>`);
     text = text.replace(/^[•-]\s+(.+)$/gm, '<li>$1</li>');
     text = text.replace(/(<li>.*<\/li>\s*)+/g, '<ul class="list-disc pl-5 space-y-1">$&</ul>');
     text = text.replace(/\n/g, '<br/>');
@@ -20,6 +22,10 @@ function MarkdownRenderer({ children }) {
 }
 
 function ChatbotWindow({ isOpen, onClose }) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const { t } = useTranslation();
+  
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -102,12 +108,10 @@ function ChatbotWindow({ isOpen, onClose }) {
     setIsTyping(true);
 
     try {
-      // Tạo message object
       const message = {
         text: currentInput || 'Tôi gửi ảnh CCCD'
       };
 
-      // Nếu có ảnh, thêm thông tin ảnh vào message
       if (currentImage) {
         const base64Image = await convertToBase64(currentImage);
         message.hasImage = true;
@@ -115,7 +119,6 @@ function ChatbotWindow({ isOpen, onClose }) {
         message.contentType = currentImage.type;
       }
 
-      // Tạo payload theo đúng format backend
       const payload = {
         sessionId,
         message
@@ -206,7 +209,10 @@ function ChatbotWindow({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-24 right-6 w-96 h-[500px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50 animate-slideUp">
+    <div className={`fixed bottom-24 right-6 w-96 h-[500px] rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50 animate-slideUp ${
+      isDark ? 'bg-gray-800' : 'bg-white'
+    }`}>
+      {/* Header */}
       <div className="bg-gradient-to-br from-purple-700 via-blue-700 to-cyan-600 text-white p-4 flex items-center justify-between flex-shrink-0 shadow-xl">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-white to-blue-100 rounded-full flex items-center justify-center shadow-lg animate-pulse-slow">
@@ -222,19 +228,29 @@ function ChatbotWindow({ isOpen, onClose }) {
             </p>
           </div>
         </div>
-        <button onClick={onClose} className="hover:bg-white/30 rounded-full p-2 transition-all hover:rotate-90 duration-300 hover:scale-110">
+        <button 
+          onClick={onClose} 
+          className="hover:bg-white/30 rounded-full p-2 transition-all hover:rotate-90 duration-300 hover:scale-110"
+        >
           <X className="w-6 h-6" />
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 chat-messages-container">
+      {/* Messages Area */}
+      <div className={`flex-1 overflow-y-auto p-4 space-y-4 chat-messages-container ${
+        isDark ? 'bg-gray-900' : 'bg-gray-50'
+      }`}>
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center p-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full flex items-center justify-center mb-4 animate-pulse-slow">
-              <Bot className="w-8 h-8 text-purple-600" />
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 animate-pulse-slow ${
+              isDark ? 'bg-gradient-to-br from-purple-900 to-blue-900' : 'bg-gradient-to-br from-purple-100 to-blue-100'
+            }`}>
+              <Bot className={`w-8 h-8 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
             </div>
-            <h3 className="font-semibold text-gray-800 mb-2">Xin chào! 👋</h3>
-            <p className="text-sm text-gray-600 mb-4">
+            <h3 className={`font-semibold mb-2 ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+              Xin chào! 👋
+            </h3>
+            <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
               Em có thể giúp anh/chị đặt lịch khám, tư vấn dịch vụ. Hãy chọn câu hỏi hoặc nhắn tin!
             </p>
             
@@ -246,13 +262,19 @@ function ChatbotWindow({ isOpen, onClose }) {
                     setInputText(action.text);
                     setTimeout(() => handleSend(), 100);
                   }}
-                  className="w-full text-left px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 border border-gray-200 rounded-xl transition-all hover:shadow-md hover:scale-[1.02] group"
+                  className={`w-full text-left px-4 py-3 border rounded-xl transition-all hover:shadow-md hover:scale-[1.02] group ${
+                    isDark 
+                      ? 'bg-gradient-to-r from-gray-800 to-gray-700 hover:from-gray-700 hover:to-gray-600 border-gray-600' 
+                      : 'bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 border-gray-200'
+                  }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 bg-gradient-to-br ${action.gradient} rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
                       {action.icon}
                     </div>
-                    <span className="text-sm font-medium text-gray-700">{action.text}</span>
+                    <span className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                      {action.text}
+                    </span>
                   </div>
                 </button>
               ))}
@@ -273,7 +295,9 @@ function ChatbotWindow({ isOpen, onClose }) {
               <div className={`rounded-2xl px-4 py-3 shadow-lg transition-all hover:shadow-xl ${
                 message.sender === 'user'
                   ? 'bg-gradient-to-br from-blue-600 to-cyan-500 text-white rounded-tr-none'
-                  : 'bg-gradient-to-br from-white to-gray-50 text-gray-800 rounded-tl-none border-2 border-purple-200'
+                  : isDark
+                    ? 'bg-gradient-to-br from-gray-700 to-gray-600 text-gray-100 rounded-tl-none border-2 border-purple-500'
+                    : 'bg-gradient-to-br from-white to-gray-50 text-gray-800 rounded-tl-none border-2 border-purple-200'
               }`}>
                 {message.image && (
                   <img 
@@ -282,9 +306,11 @@ function ChatbotWindow({ isOpen, onClose }) {
                     className="max-w-full h-auto rounded-lg mb-2"
                   />
                 )}
-                <MarkdownRenderer>{message.text}</MarkdownRenderer>
+                <MarkdownRenderer isDark={isDark}>{message.text}</MarkdownRenderer>
               </div>
-              <span className="text-xs text-gray-500 mt-1">{formatTime(message.timestamp)}</span>
+              <span className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                {formatTime(message.timestamp)}
+              </span>
             </div>
           </div>
         ))}
@@ -294,7 +320,11 @@ function ChatbotWindow({ isOpen, onClose }) {
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 flex items-center justify-center shadow-lg animate-pulse">
               <Bot className="w-4 h-4 text-white" />
             </div>
-            <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl rounded-tl-none px-4 py-3 shadow-lg border-2 border-purple-200">
+            <div className={`rounded-2xl rounded-tl-none px-4 py-3 shadow-lg border-2 ${
+              isDark 
+                ? 'bg-gradient-to-br from-gray-700 to-gray-600 border-purple-500' 
+                : 'bg-gradient-to-br from-white to-gray-50 border-purple-200'
+            }`}>
               <div className="flex gap-1.5">
                 <div className="w-2.5 h-2.5 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                 <div className="w-2.5 h-2.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
@@ -306,7 +336,8 @@ function ChatbotWindow({ isOpen, onClose }) {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t bg-white p-3">
+      {/* Input Area */}
+      <div className={`border-t p-3 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         {imagePreview && (
           <div className="mb-2 relative inline-block">
             <img 
@@ -346,7 +377,11 @@ function ChatbotWindow({ isOpen, onClose }) {
             onKeyPress={handleKeyPress}
             placeholder="Nhập tin nhắn..."
             rows="1"
-            className="flex-1 px-4 py-2 text-sm border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none overflow-y-auto custom-scrollbar"
+            className={`flex-1 px-4 py-2 text-sm border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none overflow-y-auto custom-scrollbar ${
+              isDark 
+                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+            }`}
             style={{ 
               maxHeight: '72px',
               minHeight: '40px',
@@ -372,6 +407,8 @@ function ChatbotWindow({ isOpen, onClose }) {
 }
 
 export default function ChatbotAvatar() {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [hasNotification, setHasNotification] = useState(true);
@@ -400,9 +437,13 @@ export default function ChatbotAvatar() {
       </button>
 
       {!isOpen && (
-        <div className="fixed bottom-24 right-6 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg text-sm whitespace-nowrap z-40 animate-fadeIn">
-         {t('ChatbotAvatar.tooltip')}
-          <div className="absolute bottom-0 right-6 transform translate-y-1/2 rotate-45 w-2 h-2 bg-gray-800"></div>
+        <div className={`fixed bottom-24 right-6 px-4 py-2 rounded-lg shadow-lg text-sm whitespace-nowrap z-40 animate-fadeIn ${
+          isDark ? 'bg-gray-700 text-gray-200' : 'bg-gray-800 text-white'
+        }`}>
+          {t('ChatbotAvatar.tooltip')}
+          <div className={`absolute bottom-0 right-6 transform translate-y-1/2 rotate-45 w-2 h-2 ${
+            isDark ? 'bg-gray-700' : 'bg-gray-800'
+          }`}></div>
         </div>
       )}
 

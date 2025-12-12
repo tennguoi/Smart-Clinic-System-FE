@@ -1,11 +1,8 @@
-// src/components/doctor/RecordDetailModal.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Pencil, Download, Eye } from 'lucide-react';
-import { medicalRecordApi } from '../../api/medicalRecordApi';
-import toast from 'react-hot-toast';
-import { downloadPdf, getMedicalRecordFilename } from '../../utils/pdfDownload';
+import { X, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+
 
 const RecordDetailModal = ({
   record,
@@ -23,70 +20,134 @@ const RecordDetailModal = ({
   saving,
   onClose,
 }) => {
-  const { t } = useTranslation();
   const { theme } = useTheme();
-  const [exporting, setExporting] = useState(false);
+  const { t } = useTranslation();
   const [isEditMode, setIsEditMode] = useState(false);
+ 
+  // Auto-resize textarea function
+  const autoResizeTextarea = (textarea) => {
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = textarea.scrollHeight + 'px';
+    }
+  };
+ 
+  // Parse prescription data into paired format
+  const parsePrescriptions = () => {
+    const drugs = localPrescriptionDrugs.split('\n').filter(d => d.trim());
+    const instructions = localPrescriptionInstructions.split('\n').filter(i => i.trim());
+    const maxLength = Math.max(drugs.length, instructions.length);
+   
+    const paired = [];
+    for (let i = 0; i < maxLength; i++) {
+      paired.push({
+        drug: drugs[i] || '',
+        instruction: instructions[i] || ''
+      });
+    }
+    return paired;
+  };
+
+
+  const [prescriptionItems, setPrescriptionItems] = useState(parsePrescriptions());
+
+
+  // Re-parse when props change (fix for first load issue)
+  useEffect(() => {
+    setPrescriptionItems(parsePrescriptions());
+  }, [localPrescriptionDrugs, localPrescriptionInstructions]);
+
+
+  // Update parent state when items change
+  const updateParentState = (items) => {
+    const drugs = items.map(item => item.drug).join('\n');
+    const instructions = items.map(item => item.instruction).join('\n');
+    setLocalPrescriptionDrugs(drugs);
+    setLocalPrescriptionInstructions(instructions);
+  };
+
+
+  const handleItemChange = (index, field, value) => {
+    const newItems = [...prescriptionItems];
+    newItems[index][field] = value;
+    setPrescriptionItems(newItems);
+    updateParentState(newItems);
+  };
+
+
+  const addPrescriptionItem = () => {
+    const newItems = [...prescriptionItems, { drug: '', instruction: '' }];
+    setPrescriptionItems(newItems);
+  };
+
+
+  const removePrescriptionItem = (index) => {
+    const newItems = prescriptionItems.filter((_, i) => i !== index);
+    setPrescriptionItems(newItems);
+    updateParentState(newItems);
+  };
+
+
+  // Auto-resize all textareas when items change
+  useEffect(() => {
+    const textareas = document.querySelectorAll('textarea[data-auto-resize]');
+    textareas.forEach(autoResizeTextarea);
+  }, [prescriptionItems, isEditMode]);
+
 
   if (!record) return null;
 
+
   const isDark = theme === 'dark';
 
-  const handleExportPdf = async () => {
-    setExporting(true);
-    try {
-      const pdfBlob = await medicalRecordApi.exportAsPdf(record.recordId);
-      downloadPdf(pdfBlob, getMedicalRecordFilename(record.recordId));
-      toast.success(t('doctorRecords.modal.pdfSuccess'));
-    } catch {
-      toast.error(t('doctorRecords.modal.pdfFailed'));
-    } finally {
-      setExporting(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
 
-      {/* Main modal */}
+
       <div
-        className={`relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-xl border shadow-2xl flex flex-col ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-          }`}
+        className={`relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-xl border shadow-2xl flex flex-col ${
+          isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div
-          className={`flex items-center justify-between p-6 border-b sticky top-0 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            }`}
-        >
+        <div className={`flex items-center justify-between p-6 border-b sticky top-0 ${
+          isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+        }`}>
           <h3 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             {t('doctorRecords.modal.title', 'Chỉnh sửa hồ sơ bệnh án')}
           </h3>
+
 
           <div className="flex items-center gap-3">
             {!isEditMode && (
               <button
                 onClick={() => setIsEditMode(true)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold transition shadow-sm ${isDark
-                  ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-                  }`}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold transition shadow-sm ${
+                  isDark
+                    ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
               >
                 <Pencil className="w-4 h-4" />
                 {t('doctorRecords.common.edit', 'Chỉnh sửa')}
               </button>
             )}
 
+
             <button
               onClick={onClose}
-              className={`p-2 rounded-lg transition ${isDark ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
-                }`}
+              className={`p-2 rounded-lg transition ${
+                isDark ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
+              }`}
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
+
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -106,12 +167,14 @@ const RecordDetailModal = ({
                     {t('doctorRecords.modal.patientName', 'Tên bệnh nhân')}
                   </label>
                   <div
-                    className={`w-full px-3 py-2 rounded-lg border break-words ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'
-                      }`}
+                    className={`w-full px-3 py-2 rounded-lg border break-words ${
+                      isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'
+                    }`}
                   >
                     {record.patientName || record.patientId || '—'}
                   </div>
                 </div>
+
 
                 <div className="space-y-2">
                   <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
@@ -122,14 +185,16 @@ const RecordDetailModal = ({
                     value={localDiagnosis}
                     onChange={(e) => setLocalDiagnosis(e.target.value)}
                     disabled={!isEditMode}
-                    className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 break-words ${isDark
-                      ? `bg-gray-800 border-gray-700 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
-                      : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
-                      }`}
+                    className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 break-words ${
+                      isDark
+                        ? `bg-gray-800 border-gray-700 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
+                        : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
+                    }`}
                     placeholder={t('doctorRecords.modal.diagnosisPlaceholder')}
                   />
                 </div>
               </div>
+
 
               {/* Treatment notes */}
               <div className="space-y-2">
@@ -141,12 +206,14 @@ const RecordDetailModal = ({
                   value={localNotes}
                   onChange={(e) => setLocalNotes(e.target.value)}
                   disabled={!isEditMode}
-                  className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y break-words whitespace-pre-wrap ${isDark
-                    ? `bg-gray-800 border-gray-700 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
-                    : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
-                    }`}
+                  className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y break-words whitespace-pre-wrap ${
+                    isDark
+                      ? `bg-gray-800 border-gray-700 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
+                      : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
+                  }`}
                 />
               </div>
+
 
               {/* ✨ Selected Services */}
               {record.services && record.services.length > 0 && (
@@ -198,45 +265,116 @@ const RecordDetailModal = ({
                 </div>
               )}
 
-              {/* Prescription */}
+
+              {/* Prescription - Paired Layout with Auto-resize */}
               <div className="space-y-3">
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
-                  {t('doctorRecords.modal.prescriptionTitle', 'Đơn thuốc')}
-                </label>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {t('doctorRecords.modal.prescriptionDrugs', 'Toa thuốc')}
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={localPrescriptionDrugs}
-                      onChange={(e) => setLocalPrescriptionDrugs(e.target.value)}
-                      disabled={!isEditMode}
-                      className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y break-words whitespace-pre-wrap ${isDark
-                        ? `bg-gray-800 border-gray-700 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
-                        : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
-                        }`}
-                      placeholder={t('doctorRecords.modal.prescriptionDrugsPlaceholder')}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {t('doctorRecords.modal.prescriptionInstructions', 'Hướng dẫn sử dụng')}
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={localPrescriptionInstructions}
-                      onChange={(e) => setLocalPrescriptionInstructions(e.target.value)}
-                      disabled={!isEditMode}
-                      className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y break-words whitespace-pre-wrap ${isDark
-                        ? `bg-gray-800 border-gray-700 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
-                        : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
-                        }`}
-                      placeholder={t('doctorRecords.modal.prescriptionInstructionsPlaceholder')}
-                    />
-                  </div>
+                <div className="flex items-center justify-between">
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                    {t('doctorRecords.modal.prescriptionTitle', 'Đơn thuốc')}
+                  </label>
+                  {isEditMode && (
+                    <button
+                      onClick={addPrescriptionItem}
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg bg-green-600 hover:bg-green-700 text-white transition"
+                    >
+                      <Plus className="w-4 h-4" />
+                      {t('doctorRecords.modal.addDrug', 'Thêm thuốc')}
+                    </button>
+                  )}
                 </div>
+
+
+                <div className="space-y-3">
+                  {prescriptionItems.length === 0 ? (
+                    <div className={`text-center py-8 rounded-lg border-2 border-dashed ${
+                      isDark ? 'border-gray-700 text-gray-400' : 'border-gray-300 text-gray-500'
+                    }`}>
+                      {t('doctorRecords.modal.noPrescription', 'Chưa có đơn thuốc')}
+                    </div>
+                  ) : (
+                    prescriptionItems.map((item, index) => (
+                      <div
+                        key={index}
+                        className={`p-4 rounded-lg border ${
+                          isDark ? 'bg-gray-750 border-gray-700' : 'bg-gray-50 border-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+                            isDark ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {index + 1}
+                          </div>
+
+
+                          <div className="flex-1 grid md:grid-cols-3 gap-3">
+                            {/* Drug name - 1/3 width */}
+                            <div className="space-y-1 md:col-span-1">
+                              <label className={`block text-sm font-medium ${
+                                isDark ? 'text-gray-300' : 'text-gray-700'
+                              }`}>
+                                {t('doctorRecords.modal.prescriptionDrugs', 'Tên thuốc')}
+                              </label>
+                              <textarea
+                                data-auto-resize
+                                value={item.drug}
+                                onChange={(e) => {
+                                  handleItemChange(index, 'drug', e.target.value);
+                                  autoResizeTextarea(e.target);
+                                }}
+                                disabled={!isEditMode}
+                                className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none break-words whitespace-pre-wrap overflow-hidden min-h-[80px] ${
+                                  isDark
+                                    ? `bg-gray-800 border-gray-600 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
+                                    : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
+                                }`}
+                                placeholder={t('doctorRecords.modal.prescriptionDrugsPlaceholder')}
+                              />
+                            </div>
+
+
+                            {/* Instructions - 2/3 width */}
+                            <div className="space-y-1 md:col-span-2">
+                              <label className={`block text-sm font-medium ${
+                                isDark ? 'text-gray-300' : 'text-gray-700'
+                              }`}>
+                                {t('doctorRecords.modal.prescriptionInstructions', 'Hướng dẫn sử dụng')}
+                              </label>
+                              <textarea
+                                data-auto-resize
+                                value={item.instruction}
+                                onChange={(e) => {
+                                  handleItemChange(index, 'instruction', e.target.value);
+                                  autoResizeTextarea(e.target);
+                                }}
+                                disabled={!isEditMode}
+                                className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none break-words whitespace-pre-wrap overflow-hidden min-h-[80px] ${
+                                  isDark
+                                    ? `bg-gray-800 border-gray-600 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
+                                    : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
+                                }`}
+                                placeholder={t('doctorRecords.modal.prescriptionInstructionsPlaceholder')}
+                              />
+                            </div>
+                          </div>
+
+
+                          {isEditMode && (
+                            <button
+                              onClick={() => removePrescriptionItem(index)}
+                              className="flex-shrink-0 p-2 rounded-lg hover:bg-red-100 text-red-600 transition"
+                               title={t('doctorRecords.modal.deleteDrug', 'Xóa')}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+
                 {prescriptions[0]?.issuedAt && (
                   <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     {t('doctorRecords.modal.prescriptionIssuedAt', 'Ngày kê đơn: {{date}}', {
@@ -246,8 +384,11 @@ const RecordDetailModal = ({
                 )}
               </div>
 
+
               {record.createdAt && (
-                <div className={`text-center text-xs pt-4 border-t ${isDark ? 'text-gray-400 border-gray-700' : 'text-gray-500 border-gray-200'}`}>
+                <div className={`text-center text-xs pt-4 border-t ${
+                  isDark ? 'text-gray-400 border-gray-700' : 'text-gray-500 border-gray-200'
+                }`}>
                   {t('doctorRecords.modal.createdAt', 'Ngày tạo: {{date}}', {
                     date: new Date(record.createdAt).toLocaleString('vi-VN'),
                   })}
@@ -257,28 +398,33 @@ const RecordDetailModal = ({
           )}
         </div>
 
+
         {/* Footer */}
         {isEditMode && (
           <div
-            className={`flex justify-end gap-4 p-6 border-t ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
-              }`}
+            className={`flex justify-end gap-4 p-6 border-t ${
+              isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
+            }`}
           >
             <button
               onClick={() => setIsEditMode(false)}
               disabled={saving}
-              className={`px-6 py-2.5 rounded-lg font-medium transition disabled:opacity-60 ${isDark
-                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                }`}
+              className={`px-6 py-2.5 rounded-lg font-medium transition disabled:opacity-60 ${
+                isDark
+                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+              }`}
             >
               {t('doctorRecords.common.cancel', 'Hủy')}
             </button>
 
+
             <button
               onClick={onSave}
               disabled={saving}
-              className={`px-6 py-2.5 rounded-lg font-medium flex items-center gap-2 transition ${saving ? 'bg-blue-400 text-white cursor-not-allowed opacity-70' : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
+              className={`px-6 py-2.5 rounded-lg font-medium flex items-center gap-2 transition ${
+                saving ? 'bg-blue-400 text-white cursor-not-allowed opacity-70' : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
             >
               {saving ? (
                 <>
@@ -299,4 +445,7 @@ const RecordDetailModal = ({
   );
 };
 
+
 export default RecordDetailModal;
+
+

@@ -7,6 +7,36 @@ import ChatbotAvatar from '../components/chatbot/ChatbotAvatar';
 const resources = {
   vi: {
     translation: {
+      bankQRModal: {
+  title: "Quét QR để thanh toán",
+  billId: "Mã hóa đơn",
+  amountToPay: "Số tiền cần thanh toán",
+  scanQR: "Mở ứng dụng ngân hàng và quét mã QR",
+  downloadQR: "Tải mã QR",
+  manualTransfer: "Hoặc chuyển khoản thủ công",
+  bank: "Ngân hàng",
+  accountHolder: "Chủ tài khoản",
+  accountNumber: "Số tài khoản",
+  amount: "Số tiền",
+  transferContent: "Nội dung chuyển khoản",
+  paymentSuccess: "Thanh toán thành công!",
+  waitingPayment: "Đang chờ thanh toán...",
+  status: "Trạng thái",
+  paidAmount: "Số tiền đã thanh toán",
+  remainingAmount: "Còn lại",
+  timeoutError: "Quá thời gian. Vui lòng kiểm tra lại hoặc liên hệ hỗ trợ.",
+  checkError: "Không thể kiểm tra trạng thái thanh toán",
+  confirmError: "Lỗi xác nhận thanh toán. Vui lòng thử lại.",
+  importantNote: "Lưu ý quan trọng",
+  note1: "Chuyển đúng số tiền và đúng nội dung",
+  note2: "Sau khi chuyển khoản, nhấn \"Tôi đã thanh toán\"",
+  note3: "Hệ thống kiểm tra giao dịch mỗi 10 giây",
+  note4: "Giao dịch sẽ được xác nhận trong vài phút",
+  cancel: "Hủy",
+  confirmPayment: "Tôi đã thanh toán",
+  processing: "Đang xử lý..."
+},
+
       // Header & Navigation
       header: {
         home: "Trang Chủ",
@@ -1398,6 +1428,8 @@ const resources = {
           "saveFailed": "Cập nhật hồ sơ thất bại",
           "deleteSuccess": "Xóa hồ sơ thành công!",
           "deleteFailed": "Xóa hồ sơ thất bại",
+          "addDrug": "Thêm thuốc",
+          deleteDrug: "Xóa thuốc",
         },
       },
       profilepage: {
@@ -3208,7 +3240,9 @@ const resources = {
           "saveSuccess": "Record updated successfully!",
           "saveFailed": "Failed to update record",
           "deleteSuccess": "Record deleted successfully!",
-          "deleteFailed": "Failed to delete record"
+          "deleteFailed": "Failed to delete record",
+          addDrug: "Add Drug",
+          deleteDrug: "Delete Drug"
         },
       },
       profilepage: {
