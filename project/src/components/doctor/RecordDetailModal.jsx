@@ -51,16 +51,14 @@ const RecordDetailModal = ({
 
       {/* Main modal */}
       <div
-        className={`relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-xl border shadow-2xl flex flex-col ${
-          isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-        }`}
+        className={`relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-xl border shadow-2xl flex flex-col ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+          }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
-          className={`flex items-center justify-between p-6 border-b sticky top-0 ${
-            isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-          }`}
+          className={`flex items-center justify-between p-6 border-b sticky top-0 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+            }`}
         >
           <h3 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             {t('doctorRecords.modal.title', 'Chỉnh sửa hồ sơ bệnh án')}
@@ -70,11 +68,10 @@ const RecordDetailModal = ({
             {!isEditMode && (
               <button
                 onClick={() => setIsEditMode(true)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold transition shadow-sm ${
-                  isDark
-                    ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold transition shadow-sm ${isDark
+                  ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
               >
                 <Pencil className="w-4 h-4" />
                 {t('doctorRecords.common.edit', 'Chỉnh sửa')}
@@ -83,9 +80,8 @@ const RecordDetailModal = ({
 
             <button
               onClick={onClose}
-              className={`p-2 rounded-lg transition ${
-                isDark ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
-              }`}
+              className={`p-2 rounded-lg transition ${isDark ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
+                }`}
             >
               <X className="w-5 h-5" />
             </button>
@@ -110,9 +106,8 @@ const RecordDetailModal = ({
                     {t('doctorRecords.modal.patientName', 'Tên bệnh nhân')}
                   </label>
                   <div
-                    className={`w-full px-3 py-2 rounded-lg border break-words ${
-                      isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'
-                    }`}
+                    className={`w-full px-3 py-2 rounded-lg border break-words ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                   >
                     {record.patientName || record.patientId || '—'}
                   </div>
@@ -127,11 +122,10 @@ const RecordDetailModal = ({
                     value={localDiagnosis}
                     onChange={(e) => setLocalDiagnosis(e.target.value)}
                     disabled={!isEditMode}
-                    className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 break-words ${
-                      isDark
-                        ? `bg-gray-800 border-gray-700 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
-                        : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
-                    }`}
+                    className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 break-words ${isDark
+                      ? `bg-gray-800 border-gray-700 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
+                      : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
+                      }`}
                     placeholder={t('doctorRecords.modal.diagnosisPlaceholder')}
                   />
                 </div>
@@ -147,14 +141,62 @@ const RecordDetailModal = ({
                   value={localNotes}
                   onChange={(e) => setLocalNotes(e.target.value)}
                   disabled={!isEditMode}
-                  className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y break-words whitespace-pre-wrap ${
-                    isDark
-                      ? `bg-gray-800 border-gray-700 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
-                      : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
-                  }`}
-                  placeholder={t('doctorRecords.modal.treatmentNotesPlaceholder')}
+                  className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y break-words whitespace-pre-wrap ${isDark
+                    ? `bg-gray-800 border-gray-700 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
+                    : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
+                    }`}
                 />
               </div>
+
+              {/* ✨ Selected Services */}
+              {record.services && record.services.length > 0 && (
+                <div className="space-y-2">
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                    {t('medicalRecords.table.servicesTitle') || 'Dịch vụ đã chọn'}
+                  </label>
+                  <div className={`rounded-lg border overflow-hidden ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                    <table className="w-full text-sm">
+                      <thead className={`text-xs uppercase ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-50 text-gray-500'}`}>
+                        <tr>
+                          <th className="px-3 py-2 text-left">{t('medicalRecords.table.serviceName', 'Tên dịch vụ')}</th>
+                          <th className="px-3 py-2 text-center w-16">{t('medicalRecords.table.quantity', 'SL')}</th>
+                          <th className="px-3 py-2 text-right">{t('medicalRecords.table.unitPrice', 'Đơn giá')}</th>
+                          <th className="px-3 py-2 text-right">{t('medicalRecords.table.totalPrice', 'Thành tiền')}</th>
+                        </tr>
+                      </thead>
+                      <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                        {record.services.map((s, idx) => (
+                          <tr key={idx} className={isDark ? 'text-gray-300' : 'text-gray-700'}>
+                            <td className="px-3 py-2">
+                              <div className="font-medium">{s.serviceName}</div>
+                              {s.note && <div className="text-xs italic text-gray-500">{s.note}</div>}
+                            </td>
+                            <td className="px-3 py-2 text-center">{s.quantity}</td>
+                            <td className="px-3 py-2 text-right">
+                              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(s.unitPrice)}
+                            </td>
+                            <td className="px-3 py-2 text-right font-medium">
+                              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(s.totalPrice || (s.unitPrice * s.quantity))}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className={`text-xs font-semibold ${isDark ? 'bg-gray-700 text-gray-200' : 'bg-gray-50 text-gray-700'}`}>
+                        <tr>
+                          <td colSpan="3" className="px-3 py-2 text-right uppercase">
+                            {t('medicalRecords.table.total', 'Tổng cộng')}:
+                          </td>
+                          <td className="px-3 py-2 text-right text-blue-600 dark:text-blue-400">
+                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+                              record.services.reduce((sum, item) => sum + (item.totalPrice || (item.unitPrice * item.quantity)), 0)
+                            )}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              )}
 
               {/* Prescription */}
               <div className="space-y-3">
@@ -171,11 +213,10 @@ const RecordDetailModal = ({
                       value={localPrescriptionDrugs}
                       onChange={(e) => setLocalPrescriptionDrugs(e.target.value)}
                       disabled={!isEditMode}
-                      className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y break-words whitespace-pre-wrap ${
-                        isDark
-                          ? `bg-gray-800 border-gray-700 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
-                          : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
-                      }`}
+                      className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y break-words whitespace-pre-wrap ${isDark
+                        ? `bg-gray-800 border-gray-700 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
+                        : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
+                        }`}
                       placeholder={t('doctorRecords.modal.prescriptionDrugsPlaceholder')}
                     />
                   </div>
@@ -188,11 +229,10 @@ const RecordDetailModal = ({
                       value={localPrescriptionInstructions}
                       onChange={(e) => setLocalPrescriptionInstructions(e.target.value)}
                       disabled={!isEditMode}
-                      className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y break-words whitespace-pre-wrap ${
-                        isDark
-                          ? `bg-gray-800 border-gray-700 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
-                          : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
-                      }`}
+                      className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y break-words whitespace-pre-wrap ${isDark
+                        ? `bg-gray-800 border-gray-700 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
+                        : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
+                        }`}
                       placeholder={t('doctorRecords.modal.prescriptionInstructionsPlaceholder')}
                     />
                   </div>
@@ -220,18 +260,16 @@ const RecordDetailModal = ({
         {/* Footer */}
         {isEditMode && (
           <div
-            className={`flex justify-end gap-4 p-6 border-t ${
-              isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
-            }`}
+            className={`flex justify-end gap-4 p-6 border-t ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
+              }`}
           >
             <button
               onClick={() => setIsEditMode(false)}
               disabled={saving}
-              className={`px-6 py-2.5 rounded-lg font-medium transition disabled:opacity-60 ${
-                isDark
-                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-              }`}
+              className={`px-6 py-2.5 rounded-lg font-medium transition disabled:opacity-60 ${isDark
+                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                }`}
             >
               {t('doctorRecords.common.cancel', 'Hủy')}
             </button>
@@ -239,9 +277,8 @@ const RecordDetailModal = ({
             <button
               onClick={onSave}
               disabled={saving}
-              className={`px-6 py-2.5 rounded-lg font-medium flex items-center gap-2 transition ${
-                saving ? 'bg-blue-400 text-white cursor-not-allowed opacity-70' : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
+              className={`px-6 py-2.5 rounded-lg font-medium flex items-center gap-2 transition ${saving ? 'bg-blue-400 text-white cursor-not-allowed opacity-70' : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
             >
               {saving ? (
                 <>

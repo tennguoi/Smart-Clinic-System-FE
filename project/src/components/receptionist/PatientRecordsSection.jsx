@@ -61,7 +61,7 @@ const ITEMS_PER_PAGE = 10;
 export default function PatientRecordsSection() {
   const { theme } = useTheme();
   const { t } = useTranslation();
-  
+
   const [queueList, setQueueList] = useState([]);
   const [loadingQueue, setLoadingQueue] = useState(false);
   const [queueError, setQueueError] = useState('');
@@ -191,6 +191,7 @@ export default function PatientRecordsSection() {
         idNumber: full.idNumber || '',
         insuranceNumber: full.insuranceNumber || '',
         notes: full.notes || '',
+        services: full.services || [], // ✨ Map services if available
       });
       setEditPatientId(full.queueId);
       setShowForm(true);
@@ -235,7 +236,7 @@ export default function PatientRecordsSection() {
       } else {
         // Gọi API thêm bệnh nhân - sẽ kiểm tra trùng lặp
         const res = await queueApi.addPatient(patientForm);
-        
+
         // Kiểm tra nếu backend phát hiện bệnh nhân đã tồn tại
         if (res.existingPatientFound) {
           // Lưu data và hiển thị modal thay vì window.confirm
@@ -245,7 +246,7 @@ export default function PatientRecordsSection() {
           });
           return; // Dừng lại, chờ user chọn trong modal
         }
-        
+
         // Không có trùng lặp - xử lý bình thường
         const newItem = {
           ...res,
@@ -254,15 +255,15 @@ export default function PatientRecordsSection() {
         };
         setQueueList(prev => sortQueueByPriority([newItem, ...prev]));
         setCurrentPage(0);
-        
+
         // Toast với thời gian tùy chỉnh cho thông báo phòng khám
         const message = res.roomName
           ? t('patientRecords.toast.addSuccessWithRoom', {
-              room: res.roomName,
-              doctor: res.doctorName ? ` - ${t('queueManagement.doctor', { name: res.doctorName })}` : ''
-            })
+            room: res.roomName,
+            doctor: res.doctorName ? ` - ${t('queueManagement.doctor', { name: res.doctorName })}` : ''
+          })
           : t('patientRecords.toast.addSuccess');
-        
+
         toast.success(message, {
           duration: res.roomName ? 6000 : toastConfig.toastOptions.success.duration,
         });
@@ -277,14 +278,14 @@ export default function PatientRecordsSection() {
   // Xử lý khi user chọn trong duplicate dialog
   const handleDuplicateConfirm = async (useExisting) => {
     if (!duplicateDialogData) return;
-    
+
     setIsProcessingDuplicate(true);
     try {
       const result = await queueApi.addPatientWithExisting(
-        duplicateDialogData.newPatientForm, 
+        duplicateDialogData.newPatientForm,
         useExisting
       );
-      
+
       const newItem = {
         ...result,
         dob: formatDateOfBirth(result.dob),
@@ -292,11 +293,11 @@ export default function PatientRecordsSection() {
       };
       setQueueList(prev => sortQueueByPriority([newItem, ...prev]));
       setCurrentPage(0);
-      
-      const successMessage = useExisting 
+
+      const successMessage = useExisting
         ? t('patientRecords.duplicateDialog.successUseExisting', { name: result.patientName })
         : t('patientRecords.duplicateDialog.successUpdateNew', { name: result.patientName });
-      
+
       toast.success(successMessage, { duration: 5000 });
       setShowForm(false);
       setDuplicateDialogData(null);
@@ -334,13 +335,13 @@ export default function PatientRecordsSection() {
         <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 transition-colors duration-300`}>
           <Users className="w-9 h-9 text-blue-600" />
           <span>{t('patientRecords.title')}</span>
-          <CountBadge 
-            currentCount={paginatedList.length} 
-            totalCount={queueList.length} 
+          <CountBadge
+            currentCount={paginatedList.length}
+            totalCount={queueList.length}
             label={t('patientRecords.label')}
           />
         </h1>
-        <button 
+        <button
           onClick={handleAddPatient}
           className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2">
           <Plus className="w-5 h-5" />
@@ -422,31 +423,28 @@ export default function PatientRecordsSection() {
       {/* Duplicate Patient Dialog Modal */}
       {duplicateDialogData && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60] p-4">
-          <div className={`rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transition-colors duration-300 ${
-            theme === 'dark' ? 'bg-gray-800' : 'bg-white'
-          }`}>
-            {/* Header */}
-            <div className={`flex items-center gap-3 p-5 border-b ${
-              theme === 'dark' ? 'border-gray-700 bg-amber-900/30' : 'border-amber-200 bg-amber-50'
+          <div className={`rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'
             }`}>
+            {/* Header */}
+            <div className={`flex items-center gap-3 p-5 border-b ${theme === 'dark' ? 'border-gray-700 bg-amber-900/30' : 'border-amber-200 bg-amber-50'
+              }`}>
               <AlertTriangle className="w-8 h-8 text-amber-500" />
               <div className="flex-1">
                 <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-amber-300' : 'text-amber-800'}`}>
                   {t('patientRecords.duplicateDialog.title')}
                 </h2>
                 <p className={`text-sm ${theme === 'dark' ? 'text-amber-200' : 'text-amber-600'}`}>
-                  {t(`patientRecords.duplicateDialog.duplicateFieldLabels.${duplicateDialogData.existingPatient.duplicateField}`)}: 
+                  {t(`patientRecords.duplicateDialog.duplicateFieldLabels.${duplicateDialogData.existingPatient.duplicateField}`)}:
                   <span className="font-semibold ml-1">
                     "{duplicateDialogData.newPatientForm[duplicateDialogData.existingPatient.duplicateField]}"
                   </span>
                   {' '}{t('patientRecords.duplicateDialog.subtitle')}
                 </p>
               </div>
-              <button 
+              <button
                 onClick={handleCloseDuplicateDialog}
-                className={`p-2 rounded-lg transition-colors ${
-                  theme === 'dark' ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
-                }`}
+                className={`p-2 rounded-lg transition-colors ${theme === 'dark' ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
+                  }`}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -455,12 +453,10 @@ export default function PatientRecordsSection() {
             {/* Content - So sánh 2 thông tin */}
             <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Thông tin bệnh nhân đã có */}
-              <div className={`p-4 rounded-lg border-2 ${
-                theme === 'dark' ? 'bg-blue-900/20 border-blue-700' : 'bg-blue-50 border-blue-200'
-              }`}>
-                <h3 className={`font-semibold mb-3 flex items-center gap-2 ${
-                  theme === 'dark' ? 'text-blue-300' : 'text-blue-700'
+              <div className={`p-4 rounded-lg border-2 ${theme === 'dark' ? 'bg-blue-900/20 border-blue-700' : 'bg-blue-50 border-blue-200'
                 }`}>
+                <h3 className={`font-semibold mb-3 flex items-center gap-2 ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'
+                  }`}>
                   <UserCheck className="w-5 h-5" />
                   {t('patientRecords.duplicateDialog.existingPatientTitle')}
                 </h3>
@@ -489,12 +485,10 @@ export default function PatientRecordsSection() {
               </div>
 
               {/* Thông tin mới nhập */}
-              <div className={`p-4 rounded-lg border-2 ${
-                theme === 'dark' ? 'bg-green-900/20 border-green-700' : 'bg-green-50 border-green-200'
-              }`}>
-                <h3 className={`font-semibold mb-3 flex items-center gap-2 ${
-                  theme === 'dark' ? 'text-green-300' : 'text-green-700'
+              <div className={`p-4 rounded-lg border-2 ${theme === 'dark' ? 'bg-green-900/20 border-green-700' : 'bg-green-50 border-green-200'
                 }`}>
+                <h3 className={`font-semibold mb-3 flex items-center gap-2 ${theme === 'dark' ? 'text-green-300' : 'text-green-700'
+                  }`}>
                   <RefreshCw className="w-5 h-5" />
                   {t('patientRecords.duplicateDialog.newPatientTitle')}
                 </h3>
@@ -534,13 +528,12 @@ export default function PatientRecordsSection() {
               <button
                 onClick={() => handleDuplicateConfirm(true)}
                 disabled={isProcessingDuplicate}
-                className={`flex-1 p-4 rounded-lg border-2 transition-all text-left ${
-                  isProcessingDuplicate 
-                    ? 'opacity-50 cursor-not-allowed' 
-                    : theme === 'dark'
-                      ? 'border-blue-600 bg-blue-900/30 hover:bg-blue-800/50 text-blue-300'
-                      : 'border-blue-500 bg-blue-50 hover:bg-blue-100 text-blue-700'
-                }`}
+                className={`flex-1 p-4 rounded-lg border-2 transition-all text-left ${isProcessingDuplicate
+                  ? 'opacity-50 cursor-not-allowed'
+                  : theme === 'dark'
+                    ? 'border-blue-600 bg-blue-900/30 hover:bg-blue-800/50 text-blue-300'
+                    : 'border-blue-500 bg-blue-50 hover:bg-blue-100 text-blue-700'
+                  }`}
               >
                 <div className="flex items-center gap-2 font-semibold">
                   <UserCheck className="w-5 h-5" />
@@ -555,13 +548,12 @@ export default function PatientRecordsSection() {
               <button
                 onClick={() => handleDuplicateConfirm(false)}
                 disabled={isProcessingDuplicate}
-                className={`flex-1 p-4 rounded-lg border-2 transition-all text-left ${
-                  isProcessingDuplicate 
-                    ? 'opacity-50 cursor-not-allowed' 
-                    : theme === 'dark'
-                      ? 'border-green-600 bg-green-900/30 hover:bg-green-800/50 text-green-300'
-                      : 'border-green-500 bg-green-50 hover:bg-green-100 text-green-700'
-                }`}
+                className={`flex-1 p-4 rounded-lg border-2 transition-all text-left ${isProcessingDuplicate
+                  ? 'opacity-50 cursor-not-allowed'
+                  : theme === 'dark'
+                    ? 'border-green-600 bg-green-900/30 hover:bg-green-800/50 text-green-300'
+                    : 'border-green-500 bg-green-50 hover:bg-green-100 text-green-700'
+                  }`}
               >
                 <div className="flex items-center gap-2 font-semibold">
                   <RefreshCw className="w-5 h-5" />
@@ -578,11 +570,10 @@ export default function PatientRecordsSection() {
               <button
                 onClick={handleCloseDuplicateDialog}
                 disabled={isProcessingDuplicate}
-                className={`w-full py-3 rounded-lg font-medium transition-colors ${
-                  theme === 'dark' 
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                } ${isProcessingDuplicate ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`w-full py-3 rounded-lg font-medium transition-colors ${theme === 'dark'
+                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  } ${isProcessingDuplicate ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {t('patientRecords.duplicateDialog.cancelBtn')}
               </button>

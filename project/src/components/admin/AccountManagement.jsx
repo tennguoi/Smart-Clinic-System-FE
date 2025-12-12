@@ -277,10 +277,10 @@ export default function AccountManagement() {
               <UserCog className="w-9 h-9 text-blue-600" />
               <span>{t('accountManagement.title')}</span>
             </h1>
-            <CountBadge 
-              currentCount={users.length} 
-              totalCount={totalElements} 
-              label={t('accountManagement.title').toLowerCase()} 
+            <CountBadge
+              currentCount={users.length}
+              totalCount={totalElements}
+              label={t('accountManagement.title').toLowerCase()}
             />
           </div>
 
@@ -385,10 +385,10 @@ export default function AccountManagement() {
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
                     {t('accountManagement.table.email')}
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
-                    {t('accountManagement.table.role')}
-                  </th>
-                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
+                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase whitespace-nowrap min-w-[120px]">
+  {t('accountManagement.table.role')}
+</th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 dark:text-gray-300 uppercase whitespace-nowrap min-w-[120px]">
                     {t('accountManagement.table.status')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
@@ -416,41 +416,43 @@ export default function AccountManagement() {
                     <td className="px-6 py-4">{t(`accountManagement.gender.${user.gender}`) || t('accountManagement.gender.other')}</td>
                     <td className="px-6 py-4">{user.phone}</td>
                     <td className="px-6 py-4">{user.email}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex gap-1 flex-wrap">
-                        {Array.isArray(user.roles) && user.roles.length > 0 ? (
-                          user.roles.map((r, i) => {
-                            const normalizedRole = r ? r.toLowerCase().replace('role_', '') : '';
-                            
-                            const color =
-                              normalizedRole === 'admin'
-                                ? 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'
-                                : normalizedRole === 'bac_si' || normalizedRole === 'bacsi'
-                                ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800'
-                                : 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800';
+                    <td className="px-6 py-4 min-w-[120px]">
+  <div className="flex gap-1 flex-wrap">
+    {Array.isArray(user.roles) && user.roles.length > 0 ? (
+      user.roles.map((r, i) => {
+        const normalizedRole = r ? r.toLowerCase().replace('role_', '') : '';
+        
+        const color =
+          normalizedRole === 'admin'
+            ? 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'
+            : normalizedRole === 'bac_si' || normalizedRole === 'bacsi'
+            ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800'
+            : 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800';
 
-                            return (
-                              <span key={i} className={`px-2 py-1 rounded-full text-xs border ${color}`}>
-                                {t(`accountManagement.roleLabels.${normalizedRole}`) || r}
-                              </span>
-                            );
-                          })
-                        ) : (
-                          <span className="text-gray-400 dark:text-gray-500 text-xs italic">
-                            {t('accountManagement.noRole')}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
+        return (
+          <span 
+            key={i} 
+            className={`px-2 py-1 rounded-full text-xs border ${color} whitespace-nowrap`}
+          >
+            {t(`accountManagement.roleLabels.${normalizedRole}`) || r}
+          </span>
+        );
+      })
+    ) : (
+      <span className="text-gray-400 dark:text-gray-500 text-xs italic whitespace-nowrap">
+        {t('accountManagement.noRole')}
+      </span>
+    )}
+  </div>
+</td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap min-w-[120px]">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          user.isVerified
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${user.isVerified
                             ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
                             : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                        }`}
+                          }`}
                       >
-                        <Power className="inline w-4 h-4 mr-1" />
+                        <Power className="w-3 h-3 mr-1" />
                         {user.isVerified ? t('accountManagement.activeStatus') : t('accountManagement.disabledStatus')}
                       </span>
                     </td>
@@ -464,11 +466,10 @@ export default function AccountManagement() {
                         </button>
                         <button
                           onClick={() => openToggleConfirmation(user.userId, user.isVerified)}
-                          className={`p-2 rounded-full transition ${
-                            user.isVerified
+                          className={`p-2 rounded-full transition ${user.isVerified
                               ? 'text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30'
                               : 'text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30'
-                          }`}
+                            }`}
                         >
                           <Power className="w-5 h-5" />
                         </button>

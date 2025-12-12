@@ -10,14 +10,6 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = authService.getToken();
-    // Chỉ log trong development mode
-    if (process.env.NODE_ENV === 'development') {
-      if (token) {
-        console.log('Axios request - Token:', token.substring(0, 50) + '...');
-      } else {
-        console.warn('No token found in localStorage');
-      }
-    }
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

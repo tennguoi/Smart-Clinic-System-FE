@@ -1,7 +1,7 @@
 // src/components/queue/QueueTable.jsx
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Eye, User ,Trash2 } from 'lucide-react';
+import { Eye, User, Trash2 } from 'lucide-react';
 
 const formatDateTime = (value) => {
   if (!value) return '—';
@@ -119,7 +119,7 @@ export default function QueueTable({
 
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    
+
                     <span className="text-sm font-medium text-gray-900 dark:text-white">
                       {q.patientName || '—'}
                     </span>
@@ -164,7 +164,11 @@ export default function QueueTable({
                     className={`px-2.5 py-1 rounded-full text-xs font-semibold border-0 focus:outline-none focus:ring-2 focus:ring-blue-500 ${getStatusColor(q.status)}`}
                   >
                     {Object.entries(statusLabels).map(([key, label]) => (
-                      <option key={key} value={key}>
+                      <option
+                        key={key}
+                        value={key}
+                        className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                      >
                         {label}
                       </option>
                     ))}

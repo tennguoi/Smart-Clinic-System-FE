@@ -1,15 +1,16 @@
-// src/components/common/SecurityManager.jsx
+// src/components/common/SecurityManager.jsx (đã thêm i18n)
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import SecuritySection from './SecuritySection';
 import axiosInstance from '../../utils/axiosConfig';
 import { authService } from '../../services/authService';
 
 export default function SecurityManager({ initialData = {} }) {
+  const { t } = useTranslation();
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(!!initialData.twoFactorEnabled);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  // Update when initialData changes (e.g., page reload)
   useEffect(() => {
     setTwoFactorEnabled(!!initialData.twoFactorEnabled);
   }, [initialData.twoFactorEnabled]);
@@ -18,9 +19,7 @@ export default function SecurityManager({ initialData = {} }) {
     const newUser = { ...initialData, ...updatedData };
     localStorage.setItem('user', JSON.stringify(newUser));
     localStorage.setItem('user_info', JSON.stringify(newUser));
-    if (authService && authService.setUserInfo) {
-      authService.setUserInfo(newUser);
-    }
+    if (authService?.setUserInfo) authService.setUserInfo(newUser);
   };
 
   const handleToggle2FA = async () => {
@@ -29,26 +28,20 @@ export default function SecurityManager({ initialData = {} }) {
 
     try {
       if (twoFactorEnabled) {
-        // Disable 2FA
         await axiosInstance.post('/api/auth/disable-2fa');
         setTwoFactorEnabled(false);
         updateUserInStorage({ twoFactorEnabled: false });
-        setMessage('Đã tắt xác thực 2 yếu tố thành công!');
+        setMessage(t('profilepage.security_2fa_disabled_success') || 'Đã tắt xác thực 2 yếu tố thành công!');
         return false;
       } else {
-        // Enable 2FA - Send OTP
-        const { data } = await axiosInstance.post('/api/auth/enable-2fa', {
-          email: initialData.email,
-        });
-
+        const { data } = await axiosInstance.post('/api/auth/enable-2fa', { email: initialData.email });
         if (data.success) {
-          setMessage('Mã OTP đã được gửi đến email: ' + initialData.email);
-          return true; // Tell SecuritySection to open OTP modal
+          setMessage(t('profilepage.security_otp_sent') || `Mã OTP đã được gửi đến email: ${initialData.email}`);
+          return true;
         }
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Không thể thực hiện';
-      setMessage(`Lỗi: ${errorMessage}`);
+      setMessage(t('profilepage.security_error') || `Lỗi: ${err.response?.data?.message || 'Không thể thực hiện'}`);
       return false;
     } finally {
       setLoading(false);
@@ -67,40 +60,32 @@ export default function SecurityManager({ initialData = {} }) {
       if (data.success) {
         setTwoFactorEnabled(true);
         updateUserInStorage({ twoFactorEnabled: true });
-        setMessage('Bật xác thực 2 yếu tố thành công!');
+        setMessage(t('profilepage.security_2fa_enabled_success') || 'Bật xác thực 2 yếu tố thành công!');
         return true;
       } else {
-        setMessage('Mã OTP không đúng hoặc đã hết hạn');
+        setMessage(t('profilepage.security_otp_invalid') || 'Mã OTP không đúng hoặc đã hết hạn');
         return false;
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Xác thực thất bại. Vui lòng thử lại.';
-      setMessage(errorMessage);
+      setMessage(err.response?.data?.message || t('profilepage.security_verify_failed') || 'Xác thực thất bại. Vui lòng thử lại.');
       return false;
     }
   };
 
-  const handleChangePassword = async (oldPassword, newPassword) => {
-    // You can add password change logic here if needed
-    // Currently, let SecuritySection handle it
-  };
+  const handleChangePassword = async (oldPassword, newPassword) => {};
 
   return (
     <div className="space-y-6">
-      {/* Notification */}
       {message && (
-        <div 
-          className={`p-4 rounded-lg border text-sm font-medium transition-all ${
-            message.includes('thành công') 
-              ? 'bg-green-50 border-green-300 text-green-800' 
-              : 'bg-red-50 border-red-300 text-red-800'
-          }`}
-        >
+        <div className={`p-4 rounded-lg border text-sm font-medium transition-all ${
+          message.includes('thành công') || message.includes('success')
+            ? 'bg-green-50 border-green-300 text-green-800'
+            : 'bg-red-50 border-red-300 text-red-800'
+        }`}>
           {message}
         </div>
       )}
 
-      {/* Main Component */}
       <SecuritySection
         twoFactorEnabled={twoFactorEnabled}
         loading={loading}
