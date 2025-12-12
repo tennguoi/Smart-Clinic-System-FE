@@ -120,14 +120,14 @@ const StatisticsPage = () => {
     // Process chart data with placeholder when empty
     const appointmentTrendData = useMemo(() => {
         if (!appointmentTrend || appointmentTrend.length === 0) {
-            return [{ date: t('statistics.empty.placeholder', { defaultValue: 'Chưa có dữ liệu' }), value: 0 }];
+            return [{ date: t('statistics.empty', { defaultValue: 'Chưa có dữ liệu' }), value: 0 }];
         }
         return appointmentTrend;
     }, [appointmentTrend, t]);
 
     const revenueTrendData = useMemo(() => {
         if (!revenueTrend || revenueTrend.length === 0) {
-            return [{ date: t('statistics.empty.placeholder', { defaultValue: 'Chưa có dữ liệu' }), value: 0 }];
+            return [{ date: t('statistics.empty', { defaultValue: 'Chưa có dữ liệu' }), value: 0 }];
         }
         return revenueTrend;
     }, [revenueTrend, t]);

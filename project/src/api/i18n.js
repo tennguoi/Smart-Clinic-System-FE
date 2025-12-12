@@ -617,7 +617,7 @@ const resources = {
       // ==================== THÊM VÀO resources.vi.translation ====================
       statistics: {
         overview: "Thống kê tổng quan",
-
+        empty: "Chưa có dữ liệu",
         // KPI Cards
         todayAppointments: "Lịch Hẹn Hôm Nay",
         newRecords: "Hồ Sơ Bệnh Án Mới",
@@ -1457,7 +1457,7 @@ const resources = {
         security_otp_invalid: "Mã OTP không đúng hoặc đã hết hạn",
         security_verify_failed: "Xác thực thất bại. Vui lòng thử lại.",
         security_error: "Đã xảy ra lỗi. Vui lòng thử lại.",
-        security_2fa_qr_generated: "Mã QR đã được tạo thành công"
+        security_2fa_qr_generated: "Mã OTP đã được tạo thành công"
       },
       login: {
         title: "Đăng nhập phòng khám",
@@ -2442,7 +2442,7 @@ const resources = {
       // ==================== THÊM VÀO resources.en.translation ====================
       statistics: {
         overview: "Statistics Overview",
-
+        empty: "No data",
         // KPI Cards
         todayAppointments: "Today's Appointments",
         newRecords: "New Medical Records",
@@ -3266,7 +3266,7 @@ const resources = {
         security_otp_invalid: "Invalid or expired OTP",
         security_verify_failed: "Verification failed. Please try again.",
         security_error: "An error occurred. Please try again.",
-        security_2fa_qr_generated: "QR code generated successfully"
+        security_2fa_qr_generated: "OTP code generated successfully"
       },
       profileManager: {
         loading: "Loading profile information...",
