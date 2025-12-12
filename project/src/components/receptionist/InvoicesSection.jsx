@@ -1,10 +1,9 @@
-// src/components/receptionist/InvoicesSection.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { billingApi } from '../../api/billingApi';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { vi as dateFnsVi, enUS as dateFnsEn } from 'date-fns/locale';
 import CreateInvoiceModal from './CreateInvoiceModal';
 import InvoiceDetailModal from './InvoiceDetailModal';
@@ -31,19 +30,56 @@ export default function InvoicesSection({ isDoctorView = false }) {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
 
+  // New states for date filtering
+  const [startDate, setStartDate] = useState(''); // yyyy-MM-dd
+  const [endDate, setEndDate] = useState(''); // yyyy-MM-dd
+
   const currentLocale = i18n.language === 'en' ? dateFnsEn : dateFnsVi;
 
   const fetchInvoices = async () => {
     setLoading(true);
     try {
+      // Note: existing API call - keep as-is for now and do client-side date filtering
       const res = await billingApi.getMyBills(0, 1000, search.trim());
       let data = res.content || res || [];
 
+      // status filtering (existing)
       if (statusFilter === 'paid') {
         data = data.filter(i => i.paymentStatus === 'Paid');
       }
       if (statusFilter === 'pending') {
         data = data.filter(i => i.paymentStatus === 'Pending' || i.paymentStatus === 'PartiallyPaid');
+      }
+
+      // date filtering (client-side)
+      if (startDate || endDate) {
+        // Build inclusive start and end Date objects
+        let start = null;
+        let end = null;
+
+        if (startDate) {
+          // start of the day
+          const parsed = parseISO(startDate);
+          start = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate(), 0, 0, 0, 0);
+        }
+        if (endDate) {
+          // end of the day (inclusive)
+          const parsed = parseISO(endDate);
+          end = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate(), 23, 59, 59, 999);
+        }
+
+        // If only start provided, search invoices on that day as well
+        if (start && !end) {
+          end = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 23, 59, 59, 999);
+        }
+
+        if (start && end) {
+          data = data.filter(i => {
+            const created = i.createdAt ? new Date(i.createdAt) : null;
+            if (!created) return false;
+            return created >= start && created <= end;
+          });
+        }
       }
 
       setInvoices(data);
@@ -56,12 +92,14 @@ export default function InvoicesSection({ isDoctorView = false }) {
     }
   };
 
+  // Debounced fetch when search/status/date filters change
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchInvoices();
     }, 300);
     return () => clearTimeout(timer);
-  }, [search, statusFilter, t]);
+    // include startDate and endDate so changing dates triggers refetch
+  }, [search, statusFilter, startDate, endDate, t]);
 
   const paginatedInvoices = useMemo(() => {
     const start = currentPage * ITEMS_PER_PAGE;
@@ -127,6 +165,14 @@ export default function InvoicesSection({ isDoctorView = false }) {
     }
   };
 
+  // Helper to reset filters including dates
+  const handleClearFilters = () => {
+    setSearch('');
+    setStatusFilter('all');
+    setStartDate('');
+    setEndDate('');
+  };
+
   return (
     <div className={`px-4 sm:px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
       {/* Header */}
@@ -155,7 +201,7 @@ export default function InvoicesSection({ isDoctorView = false }) {
       {/* Bộ lọc */}
       <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-md border p-6 mb-6 transition-colors duration-300`}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-6">
+          <div className="lg:col-span-4">
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('invoices.filters.search')}</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -169,12 +215,14 @@ export default function InvoicesSection({ isDoctorView = false }) {
             </div>
           </div>
 
-          <div className="lg:col-span-4">
-            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('invoices.filters.status')}</label>
+          <div className="lg:col-span-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+              {t('invoices.filters.status')}
+            </label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
             >
               <option value="all">{t('invoices.filters.allStatus')}</option>
               <option value="paid">{t('invoices.filters.paid')}</option>
@@ -182,15 +230,43 @@ export default function InvoicesSection({ isDoctorView = false }) {
             </select>
           </div>
 
-          <div className="lg:col-span-2 flex items-end">
-            <button
-              onClick={() => {
-                setSearch('');
-                setStatusFilter('all');
+          {/* Date filters */}
+          <div className="lg:col-span-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}> {t('invoices.filters.startDate') || 'Start date'}</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => {
+                const sd = e.target.value;
+                setStartDate(sd);
+                // If endDate is before new startDate, bump endDate to startDate
+                if (sd && endDate && endDate < sd) {
+                  setEndDate(sd);
+                }
               }}
-              className={`w-full px-4 py-3 rounded-xl transition font-medium ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
+              className={`w-full px-3 py-2 border rounded-xl ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+              max={new Date().toISOString().split('T')[0]} // optional: prevent start in future
+            />
+          </div>
+
+          <div className="lg:col-span-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}> {t('invoices.filters.endDate') || 'End date'}</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className={`w-full px-3 py-2 border rounded-xl ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+              min={startDate || undefined} // ensure end cannot be earlier than start
+              max={new Date().toISOString().split('T')[0]} // optional: prevent end in future
+            />
+          </div>
+
+           <div className="lg:col-span-2 flex items-end">
+            <button
+              onClick={handleClearFilters}
+              className={`w-full px-4 py-3 rounded-xl transition font-medium flex items-center justify-center gap-2 ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
             >
-              {t('invoices.filters.clear')}
+              <span className="whitespace-nowrap">{t('invoices.filters.clear') || 'Xóa lọc'}</span>
             </button>
           </div>
         </div>
@@ -209,10 +285,10 @@ export default function InvoicesSection({ isDoctorView = false }) {
           <div className="p-16 text-center">
             <FileText className={`w-16 h-16 mx-auto mb-4 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} />
             <p className="text-red-600 font-semibold">
-              {(search || statusFilter !== 'all') ? t('invoices.noResults') : t('invoices.noInvoices')}
+              {(search || statusFilter !== 'all' || startDate || endDate) ? t('invoices.noResults') : t('invoices.noInvoices')}
             </p>
             <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-              {(search || statusFilter !== 'all') ? t('invoices.tryDifferentFilter') : t('invoices.createFirstInvoice')}
+              {(search || statusFilter !== 'all' || startDate || endDate) ? t('invoices.tryDifferentFilter') : t('invoices.createFirstInvoice')}
             </p>
           </div>
         ) : (

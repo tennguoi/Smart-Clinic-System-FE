@@ -922,7 +922,9 @@ const resources = {
           paid: "Đã thanh toán",
           pending: "Chưa thanh toán",
           unpaidOnly: "Chỉ chưa thanh toán",
-          clear: "Xóa bộ lọc"
+          clear: "Xóa lọc",
+          startDate: "Ngày bắt đầu",
+          endDate: "Ngày kết thúc"
         },
 
         modal: {
@@ -2731,7 +2733,9 @@ const resources = {
           paid: "Paid",
           pending: "Pending / Partial",
           unpaidOnly: "Unpaid only",
-          clear: "Clear filters"
+          clear: "Clear filters",
+          startDate: "Start date",
+          endDate: "End date"
         },
 
         table: {
