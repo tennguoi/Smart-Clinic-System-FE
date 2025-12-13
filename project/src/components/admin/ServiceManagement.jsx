@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  Plus, Edit, Trash2, X, Power, Eye, Upload, Image as ImageIcon, Search, AlertTriangle, Briefcase,
+  Plus, Edit,  X, Power, Eye, Upload, Image as ImageIcon, Search, AlertTriangle, Briefcase,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
@@ -437,9 +437,7 @@ export default function ServiceManagement() {
                             <button onClick={() => handleOpenModal('view', service)} title={t('servicesManagement.common.view')} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/30 transition">
                               <Eye className="w-5 h-5" />
                             </button>
-                            <button onClick={() => handleDeleteClick(service)} title={t('servicesManagement.common.delete')} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 transition">
-                              <Trash2 className="w-5 h-5" />
-                            </button>
+                           
                             <button onClick={() => handleToggleStatusClick(service)}
                                     title={service.isActive ? t('servicesManagement.deactivate') : t('servicesManagement.activate')}
                                     className={`p-2 rounded-full transition ${service.isActive ? 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30' : 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30'}`}>
