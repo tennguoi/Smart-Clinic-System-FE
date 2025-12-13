@@ -685,6 +685,7 @@ const resources = {
         loadError: "Không thể tải dữ liệu ",
         error: "Lỗi",
         loading: "Đang tải",
+        processing: "Đang xử lý...",
       },
       appointmentManagement: {
         appointment: "lịch hẹn",
@@ -2512,6 +2513,7 @@ const resources = {
         loadError: "Unable to load  data",
         error: "Error",
         loading: "Loading",
+        processing: "Processing..."
       },
       appointmentManagement: {
         "appointment": "appointment",
