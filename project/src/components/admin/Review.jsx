@@ -626,11 +626,11 @@ export default function ReviewManagement() {
                       onChange={handleInputChange}
                       required
                       disabled={modalMode === 'view'}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed ${
-                        theme === 'dark'
-                          ? 'bg-gray-700 border-gray-600 text-white'
-                          : 'bg-white border-gray-300 text-gray-900'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed ${
+    theme === 'dark'
+      ? 'bg-gray-700 border-gray-600 text-white disabled:bg-gray-700 disabled:text-gray-300'
+      : 'bg-white border-gray-300 text-gray-900 disabled:bg-gray-50 disabled:text-gray-600'
+  }`}
                     />
                   </div>
 
@@ -654,11 +654,11 @@ export default function ReviewManagement() {
                         max="5"
                         required
                         disabled={modalMode === 'view'}
-                        className={`w-24 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed ${
-                          theme === 'dark'
-                            ? 'bg-gray-700 border-gray-600 text-white'
-                            : 'bg-white border-gray-300 text-gray-900'
-                        }`}
+className={`w-24 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed ${
+  theme === 'dark'
+    ? 'bg-gray-700 border-gray-600 text-white disabled:bg-gray-700 disabled:text-gray-300'
+    : 'bg-white border-gray-300 text-gray-900 disabled:bg-gray-50 disabled:text-gray-600'
+}`}
                       />
                       <div className="flex gap-1">{renderStars(formData.rating)}</div>
                     </div>
@@ -681,11 +681,11 @@ export default function ReviewManagement() {
                       rows="4"
                       required
                       disabled={modalMode === 'view'}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed ${
-                        theme === 'dark'
-                          ? 'bg-gray-700 border-gray-600 text-white'
-                          : 'bg-white border-gray-300 text-gray-900'
-                      }`}
+                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed ${
+  theme === 'dark'
+    ? 'bg-gray-700 border-gray-600 text-white disabled:bg-gray-700 disabled:text-gray-300'
+    : 'bg-white border-gray-300 text-gray-900 disabled:bg-gray-50 disabled:text-gray-600'
+}`}
                     />
                   </div>
                 </div>
