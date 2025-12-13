@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Pencil, Plus, Trash2 } from 'lucide-react';
+import { X, Pencil, Plus } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 
 
@@ -23,7 +23,52 @@ const RecordDetailModal = ({
   const { theme } = useTheme();
   const { t } = useTranslation();
   const [isEditMode, setIsEditMode] = useState(false);
- 
+  
+  // Track when modal opens with new data
+  const lastLoadedRecordId = useRef(null);
+  const lastLoadedDrugs = useRef('');
+  const lastLoadedInstructions = useRef('');
+  
+  // Parse prescription data into paired format
+  const parsePrescriptions = (drugs = '', instructions = '') => {
+    const drugList = drugs.split('\n').filter(d => d.trim());
+    const instructionList = instructions.split('\n').filter(i => i.trim());
+    const maxLength = Math.max(drugList.length, instructionList.length);
+   
+    const paired = [];
+    for (let i = 0; i < maxLength; i++) {
+      paired.push({
+        drug: drugList[i] || '',
+        instruction: instructionList[i] || ''
+      });
+    }
+    return paired.length > 0 ? paired : [];
+  };
+
+  // Initialize with current props
+  const [prescriptionItems, setPrescriptionItems] = useState(() => 
+    parsePrescriptions(localPrescriptionDrugs, localPrescriptionInstructions)
+  );
+
+  // Only reload data when record changes OR when props change from external source (not from our updates)
+  useEffect(() => {
+    const recordChanged = record?.id !== lastLoadedRecordId.current;
+    const propsChanged = 
+      localPrescriptionDrugs !== lastLoadedDrugs.current || 
+      localPrescriptionInstructions !== lastLoadedInstructions.current;
+    
+    // Only parse if it's a different record OR props changed from external source
+    if (recordChanged || (propsChanged && !isEditMode)) {
+      const parsed = parsePrescriptions(localPrescriptionDrugs, localPrescriptionInstructions);
+      setPrescriptionItems(parsed);
+      
+      // Update refs to track current loaded state
+      lastLoadedRecordId.current = record?.id;
+      lastLoadedDrugs.current = localPrescriptionDrugs;
+      lastLoadedInstructions.current = localPrescriptionInstructions;
+    }
+  }, [record?.id, localPrescriptionDrugs, localPrescriptionInstructions, isEditMode]);
+
   // Auto-resize textarea function
   const autoResizeTextarea = (textarea) => {
     if (textarea) {
@@ -31,41 +76,19 @@ const RecordDetailModal = ({
       textarea.style.height = textarea.scrollHeight + 'px';
     }
   };
- 
-  // Parse prescription data into paired format
-  const parsePrescriptions = () => {
-    const drugs = localPrescriptionDrugs.split('\n').filter(d => d.trim());
-    const instructions = localPrescriptionInstructions.split('\n').filter(i => i.trim());
-    const maxLength = Math.max(drugs.length, instructions.length);
-   
-    const paired = [];
-    for (let i = 0; i < maxLength; i++) {
-      paired.push({
-        drug: drugs[i] || '',
-        instruction: instructions[i] || ''
-      });
-    }
-    return paired;
-  };
 
-
-  const [prescriptionItems, setPrescriptionItems] = useState(parsePrescriptions());
-
-
-  // Re-parse when props change (fix for first load issue)
-  useEffect(() => {
-    setPrescriptionItems(parsePrescriptions());
-  }, [localPrescriptionDrugs, localPrescriptionInstructions]);
-
-
-  // Update parent state when items change
+  // Update parent state
   const updateParentState = (items) => {
     const drugs = items.map(item => item.drug).join('\n');
     const instructions = items.map(item => item.instruction).join('\n');
+    
+    // Update refs to prevent re-parsing our own changes
+    lastLoadedDrugs.current = drugs;
+    lastLoadedInstructions.current = instructions;
+    
     setLocalPrescriptionDrugs(drugs);
     setLocalPrescriptionInstructions(instructions);
   };
-
 
   const handleItemChange = (index, field, value) => {
     const newItems = [...prescriptionItems];
@@ -74,37 +97,25 @@ const RecordDetailModal = ({
     updateParentState(newItems);
   };
 
-
   const addPrescriptionItem = () => {
     const newItems = [...prescriptionItems, { drug: '', instruction: '' }];
-    setPrescriptionItems(newItems);
-  };
-
-
-  const removePrescriptionItem = (index) => {
-    const newItems = prescriptionItems.filter((_, i) => i !== index);
     setPrescriptionItems(newItems);
     updateParentState(newItems);
   };
 
-
-  // Auto-resize all textareas when items change
-  useEffect(() => {
-    const textareas = document.querySelectorAll('textarea[data-auto-resize]');
-    textareas.forEach(autoResizeTextarea);
-  }, [prescriptionItems, isEditMode]);
-
+  const removePrescriptionItem = (indexToRemove) => {
+    const newItems = prescriptionItems.filter((_, i) => i !== indexToRemove);
+    setPrescriptionItems(newItems);
+    updateParentState(newItems);
+  };
 
   if (!record) return null;
 
-
   const isDark = theme === 'dark';
-
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-
 
       <div
         className={`relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-xl border shadow-2xl flex flex-col ${
@@ -119,7 +130,6 @@ const RecordDetailModal = ({
           <h3 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             {t('doctorRecords.modal.title', 'Chỉnh sửa hồ sơ bệnh án')}
           </h3>
-
 
           <div className="flex items-center gap-3">
             {!isEditMode && (
@@ -136,7 +146,6 @@ const RecordDetailModal = ({
               </button>
             )}
 
-
             <button
               onClick={onClose}
               className={`p-2 rounded-lg transition ${
@@ -147,7 +156,6 @@ const RecordDetailModal = ({
             </button>
           </div>
         </div>
-
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -175,7 +183,6 @@ const RecordDetailModal = ({
                   </div>
                 </div>
 
-
                 <div className="space-y-2">
                   <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
                     {t('doctorRecords.modal.diagnosis', 'Chẩn đoán')} <span className="text-red-500">*</span>
@@ -195,7 +202,6 @@ const RecordDetailModal = ({
                 </div>
               </div>
 
-
               {/* Treatment notes */}
               <div className="space-y-2">
                 <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
@@ -214,8 +220,7 @@ const RecordDetailModal = ({
                 />
               </div>
 
-
-              {/* ✨ Selected Services */}
+              {/* Selected Services */}
               {record.services && record.services.length > 0 && (
                 <div className="space-y-2">
                   <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
@@ -265,26 +270,27 @@ const RecordDetailModal = ({
                 </div>
               )}
 
-
-             {/* Prescription - Vertical Layout */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+              {/* Prescription Form */}
+              <div className={`rounded-xl border p-6 ${
+                isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-blue-200'
+              }`}>
+                <div className="space-y-4">
+                  {/* Tiêu đề */}
+                  <h4 className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>
                     {t('doctorRecords.modal.prescriptionTitle', 'Đơn thuốc')}
-                  </label>
-                  {isEditMode && (
-                    <button
-                      onClick={addPrescriptionItem}
-                      className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg bg-green-600 hover:bg-green-700 text-white transition"
-                    >
-                      <Plus className="w-4 h-4" />
-                      {t('doctorRecords.modal.addDrug', 'Thêm thuốc')}
-                    </button>
-                  )}
-                </div>
+                  </h4>
 
+                  {/* Header bảng (ẩn trên mobile) */}
+                  <div className={`hidden md:grid grid-cols-12 gap-4 font-semibold text-sm rounded-xl px-4 py-3 ${
+                    isDark ? 'bg-gray-800 text-gray-300' : 'bg-blue-50 text-slate-600'
+                  }`}>
+                    <div className="col-span-1 text-center">{t('prescriptionForm.table.stt', 'STT')}</div>
+                    <div className="col-span-5">{t('prescriptionForm.table.drugName', 'Tên thuốc')}</div>
+                    <div className="col-span-5">{t('prescriptionForm.table.instructions', 'Hướng dẫn sử dụng')}</div>
+                    <div className="col-span-1 text-center">{t('prescriptionForm.table.delete', 'Xóa')}</div>
+                  </div>
 
-                <div className="space-y-3">
+                  {/* Danh sách dòng */}
                   {prescriptionItems.length === 0 ? (
                     <div className={`text-center py-8 rounded-lg border-2 border-dashed ${
                       isDark ? 'border-gray-700 text-gray-400' : 'border-gray-300 text-gray-500'
@@ -293,98 +299,167 @@ const RecordDetailModal = ({
                     </div>
                   ) : (
                     prescriptionItems.map((item, index) => (
-                      <div
-                        key={index}
-                        className={`p-4 rounded-lg border ${
-                          isDark ? 'bg-gray-750 border-gray-700' : 'bg-gray-50 border-gray-200'
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
-                            isDark ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-700'
+                      <div key={`prescription-${index}`} className="space-y-3">
+                        {/* Mobile layout */}
+                        <div className={`md:hidden rounded-xl border p-3 ${
+                          isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-blue-200'
+                        }`}>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>
+                              #{index + 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removePrescriptionItem(index)}
+                              disabled={!isEditMode}
+                              className={`p-2 rounded-lg transition-all ${
+                                !isEditMode 
+                                  ? 'opacity-50 cursor-not-allowed text-gray-400'
+                                  : isDark
+                                    ? 'text-red-400 hover:bg-red-900/30'
+                                    : 'text-red-500 hover:bg-red-50'
+                              }`}
+                              title={t('doctorRecords.modal.deleteDrug', 'Xóa')}
+                            >
+                              <X size={18} />
+                            </button>
+                          </div>
+
+                          <label className={`block text-xs font-semibold mb-1 ${
+                            isDark ? 'text-gray-300' : 'text-slate-600'
+                          }`}>
+                            {t('prescriptionForm.drugNameLabel', 'Tên thuốc')}
+                          </label>
+                          <textarea
+                            value={item.drug}
+                            onChange={(e) => {
+                              handleItemChange(index, 'drug', e.target.value);
+                              autoResizeTextarea(e.target);
+                            }}
+                            disabled={!isEditMode}
+                            className={`w-full px-4 py-3 border rounded-xl focus:ring-4 text-sm transition-all resize-none overflow-hidden ${
+                              isDark
+                                ? `bg-gray-800 border-gray-700 text-white focus:ring-blue-900/50 focus:border-blue-700 ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
+                                : `bg-white border-blue-200 focus:ring-blue-100 focus:border-blue-500 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
+                            }`}
+                            placeholder={t('prescriptionForm.drugNamePlaceholder', 'Nhập tên thuốc')}
+                            rows={1}
+                          />
+
+                          <label className={`block text-xs font-semibold mb-1 mt-3 ${
+                            isDark ? 'text-gray-300' : 'text-slate-600'
+                          }`}>
+                            {t('prescriptionForm.instructionsLabel', 'Hướng dẫn sử dụng')}
+                          </label>
+                          <textarea
+                            value={item.instruction}
+                            onChange={(e) => {
+                              handleItemChange(index, 'instruction', e.target.value);
+                              autoResizeTextarea(e.target);
+                            }}
+                            disabled={!isEditMode}
+                            className={`w-full px-4 py-3 border rounded-xl focus:ring-4 text-sm transition-all resize-none overflow-hidden ${
+                              isDark
+                                ? `bg-gray-800 border-gray-700 text-white focus:ring-blue-900/50 focus:border-blue-700 ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
+                                : `bg-white border-blue-200 focus:ring-blue-100 focus:border-blue-500 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
+                            }`}
+                            placeholder={t('prescriptionForm.instructionsPlaceholder', 'Nhập hướng dẫn sử dụng')}
+                            rows={1}
+                          />
+                        </div>
+
+                        {/* Desktop layout */}
+                        <div className={`hidden md:grid grid-cols-12 gap-4 items-start rounded-xl border px-4 py-3 ${
+                          isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-blue-200'
+                        }`}>
+                          <div className={`col-span-1 flex items-center justify-center pt-3 font-semibold ${
+                            isDark ? 'text-gray-300' : 'text-gray-700'
                           }`}>
                             {index + 1}
                           </div>
-
-
-                          {/* Changed from grid to flex-col for vertical layout */}
-                          <div className="flex-1 space-y-3">
-                            {/* Drug name - Full width on top */}
-                            <div className="space-y-1">
-                              <label className={`block text-sm font-medium ${
-                                isDark ? 'text-gray-300' : 'text-gray-700'
-                              }`}>
-                                {t('doctorRecords.modal.prescriptionDrugs', 'Tên thuốc')}
-                              </label>
-                              <textarea
-                                data-auto-resize
-                                value={item.drug}
-                                onChange={(e) => {
-                                  handleItemChange(index, 'drug', e.target.value);
-                                  autoResizeTextarea(e.target);
-                                }}
-                                disabled={!isEditMode}
-                                className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none break-words whitespace-pre-wrap overflow-hidden min-h-[80px] ${
-                                  isDark
-                                    ? `bg-gray-800 border-gray-600 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
-                                    : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
-                                }`}
-                                placeholder={t('doctorRecords.modal.prescriptionDrugsPlaceholder')}
-                              />
-                            </div>
-
-
-                            {/* Instructions - Full width on bottom */}
-                            <div className="space-y-1">
-                              <label className={`block text-sm font-medium ${
-                                isDark ? 'text-gray-300' : 'text-gray-700'
-                              }`}>
-                                {t('doctorRecords.modal.prescriptionInstructions', 'Hướng dẫn sử dụng')}
-                              </label>
-                              <textarea
-                                data-auto-resize
-                                value={item.instruction}
-                                onChange={(e) => {
-                                  handleItemChange(index, 'instruction', e.target.value);
-                                  autoResizeTextarea(e.target);
-                                }}
-                                disabled={!isEditMode}
-                                className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none break-words whitespace-pre-wrap overflow-hidden min-h-[80px] ${
-                                  isDark
-                                    ? `bg-gray-800 border-gray-600 text-white ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
-                                    : `bg-white border-gray-300 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
-                                }`}
-                                placeholder={t('doctorRecords.modal.prescriptionInstructionsPlaceholder')}
-                              />
-                            </div>
+                          <div className="col-span-5">
+                            <textarea
+                              value={item.drug}
+                              onChange={(e) => {
+                                handleItemChange(index, 'drug', e.target.value);
+                                autoResizeTextarea(e.target);
+                              }}
+                              disabled={!isEditMode}
+                              className={`w-full px-4 py-3 border rounded-xl focus:ring-4 transition-all resize-none overflow-hidden ${
+                                isDark
+                                  ? `bg-gray-800 border-gray-700 text-white focus:ring-blue-900/50 focus:border-blue-700 ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
+                                  : `bg-white border-blue-200 focus:ring-blue-100 focus:border-blue-500 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
+                              }`}
+                              placeholder={t('prescriptionForm.drugNamePlaceholder', 'Nhập tên thuốc')}
+                              rows={1}
+                            />
                           </div>
-
-
-                          {isEditMode && (
+                          <div className="col-span-5">
+                            <textarea
+                              value={item.instruction}
+                              onChange={(e) => {
+                                handleItemChange(index, 'instruction', e.target.value);
+                                autoResizeTextarea(e.target);
+                              }}
+                              disabled={!isEditMode}
+                              className={`w-full px-4 py-3 border rounded-xl focus:ring-4 transition-all resize-none overflow-hidden ${
+                                isDark
+                                  ? `bg-gray-800 border-gray-700 text-white focus:ring-blue-900/50 focus:border-blue-700 ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
+                                  : `bg-white border-blue-200 focus:ring-blue-100 focus:border-blue-500 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
+                              }`}
+                              placeholder={t('prescriptionForm.instructionsPlaceholder', 'Nhập hướng dẫn sử dụng')}
+                              rows={1}
+                            />
+                          </div>
+                          <div className="col-span-1 flex items-center justify-center pt-2">
                             <button
+                              type="button"
                               onClick={() => removePrescriptionItem(index)}
-                              className="flex-shrink-0 p-2 rounded-lg hover:bg-red-100 text-red-600 transition"
+                              disabled={!isEditMode}
+                              className={`p-2 rounded-lg transition-all ${
+                                !isEditMode 
+                                  ? 'opacity-50 cursor-not-allowed text-gray-400'
+                                  : isDark
+                                    ? 'text-red-400 hover:bg-red-900/30'
+                                    : 'text-red-500 hover:bg-red-50'
+                              }`}
                               title={t('doctorRecords.modal.deleteDrug', 'Xóa')}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <X size={18} />
                             </button>
-                          )}
+                          </div>
                         </div>
                       </div>
                     ))
                   )}
+
+                  {/* Nút thêm dòng */}
+                  <button
+                    type="button"
+                    onClick={addPrescriptionItem}
+                    disabled={!isEditMode}
+                    className={`w-full py-3 border-2 border-dashed rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
+                      !isEditMode
+                        ? 'opacity-50 cursor-not-allowed border-gray-400 text-gray-400'
+                        : isDark
+                          ? 'border-blue-800 text-blue-400 hover:bg-blue-900/30 hover:border-blue-600'
+                          : 'border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-500'
+                    }`}
+                    title={t('prescriptionForm.addButton', 'Thêm dòng')}
+                  >
+                    <Plus size={18} />
+                    {t('doctorRecords.modal.addDrug', 'Thêm thuốc')}
+                  </button>
+
+                  {prescriptions[0]?.issuedAt && (
+                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {t('doctorRecords.modal.prescriptionIssuedAt', 'Ngày kê đơn: {{date}}', {
+                        date: new Date(prescriptions[0].issuedAt).toLocaleString('vi-VN'),
+                      })}
+                    </p>
+                  )}
                 </div>
-
-
-                {prescriptions[0]?.issuedAt && (
-                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                    {t('doctorRecords.modal.prescriptionIssuedAt', 'Ngày kê đơn: {{date}}', {
-                      date: new Date(prescriptions[0].issuedAt).toLocaleString('vi-VN'),
-                    })}
-                  </p>
-                )}
               </div>
-
 
               {record.createdAt && (
                 <div className={`text-center text-xs pt-4 border-t ${
@@ -399,7 +474,6 @@ const RecordDetailModal = ({
           )}
         </div>
 
-
         {/* Footer */}
         {isEditMode && (
           <div
@@ -408,6 +482,7 @@ const RecordDetailModal = ({
             }`}
           >
             <button
+              type="button"
               onClick={() => setIsEditMode(false)}
               disabled={saving}
               className={`px-6 py-2.5 rounded-lg font-medium transition disabled:opacity-60 ${
@@ -419,8 +494,8 @@ const RecordDetailModal = ({
               {t('doctorRecords.common.cancel', 'Hủy')}
             </button>
 
-
             <button
+              type="button"
               onClick={onSave}
               disabled={saving}
               className={`px-6 py-2.5 rounded-lg font-medium flex items-center gap-2 transition ${
@@ -446,7 +521,4 @@ const RecordDetailModal = ({
   );
 };
 
-
 export default RecordDetailModal;
-
-
