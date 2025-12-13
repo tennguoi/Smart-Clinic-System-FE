@@ -208,7 +208,8 @@ const resources = {
         save: "Lưu",
         edit: "Sửa",
         delete: "Xóa",
-        search: "Tìm kiếm"
+        search: "Tìm kiếm",
+        processing: "Đang xử lý...",
       },
 
       // SEO
@@ -603,6 +604,7 @@ const resources = {
           view: "Xem chi tiết",
           save: "Lưu",
           no: "STT",
+          processing: "Đang xử lý..."
         },
         modal: {
           createTitle: "Tạo dịch vụ mới",
@@ -2035,7 +2037,8 @@ const resources = {
         save: "Save",
         edit: "Edit",
         delete: "Delete",
-        search: "Search"
+        search: "Search",
+        processing: "Processing...",
       },
 
       seo: {
@@ -2440,6 +2443,7 @@ const resources = {
           view: "View Details",
           save: "Save",
           no: "No.",
+          processing: "Processing..."
         },
         toast: {
           createSuccess: "Service created successfully!",

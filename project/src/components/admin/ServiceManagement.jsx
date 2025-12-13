@@ -673,7 +673,7 @@ export default function ServiceManagement() {
                 {modalMode !== 'view' && (
                   <div className="flex gap-3 pt-4">
                     <button type="submit" disabled={loading || uploadingImage} className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-70">
-                      {uploadingImage ? t('common.processing') : loading ? t('common.processing') : modalMode === 'create' ? t('servicesManagement.createButton') : t('servicesManagement.common.save')}
+                      {uploadingImage ? t('servicesManagement.common.processing') : loading ? t('servicesManagement.common.processing') : modalMode === 'create' ? t('servicesManagement.createButton') : t('servicesManagement.common.save')}
                     </button>
                     <button type="button" onClick={handleCloseModal} disabled={loading || uploadingImage} className={`flex-1 py-2.5 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition ${theme === 'dark' ? 'bg-gray-600 text-gray-200' : 'bg-gray-300 text-gray-700'}`}>
                       {t('servicesManagement.common.cancel')}
@@ -698,7 +698,7 @@ export default function ServiceManagement() {
               </p>
               <div className="flex gap-3">
                 <button onClick={handleConfirmDelete} disabled={loading} className="flex-1 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 font-semibold transition disabled:opacity-70">
-                  {loading ? t('common.processing') : t('servicesManagement.common.delete')}
+                  {loading ? t('servicesManagement.common.processing') : t('servicesManagement.common.delete')}
                 </button>
                 <button onClick={() => { setShowDeleteConfirmation(false); setServiceToDelete(null); }} className={`flex-1 py-2.5 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 font-semibold transition ${theme === 'dark' ? 'bg-gray-600 text-gray-200' : 'bg-gray-300 text-gray-700'}`}>
                   {t('servicesManagement.common.cancel')}
@@ -725,7 +725,7 @@ export default function ServiceManagement() {
                   disabled={loading}
                   className={`flex-1 py-2.5 rounded-lg font-semibold transition disabled:opacity-70 ${toggleTarget.currentStatus ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
                 >
-                  {loading ? t('common.processing') : t('servicesManagement.common.confirm')}
+                  {loading ? t('servicesManagement.common.processing') : t('servicesManagement.common.confirm')}
                 </button>
                 <button
                   onClick={() => { setShowToggleConfirmation(false); setToggleTarget(null); }}
