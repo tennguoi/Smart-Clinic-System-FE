@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { authService } from '../services/authService';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import logo from '../images/logo.png';
 import backgroundImage from '../images/background.png';
 
@@ -77,6 +78,11 @@ const Verify2FA = () => {
       <div className="absolute w-72 h-72 bg-teal-300 rounded-full opacity-30 blur-3xl animate-ping top-10 left-10"></div>
       <div className="absolute w-96 h-96 bg-blue-400 rounded-full opacity-20 blur-3xl animate-pulse bottom-10 right-10"></div>
 
+      {/* Language Switcher - góc trên bên phải */}
+      <div className="absolute top-6 right-6 z-20">
+        <LanguageSwitcher />
+      </div>
+
       <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl relative z-10">
         <div className="flex justify-center mb-6">
           <img src={logo} alt="Logo" className="w-full max-w-[150px] h-auto object-contain" />
@@ -86,7 +92,8 @@ const Verify2FA = () => {
           {t('verify2fa.title')}
         </h2>
         <p className="text-center text-gray-600 mb-6 text-sm">
-          {t('verify2fa.description')} <strong>{email}</strong>
+          {t('verify2fa.description')}
+          <strong>{email}</strong>
         </p>
 
         {error && (
@@ -127,9 +134,9 @@ const Verify2FA = () => {
           </button>
 
           <p className="mt-4 text-center text-sm text-gray-600">
-            {t('verify2fa.backToLogin')}{' '}
+            {t('verify2fa.backTo')}{' '}
             <a href="/login" className="text-teal-600 hover:underline">
-              {t('login.title')}
+              {t('verify2fa.loginPage')}
             </a>
           </p>
         </form>

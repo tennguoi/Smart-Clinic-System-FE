@@ -8,34 +8,34 @@ const resources = {
   vi: {
     translation: {
       bankQRModal: {
-  title: "Quét QR để thanh toán",
-  billId: "Mã hóa đơn",
-  amountToPay: "Số tiền cần thanh toán",
-  scanQR: "Mở ứng dụng ngân hàng và quét mã QR",
-  downloadQR: "Tải mã QR",
-  manualTransfer: "Hoặc chuyển khoản thủ công",
-  bank: "Ngân hàng",
-  accountHolder: "Chủ tài khoản",
-  accountNumber: "Số tài khoản",
-  amount: "Số tiền",
-  transferContent: "Nội dung chuyển khoản",
-  paymentSuccess: "Thanh toán thành công!",
-  waitingPayment: "Đang chờ thanh toán...",
-  status: "Trạng thái",
-  paidAmount: "Số tiền đã thanh toán",
-  remainingAmount: "Còn lại",
-  timeoutError: "Quá thời gian. Vui lòng kiểm tra lại hoặc liên hệ hỗ trợ.",
-  checkError: "Không thể kiểm tra trạng thái thanh toán",
-  confirmError: "Lỗi xác nhận thanh toán. Vui lòng thử lại.",
-  importantNote: "Lưu ý quan trọng",
-  note1: "Chuyển đúng số tiền và đúng nội dung",
-  note2: "Sau khi chuyển khoản, nhấn \"Tôi đã thanh toán\"",
-  note3: "Hệ thống kiểm tra giao dịch mỗi 10 giây",
-  note4: "Giao dịch sẽ được xác nhận trong vài phút",
-  cancel: "Hủy",
-  confirmPayment: "Tôi đã thanh toán",
-  processing: "Đang xử lý..."
-},
+        title: "Quét QR để thanh toán",
+        billId: "Mã hóa đơn",
+        amountToPay: "Số tiền cần thanh toán",
+        scanQR: "Mở ứng dụng ngân hàng và quét mã QR",
+        downloadQR: "Tải mã QR",
+        manualTransfer: "Hoặc chuyển khoản thủ công",
+        bank: "Ngân hàng",
+        accountHolder: "Chủ tài khoản",
+        accountNumber: "Số tài khoản",
+        amount: "Số tiền",
+        transferContent: "Nội dung chuyển khoản",
+        paymentSuccess: "Thanh toán thành công!",
+        waitingPayment: "Đang chờ thanh toán...",
+        status: "Trạng thái",
+        paidAmount: "Số tiền đã thanh toán",
+        remainingAmount: "Còn lại",
+        timeoutError: "Quá thời gian. Vui lòng kiểm tra lại hoặc liên hệ hỗ trợ.",
+        checkError: "Không thể kiểm tra trạng thái thanh toán",
+        confirmError: "Lỗi xác nhận thanh toán. Vui lòng thử lại.",
+        importantNote: "Lưu ý quan trọng",
+        note1: "Chuyển đúng số tiền và đúng nội dung",
+        note2: "Sau khi chuyển khoản, nhấn \"Tôi đã thanh toán\"",
+        note3: "Hệ thống kiểm tra giao dịch mỗi 10 giây",
+        note4: "Giao dịch sẽ được xác nhận trong vài phút",
+        cancel: "Hủy",
+        confirmPayment: "Tôi đã thanh toán",
+        processing: "Đang xử lý..."
+      },
 
       // Header & Navigation
       header: {
@@ -1214,6 +1214,10 @@ const resources = {
         appointmentstoday: "Lịch Hẹn Hôm Nay",
       },
       doctorStats: {
+        empty: {
+          title: "Không có dữ liệu",
+          placeholder: "Không có dữ liệu thống kê"
+        },
         header: {
           subtitle: "Thống kê hiệu suất",
           title: "Bác sĩ – Báo cáo ca khám"
@@ -1868,7 +1872,9 @@ const resources = {
         backToLogin: "Quay lại Trang đăng nhập",
         success: "Xác thực 2FA thành công!",
         error: "Xác thực OTP thất bại!",
-        otpInvalid: "Mã OTP không hợp lệ hoặc hết hạn!"
+        otpInvalid: "Mã OTP không hợp lệ hoặc hết hạn!",
+        backTo: "Quay lại",
+        loginPage: "Trang đăng nhập"
       }
 
     }
@@ -3031,6 +3037,10 @@ const resources = {
         appointmentstoday: "Today's Appointments"
       },
       doctorStats: {
+        empty: {
+          title: "No data available",
+          placeholder: "No statistics data available"
+        },
         header: {
           subtitle: "Performance Statistics",
           title: "Doctor – Examination Report"
@@ -3712,7 +3722,9 @@ const resources = {
         backToLogin: "Back to Login",
         success: "2FA verification successful!",
         error: "OTP verification failed!",
-        otpInvalid: "Invalid or expired OTP!"
+        otpInvalid: "Invalid or expired OTP!",
+        backTo: "Back to",
+        loginPage: "Login Page"
       }
 
     }

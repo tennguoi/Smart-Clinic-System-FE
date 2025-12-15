@@ -38,7 +38,7 @@ const RANGE_OPTIONS = [
 export default function DoctorStatsDashboard() {
   const { theme } = useTheme();
   const { t } = useTranslation();
-   
+
   // Load saved preferences from localStorage
   const [rangeType, setRangeType] = useState(() => {
     try {
@@ -48,7 +48,7 @@ export default function DoctorStatsDashboard() {
       return 'day';
     }
   });
-  
+
   const [selectedDate, setSelectedDate] = useState(() => {
     try {
       const saved = localStorage.getItem('doctorStatsSelectedDate');
@@ -57,7 +57,7 @@ export default function DoctorStatsDashboard() {
       return new Date();
     }
   });
-    const formatPercentage = (value) => {
+  const formatPercentage = (value) => {
     if (value == null || value === 0) return t('doctorStats.noData');
     return `${Math.round(value * 100)}%`;
   };
@@ -66,7 +66,7 @@ export default function DoctorStatsDashboard() {
   const [statsData, setStatsData] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isForceRefresh, setIsForceRefresh] = useState(false);
-  
+
   // Save rangeType to localStorage when it changes
   useEffect(() => {
     try {
@@ -75,7 +75,7 @@ export default function DoctorStatsDashboard() {
       console.error('Failed to save rangeType:', err);
     }
   }, [rangeType]);
-  
+
   // Save selectedDate to localStorage when it changes
   useEffect(() => {
     try {
@@ -142,7 +142,6 @@ export default function DoctorStatsDashboard() {
   const chartDisplayData = useMemo(() => {
     if (chartData.length > 0) return chartData;
     const placeholderLabel =
-      t('doctorStats.empty.placeholder', { defaultValue: 'Chưa có dữ liệu' }) ||
       t('doctorStats.empty.title', { defaultValue: 'Chưa có dữ liệu' });
     return [{ label: placeholderLabel, visits: 0 }];
   }, [chartData, t]);
@@ -222,11 +221,10 @@ export default function DoctorStatsDashboard() {
                 key={option.value}
                 type="button"
                 onClick={() => setRangeType(option.value)}
-                className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${
-                  option.value === rangeType
+                className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${option.value === rangeType
                     ? (theme === 'dark' ? 'bg-gray-600 text-cyan-400 shadow' : 'bg-white text-cyan-600 shadow')
                     : (theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')
-                }`}
+                  }`}
               >
                 {t(`doctorStats.range.${option.label}`)}
               </button>
@@ -239,7 +237,7 @@ export default function DoctorStatsDashboard() {
               selected={selectedDate}
               onChange={(date) => date && setSelectedDate(date)}
               className={`w-32 bg-transparent text-sm font-semibold focus:outline-none ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}
-              calendarClassName={`rounded-xl border shadow-lg ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'}`}
+              calendarClassName="rounded-xl border shadow-lg bg-white border-gray-200 text-gray-800"
               {...datePickerConfig}
             />
           </div>
@@ -296,26 +294,26 @@ export default function DoctorStatsDashboard() {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Bar Chart */}
         <div className={`rounded-2xl border p-6 shadow-sm transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
-              <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                {rangeType === 'day' 
-                  ? t('doctorStats.chart.visitsByHour')
-                  : rangeType === 'week'
-                  ? t('doctorStats.chart.visitsByDay')
-                  : t('doctorStats.chart.visitsByMonth')
-                }
-              </h3>
+          <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            {rangeType === 'day'
+              ? t('doctorStats.chart.visitsByHour')
+              : rangeType === 'week'
+                ? t('doctorStats.chart.visitsByDay')
+                : t('doctorStats.chart.visitsByMonth')
+            }
+          </h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartDisplayData}>
                 <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
                 <XAxis dataKey="label" tick={{ fill: theme === 'dark' ? '#9ca3af' : '#6b7280' }} />
                 <YAxis tick={{ fill: theme === 'dark' ? '#9ca3af' : '#6b7280' }} allowDecimals={false} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: theme === 'dark' ? '#1f2937' : '#fff', 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: theme === 'dark' ? '#1f2937' : '#fff',
                     borderColor: theme === 'dark' ? '#374151' : '#e5e7eb',
                     color: theme === 'dark' ? '#fff' : '#000'
-                  }} 
+                  }}
                 />
                 <Bar dataKey="visits" fill="#06b6d4" radius={[8, 8, 0, 0]} />
               </BarChart>
@@ -334,9 +332,9 @@ export default function DoctorStatsDashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
                 <XAxis dataKey="label" tick={{ fill: theme === 'dark' ? '#9ca3af' : '#6b7280' }} />
                 <YAxis tick={{ fill: theme === 'dark' ? '#9ca3af' : '#6b7280' }} allowDecimals={false} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: theme === 'dark' ? '#1f2937' : '#fff', 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: theme === 'dark' ? '#1f2937' : '#fff',
                     borderColor: theme === 'dark' ? '#374151' : '#e5e7eb',
                     color: theme === 'dark' ? '#fff' : '#000'
                   }}
