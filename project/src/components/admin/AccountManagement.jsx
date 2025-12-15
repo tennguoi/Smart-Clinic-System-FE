@@ -235,6 +235,7 @@ export default function AccountManagement() {
     try {
       if (isEditMode && selectedUser) {
         const updateData = {
+           email: formData.email,
           fullName: formData.fullName,
           phone: formData.phone,
           dob: formData.dob,
