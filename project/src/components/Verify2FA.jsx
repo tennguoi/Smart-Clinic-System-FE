@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { authService } from '../services/authService';
 import logo from '../images/logo.png';
 import backgroundImage from '../images/background.png';
 
 const Verify2FA = () => {
+  const { t } = useTranslation();
   const [otpCode, setOtpCode] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -30,7 +32,7 @@ const Verify2FA = () => {
       const { token, message } = response.data;
 
       if (!response.data.success) {
-        setError(message || 'Xác thực OTP thất bại!');
+        setError(message || t('verify2fa.error'));
         setLoading(false);
         return;
       }
@@ -45,7 +47,7 @@ const Verify2FA = () => {
       // Lưu vào authService
       authService.login(token, { userId, email, fullName }, roles);
 
-      setSuccess('Xác thực 2FA thành công!');
+      setSuccess(t('verify2fa.success'));
 
       // Chuyển hướng đến trang chính
       const defaultRoute = authService.getDefaultRoute();
@@ -55,7 +57,7 @@ const Verify2FA = () => {
 
     } catch (err) {
       console.error('2FA verification error:', err);
-      setError(err.response?.data?.message || 'Xác thực OTP thất bại!');
+      setError(err.response?.data?.message || t('verify2fa.error'));
     } finally {
       setLoading(false);
     }
@@ -81,10 +83,10 @@ const Verify2FA = () => {
         </div>
 
         <h2 className="text-3xl font-bold text-center text-teal-700 mb-2">
-          Xác thực 2FA
+          {t('verify2fa.title')}
         </h2>
         <p className="text-center text-gray-600 mb-6 text-sm">
-          Vui lòng nhập mã OTP đã được gửi đến email: <strong>{email}</strong>
+          {t('verify2fa.description')} <strong>{email}</strong>
         </p>
 
         {error && (
@@ -101,7 +103,7 @@ const Verify2FA = () => {
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="otpCode" className="block text-sm font-medium text-gray-700">
-              Mã OTP
+              {t('verify2fa.otpLabel')}
             </label>
             <input
               type="text"
@@ -109,7 +111,7 @@ const Verify2FA = () => {
               value={otpCode}
               onChange={(e) => setOtpCode(e.target.value)}
               className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              placeholder="Nhập mã 6 số"
+              placeholder={t('verify2fa.otpPlaceholder')}
               maxLength={6}
               required
             />
@@ -121,13 +123,13 @@ const Verify2FA = () => {
             className={`w-full bg-teal-600 text-white p-3 rounded-lg font-semibold transition-transform duration-300 
               ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-teal-700 hover:scale-105'}`}
           >
-            {loading ? 'Đang xác thực...' : 'Xác thực'}
+            {loading ? t('verify2fa.verifying') : t('verify2fa.verify')}
           </button>
 
           <p className="mt-4 text-center text-sm text-gray-600">
-            Quay lại{' '}
+            {t('verify2fa.backToLogin')}{' '}
             <a href="/login" className="text-teal-600 hover:underline">
-              Trang đăng nhập
+              {t('login.title')}
             </a>
           </p>
         </form>
