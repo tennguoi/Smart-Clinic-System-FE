@@ -507,10 +507,7 @@ export default function AppointmentForm() {
           </form>
         </div>
 
-        {/* FOOTER INFO */}
-        <div className="pb-8 text-center text-sm text-gray-600 dark:text-gray-300 animate-[fadeIn_0.8s_ease-out]">
-          <p>{t('appointment.helpText')}: <span className="font-bold text-cyan-600 dark:text-cyan-400">1900 1234</span></p>
-        </div>
+        
       </div>
 
       <style jsx>{`

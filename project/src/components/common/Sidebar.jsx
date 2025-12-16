@@ -112,9 +112,9 @@ const Sidebar = ({
       </nav>
 
       {/* Footer - Desktop: luôn hiện, Mobile: ẩn khi collapsed */}
-      <div className={`p-4 ${theme === 'dark' ? 'border-t border-gray-700' : 'border-t border-blue-900'} flex-shrink-0 transition-colors duration-300 ${isCollapsed ? 'hidden lg:block' : 'block'}`}>
+      {/* <div className={`p-4 ${theme === 'dark' ? 'border-t border-gray-700' : 'border-t border-blue-900'} flex-shrink-0 transition-colors duration-300 ${isCollapsed ? 'hidden lg:block' : 'block'}`}>
         <p className="text-xs text-blue-300 text-center">© 2025 HealthCare System</p>
-      </div>
+      </div> */}
     </aside>
   );
 };

@@ -32,13 +32,13 @@ const ForgotPassword = () => {
 
     try {
       const response = await axios.post('http://localhost:8082/api/auth/forgot-password', { email });
-      
-      setSuccess(response.data.message || t('forgotPassword.otpSent'));
-      
+
+      setSuccess(t('forgotPassword.otpSent'));
+
       // Chuyển sang trang nhập OTP sau 1.5s
       setTimeout(() => {
-        navigate('/verify-otp', { 
-          state: { email, from: 'forgot-password' } 
+        navigate('/verify-otp', {
+          state: { email, from: 'forgot-password' }
         });
       }, 1500);
 
@@ -127,8 +127,8 @@ const ForgotPassword = () => {
             type="submit"
             disabled={loading}
             className={`w-full bg-teal-600 text-white p-3 rounded-lg font-semibold transition-all duration-300 
-              ${loading 
-                ? 'opacity-70 cursor-not-allowed' 
+              ${loading
+                ? 'opacity-70 cursor-not-allowed'
                 : 'hover:bg-teal-700 hover:scale-105 shadow-lg'
               }`}
           >

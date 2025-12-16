@@ -65,6 +65,10 @@ export const authService = {
       .some(role => userRoles.includes(role));
   },
 
+  setUserInfo: (userInfo) => {
+    localStorage.setItem(USER_KEY, JSON.stringify(userInfo));
+  },
+
   getDefaultRoute: () => {
     const roles = authService.getRoles();
     if (roles.includes('ROLE_ADMIN')) {
