@@ -1,7 +1,7 @@
 import { Lock, Shield, Key, X, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../../contexts/ThemeContext'; // ← Thêm import
+import { useTheme } from '../../contexts/ThemeContext';
 import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
 import axiosInstance from '../../utils/axiosConfig';
@@ -13,7 +13,7 @@ export default function SecuritySection({
   loading,
 }) {
   const { t } = useTranslation();
-  const { theme } = useTheme(); // ← Thêm hook
+  const { theme } = useTheme();
 
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
@@ -34,15 +34,18 @@ export default function SecuritySection({
     setError('');
     setSuccess('');
 
+    // Client-side validation
     if (changePasswordData.newPassword !== changePasswordData.confirmPassword) {
-      setError(t('profilepage.security_password_mismatch'));
-      toast.error(t('profilepage.security_password_mismatch'));
+      const errorMsg = t('profilepage.security_password_mismatch');
+      setError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
 
     if (changePasswordData.newPassword.length < 8) {
-      setError(t('profilepage.security_password_too_short'));
-      toast.error(t('profilepage.security_password_too_short'));
+      const errorMsg = t('profilepage.security_password_too_short');
+      setError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
 
@@ -55,24 +58,40 @@ export default function SecuritySection({
       });
 
       if (data?.success) {
-        toast.success(t('profilepage.security_password_changed_success'), { id: loadingToast });
-        setSuccess(t('profilepage.security_password_changed_success'));
+        const successMsg = t('profilepage.security_password_changed_success');
+        toast.success(successMsg, { id: loadingToast });
+        setSuccess(successMsg);
         setChangePasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
         setTimeout(() => {
           setIsChangePasswordModalOpen(false);
           setSuccess('');
         }, 1500);
       } else {
-        const msg = (data?.message && data.message.includes("Mật khẩu hiện tại không đúng"))
-          ? t('profilepage.security_current_password_incorrect')
-          : (data?.message || t('profilepage.security_password_change_failed'));
-        toast.error(msg, { id: loadingToast });
-        setError(msg);
+        // Xử lý lỗi từ server một cách linh hoạt
+        let errorMsg;
+
+        // Nếu server có errorCode, map sang message dịch
+        if (data?.errorCode === 'INCORRECT_PASSWORD') {
+          errorMsg = t('profilepage.security_current_password_incorrect');
+        }
+        // Map hardcoded backend message "Mật khẩu hiện tại không đúng." to translation key
+        else if (data?.message && (data.message === 'Mật khẩu hiện tại không đúng.' || data.message.includes('Mật khẩu hiện tại không đúng'))) {
+          errorMsg = t('profilepage.security_current_password_incorrect');
+        }
+        else {
+          // Fallback cho các lỗi khác, ưu tiên hiển thị message từ server nếu có, ngược lại dùng message mặc định
+          errorMsg = data?.message || t('profilepage.security_password_change_failed');
+        }
+
+        toast.error(errorMsg, { id: loadingToast });
+        setError(errorMsg);
       }
     } catch (err) {
-      const msg = err.response?.data?.message || t('profilepage.security_password_change_error');
-      toast.error(msg, { id: loadingToast });
-      setError(msg);
+      const errorMsg = err.response?.data?.message ||
+        err.response?.data?.error ||
+        t('profilepage.security_password_change_error');
+      toast.error(errorMsg, { id: loadingToast });
+      setError(errorMsg);
     }
   };
 
@@ -112,8 +131,9 @@ export default function SecuritySection({
     setOtpError('');
 
     if (otpCode.length !== 6) {
-      setOtpError(t('profilepage.security_otp_invalid_length'));
-      toast.error(t('profilepage.security_otp_invalid_length'));
+      const errorMsg = t('profilepage.security_otp_invalid_length');
+      setOtpError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
 
@@ -127,12 +147,14 @@ export default function SecuritySection({
         setIsOtpModalOpen(false);
         setOtpCode('');
       } else {
-        toast.error(t('profilepage.security_otp_invalid'), { id: verifyingToast });
-        setOtpError(t('profilepage.security_otp_invalid'));
+        const errorMsg = t('profilepage.security_otp_invalid');
+        toast.error(errorMsg, { id: verifyingToast });
+        setOtpError(errorMsg);
       }
     } catch (err) {
-      toast.error(t('profilepage.security_otp_verification_failed'), { id: verifyingToast });
-      setOtpError(t('profilepage.security_otp_verification_failed'));
+      const errorMsg = t('profilepage.security_otp_verification_failed');
+      toast.error(errorMsg, { id: verifyingToast });
+      setOtpError(errorMsg);
     } finally {
       setIsVerifying(false);
     }
@@ -145,8 +167,13 @@ export default function SecuritySection({
     setSuccess('');
     setOtpError('');
     setOtpCode('');
+    setChangePasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
     toast.dismiss();
   };
+
+  // Nếu hình ảnh bạn gửi là mockup thiết kế, hãy đảm bảo rằng:
+  // 1. Server của bạn trả về message bằng ngôn ngữ phù hợp
+  // 2. Hoặc server trả về errorCode để client dịch
 
   return (
     <>
@@ -226,8 +253,13 @@ export default function SecuritySection({
               <button
                 onClick={handleToggle2FAClick}
                 disabled={is2FALoading || loading}
-                className={`relative inline-flex h-12 w-24 items-center rounded-full transition-colors focus:outline-none focus:ring-4 ${twoFactorEnabled ? 'bg-green-500' : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'
-                  } ${is2FALoading || loading ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90'}`}
+                className={`relative inline-flex h-12 w-24 items-center rounded-full transition-colors focus:outline-none focus:ring-4 ${twoFactorEnabled
+                  ? 'bg-green-500'
+                  : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'
+                  } ${is2FALoading || loading
+                    ? 'opacity-70 cursor-not-allowed'
+                    : 'hover:opacity-90'
+                  }`}
               >
                 <span
                   className={`inline-flex h-10 w-10 rounded-full bg-white shadow-lg transform transition-transform duration-300 ${twoFactorEnabled ? 'translate-x-12' : 'translate-x-1'
@@ -321,6 +353,7 @@ export default function SecuritySection({
                       : 'bg-white border-gray-300 text-gray-900'
                       }`}
                     required
+                    autoComplete="current-password"
                   />
                 </div>
                 <div>
@@ -338,6 +371,7 @@ export default function SecuritySection({
                       : 'bg-white border-gray-300 text-gray-900'
                       }`}
                     required
+                    autoComplete="new-password"
                   />
                 </div>
                 <div>
@@ -355,13 +389,22 @@ export default function SecuritySection({
                       : 'bg-white border-gray-300 text-gray-900'
                       }`}
                     required
+                    autoComplete="new-password"
                   />
                 </div>
-                {error && <p className="text-red-600 text-sm text-center font-medium">{error}</p>}
-                {success && <p className="text-green-600 text-sm text-center font-medium">{success}</p>}
+
+                {/* Hiển thị thông báo thành công */}
+                {success && (
+                  <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-green-900/30' : 'bg-green-50'
+                    }`}>
+                    <p className="text-green-600 text-sm text-center font-medium">{success}</p>
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
+                  className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!changePasswordData.oldPassword || !changePasswordData.newPassword || !changePasswordData.confirmPassword}
                 >
                   {t('profilepage.security_change_password')}
                 </button>
@@ -370,7 +413,7 @@ export default function SecuritySection({
           </div>
         )}
 
-        {/* Modal OTP */}
+        {/* Modal OTP - Giữ nguyên */}
         {isOtpModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className={`rounded-xl shadow-2xl max-w-md w-full p-6 relative ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'

@@ -8,15 +8,41 @@ import axiosInstance from '../../utils/axiosConfig';
 import LanguageSwitcher from '../LanguageSwitcher';
 import { useTheme } from '../../contexts/ThemeContext';
 
+// Helper to construct image URL
+const getPhotoSrc = (photoUrl) => {
+  if (!photoUrl) return '';
+  if (photoUrl.startsWith('http')) return photoUrl;
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8082';
+  const normalized = photoUrl.startsWith('/') ? photoUrl : `/${photoUrl}`;
+  return `${baseUrl}${normalized}`;
+};
+
 export default function Header() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { theme, toggleTheme } = useTheme();
 
-  const user = authService.getUserInfo() || {};
+  const [user, setUser] = useState(authService.getUserInfo() || {});
+
+  useEffect(() => {
+    const handleUserInfoUpdate = () => {
+      setUser(authService.getUserInfo() || {});
+    };
+
+    window.addEventListener('userInfoUpdated', handleUserInfoUpdate);
+    // Also listen to storage events for cross-tab updates
+    window.addEventListener('storage', handleUserInfoUpdate);
+
+    return () => {
+      window.removeEventListener('userInfoUpdated', handleUserInfoUpdate);
+      window.removeEventListener('storage', handleUserInfoUpdate);
+    };
+  }, []);
+
   const fullName = user.fullName || t('header.defaultName', 'Người dùng');
   const email = user.email || '';
+  const photoUrl = user.photoUrl;
 
   // Đóng dropdown khi click ngoài
   useEffect(() => {
@@ -72,8 +98,25 @@ export default function Header() {
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-2 rounded-lg transition"
             >
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white font-bold shadow-md">
-                {fullName.slice(0, 2).toUpperCase()}
+              <div className="w-10 h-10 rounded-full overflow-hidden shadow-md flex-shrink-0">
+                {photoUrl ? (
+                  <img
+                    src={getPhotoSrc(photoUrl)}
+                    alt={fullName}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+
+                {/* Fallback to initials if no photo or error */}
+                <div
+                  className={`w-full h-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold ${photoUrl ? 'hidden' : 'flex'}`}
+                >
+                  {fullName.slice(0, 2).toUpperCase()}
+                </div>
               </div>
 
               <div className="text-left hidden md:block">
