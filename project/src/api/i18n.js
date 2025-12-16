@@ -1895,6 +1895,34 @@ const resources = {
         "resend": "Gửi lại mã",
         "resent": "Đã gửi lại mã OTP thành công",
         "resendFailed": "Gửi lại mã thất bại"
+      },
+      appointmenttrackingpage: {
+        "phoneNumberLabel": "Số điện thoại",
+        "nameLabel": "Tên bệnh nhân",
+        "emailLabel": "Email",
+        "servicesLabel": "Dịch vụ đăng ký",
+        "notesLabel": "Ghi chú",
+        "confirmedByLabel": "Được xác nhận bởi",
+        "backToHomeButton": "Về trang chủ",
+        "bookNewAppointmentButton": "Đặt lịch mới",
+        "noteLabel": "Lưu ý",
+        "noteDescription": "Nếu bạn cần thay đổi hoặc hủy lịch hẹn, vui lòng liên hệ với phòng khám qua số hotline hoặc email được gửi khi đặt lịch.",
+        "pending": "Đang chờ",
+        "confirmed": "Đã xác nhận",
+        "completed": "Đã hoàn thành",
+        "cancelled": "Đã hủy",
+        "title": "Thông tin lịch hẹn",
+        "appointmentCodeLabel": "Mã lịch hẹn",
+        "appointmentDateLabel": "Ngày hẹn",
+        "appointmentTimeLabel": "Thời gian hẹn",
+        "appointmentStatusLabel": "Trạng thái",
+        "patientNameLabel": "Tên bệnh nhân",
+        "invalidAppointmentCode": "Mã lịch hẹn không hợp lệ",
+        "appointmentNotFound": "Không tìm thấy lịch hẹn. Vui lòng kiểm tra lại mã.",
+        "notDefined": "Chưa xác định",
+        "notFoundTitle": "Không tìm thấy lịch hẹn",
+        "backToHome": "Về trang chủ",
+        "description": "Theo dõi trạng thái và chi tiết lịch khám của bạn"
       }
 
     }
@@ -3776,6 +3804,34 @@ const resources = {
         noEmail: "Email information not found. Please start over from forgot password.",
         backTo: "Back to",
         login: "Login"
+      },
+      appointmenttrackingpage: {
+        "phoneNumberLabel": "Phone Number",
+        "nameLabel": "Name",
+        "emailLabel": "Email",
+        "servicesLabel": "Services",
+        "notesLabel": "Notes",
+        "confirmedByLabel": "Confirmed By",
+        "backToHomeButton": "Back to Home",
+        "bookNewAppointmentButton": "Book New Appointment",
+        "noteLabel": "Note",
+        "noteDescription": "If you need to change or cancel the appointment, please contact the clinic through the hotline or email sent when booking.",
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+        "title": "Appointment Information",
+        "appointmentCodeLabel": "Appointment code",
+        "appointmentDateLabel": "Appointment date",
+        "appointmentTimeLabel": "Appointment time",
+        "appointmentStatusLabel": "Appointment status",
+        "patientNameLabel": "Patient Name",
+        "invalidAppointmentCode": "Invalid appointment code",
+        "appointmentNotFound": "Appointment not found. Please check the code.",
+        "notDefined": "Not defined",
+        "notFoundTitle": "Appointment Not Found",
+        "backToHome": "Back to Home",
+        "description": "Track the status and details of your appointment"
       }
 
     }
