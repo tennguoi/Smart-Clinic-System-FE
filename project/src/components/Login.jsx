@@ -37,7 +37,7 @@ const Login = () => {
         password,
       });
 
-      const { token, roles, userId, fullName, message, requires2FA } = response.data;
+      const { token, roles, userId, fullName, message, requires2FA, twoFactorEnabled } = response.data;
 
       // Xác thực 2FA
       if (requires2FA === true) {
@@ -55,7 +55,7 @@ const Login = () => {
         return;
       }
 
-      authService.login(token, { userId, email, fullName }, roles);
+      authService.login(token, { userId, email, fullName, twoFactorEnabled }, roles);
       setSuccess(t('login.success'));
 
       const defaultRoute = authService.getDefaultRoute();

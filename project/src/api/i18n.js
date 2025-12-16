@@ -1530,7 +1530,9 @@ const resources = {
         failed: "Đặt lại mật khẩu thất bại! Vui lòng thử lại.",
         noEmail: "Không tìm thấy thông tin email. Vui lòng thực hiện lại từ bước quên mật khẩu.",
         backTo: "Quay lại",
-        login: "Đăng nhập"
+        login: "Đăng nhập",
+        passwordTooShort: "Mật khẩu phải có ít nhất 6 ký tự",
+        passwordRequirement: "Mật khẩu phải có ít nhất 6 ký tự"
       },
       forgotPassword: {
         title: "Quên mật khẩu",
@@ -1865,18 +1867,25 @@ const resources = {
         "tooltip": "Cần hỗ trợ? Chat với  tôi!",
       },
       verify2fa: {
-        title: "Xác thực 2FA",
-        description: "Vui lòng nhập mã OTP đã được gửi đến email: ",
-        otpLabel: "Mã OTP",
-        otpPlaceholder: "Nhập mã 6 số",
-        verifying: "Đang xác thực...",
-        verify: "Xác thực",
-        backToLogin: "Quay lại Trang đăng nhập",
-        success: "Xác thực 2FA thành công!",
-        error: "Xác thực OTP thất bại!",
-        otpInvalid: "Mã OTP không hợp lệ hoặc hết hạn!",
-        backTo: "Quay lại",
-        loginPage: "Trang đăng nhập"
+        "title": "Xác thực 2FA",
+        "description": "Vui lòng nhập mã OTP đã được gửi đến email: ",
+        "otpLabel": "Mã OTP",
+        "otpPlaceholder": "Nhập mã 6 số",
+        "verifying": "Đang xác thực...",
+        "verify": "Xác thực",
+        "backToLogin": "Quay lại Trang đăng nhập",
+        "success": "Xác thực 2FA thành công!",
+        "error": "Xác thực OTP thất bại!",
+        "otpInvalid": "Mã OTP không hợp lệ hoặc hết hạn!",
+        "backTo": "Quay lại",
+        "loginPage": "Trang đăng nhập",
+        "security_current_password_incorrect": "Mật khẩu hiện tại không đúng",
+        "invalidLength": "Mã OTP phải có đủ 6 chữ số",
+        "notReceived": "Không nhận được mã?",
+        "resendIn": "Gửi lại sau",
+        "resend": "Gửi lại mã",
+        "resent": "Đã gửi lại mã OTP thành công",
+        "resendFailed": "Gửi lại mã thất bại"
       }
 
     }
@@ -3394,7 +3403,9 @@ const resources = {
         failed: "Password reset failed! Please try again.",
         noEmail: "Email information not found. Please start over from forgot password.",
         backTo: "Back to",
-        login: "Login"
+        login: "Login",
+        passwordTooShort: "Password must be at least 6 characters long",
+        passwordRequirement: "Password must be at least 6 characters long"
       },
       forgotPassword: {
         title: "Forgot Password",
@@ -3716,19 +3727,38 @@ const resources = {
         "removeKeyword": "Remove keyword"
       },
       verify2fa: {
-        title: "Verify 2FA",
-        description: "Please enter the OTP code sent to your email: ",
-        otpLabel: "OTP Code",
-        otpPlaceholder: "Enter 6-digit code",
-        verifying: "Verifying...",
-        verify: "Verify",
-        backToLogin: "Back to Login",
-        success: "2FA verification successful!",
-        error: "OTP verification failed!",
-        otpInvalid: "Invalid or expired OTP!",
+        "title": "Verify 2FA",
+        "description": "Please enter the OTP code sent to your email: ",
+        "otpLabel": "OTP Code",
+        "otpPlaceholder": "Enter 6-digit code",
+        "verifying": "Verifying...",
+        "verify": "Verify",
+        "backToLogin": "Back to Login",
+        "success": "2FA verification successful!",
+        "error": "OTP verification failed!",
+        "otpInvalid": "Invalid or expired OTP!",
+        "backTo": "Back to",
+        "loginPage": "Login Page",
+        "security_current_password_incorrect": "Incorrect current password",
+        "invalidLength": "OTP code must be 6 digits",
+        "notReceived": "Didn't receive code?",
+        "resendIn": "Resend in",
+        "resend": "Resend code",
+        "resent": "OTP code resent successfully",
+        "resendFailed": "Failed to resend code"
+      },
+      resetPassword: {
+        title: "Reset Password",
+        forEmail: "Resetting password for",
+        newPassword: "New Password",
+        placeholder: "Enter new password (min 6 characters)",
+        updateButton: "Update Password",
+        updating: "Updating...",
+        success: "Password reset successfully! Redirecting to login...",
+        failed: "Password reset failed! Please try again.",
+        noEmail: "Email information not found. Please start over from forgot password.",
         backTo: "Back to",
-        loginPage: "Login Page",
-        "security_current_password_incorrect": "Incorrect current password"
+        login: "Login"
       }
 
     }

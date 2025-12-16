@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // ← Thêm useEffect, useRef
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -9,16 +9,66 @@ import backgroundImage from '../images/background.png';
 
 const Verify2FA = () => {
   const { t } = useTranslation();
-  const [otpCode, setOtpCode] = useState('');
+  const [otp, setOtp] = useState(['', '', '', '', '', '']); // ← Thay đổi từ otpCode string thành mảng
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [countdown, setCountdown] = useState(60); // ← Thêm countdown (nếu cần resend OTP)
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email || '';
 
+  const inputRefs = useRef([]); // ← Thêm useRef cho các ô input
+
+  // Focus ô đầu tiên khi load
+  useEffect(() => {
+    inputRefs.current[0]?.focus();
+  }, []);
+
+  // Countdown 60s (nếu có chức năng resend)
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
+
+  const handleChange = (index, value) => {
+    if (!/^\d?$/.test(value)) return;
+
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+
+    // Tự động nhảy ô
+    if (value && index < 5) {
+      inputRefs.current[index + 1].focus();
+    }
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      inputRefs.current[index - 1].focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    const newOtp = pasted.padEnd(6, '').slice(0, 6).split('');
+    setOtp(newOtp);
+    inputRefs.current[pasted.length < 6 ? pasted.length : 5].focus();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const otpCode = otp.join(''); // ← Chuyển mảng thành string
+
+    if (otpCode.length !== 6) {
+      setError(t('verify2fa.invalidLength') || 'Mã OTP phải có 6 chữ số'); // ← Thêm key này vào file dịch
+      return;
+    }
+
     setLoading(true);
     setError('');
     setSuccess('');
@@ -43,10 +93,10 @@ const Verify2FA = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      const { userId, fullName, roles } = userResponse.data;
+      const { userId, fullName, roles, twoFactorEnabled } = userResponse.data;
 
       // Lưu vào authService
-      authService.login(token, { userId, email, fullName }, roles);
+      authService.login(token, { userId, email, fullName, twoFactorEnabled }, roles);
 
       setSuccess(t('verify2fa.success'));
 
@@ -59,9 +109,33 @@ const Verify2FA = () => {
     } catch (err) {
       console.error('2FA verification error:', err);
       setError(err.response?.data?.message || t('verify2fa.error'));
+
+      // Reset OTP khi có lỗi
+      setOtp(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
     } finally {
       setLoading(false);
     }
+  };
+
+  // Hàm resend OTP (nếu cần)
+  const handleResend = async () => {
+    if (countdown > 0) return;
+
+    // Reset countdown và OTP
+    setCountdown(60);
+    setOtp(['', '', '', '', '', '']);
+    setError('');
+    setSuccess('');
+    inputRefs.current[0]?.focus();
+
+    // Gửi request resend ở đây nếu backend hỗ trợ
+    // try {
+    //   await axios.post('http://localhost:8082/api/auth/resend-2fa', { email });
+    //   setSuccess(t('verify2fa.resent'));
+    // } catch (err) {
+    //   setError(t('verify2fa.resendFailed'));
+    // }
   };
 
   return (
@@ -83,7 +157,7 @@ const Verify2FA = () => {
         <LanguageSwitcher />
       </div>
 
-      <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl relative z-10">
+      <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl relative z-10 animate-fadeIn">
         <div className="flex justify-center mb-6">
           <img src={logo} alt="Logo" className="w-full max-w-[150px] h-auto object-contain" />
         </div>
@@ -93,53 +167,79 @@ const Verify2FA = () => {
         </h2>
         <p className="text-center text-gray-600 mb-6 text-sm">
           {t('verify2fa.description')}
-          <strong>{email}</strong>
+          <strong className="text-teal-700 ml-1">{email}</strong>
         </p>
 
         {error && (
-          <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">
+          <div className="bg-red-100 border border-red-300 text-red-700 p-3 rounded-lg mb-5 text-sm text-center animate-shake">
             {error}
           </div>
         )}
         {success && (
-          <div className="bg-green-100 text-green-700 p-3 rounded mb-4 text-sm">
+          <div className="bg-green-100 border border-green-300 text-green-700 p-3 rounded-lg mb-5 text-sm text-center">
             {success}
           </div>
         )}
 
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="otpCode" className="block text-sm font-medium text-gray-700">
-              {t('verify2fa.otpLabel')}
-            </label>
-            <input
-              type="text"
-              id="otpCode"
-              value={otpCode}
-              onChange={(e) => setOtpCode(e.target.value)}
-              className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              placeholder={t('verify2fa.otpPlaceholder')}
-              maxLength={6}
-              required
-            />
+          {/* 6 ô nhập OTP */}
+          <div className="flex justify-center gap-3 mb-8">
+            {otp.map((digit, index) => (
+              <input
+                key={index}
+                ref={(el) => (inputRefs.current[index] = el)}
+                type="text"
+                value={digit}
+                onChange={(e) => handleChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                onPaste={index === 0 ? handlePaste : undefined}
+                className="w-14 h-14 text-2xl font-bold text-center border-2 rounded-lg focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-200 transition-all"
+                maxLength="1"
+                inputMode="numeric"
+                disabled={loading}
+              />
+            ))}
           </div>
 
           <button
             type="submit"
-            disabled={loading}
-            className={`w-full bg-teal-600 text-white p-3 rounded-lg font-semibold transition-transform duration-300 
-              ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-teal-700 hover:scale-105'}`}
+            disabled={loading || otp.join('').length !== 6}
+            className={`w-full py-3.5 rounded-lg font-semibold text-white transition-all duration-300 
+              ${loading || otp.join('').length !== 6
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-teal-600 hover:bg-teal-700 hover:scale-105 shadow-lg'
+              }`}
           >
             {loading ? t('verify2fa.verifying') : t('verify2fa.verify')}
           </button>
-
-          <p className="mt-4 text-center text-sm text-gray-600">
-            {t('verify2fa.backTo')}{' '}
-            <a href="/login" className="text-teal-600 hover:underline">
-              {t('verify2fa.loginPage')}
-            </a>
-          </p>
         </form>
+
+        {/* Nút Resend (tùy chọn) */}
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            {t('verify2fa.notReceived') || 'Không nhận được mã?'}{' '}
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={countdown > 0}
+              className={`font-semibold transition-colors ${countdown > 0
+                ? 'text-gray-400 cursor-not-allowed'
+                : 'text-teal-600 hover:text-teal-700 hover:underline'
+                }`}
+            >
+              {countdown > 0
+                ? `${t('verify2fa.resendIn') || 'Gửi lại sau'} ${countdown}s`
+                : t('verify2fa.resend') || 'Gửi lại mã'}
+            </button>
+          </p>
+        </div>
+
+        <p className="mt-6 text-center text-sm text-gray-600">
+          {t('verify2fa.backTo')}{' '}
+          <a href="/login" className="text-teal-600 hover:underline font-medium">
+            {t('verify2fa.loginPage')}
+          </a>
+        </p>
       </div>
     </div>
   );
