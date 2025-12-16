@@ -208,7 +208,7 @@ export default function SecurityManager({ initialData = {} }) {
 
   return (
     <div className="space-y-6">
-      {message && (
+      {/* {message && (
         <div className={`p-4 rounded-lg border text-sm font-medium transition-all ${
           message.toLowerCase().includes('thành công') || 
           message.toLowerCase().includes('success') || 
@@ -220,7 +220,7 @@ export default function SecurityManager({ initialData = {} }) {
         }`}>
           {message}
         </div>
-      )}
+      )} */}
 
       {isFetching ? (
         <div className="flex justify-center items-center p-8">

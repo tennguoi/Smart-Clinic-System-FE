@@ -79,12 +79,10 @@ export default function SecuritySection({
   const handleToggle2FAClick = async () => {
     if (!twoFactorEnabled) {
       setIs2FALoading(true);
-      toast.loading(t('profilepage.security_enabling_2fa'));
 
       try {
         const shouldOpenOtpModal = await onToggle2FA();
         if (shouldOpenOtpModal) {
-          toast.dismiss();
           toast.success(t('profilepage.security_2fa_qr_generated'));
           setIsOtpModalOpen(true);
           setOtpCode('');
@@ -97,7 +95,6 @@ export default function SecuritySection({
       }
     } else {
       setIs2FALoading(true);
-      toast.loading(t('profilepage.security_disabling_2fa'));
 
       try {
         await onToggle2FA();
