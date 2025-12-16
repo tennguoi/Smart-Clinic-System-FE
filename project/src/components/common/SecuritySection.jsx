@@ -63,7 +63,9 @@ export default function SecuritySection({
           setSuccess('');
         }, 1500);
       } else {
-        const msg = data?.message || t('profilepage.security_password_change_failed');
+        const msg = (data?.message && data.message.includes("Mật khẩu hiện tại không đúng"))
+          ? t('profilepage.security_current_password_incorrect')
+          : (data?.message || t('profilepage.security_password_change_failed'));
         toast.error(msg, { id: loadingToast });
         setError(msg);
       }
@@ -153,42 +155,35 @@ export default function SecuritySection({
     <>
       <Toaster {...toastConfig} />
 
-      <div className={`rounded-lg shadow-sm border p-6 ${
-        theme === 'dark'
-          ? 'bg-gray-800 border-gray-700'
-          : 'bg-white border-gray-200'
-      }`}>
-        <h2 className={`text-xl font-semibold mb-6 ${
-          theme === 'dark' ? 'text-white' : 'text-gray-900'
+      <div className={`rounded-lg shadow-sm border p-6 ${theme === 'dark'
+        ? 'bg-gray-800 border-gray-700'
+        : 'bg-white border-gray-200'
         }`}>
+        <h2 className={`text-xl font-semibold mb-6 ${theme === 'dark' ? 'text-white' : 'text-gray-900'
+          }`}>
           {t('profilepage.security_title')}
         </h2>
 
         <div className="space-y-6">
           {/* Đổi mật khẩu */}
-          <div className={`p-4 rounded-lg border ${
-            theme === 'dark'
-              ? 'bg-gray-700 border-gray-600'
-              : 'bg-gray-50 border-gray-200'
-          }`}>
+          <div className={`p-4 rounded-lg border ${theme === 'dark'
+            ? 'bg-gray-700 border-gray-600'
+            : 'bg-gray-50 border-gray-200'
+            }`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${
-                  theme === 'dark' ? 'bg-blue-900/30' : 'bg-blue-100'
-                }`}>
-                  <Lock className={`w-5 h-5 ${
-                    theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-                  }`} />
+                <div className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-blue-900/30' : 'bg-blue-100'
+                  }`}>
+                  <Lock className={`w-5 h-5 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                    }`} />
                 </div>
                 <div>
-                  <h3 className={`text-sm font-semibold ${
-                    theme === 'dark' ? 'text-white' : 'text-gray-900'
-                  }`}>
+                  <h3 className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'
+                    }`}>
                     {t('profilepage.security_password')}
                   </h3>
-                  <p className={`text-xs ${
-                    theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                  }`}>
+                  <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
                     {t('profilepage.security_password_desc')}
                   </p>
                 </div>
@@ -204,31 +199,26 @@ export default function SecuritySection({
           </div>
 
           {/* 2FA */}
-          <div className={`p-5 rounded-lg border-2 ${
-            theme === 'dark'
-              ? 'bg-gradient-to-r from-green-900/20 to-blue-900/20 border-green-700'
-              : 'bg-gradient-to-r from-green-50 to-blue-50 border-green-200'
-          }`}>
+          <div className={`p-5 rounded-lg border-2 ${theme === 'dark'
+            ? 'bg-gradient-to-r from-green-900/20 to-blue-900/20 border-green-700'
+            : 'bg-gradient-to-r from-green-50 to-blue-50 border-green-200'
+            }`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-lg shadow-sm ${
-                  theme === 'dark' ? 'bg-gray-800' : 'bg-white'
-                }`}>
-                  <Shield className={`w-6 h-6 ${
-                    twoFactorEnabled 
-                      ? 'text-green-600' 
-                      : theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
-                  }`} />
+                <div className={`p-3 rounded-lg shadow-sm ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+                  }`}>
+                  <Shield className={`w-6 h-6 ${twoFactorEnabled
+                    ? 'text-green-600'
+                    : theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
+                    }`} />
                 </div>
                 <div>
-                  <h3 className={`text-base font-bold mb-1 ${
-                    theme === 'dark' ? 'text-white' : 'text-gray-900'
-                  }`}>
+                  <h3 className={`text-base font-bold mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'
+                    }`}>
                     {t('profilepage.security_2fa')}
                   </h3>
-                  <p className={`text-sm ${
-                    theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                  }`}>
+                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                    }`}>
                     {twoFactorEnabled
                       ? t('profilepage.security_2fa_enabled_desc')
                       : t('profilepage.security_2fa_disabled_desc')}
@@ -239,34 +229,29 @@ export default function SecuritySection({
               <button
                 onClick={handleToggle2FAClick}
                 disabled={is2FALoading || loading}
-                className={`relative inline-flex h-12 w-24 items-center rounded-full transition-colors focus:outline-none focus:ring-4 ${
-                  twoFactorEnabled ? 'bg-green-500' : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'
-                } ${is2FALoading || loading ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90'}`}
+                className={`relative inline-flex h-12 w-24 items-center rounded-full transition-colors focus:outline-none focus:ring-4 ${twoFactorEnabled ? 'bg-green-500' : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'
+                  } ${is2FALoading || loading ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90'}`}
               >
                 <span
-                  className={`inline-flex h-10 w-10 rounded-full bg-white shadow-lg transform transition-transform duration-300 ${
-                    twoFactorEnabled ? 'translate-x-12' : 'translate-x-1'
-                  }`}
+                  className={`inline-flex h-10 w-10 rounded-full bg-white shadow-lg transform transition-transform duration-300 ${twoFactorEnabled ? 'translate-x-12' : 'translate-x-1'
+                    }`}
                 >
                   {is2FALoading || loading ? (
                     <Loader2 className="w-5 h-5 text-blue-500 animate-spin m-auto" />
                   ) : twoFactorEnabled ? (
                     <span className="text-green-600 font-bold m-auto text-xl">✓</span>
                   ) : (
-                    <span className={`font-bold m-auto text-xl ${
-                      theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                    }`}>✕</span>
+                    <span className={`font-bold m-auto text-xl ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                      }`}>✕</span>
                   )}
                 </span>
               </button>
             </div>
 
-            <div className={`mt-4 pt-4 border-t ${
-              theme === 'dark' ? 'border-gray-700' : 'border-green-200'
-            }`}>
-              <p className={`text-xs flex items-start gap-2 ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+            <div className={`mt-4 pt-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-green-200'
               }`}>
+              <p className={`text-xs flex items-start gap-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                }`}>
                 <span className="text-yellow-600 font-bold">Warning</span>
                 <span>
                   {twoFactorEnabled
@@ -278,28 +263,23 @@ export default function SecuritySection({
           </div>
 
           {/* Lời khuyên bảo mật */}
-          <div className={`p-4 rounded-lg border ${
-            theme === 'dark'
-              ? 'bg-yellow-900/20 border-yellow-800'
-              : 'bg-yellow-50 border-yellow-200'
-          }`}>
+          <div className={`p-4 rounded-lg border ${theme === 'dark'
+            ? 'bg-yellow-900/20 border-yellow-800'
+            : 'bg-yellow-50 border-yellow-200'
+            }`}>
             <div className="flex items-start gap-3">
-              <div className={`p-2 rounded-lg ${
-                theme === 'dark' ? 'bg-yellow-900/30' : 'bg-yellow-100'
-              }`}>
-                <Shield className={`w-5 h-5 ${
-                  theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'
-                }`} />
+              <div className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-yellow-900/30' : 'bg-yellow-100'
+                }`}>
+                <Shield className={`w-5 h-5 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'
+                  }`} />
               </div>
               <div>
-                <h4 className={`text-sm font-semibold mb-1 ${
-                  theme === 'dark' ? 'text-yellow-400' : 'text-yellow-900'
-                }`}>
+                <h4 className={`text-sm font-semibold mb-1 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-900'
+                  }`}>
                   {t('profilepage.security_tips_title')}
                 </h4>
-                <ul className={`text-xs space-y-1 ${
-                  theme === 'dark' ? 'text-yellow-300' : 'text-yellow-800'
-                }`}>
+                <ul className={`text-xs space-y-1 ${theme === 'dark' ? 'text-yellow-300' : 'text-yellow-800'
+                  }`}>
                   <li>• {t('profilepage.security_tip_strong_password')}</li>
                   <li>• {t('profilepage.security_tip_no_share')}</li>
                   <li>• {t('profilepage.security_tip_change_regularly')}</li>
@@ -313,29 +293,25 @@ export default function SecuritySection({
         {/* Modal Đổi mật khẩu */}
         {isChangePasswordModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className={`rounded-xl shadow-2xl max-w-md w-full p-6 relative ${
-              theme === 'dark' ? 'bg-gray-800' : 'bg-white'
-            }`}>
+            <div className={`rounded-xl shadow-2xl max-w-md w-full p-6 relative ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+              }`}>
               <button
                 onClick={closeModals}
-                className={`absolute top-4 right-4 transition ${
-                  theme === 'dark'
-                    ? 'text-gray-400 hover:text-gray-200'
-                    : 'text-gray-400 hover:text-gray-600'
-                }`}
+                className={`absolute top-4 right-4 transition ${theme === 'dark'
+                  ? 'text-gray-400 hover:text-gray-200'
+                  : 'text-gray-400 hover:text-gray-600'
+                  }`}
               >
                 <X className="w-6 h-6" />
               </button>
-              <h3 className={`text-lg font-semibold mb-4 ${
-                theme === 'dark' ? 'text-white' : 'text-gray-900'
-              }`}>
+              <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}>
                 {t('profilepage.security_change_password')}
               </h3>
               <form onSubmit={handleChangePasswordSubmit} className="space-y-4">
                 <div>
-                  <label className={`block text-sm font-medium mb-2 ${
-                    theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
+                  <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                     {t('profilepage.security_current_password')} <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -343,18 +319,16 @@ export default function SecuritySection({
                     value={changePasswordData.oldPassword}
                     onChange={(e) => setChangePasswordData({ ...changePasswordData, oldPassword: e.target.value })}
                     placeholder={t('profilepage.security_enter_current_password')}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ${
-                      theme === 'dark'
-                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                        : 'bg-white border-gray-300 text-gray-900'
-                    }`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ${theme === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                      : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                     required
                   />
                 </div>
                 <div>
-                  <label className={`block text-sm font-medium mb-2 ${
-                    theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
+                  <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                     {t('profilepage.security_new_password')} <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -362,18 +336,16 @@ export default function SecuritySection({
                     value={changePasswordData.newPassword}
                     onChange={(e) => setChangePasswordData({ ...changePasswordData, newPassword: e.target.value })}
                     placeholder={t('profilepage.security_enter_new_password')}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ${
-                      theme === 'dark'
-                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                        : 'bg-white border-gray-300 text-gray-900'
-                    }`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ${theme === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                      : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                     required
                   />
                 </div>
                 <div>
-                  <label className={`block text-sm font-medium mb-2 ${
-                    theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
+                  <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                     {t('profilepage.security_confirm_new_password')} <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -381,11 +353,10 @@ export default function SecuritySection({
                     value={changePasswordData.confirmPassword}
                     onChange={(e) => setChangePasswordData({ ...changePasswordData, confirmPassword: e.target.value })}
                     placeholder={t('profilepage.security_confirm_new_password')}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ${
-                      theme === 'dark'
-                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                        : 'bg-white border-gray-300 text-gray-900'
-                    }`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ${theme === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                      : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                     required
                   />
                 </div>
@@ -405,54 +376,46 @@ export default function SecuritySection({
         {/* Modal OTP */}
         {isOtpModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className={`rounded-xl shadow-2xl max-w-md w-full p-6 relative ${
-              theme === 'dark' ? 'bg-gray-800' : 'bg-white'
-            }`}>
+            <div className={`rounded-xl shadow-2xl max-w-md w-full p-6 relative ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+              }`}>
               <button
                 onClick={closeModals}
-                className={`absolute top-4 right-4 transition ${
-                  theme === 'dark'
-                    ? 'text-gray-400 hover:text-gray-200'
-                    : 'text-gray-400 hover:text-gray-600'
-                }`}
+                className={`absolute top-4 right-4 transition ${theme === 'dark'
+                  ? 'text-gray-400 hover:text-gray-200'
+                  : 'text-gray-400 hover:text-gray-600'
+                  }`}
               >
                 <X className="w-6 h-6" />
               </button>
               <div className="text-center mb-6">
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
-                  theme === 'dark' ? 'bg-blue-900/30' : 'bg-blue-100'
-                }`}>
-                  <Shield className={`w-8 h-8 ${
-                    theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-                  }`} />
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${theme === 'dark' ? 'bg-blue-900/30' : 'bg-blue-100'
+                  }`}>
+                  <Shield className={`w-8 h-8 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                    }`} />
                 </div>
-                <h3 className={`text-lg font-semibold mb-2 ${
-                  theme === 'dark' ? 'text-white' : 'text-gray-900'
-                }`}>
+                <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'
+                  }`}>
                   {t('profilepage.security_otp_title')}
                 </h3>
-                <p className={`text-sm whitespace-pre-line ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                }`}>
+                <p className={`text-sm whitespace-pre-line ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                  }`}>
                   {t('profilepage.security_otp_description')}
                 </p>
               </div>
               <form onSubmit={handleOtpSubmit} className="space-y-4">
                 <div>
-                  <label className={`block text-sm font-medium mb-2 text-center ${
-                    theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
+                  <label className={`block text-sm font-medium mb-2 text-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                     {t('profilepage.security_otp_code')}
                   </label>
                   <input
                     type="text"
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    className={`w-full px-4 py-3 border rounded-lg text-center text-2xl tracking-widest font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ${
-                      theme === 'dark'
-                        ? 'bg-gray-700 border-gray-600 text-white'
-                        : 'bg-white border-gray-300 text-gray-900'
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg text-center text-2xl tracking-widest font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ${theme === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white'
+                      : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                     placeholder="000000"
                     maxLength={6}
                     required
@@ -463,11 +426,10 @@ export default function SecuritySection({
                 <button
                   type="submit"
                   disabled={isVerifying || otpCode.length !== 6}
-                  className={`w-full py-3 rounded-lg text-white font-medium flex items-center justify-center gap-2 transition ${
-                    isVerifying || otpCode.length !== 6
-                      ? 'bg-blue-400 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
+                  className={`w-full py-3 rounded-lg text-white font-medium flex items-center justify-center gap-2 transition ${isVerifying || otpCode.length !== 6
+                    ? 'bg-blue-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                    }`}
                 >
                   {isVerifying ? (
                     <>
@@ -481,11 +443,10 @@ export default function SecuritySection({
                 <button
                   type="button"
                   onClick={closeModals}
-                  className={`w-full py-3 rounded-lg font-medium transition ${
-                    theme === 'dark'
-                      ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`w-full py-3 rounded-lg font-medium transition ${theme === 'dark'
+                    ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   {t('profilepage.cancel')}
                 </button>

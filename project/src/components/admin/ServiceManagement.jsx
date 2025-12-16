@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  Plus, Edit,  X, Power, Eye, Upload, Image as ImageIcon, Search, AlertTriangle, Briefcase,
+  Plus, Edit, X, Power, Eye, Upload, Image as ImageIcon, Search, AlertTriangle, Briefcase,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
@@ -231,15 +231,19 @@ export default function ServiceManagement() {
       }
       const payload = { ...formData, price: parseFloat(formData.price), photoUrl };
 
+
       if (modalMode === 'edit') {
         await AdminServiceApi.updateService(selectedService.serviceId, payload);
         toast.success(t('servicesManagement.toast.updateSuccess'));
+        fetchServices(currentPage);
       } else {
-        await AdminServiceApi.createService(payload);
+        const newService = await AdminServiceApi.createService(payload);
         toast.success(t('servicesManagement.toast.createSuccess'));
+        setServices(prev => [newService, ...prev]);
+        setTotalElements(prev => prev + 1);
       }
       handleCloseModal();
-      fetchServices(currentPage);
+
     } catch (err) {
       toast.error(err.response?.data?.message || t('common.error'));
     } finally {
@@ -437,10 +441,10 @@ export default function ServiceManagement() {
                             <button onClick={() => handleOpenModal('view', service)} title={t('servicesManagement.common.view')} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/30 transition">
                               <Eye className="w-5 h-5" />
                             </button>
-                           
+
                             <button onClick={() => handleToggleStatusClick(service)}
-                                    title={service.isActive ? t('servicesManagement.deactivate') : t('servicesManagement.activate')}
-                                    className={`p-2 rounded-full transition ${service.isActive ? 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30' : 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30'}`}>
+                              title={service.isActive ? t('servicesManagement.deactivate') : t('servicesManagement.activate')}
+                              className={`p-2 rounded-full transition ${service.isActive ? 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30' : 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30'}`}>
                               <Power className="w-5 h-5" />
                             </button>
                           </div>
@@ -484,11 +488,10 @@ export default function ServiceManagement() {
                         <button
                           key={0}
                           onClick={() => handlePageChange(0)}
-                          className={`px-4 py-2.5 rounded-lg border font-medium transition ${
-                            currentPage === 0
+                          className={`px-4 py-2.5 rounded-lg border font-medium transition ${currentPage === 0
                               ? 'bg-blue-600 text-white border-blue-600'
                               : `${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'}`
-                          }`}
+                            }`}
                         >
                           1
                         </button>
@@ -502,11 +505,10 @@ export default function ServiceManagement() {
                         <button
                           key={i}
                           onClick={() => handlePageChange(i)}
-                          className={`px-4 py-2.5 rounded-lg border font-medium transition ${
-                            currentPage === i
+                          className={`px-4 py-2.5 rounded-lg border font-medium transition ${currentPage === i
                               ? 'bg-blue-600 text-white border-blue-600'
                               : `${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'}`
-                          }`}
+                            }`}
                         >
                           {i + 1}
                         </button>
@@ -520,11 +522,10 @@ export default function ServiceManagement() {
                         <button
                           key={totalPages - 1}
                           onClick={() => handlePageChange(totalPages - 1)}
-                          className={`px-4 py-2.5 rounded-lg border font-medium transition ${
-                            currentPage === totalPages - 1
+                          className={`px-4 py-2.5 rounded-lg border font-medium transition ${currentPage === totalPages - 1
                               ? 'bg-blue-600 text-white border-blue-600'
                               : `${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'}`
-                          }`}
+                            }`}
                         >
                           {totalPages}
                         </button>
@@ -562,8 +563,8 @@ export default function ServiceManagement() {
               <div className={`flex justify-between items-center p-6 border-b sticky top-0 ${theme === 'dark' ? 'bg-gray-700' : 'bg-blue-50/80'} backdrop-blur`}>
                 <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-blue-700'}`}>
                   {modalMode === 'create' ? t('servicesManagement.modal.createTitle') :
-                   modalMode === 'view' ? t('servicesManagement.modal.viewTitle') :
-                   t('servicesManagement.modal.editTitle')}
+                    modalMode === 'view' ? t('servicesManagement.modal.viewTitle') :
+                      t('servicesManagement.modal.editTitle')}
                 </h2>
                 <div className="flex items-center gap-3">
                   {modalMode === 'view' && (
@@ -613,27 +614,27 @@ export default function ServiceManagement() {
                     <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       {t('servicesManagement.name')} <span className="text-red-500">*</span>
                     </label>
-                    <input 
-                      type="text" 
-                      name="name" 
-                      value={formData.name} 
-                      onChange={handleInputChange} 
-                      required 
-                      disabled={modalMode === 'view'} 
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 dark:disabled:text-gray-300 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`} 
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      required
+                      disabled={modalMode === 'view'}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 dark:disabled:text-gray-300 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                     />
                   </div>
                   <div className="md:col-span-2">
                     <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       {t('servicesManagement.common.description')} <span className="text-red-500">*</span>
                     </label>
-                    <textarea 
-                      name="description" 
-                      value={formData.description} 
-                      onChange={handleInputChange} 
-                      rows="3" 
-                      required 
-                      disabled={modalMode === 'view'} 
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      rows="3"
+                      required
+                      disabled={modalMode === 'view'}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 dark:disabled:text-gray-300 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                     ></textarea>
                   </div>
@@ -641,12 +642,12 @@ export default function ServiceManagement() {
                     <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       {t('servicesManagement.category')} <span className="text-red-500">*</span>
                     </label>
-                    <select 
-                      name="category" 
-                      value={formData.category} 
-                      onChange={handleInputChange} 
-                      required 
-                      disabled={modalMode === 'view'} 
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleInputChange}
+                      required
+                      disabled={modalMode === 'view'}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 dark:disabled:text-gray-300 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                     >
                       {categoryOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -656,16 +657,16 @@ export default function ServiceManagement() {
                     <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       {t('servicesManagement.common.price')} (VNĐ) <span className="text-red-500">*</span>
                     </label>
-                    <input 
-                      type="number" 
-                      name="price" 
-                      value={formData.price} 
-                      onChange={handleInputChange} 
-                      min="0" 
-                    
-                      required 
-                      disabled={modalMode === 'view'} 
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 dark:disabled:text-gray-300 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`} 
+                    <input
+                      type="number"
+                      name="price"
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      min="0"
+
+                      required
+                      disabled={modalMode === 'view'}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 dark:disabled:text-gray-300 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                     />
                   </div>
                 </div>

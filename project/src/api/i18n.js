@@ -1491,6 +1491,8 @@ const resources = {
         "security_otp_invalid_length": "Vui lòng nhập mã OTP gồm 6 chữ số.",
         "security_verifying": "Đang xác minh...",
         "security_confirm_otp": "Xác nhận OTP",
+        "security_password_too_short": "Mật khẩu phải có ít nhất 6 ký tự",
+        "security_current_password_incorrect": "Mật khẩu hiện tại không đúng",
         "cancel": "Hủy",
         security_otp_sent: "Mã OTP đã được gửi đến email của bạn",
         security_2fa_enabled_success: "Bật xác thực 2 yếu tố thành công!",
@@ -3311,6 +3313,7 @@ const resources = {
         "security_otp_code": "OTP Code",
         "security_otp_invalid": "Invalid OTP. Please try again.",
         "security_otp_invalid_length": "Please enter a 6-digit OTP.",
+        "security_password_too_short": "Password must be at least 6 characters long.",
         "security_verifying": "Verifying...",
         "security_confirm_otp": "Confirm OTP",
         "cancel": "Cancel",
@@ -3724,7 +3727,8 @@ const resources = {
         error: "OTP verification failed!",
         otpInvalid: "Invalid or expired OTP!",
         backTo: "Back to",
-        loginPage: "Login Page"
+        loginPage: "Login Page",
+        "security_current_password_incorrect": "Incorrect current password"
       }
 
     }
