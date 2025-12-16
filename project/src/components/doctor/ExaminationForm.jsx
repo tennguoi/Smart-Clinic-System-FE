@@ -1,10 +1,11 @@
-
 // ExaminationForm.jsx
 import { useState } from 'react';
 import { CheckCircle, Loader2, Sparkles } from 'lucide-react';
 import PrescriptionForm from './PrescriptionForm';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
+import toast from 'react-hot-toast';
+import { toastConfig } from '../../config/toastConfig';
 
 export default function ExaminationForm({
   diagnosis,
@@ -26,16 +27,46 @@ export default function ExaminationForm({
   const [suggestedDrugs, setSuggestedDrugs] = useState([]);
   const [showDrugSuggestions, setShowDrugSuggestions] = useState(false);
 
+  // Kiểm tra chẩn đoán có liên quan đến tai mũi họng không
+  const isENTRelated = (diagnosisText) => {
+    const entKeywords = [
+      'tai', 'mũi', 'họng', '후두', 'amidan', 'viêm họng', 'viêm tai', 'viêm xoang',
+      'polyp', 'xoang', 'thanh quản', 'thính giác', 'ù tai', 'ngạt mũi', 
+      'chảy nước mũi', 'ho', 'khàn tiếng', 'nuốt khó', 'đau họng', 'sổ mũi',
+      'viêm VA', 'viêm amidan', 'viêm후두', 'chảy máu cam', 'ngứa tai',
+      'ent', 'otitis', 'rhinitis', 'pharyngitis', 'laryngitis', 'sinusitis',
+      'tonsillitis', 'adenoiditis', 'otolaryngology', 'eustachian', 'turbinate'
+    ];
+    
+    const lowerDiagnosis = diagnosisText.toLowerCase();
+    return entKeywords.some(keyword => lowerDiagnosis.includes(keyword.toLowerCase()));
+  };
+
   // Gọi AI để sinh ghi chú điều trị và đề xuất thuốc
   const generateTreatmentPlan = async () => {
     if (!diagnosis.trim()) {
-      alert(t('doctorExamination.diagnosisRequired'));
+      toast.error(
+        t('doctorExamination.diagnosisRequired') ?? 'Vui lòng nhập chẩn đoán trước',
+        toastConfig.toastOptions.error
+      );
       return;
     }
+
+    // Kiểm tra chẩn đoán có liên quan đến tai mũi họng
+    if (!isENTRelated(diagnosis)) {
+      toast.error(
+        '⚠️ Chẩn đoán không liên quan đến Tai - Mũi - Họng. Vui lòng nhập chẩn đoán phù hợp với chuyên khoa.',
+        {
+          ...toastConfig.toastOptions.error,
+          duration: 5000,
+        }
+      );
+      return;
+    }
+
     setIsGenerating(true);
     setShowDrugSuggestions(false);
     try {
-      // (Giữ nguyên endpoint theo code gốc frontend)
       const response = await fetch('https://n8n.quanliduan-pms.site/webhook/ai-support', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -58,7 +89,10 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`,
       parseAIResponse(aiText);
     } catch (error) {
       console.error('Lỗi sinh phác đồ:', error);
-      alert(t('doctorExamination.generatePlanError') ?? 'Không thể sinh phác đồ tự động. Vui lòng thử lại.');
+      toast.error(
+        t('doctorExamination.generatePlanError') ?? 'Không thể sinh phác đồ tự động. Vui lòng thử lại.',
+        toastConfig.toastOptions.error
+      );
     } finally {
       setIsGenerating(false);
     }
@@ -81,8 +115,15 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`,
           if (validDrugs.length > 0) {
             setSuggestedDrugs(validDrugs);
             setShowDrugSuggestions(true);
+            toast.success(
+              `✨ AI đã đề xuất ${validDrugs.length} loại thuốc`,
+              toastConfig.toastOptions.success
+            );
           } else {
-            alert(t('doctorExamination.noDrugsRecommended') ?? 'AI không đề xuất thuốc cụ thể. Vui lòng kê đơn thủ công.');
+            toast.info(
+              t('doctorExamination.noDrugsRecommended') ?? 'AI không đề xuất thuốc cụ thể. Vui lòng kê đơn thủ công.',
+              toastConfig.toastOptions.info
+            );
           }
         }
       } else {
@@ -95,6 +136,10 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`,
           if (validDrugs.length > 0) {
             setSuggestedDrugs(validDrugs);
             setShowDrugSuggestions(true);
+            toast.success(
+              `✨ AI đã đề xuất ${validDrugs.length} loại thuốc`,
+              toastConfig.toastOptions.success
+            );
           }
           const notesText = text.substring(0, text.indexOf('[')).trim();
           if (notesText.length > 10) {
@@ -108,7 +153,10 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`,
     } catch (e) {
       console.error('Lỗi parse AI response:', e);
       console.log('Raw text:', text);
-      alert(t('doctorExamination.parseError') ?? 'Không thể phân tích kết quả AI. Vui lòng thử lại hoặc kê đơn thủ công.');
+      toast.error(
+        t('doctorExamination.parseError') ?? 'Không thể phân tích kết quả AI. Vui lòng thử lại hoặc kê đơn thủ công.',
+        toastConfig.toastOptions.error
+      );
     }
   };
 
@@ -129,44 +177,26 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`,
           onUpdatePrescription(currentLength, 'instructions', drug.instructions);
         }, 50);
       }
+      toast.success(
+        `✅ Đã thêm: ${drug.drugName}`,
+        toastConfig.toastOptions.success
+      );
     } else {
       const indexToRemove = prescriptionItems.findIndex(
         item => item.drugName.trim() === drug.drugName.trim()
       );
       if (indexToRemove !== -1) {
         onRemovePrescription(indexToRemove);
+        toast.info(
+          `🗑️ Đã xóa: ${drug.drugName}`,
+          toastConfig.toastOptions.info
+        );
       }
     }
   };
 
   const isDrugSelected = (drug) =>
     prescriptionItems.some(item => item.drugName.trim() === drug.drugName.trim());
-
-  const applyAllDrugs = () => {
-    const currentLength = prescriptionItems.length;
-    for (let i = currentLength - 1; i > 0; i--) {
-      onRemovePrescription(i);
-    }
-    onUpdatePrescription(0, 'drugName', '');
-    onUpdatePrescription(0, 'instructions', '');
-    suggestedDrugs.forEach((drug, index) => {
-      if (index === 0) {
-        setTimeout(() => {
-          onUpdatePrescription(0, 'drugName', drug.drugName);
-          onUpdatePrescription(0, 'instructions', drug.instructions);
-        }, 100);
-      } else {
-        setTimeout(() => {
-          onAddPrescription();
-          setTimeout(() => {
-            onUpdatePrescription(index, 'drugName', drug.drugName);
-            onUpdatePrescription(index, 'instructions', drug.instructions);
-          }, 50);
-        }, 100 + (index * 100));
-      }
-    });
-    setTimeout(() => setShowDrugSuggestions(false), 500);
-  };
 
   return (
     <div className="space-y-3 lg:space-y-4">
@@ -246,23 +276,14 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`,
               <Sparkles size={18} className="text-purple-600" />
               {t('doctorExamination.aiSuggestedDrugs', { count: suggestedDrugs.length }) ?? `AI Đề Xuất ${suggestedDrugs.length} Thuốc`}
             </h3>
-            <div className="flex gap-2">
-              <button
-                onClick={applyAllDrugs}
-                className="px-3 py-1.5 bg-purple-600 text-white text-xs font-semibold rounded-lg hover:bg-purple-700 transition-all flex items-center gap-1"
-              >
-                <CheckCircle size={14} />
-                {t('doctorExamination.applyAll') ?? 'Áp dụng tất cả'}
-              </button>
-              <button
-                onClick={() => setShowDrugSuggestions(false)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                  theme === 'dark' ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                {t('doctorExamination.close') || 'Đóng'}
-              </button>
-            </div>
+            <button
+              onClick={() => setShowDrugSuggestions(false)}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                theme === 'dark' ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              {t('doctorExamination.close') || 'Đóng'}
+            </button>
           </div>
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {suggestedDrugs.map((drug, index) => {
@@ -296,7 +317,7 @@ QUAN TRỌNG: Chỉ trả về JSON, không thêm text giải thích.`,
           </div>
           <p className={`${theme === 'dark' ? 'text-purple-200' : 'text-purple-700'} text-xs mt-3 italic flex items-center gap-1`}>
             <Sparkles size={12} />
-            {t('doctorExamination.selectDrugsHint') ?? 'Tick chọn thuốc cần dùng hoặc áp dụng tất cả'}
+            {t('doctorExamination.selectDrugsHint') ?? 'Tick chọn từng thuốc cần dùng'}
           </p>
         </div>
       )}
