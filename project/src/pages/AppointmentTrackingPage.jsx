@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Calendar, Clock, User, Mail, Phone, FileText, CheckCircle, XCircle, Loader } from 'lucide-react';
 import axios from 'axios';
-
+import { useTranslation } from 'react-i18next';
 export default function AppointmentTracking() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const code = searchParams.get('code');
@@ -14,7 +15,7 @@ export default function AppointmentTracking() {
 
   useEffect(() => {
     if (!code) {
-      setError('Mã lịch hẹn không hợp lệ');
+      setError(t('appointmenttrackingpage.invalidAppointmentCode'));
       setLoading(false);
       return;
     }
@@ -34,7 +35,7 @@ export default function AppointmentTracking() {
       console.error('Error fetching appointment:', err);
       setError(
         err.response?.data?.message || 
-        'Không tìm thấy lịch hẹn. Vui lòng kiểm tra lại mã.'
+        t('appointmenttrackingpage.appointmentNotFound')
       );
     } finally {
       setLoading(false);
@@ -43,10 +44,10 @@ export default function AppointmentTracking() {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      'Pending': { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Chờ xác nhận', icon: Clock },
-      'Confirmed': { bg: 'bg-green-100', text: 'text-green-800', label: 'Đã xác nhận', icon: CheckCircle },
-      'Cancelled': { bg: 'bg-red-100', text: 'text-red-800', label: 'Đã hủy', icon: XCircle },
-      'Completed': { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Hoàn thành', icon: CheckCircle }
+      'Pending': { bg: 'bg-yellow-100', text: 'text-yellow-800', label: t('appointmenttrackingpage.pending'), icon: Clock },
+      'Confirmed': { bg: 'bg-green-100', text: 'text-green-800', label: t('appointmenttrackingpage.confirmed'), icon: CheckCircle },
+      'Cancelled': { bg: 'bg-red-100', text: 'text-red-800', label: t('appointmenttrackingpage.cancelled'), icon: XCircle },
+      'Completed': { bg: 'bg-blue-100', text: 'text-blue-800', label: t('appointmenttrackingpage.completed'), icon: CheckCircle }
     };
 
     const config = statusConfig[status] || statusConfig['Pending'];
@@ -61,7 +62,7 @@ export default function AppointmentTracking() {
   };
 
   const formatDateTime = (dateTimeString) => {
-    if (!dateTimeString) return 'Chưa xác định';
+    if (!dateTimeString) return t('appointmenttrackingpage.notDefined');
     const date = new Date(dateTimeString);
     return date.toLocaleString('vi-VN', {
       weekday: 'long',
@@ -91,13 +92,13 @@ export default function AppointmentTracking() {
           <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <XCircle className="w-12 h-12 text-red-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Không tìm thấy lịch hẹn</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">{t('appointmenttrackingpage.notFoundTitle')}</h2>
           <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
           <button
             onClick={() => navigate('/')}
             className="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-3 rounded-lg font-semibold transition-colors"
           >
-            Về trang chủ
+            {t('appointmenttrackingpage.backToHome')}
           </button>
         </div>
       </div>
@@ -109,8 +110,8 @@ export default function AppointmentTracking() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Thông Tin Lịch Hẹn</h1>
-          <p className="text-gray-600 dark:text-gray-300">Theo dõi trạng thái và chi tiết lịch khám của bạn</p>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">{t('appointmenttrackingpage.title')}</h1>
+          <p className="text-gray-600 dark:text-gray-300">{t('appointmenttrackingpage.description')}</p>
         </div>
 
         {/* Appointment Card */}
@@ -119,7 +120,7 @@ export default function AppointmentTracking() {
           <div className="bg-gradient-to-r from-cyan-600 to-teal-600 dark:from-cyan-700 dark:to-teal-700 p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-cyan-100 text-sm mb-1">Mã lịch hẹn</p>
+                <p className="text-cyan-100 text-sm mb-1">{t('appointmenttrackingpage.appointmentCodeLabel')}</p>
                 <p className="text-3xl font-bold">{appointment.appointmentCode}</p>
               </div>
               {getStatusBadge(appointment.status)}
@@ -134,7 +135,7 @@ export default function AppointmentTracking() {
                 <Calendar className="w-6 h-6 text-cyan-600" />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Thời gian khám</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('appointmenttrackingpage.appointmentTimeLabel')}</p>
                 <p className="text-lg font-semibold text-gray-900 dark:text-white">{formatDateTime(appointment.appointmentTime)}</p>
               </div>
             </div>
@@ -146,7 +147,7 @@ export default function AppointmentTracking() {
                   <User className="w-6 h-6 text-teal-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Bệnh nhân</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('appointmenttrackingpage.patientNameLabel')}</p>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">{appointment.patientName}</p>
                 </div>
               </div>
@@ -156,7 +157,7 @@ export default function AppointmentTracking() {
                   <Phone className="w-6 h-6 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Số điện thoại</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('appointmenttrackingpage.phoneNumberLabel')}</p>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">{appointment.phone}</p>
                 </div>
               </div>
@@ -169,7 +170,7 @@ export default function AppointmentTracking() {
                   <Mail className="w-6 h-6 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Email</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('appointmenttrackingpage.emailLabel')}</p>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">{appointment.email}</p>
                 </div>
               </div>
@@ -178,7 +179,7 @@ export default function AppointmentTracking() {
             {/* Services */}
             {appointment.services && appointment.services.length > 0 && (
               <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 font-semibold">Dịch vụ đăng ký</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 font-semibold">{t('appointmenttrackingpage.servicesLabel')}</p>
                 <div className="space-y-2">
                   {appointment.services.map((service, idx) => (
                     <div key={idx} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg">
@@ -199,7 +200,7 @@ export default function AppointmentTracking() {
                   <FileText className="w-6 h-6 text-orange-600" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Ghi chú</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('appointmenttrackingpage.notesLabel')}</p>
                   <p className="text-gray-900 dark:text-white">{appointment.notes}</p>
                 </div>
               </div>
@@ -208,7 +209,7 @@ export default function AppointmentTracking() {
             {/* Confirmed By */}
             {appointment.confirmedBy && (
               <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
-                <p className="text-sm text-green-700 dark:text-green-400 mb-1">Được xác nhận bởi</p>
+                <p className="text-sm text-green-700 dark:text-green-400 mb-1">{t('appointmenttrackingpage.confirmedByLabel')}</p>
                 <p className="text-lg font-semibold text-green-900 dark:text-green-100">{appointment.confirmedBy}</p>
                 {appointment.confirmedAt && (
                   <p className="text-sm text-green-600 dark:text-green-400 mt-1">
@@ -226,13 +227,13 @@ export default function AppointmentTracking() {
                 onClick={() => navigate('/')}
                 className="flex-1 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-200 py-3 rounded-lg font-semibold transition-colors"
               >
-                Về trang chủ
+                {t('appointmenttrackingpage.backToHomeButton')}
               </button>
               <button
                 onClick={() => navigate('/appointment')}
                 className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white py-3 rounded-lg font-semibold transition-colors"
               >
-                Đặt lịch mới
+                {t('appointmenttrackingpage.bookNewAppointmentButton')}
               </button>
             </div>
           </div>
@@ -241,7 +242,7 @@ export default function AppointmentTracking() {
         {/* Info Box */}
         <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
           <p className="text-blue-900 dark:text-blue-100 text-sm">
-            <strong>Lưu ý:</strong> Nếu bạn cần thay đổi hoặc hủy lịch hẹn, vui lòng liên hệ với phòng khám qua số hotline hoặc email được gửi khi đặt lịch.
+            <strong>{t('appointmenttrackingpage.noteLabel')}</strong> {t('appointmenttrackingpage.noteDescription')}
           </p>
         </div>
       </div>
