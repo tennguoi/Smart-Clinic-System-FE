@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useMediaQuery } from 'react-responsive';
 import { Calendar, CheckCircle, Clock, AlertCircle, Loader2, Eye, Plus, X } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import PatientForm from './PatientForm';
 import Pagination from '../common/Pagination';
 import AppointmentSearchFilter from './AppointmentSearchFilter';
-import CountBadge from '../common/CountBadge'; // 👈 IMPORT COMPONENT
+import CountBadge from '../common/CountBadge';
 import { queueApi } from '../../api/receptionApi';
 import { useTheme } from '../../contexts/ThemeContext';
 import { toastConfig } from '../../config/toastConfig';
@@ -15,6 +16,11 @@ const PAGE_SIZE = 10;
 export default function AppointmentCheckInSection() {
   const { theme } = useTheme();
   const { t } = useTranslation();
+
+  // Media queries - được sử dụng thực sự để responsive
+  const isMobile = useMediaQuery({ maxWidth: 767 });
+  const isTablet = useMediaQuery({ minWidth: 768, maxWidth: 1023 });
+  const isDesktop = useMediaQuery({ minWidth: 1024 });
 
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -30,7 +36,7 @@ export default function AppointmentCheckInSection() {
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [totalFiltered, setTotalFiltered] = useState(0); // 👈 THÊM STATE ĐỂ LƯU TỔNG SỐ SAU KHI LỌC
+  const [totalFiltered, setTotalFiltered] = useState(0);
 
   const [patientForm, setPatientForm] = useState({
     patientName: '',
@@ -87,7 +93,7 @@ export default function AppointmentCheckInSection() {
 
     // 3) Lưu tổng số sau khi lọc
     const total = result.length;
-    setTotalFiltered(total); // 👈 LƯU TỔNG SỐ
+    setTotalFiltered(total);
 
     // 4) Paginate
     const pages = Math.ceil(total / PAGE_SIZE);
@@ -270,12 +276,10 @@ export default function AppointmentCheckInSection() {
             <span>{t('appointmentCheckIn.title')}</span>
           </h1>
           
-          {/* 👇 THÊM COUNTBADGE */}
           <CountBadge
             currentCount={filteredAppointments.length}
             totalCount={totalFiltered}
             label={t('appointmentCheckIn.label') || 'lịch hẹn'}
-           
           />
         </div>
       </div>
@@ -289,141 +293,267 @@ export default function AppointmentCheckInSection() {
         onClear={() => setCurrentPage(0)}
       />
 
-      {/* Bảng danh sách */}
+      {/* Loading */}
       {loading ? (
         <div className={`rounded-lg shadow border p-12 text-center mt-6 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
           <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-blue-600" />
           <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>{t('appointmentCheckIn.loading')}</p>
         </div>
       ) : (
-        <div className={`rounded-lg shadow border overflow-hidden mt-6 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-          <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
-            <thead className={theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}>
-              <tr>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase w-20 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                  {t('appointmentCheckIn.table.stt')}
-                </th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                  {t('appointmentCheckIn.table.code')}
-                </th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                  {t('appointmentCheckIn.table.patient')}
-                </th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                  {t('appointmentCheckIn.table.phone')}
-                </th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                  {t('appointmentCheckIn.table.time')}
-                </th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                  {t('appointmentCheckIn.table.services')}
-                </th>
-                <th className={`px-4 py-3 text-center text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                  {t('appointmentCheckIn.table.status')}
-                </th>
-                <th className={`px-4 py-3 text-center text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                  {t('appointmentCheckIn.table.actions')}
-                </th>
-              </tr>
-            </thead>
-            <tbody className={`divide-y ${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
+        <>
+          {/* Mobile: Dạng Card */}
+          {isMobile ? (
+            <div className="space-y-4 mt-6">
               {filteredAppointments.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className={`px-4 py-16 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                    {(searchKeyword || searchStatus !== 'all')
-                      ? t('appointmentCheckIn.noResults')
-                      : t('appointmentCheckIn.noAppointments')}
-                  </td>
-                </tr>
+                <div className={`rounded-lg p-8 text-center border ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-white border-gray-200 text-gray-500'}`}>
+                  {(searchKeyword || searchStatus !== 'all')
+                    ? t('appointmentCheckIn.noResults')
+                    : t('appointmentCheckIn.noAppointments')}
+                </div>
               ) : (
                 filteredAppointments.map((appt, idx) => {
                   const stt = currentPage * PAGE_SIZE + idx + 1;
                   return (
-                    <tr key={appt.appointmentId ?? `${appt.appointmentCode}-${idx}`}>
-                      <td className={`px-4 py-4 text-center text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>{stt}</td>
-                      <td className="px-4 py-4">
-                        <span className={`inline-flex px-4 py-2 rounded-md text-base font-mono font-bold border ${
-                          theme === 'dark' ? 'bg-blue-900/20 text-blue-300 border-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200'
-                        }`}>
-                          {appt.appointmentCode}
-                        </span>
-                      </td>
-                      <td className={`px-4 py-4 text-sm font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>{appt.patientName}</td>
-                      <td className={`px-4 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{appt.phone ?? '—'}</td>
-                      <td className={`px-4 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{formatTime(appt.appointmentTime)}</td>
-                      <td className="px-4 py-4">
-                        {appt.services?.length > 0 ? (
-                          <div className="flex flex-wrap gap-1.5">
-                            {appt.services.map((s) => (
-                              <span
-                                key={s.serviceId ?? s.name}
-                                className={`px-2.5 py-1 text-xs rounded-full border ${
-                                  theme === 'dark' ? 'bg-purple-900/20 text-purple-300 border-purple-800' : 'bg-purple-100 text-purple-700 border-purple-200'
-                                }`}
-                              >
-                                {s.name}
-                              </span>
-                            ))}
+                    <div
+                      key={appt.appointmentId ?? `${appt.appointmentCode}-${idx}`}
+                      className={`rounded-lg shadow border p-5 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <div className="font-bold text-lg">
+                            {stt}. <span className={`inline-flex px-3 py-1 rounded-md text-base font-mono font-bold border ${theme === 'dark' ? 'bg-blue-900/20 text-blue-300 border-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
+                              {appt.appointmentCode}
+                            </span>
                           </div>
-                        ) : (
-                          <span className={theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}>—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4 text-center">
-                        {appt.hasCheckedIn ? (
-                          <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold ${
-                            theme === 'dark' ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'
-                          }`}>
-                            <CheckCircle className="w-4 h-4" /> {t('appointmentCheckIn.status.added')}
-                          </span>
-                        ) : isUpcoming(appt.appointmentTime) ? (
-                          <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse ${
-                            theme === 'dark' ? 'bg-amber-900/30 text-amber-300' : 'bg-amber-100 text-amber-700'
-                          }`}>
-                            <Clock className="w-4 h-4" /> {t('appointmentCheckIn.status.upcoming')}
-                          </span>
-                        ) : isPast(appt.appointmentTime) ? (
-                          <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold ${
-                            theme === 'dark' ? 'bg-red-900/30 text-red-300' : 'bg-red-100 text-red-700'
-                          }`}>
-                            <AlertCircle className="w-4 h-4" /> {t('appointmentCheckIn.status.overdue')}
-                          </span>
-                        ) : (
-                          <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold ${
-                            theme === 'dark' ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'
-                          }`}>
-                            <Clock className="w-4 h-4" /> {t('appointmentCheckIn.status.waiting')}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4 text-center space-x-3">
-                        {!appt.hasCheckedIn ? (
-                          <button
-                            onClick={() => handleAddPatientFromAppointment(appt)}
-                            className="text-green-600 hover:text-green-700 p-2 transition"
-                            title={t('appointmentCheckIn.actions.addToQueue')}
-                          >
-                            <Plus className="w-6 h-6" />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleViewDetail(appt)}
-                            className={`p-2 rounded-full transition ${theme === 'dark' ? 'text-blue-300 hover:bg-blue-900/30' : 'text-blue-600 hover:bg-blue-100'}`}
-                            title={t('appointmentCheckIn.actions.viewDetail')}
-                          >
-                            <Eye className="w-6 h-6" />
-                          </button>
-                        )}
-                      </td>
-                    </tr>
+                          <div className={`mt-2 text-lg font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {appt.patientName}
+                          </div>
+                        </div>
+                        <div>
+                          {!appt.hasCheckedIn ? (
+                            <button
+                              onClick={() => handleAddPatientFromAppointment(appt)}
+                              className="text-green-600 hover:text-green-700 p-2 transition"
+                              title={t('appointmentCheckIn.actions.addToQueue')}
+                            >
+                              <Plus className="w-7 h-7" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleViewDetail(appt)}
+                              className={`p-2 rounded-full transition ${theme === 'dark' ? 'text-blue-300 hover:bg-blue-900/30' : 'text-blue-600 hover:bg-blue-100'}`}
+                              title={t('appointmentCheckIn.actions.viewDetail')}
+                            >
+                              <Eye className="w-7 h-7" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 text-sm">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>SĐT:</span>
+                            <span className="ml-2 font-medium">{appt.phone ?? '—'}</span>
+                          </div>
+                          <div>
+                            <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Thời gian:</span>
+                            <span className="ml-2 font-medium">{formatTime(appt.appointmentTime)}</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Dịch vụ:</span>
+                          <div className="mt-1 flex flex-wrap gap-1.5">
+                            {appt.services?.length > 0 ? (
+                              appt.services.map((s) => (
+                                <span
+                                  key={s.serviceId ?? s.name}
+                                  className={`px-2.5 py-1 text-xs rounded-full border ${
+                                    theme === 'dark' ? 'bg-purple-900/20 text-purple-300 border-purple-800' : 'bg-purple-100 text-purple-700 border-purple-200'
+                                  }`}
+                                >
+                                  {s.name}
+                                </span>
+                              ))
+                            ) : (
+                              <span className={`${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>—</span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="text-center pt-3">
+                          {appt.hasCheckedIn ? (
+                            <span className={`inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-semibold ${theme === 'dark' ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'}`}>
+                              <CheckCircle className="w-5 h-5" /> {t('appointmentCheckIn.status.added')}
+                            </span>
+                          ) : isUpcoming(appt.appointmentTime) ? (
+                            <span className={`inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-semibold animate-pulse ${theme === 'dark' ? 'bg-amber-900/30 text-amber-300' : 'bg-amber-100 text-amber-700'}`}>
+                              <Clock className="w-5 h-5" /> {t('appointmentCheckIn.status.upcoming')}
+                            </span>
+                          ) : isPast(appt.appointmentTime) ? (
+                            <span className={`inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-semibold ${theme === 'dark' ? 'bg-red-900/30 text-red-300' : 'bg-red-100 text-red-700'}`}>
+                              <AlertCircle className="w-5 h-5" /> {t('appointmentCheckIn.status.overdue')}
+                            </span>
+                          ) : (
+                            <span className={`inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-semibold ${theme === 'dark' ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
+                              <Clock className="w-5 h-5" /> {t('appointmentCheckIn.status.waiting')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   );
                 })
               )}
-            </tbody>
-          </table>
+            </div>
+          ) : (
+            /* Tablet & Desktop: Bảng gốc với ẩn cột trên tablet */
+            <div className={`rounded-lg shadow border overflow-hidden mt-6 overflow-x-auto ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+              <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                <thead className={theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}>
+                  <tr>
+                    <th className={`px-4 py-3 text-left text-xs font-semibold uppercase w-20 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {t('appointmentCheckIn.table.stt')}
+                    </th>
+                    <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {t('appointmentCheckIn.table.code')}
+                    </th>
+                    <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {t('appointmentCheckIn.table.patient')}
+                    </th>
+                    {!isTablet && (
+                      <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                        {t('appointmentCheckIn.table.phone')}
+                      </th>
+                    )}
+                    <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {t('appointmentCheckIn.table.time')}
+                    </th>
+                    <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {t('appointmentCheckIn.table.services')}
+                    </th>
+                    <th className={`px-4 py-3 text-center text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {t('appointmentCheckIn.table.status')}
+                    </th>
+                    <th className={`px-4 py-3 text-center text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {t('appointmentCheckIn.table.actions')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className={`divide-y ${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
+                  {filteredAppointments.length === 0 ? (
+                    <tr>
+                      <td colSpan={isTablet ? 7 : 8} className={`px-4 py-16 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {(searchKeyword || searchStatus !== 'all')
+                          ? t('appointmentCheckIn.noResults')
+                          : t('appointmentCheckIn.noAppointments')}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredAppointments.map((appt, idx) => {
+                      const stt = currentPage * PAGE_SIZE + idx + 1;
+                      return (
+                        <tr key={appt.appointmentId ?? `${appt.appointmentCode}-${idx}`}>
+                          <td className={`px-4 py-4 text-center text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>{stt}</td>
+                          <td className="px-4 py-4">
+                            <span className={`inline-flex px-4 py-2 rounded-md text-base font-mono font-bold border ${
+                              theme === 'dark' ? 'bg-blue-900/20 text-blue-300 border-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200'
+                            }`}>
+                              {appt.appointmentCode}
+                            </span>
+                          </td>
+                          <td className={`px-4 py-4 text-sm font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>{appt.patientName}</td>
+                          {!isTablet && (
+                            <td className={`px-4 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{appt.phone ?? '—'}</td>
+                          )}
+                          <td className={`px-4 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{formatTime(appt.appointmentTime)}</td>
+                          <td className="px-4 py-4">
+                            {appt.services?.length > 0 ? (
+                              <div className="flex flex-wrap gap-1.5">
+                                {appt.services.map((s) => (
+                                  <span
+                                    key={s.serviceId ?? s.name}
+                                    className={`px-2.5 py-1 text-xs rounded-full border ${
+                                      theme === 'dark' ? 'bg-purple-900/20 text-purple-300 border-purple-800' : 'bg-purple-100 text-purple-700 border-purple-200'
+                                    }`}
+                                  >
+                                    {s.name}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className={theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}>—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-4 text-center">
+                            {appt.hasCheckedIn ? (
+                              <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold ${
+                                theme === 'dark' ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'
+                              }`}>
+                                <CheckCircle className="w-4 h-4" /> {t('appointmentCheckIn.status.added')}
+                              </span>
+                            ) : isUpcoming(appt.appointmentTime) ? (
+                              <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse ${
+                                theme === 'dark' ? 'bg-amber-900/30 text-amber-300' : 'bg-amber-100 text-amber-700'
+                              }`}>
+                                <Clock className="w-4 h-4" /> {t('appointmentCheckIn.status.upcoming')}
+                              </span>
+                            ) : isPast(appt.appointmentTime) ? (
+                              <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold ${
+                                theme === 'dark' ? 'bg-red-900/30 text-red-300' : 'bg-red-100 text-red-700'
+                              }`}>
+                                <AlertCircle className="w-4 h-4" /> {t('appointmentCheckIn.status.overdue')}
+                              </span>
+                            ) : (
+                              <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold ${
+                                theme === 'dark' ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'
+                              }`}>
+                                <Clock className="w-4 h-4" /> {t('appointmentCheckIn.status.waiting')}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-4 text-center space-x-3">
+                            {!appt.hasCheckedIn ? (
+                              <button
+                                onClick={() => handleAddPatientFromAppointment(appt)}
+                                className="text-green-600 hover:text-green-700 p-2 transition"
+                                title={t('appointmentCheckIn.actions.addToQueue')}
+                              >
+                                <Plus className="w-6 h-6" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleViewDetail(appt)}
+                                className={`p-2 rounded-full transition ${theme === 'dark' ? 'text-blue-300 hover:bg-blue-900/30' : 'text-blue-600 hover:bg-blue-100'}`}
+                                title={t('appointmentCheckIn.actions.viewDetail')}
+                              >
+                                <Eye className="w-6 h-6" />
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
 
-          {totalPages > 1 && (
-            <div className={`border-t px-6 py-4 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+              {totalPages > 1 && (
+                <div className={`border-t px-6 py-4 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Pagination riêng cho mobile */}
+          {isMobile && totalPages > 1 && (
+            <div className="mt-6 flex justify-center">
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -431,7 +561,7 @@ export default function AppointmentCheckInSection() {
               />
             </div>
           )}
-        </div>
+        </>
       )}
 
       {/* Form thêm bệnh nhân */}

@@ -1,5 +1,6 @@
 // src/components/admin/ClinicRoomManagement.jsx
 import { useState, useEffect, useMemo } from 'react';
+import { useMediaQuery } from 'react-responsive';
 import { Plus, Edit, Power, X, Building2, DoorOpen, Eye, Loader2, AlertCircle } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { toastConfig } from '../../config/toastConfig';
@@ -12,6 +13,9 @@ import { useTranslation } from 'react-i18next';
 export default function ClinicRoomManagement({ isAdminView = true }) {
   const { theme } = useTheme();
   const { t } = useTranslation();
+
+  const isMobile = useMediaQuery({ maxWidth: 767 });
+  const isTabletOrLarger = useMediaQuery({ minWidth: 768 });
 
   const [rooms, setRooms] = useState([]);
   const [doctors, setDoctors] = useState([]);
@@ -287,8 +291,8 @@ export default function ClinicRoomManagement({ isAdminView = true }) {
 
       {/* Filter và Search */}
       <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-md border p-6 mb-6 transition-colors duration-300`}>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-5">
+        <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'lg:grid-cols-12 gap-4'}`}>
+          <div className={isMobile ? '' : 'lg:col-span-5'}>
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('roomManagement.common.search', 'Tìm kiếm')}</label>
             <input
               type="text"
@@ -301,7 +305,7 @@ export default function ClinicRoomManagement({ isAdminView = true }) {
               className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'}`}
             />
           </div>
-          <div className="lg:col-span-3">
+          <div className={isMobile ? '' : 'lg:col-span-3'}>
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('roomManagement.statusLabel', 'Trạng thái')}</label>
             <select
               value={filterStatus}
@@ -319,7 +323,7 @@ export default function ClinicRoomManagement({ isAdminView = true }) {
 
           {/* Chỉ admin mới thấy filter Hoạt động */}
           {isAdminView && (
-            <div className="lg:col-span-3">
+            <div className={isMobile ? '' : 'lg:col-span-3'}>
               <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('roomManagement.activeLabel', 'Hoạt động')}</label>
               <select
                 value={filterActive}
@@ -333,7 +337,7 @@ export default function ClinicRoomManagement({ isAdminView = true }) {
             </div>
           )}
 
-          <div className={`lg:col-span-${isAdminView ? '1' : '4'}`}>
+          <div className={isMobile ? '' : `lg:col-span-${isAdminView ? '1' : '4'}`}>
             <label className="block text-sm font-medium text-gray-700 mb-2">&nbsp;</label>
             <button
               onClick={() => {
@@ -349,7 +353,7 @@ export default function ClinicRoomManagement({ isAdminView = true }) {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table / Card view */}
       {loading && !showModal ? (
         <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow border p-12 text-center text-gray-500 transition-colors duration-300`}>
           <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
@@ -357,113 +361,170 @@ export default function ClinicRoomManagement({ isAdminView = true }) {
         </div>
       ) : (
         <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow border overflow-hidden transition-colors duration-300`}>
-          <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
-            <thead className={theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}>
-              <tr>
-                <th className={`px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider w-20 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {t('roomManagement.common.stt', 'STT')}
-                </th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {t('roomManagement.table.roomName', 'Tên phòng')}
-                </th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {t('roomManagement.table.doctor', 'Bác sĩ')}
-                </th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {t('roomManagement.table.status', 'Trạng thái')}
-                </th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {t('roomManagement.table.active', 'Hoạt động')}
-                </th>
-                <th className={`px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {t('roomManagement.common.actions', 'Thao tác')}
-                </th>
-              </tr>
-            </thead>
-            <tbody className={`${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
+          {isMobile ? (
+            // Mobile Card View
+            <div className="p-4 space-y-4">
               {rooms.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className={`px-6 py-16 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                    <div>
-                      <p className="mb-4 text-lg">{t('roomManagement.noRooms', 'Chưa có phòng khám nào')}</p>
-                    </div>
-                  </td>
-                </tr>
+                <div className="text-center py-12">
+                  <p className="text-lg text-gray-500">{t('roomManagement.noRooms', 'Chưa có phòng khám nào')}</p>
+                </div>
               ) : (
                 currentPageRooms.map((room, index) => (
-                  <tr key={room.roomId} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}>
-                    <td className={`px-4 py-4 text-center font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {currentPage * pageSize + index + 1}
-                    </td>
-
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{room.roomName || 'N/A'}</span>
+                  <div key={room.roomId} className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <div className="font-semibold text-lg">{room.roomName || 'N/A'}</div>
+                        <div className="text-sm text-gray-500 mt-1">
+                          Bác sĩ: {room.doctorName || t('roomManagement.noDoctor', 'Chưa gán bác sĩ')}
+                        </div>
                       </div>
-                    </td>
-
-                    <td className={`px-4 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {room.doctorName ? (
-                        <span className="font-medium">{room.doctorName}</span>
-                      ) : (
-                        <span className="text-gray-400 italic">{t('roomManagement.noDoctor', 'Chưa gán bác sĩ')}</span>
-                      )}
-                    </td>
-
-                    <td className="px-4 py-4 text-sm">
-                      <span
-                        className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
-                          room.status === 'Available'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                            : room.status === 'Occupied'
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
-                        }`}
+                      <div className="text-right">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                          room.status === 'Available' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
+                          'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                        }`}>
+                          {room.status === 'Available' ? t('roomManagement.statusAvailable', 'Sẵn sàng') : t('roomManagement.statusOccupied', 'Đang sử dụng')}
+                        </span>
+                        <div className={`mt-2 inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                          room.isActive ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                          'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                        }`}>
+                          {room.isActive ? t('roomManagement.active', 'Hoạt động') : t('roomManagement.inactive', 'Ngưng hoạt động')}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-4">
+                      <button
+                        onClick={() => handleOpenModal('view', room)}
+                        className="text-blue-600 dark:text-blue-400"
+                        title={t('roomManagement.common.view', 'Xem chi tiết')}
                       >
-                        {room.status === 'Available' ? t('roomManagement.statusAvailable', 'Sẵn sàng') : 
-                         room.status === 'Occupied' ? t('roomManagement.statusOccupied', 'Đang sử dụng') : '—'}
-                      </span>
-                    </td>
-
-                    {/* Cột Hoạt động: Xanh lá = active, Đỏ = inactive */}
-                    <td className="px-4 py-4 text-sm">
-                      <span
-                        className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
-                          room.isActive
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                        }`}
-                      >
-                        {room.isActive ? t('roomManagement.active', 'Hoạt động') : t('roomManagement.inactive', 'Ngưng hoạt động')}
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-4 text-center">
-                      <div className="flex items-center justify-center gap-4">
-                        <button
-                          onClick={() => handleOpenModal('view', room)}
-                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                          title={t('roomManagement.common.view', 'Xem chi tiết')}
+                        <Eye className="w-6 h-6" />
+                      </button>
+                      {isAdminView && (
+                        <button 
+                          onClick={() => openToggleConfirm(room)} 
+                          title={room.isActive ? t('roomManagement.confirmDeactivate.confirm', 'Vô hiệu hóa') : t('roomManagement.confirmActivate.confirm', 'Kích hoạt')}
+                          className="transition-all transform hover:scale-110"
                         >
-                          <Eye className="w-5 h-5" />
+                          <Power className={`w-6 h-6 ${room.isActive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} />
                         </button>
-                        
-                        {isAdminView && (
-                          <button 
-                            onClick={() => openToggleConfirm(room)} 
-                            title={room.isActive ? t('roomManagement.confirmDeactivate.confirm', 'Vô hiệu hóa') : t('roomManagement.confirmActivate.confirm', 'Kích hoạt')}
-                            className="transition-all transform hover:scale-110"
-                          >
-                            <Power className={`w-5 h-5 ${room.isActive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} />
-                          </button>
-                        )}
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          ) : (
+            // Tablet & Desktop Table View
+            <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+              <thead className={theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}>
+                <tr>
+                  <th className={`px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider w-20 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {t('roomManagement.common.stt', 'STT')}
+                  </th>
+                  <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {t('roomManagement.table.roomName', 'Tên phòng')}
+                  </th>
+                  <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {t('roomManagement.table.doctor', 'Bác sĩ')}
+                  </th>
+                  <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {t('roomManagement.table.status', 'Trạng thái')}
+                  </th>
+                  <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {t('roomManagement.table.active', 'Hoạt động')}
+                  </th>
+                  <th className={`px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {t('roomManagement.common.actions', 'Thao tác')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className={`${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
+                {rooms.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className={`px-6 py-16 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                      <div>
+                        <p className="mb-4 text-lg">{t('roomManagement.noRooms', 'Chưa có phòng khám nào')}</p>
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  currentPageRooms.map((room, index) => (
+                    <tr key={room.roomId} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}>
+                      <td className={`px-4 py-4 text-center font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                        {currentPage * pageSize + index + 1}
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{room.roomName || 'N/A'}</span>
+                        </div>
+                      </td>
+
+                      <td className={`px-4 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                        {room.doctorName ? (
+                          <span className="font-medium">{room.doctorName}</span>
+                        ) : (
+                          <span className="text-gray-400 italic">{t('roomManagement.noDoctor', 'Chưa gán bác sĩ')}</span>
+                        )}
+                      </td>
+
+                      <td className="px-4 py-4 text-sm">
+                        <span
+                          className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
+                            room.status === 'Available'
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                              : room.status === 'Occupied'
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                              : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                          }`}
+                        >
+                          {room.status === 'Available' ? t('roomManagement.statusAvailable', 'Sẵn sàng') : 
+                           room.status === 'Occupied' ? t('roomManagement.statusOccupied', 'Đang sử dụng') : '—'}
+                        </span>
+                      </td>
+
+                      {/* Cột Hoạt động: Xanh lá = active, Đỏ = inactive */}
+                      <td className="px-4 py-4 text-sm">
+                        <span
+                          className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
+                            room.isActive
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                              : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                          }`}
+                        >
+                          {room.isActive ? t('roomManagement.active', 'Hoạt động') : t('roomManagement.inactive', 'Ngưng hoạt động')}
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-4 text-center">
+                        <div className="flex items-center justify-center gap-4">
+                          <button
+                            onClick={() => handleOpenModal('view', room)}
+                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                            title={t('roomManagement.common.view', 'Xem chi tiết')}
+                          >
+                            <Eye className="w-5 h-5" />
+                          </button>
+                          
+                          {isAdminView && (
+                            <button 
+                              onClick={() => openToggleConfirm(room)} 
+                              title={room.isActive ? t('roomManagement.confirmDeactivate.confirm', 'Vô hiệu hóa') : t('roomManagement.confirmActivate.confirm', 'Kích hoạt')}
+                              className="transition-all transform hover:scale-110"
+                            >
+                              <Power className={`w-5 h-5 ${room.isActive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
           {rooms.length > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}
         </div>
       )}

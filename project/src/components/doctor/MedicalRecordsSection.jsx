@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { useMediaQuery } from 'react-responsive';
 import { useTranslation } from 'react-i18next';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import CreateRecordForm from './CreateRecordForm';
@@ -19,6 +20,9 @@ const ITEMS_PER_PAGE = 10;
 const MedicalRecordsSection = () => {
   const { theme } = useTheme();
   const { t } = useTranslation();
+
+  const isMobile = useMediaQuery({ maxWidth: 767 });
+  const isTabletOrLarger = useMediaQuery({ minWidth: 768 });
 
   const [records, setRecords] = useState([]);
   const [recordsLoading, setRecordsLoading] = useState(false);
@@ -211,7 +215,7 @@ const MedicalRecordsSection = () => {
       )}
  {/* FILTERS */}
       <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-md border p-6 mb-6 transition-colors duration-300`}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 lg:grid-cols-4 gap-4'}`}>
           {/* Search */}
           <div>
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
@@ -300,42 +304,81 @@ const MedicalRecordsSection = () => {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full table-fixed">
-                <thead className={`${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} border-b`}>
-                  <tr>
-                    <th className={`text-center px-4 py-3 text-xs font-bold uppercase tracking-wider w-20 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {t('medicalRecords.table.stt')}
-                    </th>
-                    <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {t('medicalRecords.table.patient')}
-                    </th>
-                    <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {t('medicalRecords.table.diagnosis')}
-                    </th>
-                    <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {t('medicalRecords.table.treatmentNotes')}
-                    </th>
-                    <th className={`text-center px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {t('medicalRecords.common.actions')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                  {paginatedRecords.map((r, idx) => (
+            {isMobile ? (
+              // Mobile Card View
+              <div className="p-4 space-y-4">
+                {paginatedRecords.map((r, idx) => (
+                  <div
+                    key={r.recordId}
+                    className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <div className="font-semibold text-lg">
+                          {r.patientName || t('doctorRecords.unknownPatient')}
+                        </div>
+                        <div className="text-sm text-gray-500 mt-1">
+                          {t('medicalRecords.table.diagnosis')}: {r.diagnosis?.slice(0, 50)}{r.diagnosis?.length > 50 ? '...' : ''}
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        #{currentPage * ITEMS_PER_PAGE + idx + 1}
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      {t('medicalRecords.table.treatmentNotes')}: {r.treatmentNotes?.slice(0, 80)}{r.treatmentNotes?.length > 80 ? '...' : ''}
+                    </div>
                     <RecordRow
-                      key={r.recordId}
                       index={currentPage * ITEMS_PER_PAGE + idx + 1}
                       record={r}
                       onUpdated={fetchMyRecords}
                       onError={(msg) => toast.error(msg)}
                       onDelete={(recordId) => patientNameMapRef.current.delete(recordId)}
                       onViewHistory={handleViewHistory}
+                      isMobile={true}
                     />
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              // Tablet & Desktop Table View
+              <div className="overflow-x-auto">
+                <table className="w-full table-fixed">
+                  <thead className={`${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} border-b`}>
+                    <tr>
+                      <th className={`text-center px-4 py-3 text-xs font-bold uppercase tracking-wider w-20 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {t('medicalRecords.table.stt')}
+                      </th>
+                      <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {t('medicalRecords.table.patient')}
+                      </th>
+                      <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {t('medicalRecords.table.diagnosis')}
+                      </th>
+                      <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {t('medicalRecords.table.treatmentNotes')}
+                      </th>
+                      <th className={`text-center px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {t('medicalRecords.common.actions')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                    {paginatedRecords.map((r, idx) => (
+                      <RecordRow
+                        key={r.recordId}
+                        index={currentPage * ITEMS_PER_PAGE + idx + 1}
+                        record={r}
+                        onUpdated={fetchMyRecords}
+                        onError={(msg) => toast.error(msg)}
+                        onDelete={(recordId) => patientNameMapRef.current.delete(recordId)}
+                        onViewHistory={handleViewHistory}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             <div className={`border-t ${theme === 'dark' ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-gray-50'}`}>
               <Pagination

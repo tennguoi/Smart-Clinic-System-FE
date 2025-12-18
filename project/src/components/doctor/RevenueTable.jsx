@@ -1,3 +1,5 @@
+// src/components/doctor/RevenueTable.jsx
+import { useMediaQuery } from 'react-responsive';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const schedule = [
@@ -9,6 +11,10 @@ const schedule = [
 
 export default function RevenueTable() {
   const { theme } = useTheme();
+
+  // Media queries từ react-responsive
+  const isMobile = useMediaQuery({ query: '(max-width: 767px)' });
+  const isTabletOrAbove = useMediaQuery({ query: '(min-width: 768px)' });
 
   return (
     <div className={`rounded-xl shadow-sm border overflow-hidden ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>

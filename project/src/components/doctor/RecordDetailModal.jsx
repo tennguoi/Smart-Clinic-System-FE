@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useMediaQuery } from 'react-responsive';
 import { useTranslation } from 'react-i18next';
 import { X, Pencil, Plus } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -22,6 +23,11 @@ const RecordDetailModal = ({
 }) => {
   const { theme } = useTheme();
   const { t } = useTranslation();
+
+  // Media queries từ react-responsive
+  const isMobile = useMediaQuery({ query: '(max-width: 767px)' });
+  const isTabletOrAbove = useMediaQuery({ query: '(min-width: 768px)' });
+
   const [isEditMode, setIsEditMode] = useState(false);
   
   // Track when modal opens with new data
@@ -118,7 +124,7 @@ const RecordDetailModal = ({
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
 
       <div
-        className={`relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-xl border shadow-2xl flex flex-col ${
+        className={`relative w-full ${isTabletOrAbove ? 'max-w-4xl' : 'max-w-full mx-4'} max-h-[90vh] overflow-hidden rounded-xl border shadow-2xl flex flex-col ${
           isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -169,7 +175,7 @@ const RecordDetailModal = ({
           ) : (
             <>
               {/* Patient & Diagnosis */}
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className={`grid ${isTabletOrAbove ? 'md:grid-cols-2' : 'grid-cols-1'} gap-4`}>
                 <div className="space-y-2">
                   <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
                     {t('doctorRecords.modal.patientName', 'Tên bệnh nhân')}
@@ -280,15 +286,17 @@ const RecordDetailModal = ({
                     {t('doctorRecords.modal.prescriptionTitle', 'Đơn thuốc')}
                   </h4>
 
-                  {/* Header bảng (ẩn trên mobile) */}
-                  <div className={`hidden md:grid grid-cols-12 gap-4 font-semibold text-sm rounded-xl px-4 py-3 ${
-                    isDark ? 'bg-gray-800 text-gray-300' : 'bg-blue-50 text-slate-600'
-                  }`}>
-                    <div className="col-span-1 text-center">{t('prescriptionForm.table.stt', 'STT')}</div>
-                    <div className="col-span-5">{t('prescriptionForm.table.drugName', 'Tên thuốc')}</div>
-                    <div className="col-span-5">{t('prescriptionForm.table.instructions', 'Hướng dẫn sử dụng')}</div>
-                    <div className="col-span-1 text-center">{t('prescriptionForm.table.delete', 'Xóa')}</div>
-                  </div>
+                  {/* Header bảng - chỉ hiển thị trên tablet trở lên */}
+                  {isTabletOrAbove && (
+                    <div className={`grid grid-cols-12 gap-4 font-semibold text-sm rounded-xl px-4 py-3 ${
+                      isDark ? 'bg-gray-800 text-gray-300' : 'bg-blue-50 text-slate-600'
+                    }`}>
+                      <div className="col-span-1 text-center">{t('prescriptionForm.table.stt', 'STT')}</div>
+                      <div className="col-span-5">{t('prescriptionForm.table.drugName', 'Tên thuốc')}</div>
+                      <div className="col-span-5">{t('prescriptionForm.table.instructions', 'Hướng dẫn sử dụng')}</div>
+                      <div className="col-span-1 text-center">{t('prescriptionForm.table.delete', 'Xóa')}</div>
+                    </div>
+                  )}
 
                   {/* Danh sách dòng */}
                   {prescriptionItems.length === 0 ? (
@@ -300,84 +308,37 @@ const RecordDetailModal = ({
                   ) : (
                     prescriptionItems.map((item, index) => (
                       <div key={`prescription-${index}`} className="space-y-3">
-                        {/* Mobile layout */}
-                        <div className={`md:hidden rounded-xl border p-3 ${
-                          isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-blue-200'
-                        }`}>
-                          <div className="flex items-center justify-between mb-2">
-                            <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>
-                              #{index + 1}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => removePrescriptionItem(index)}
-                              disabled={!isEditMode}
-                              className={`p-2 rounded-lg transition-all ${
-                                !isEditMode 
-                                  ? 'opacity-50 cursor-not-allowed text-gray-400'
-                                  : isDark
-                                    ? 'text-red-400 hover:bg-red-900/30'
-                                    : 'text-red-500 hover:bg-red-50'
-                              }`}
-                              title={t('doctorRecords.modal.deleteDrug', 'Xóa')}
-                            >
-                              <X size={18} />
-                            </button>
-                          </div>
-
-                          <label className={`block text-xs font-semibold mb-1 ${
-                            isDark ? 'text-gray-300' : 'text-slate-600'
+                        {/* Mobile layout - chỉ hiển thị khi isMobile */}
+                        {isMobile && (
+                          <div className={`rounded-xl border p-3 ${
+                            isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-blue-200'
                           }`}>
-                            {t('prescriptionForm.drugNameLabel', 'Tên thuốc')}
-                          </label>
-                          <textarea
-                            value={item.drug}
-                            onChange={(e) => {
-                              handleItemChange(index, 'drug', e.target.value);
-                              autoResizeTextarea(e.target);
-                            }}
-                            disabled={!isEditMode}
-                            className={`w-full px-4 py-3 border rounded-xl focus:ring-4 text-sm transition-all resize-none overflow-hidden ${
-                              isDark
-                                ? `bg-gray-800 border-gray-700 text-white focus:ring-blue-900/50 focus:border-blue-700 ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
-                                : `bg-white border-blue-200 focus:ring-blue-100 focus:border-blue-500 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
-                            }`}
-                            placeholder={t('prescriptionForm.drugNamePlaceholder', 'Nhập tên thuốc')}
-                            rows={1}
-                          />
+                            <div className="flex items-center justify-between mb-2">
+                              <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>
+                                #{index + 1}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => removePrescriptionItem(index)}
+                                disabled={!isEditMode}
+                                className={`p-2 rounded-lg transition-all ${
+                                  !isEditMode 
+                                    ? 'opacity-50 cursor-not-allowed text-gray-400'
+                                    : isDark
+                                      ? 'text-red-400 hover:bg-red-900/30'
+                                      : 'text-red-500 hover:bg-red-50'
+                                }`}
+                                title={t('doctorRecords.modal.deleteDrug', 'Xóa')}
+                              >
+                                <X size={18} />
+                              </button>
+                            </div>
 
-                          <label className={`block text-xs font-semibold mb-1 mt-3 ${
-                            isDark ? 'text-gray-300' : 'text-slate-600'
-                          }`}>
-                            {t('prescriptionForm.instructionsLabel', 'Hướng dẫn sử dụng')}
-                          </label>
-                          <textarea
-                            value={item.instruction}
-                            onChange={(e) => {
-                              handleItemChange(index, 'instruction', e.target.value);
-                              autoResizeTextarea(e.target);
-                            }}
-                            disabled={!isEditMode}
-                            className={`w-full px-4 py-3 border rounded-xl focus:ring-4 text-sm transition-all resize-none overflow-hidden ${
-                              isDark
-                                ? `bg-gray-800 border-gray-700 text-white focus:ring-blue-900/50 focus:border-blue-700 ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
-                                : `bg-white border-blue-200 focus:ring-blue-100 focus:border-blue-500 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
-                            }`}
-                            placeholder={t('prescriptionForm.instructionsPlaceholder', 'Nhập hướng dẫn sử dụng')}
-                            rows={1}
-                          />
-                        </div>
-
-                        {/* Desktop layout */}
-                        <div className={`hidden md:grid grid-cols-12 gap-4 items-start rounded-xl border px-4 py-3 ${
-                          isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-blue-200'
-                        }`}>
-                          <div className={`col-span-1 flex items-center justify-center pt-3 font-semibold ${
-                            isDark ? 'text-gray-300' : 'text-gray-700'
-                          }`}>
-                            {index + 1}
-                          </div>
-                          <div className="col-span-5">
+                            <label className={`block text-xs font-semibold mb-1 ${
+                              isDark ? 'text-gray-300' : 'text-slate-600'
+                            }`}>
+                              {t('prescriptionForm.drugNameLabel', 'Tên thuốc')}
+                            </label>
                             <textarea
                               value={item.drug}
                               onChange={(e) => {
@@ -385,7 +346,7 @@ const RecordDetailModal = ({
                                 autoResizeTextarea(e.target);
                               }}
                               disabled={!isEditMode}
-                              className={`w-full px-4 py-3 border rounded-xl focus:ring-4 transition-all resize-none overflow-hidden ${
+                              className={`w-full px-4 py-3 border rounded-xl focus:ring-4 text-sm transition-all resize-none overflow-hidden ${
                                 isDark
                                   ? `bg-gray-800 border-gray-700 text-white focus:ring-blue-900/50 focus:border-blue-700 ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
                                   : `bg-white border-blue-200 focus:ring-blue-100 focus:border-blue-500 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
@@ -393,8 +354,12 @@ const RecordDetailModal = ({
                               placeholder={t('prescriptionForm.drugNamePlaceholder', 'Nhập tên thuốc')}
                               rows={1}
                             />
-                          </div>
-                          <div className="col-span-5">
+
+                            <label className={`block text-xs font-semibold mb-1 mt-3 ${
+                              isDark ? 'text-gray-300' : 'text-slate-600'
+                            }`}>
+                              {t('prescriptionForm.instructionsLabel', 'Hướng dẫn sử dụng')}
+                            </label>
                             <textarea
                               value={item.instruction}
                               onChange={(e) => {
@@ -402,7 +367,7 @@ const RecordDetailModal = ({
                                 autoResizeTextarea(e.target);
                               }}
                               disabled={!isEditMode}
-                              className={`w-full px-4 py-3 border rounded-xl focus:ring-4 transition-all resize-none overflow-hidden ${
+                              className={`w-full px-4 py-3 border rounded-xl focus:ring-4 text-sm transition-all resize-none overflow-hidden ${
                                 isDark
                                   ? `bg-gray-800 border-gray-700 text-white focus:ring-blue-900/50 focus:border-blue-700 ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
                                   : `bg-white border-blue-200 focus:ring-blue-100 focus:border-blue-500 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
@@ -411,24 +376,71 @@ const RecordDetailModal = ({
                               rows={1}
                             />
                           </div>
-                          <div className="col-span-1 flex items-center justify-center pt-2">
-                            <button
-                              type="button"
-                              onClick={() => removePrescriptionItem(index)}
-                              disabled={!isEditMode}
-                              className={`p-2 rounded-lg transition-all ${
-                                !isEditMode 
-                                  ? 'opacity-50 cursor-not-allowed text-gray-400'
-                                  : isDark
-                                    ? 'text-red-400 hover:bg-red-900/30'
-                                    : 'text-red-500 hover:bg-red-50'
-                              }`}
-                              title={t('doctorRecords.modal.deleteDrug', 'Xóa')}
-                            >
-                              <X size={18} />
-                            </button>
+                        )}
+
+                        {/* Desktop layout - chỉ hiển thị trên tablet trở lên */}
+                        {isTabletOrAbove && (
+                          <div className={`grid grid-cols-12 gap-4 items-start rounded-xl border px-4 py-3 ${
+                            isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-blue-200'
+                          }`}>
+                            <div className={`col-span-1 flex items-center justify-center pt-3 font-semibold ${
+                              isDark ? 'text-gray-300' : 'text-gray-700'
+                            }`}>
+                              {index + 1}
+                            </div>
+                            <div className="col-span-5">
+                              <textarea
+                                value={item.drug}
+                                onChange={(e) => {
+                                  handleItemChange(index, 'drug', e.target.value);
+                                  autoResizeTextarea(e.target);
+                                }}
+                                disabled={!isEditMode}
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-4 transition-all resize-none overflow-hidden ${
+                                  isDark
+                                    ? `bg-gray-800 border-gray-700 text-white focus:ring-blue-900/50 focus:border-blue-700 ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
+                                    : `bg-white border-blue-200 focus:ring-blue-100 focus:border-blue-500 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
+                                }`}
+                                placeholder={t('prescriptionForm.drugNamePlaceholder', 'Nhập tên thuốc')}
+                                rows={1}
+                              />
+                            </div>
+                            <div className="col-span-5">
+                              <textarea
+                                value={item.instruction}
+                                onChange={(e) => {
+                                  handleItemChange(index, 'instruction', e.target.value);
+                                  autoResizeTextarea(e.target);
+                                }}
+                                disabled={!isEditMode}
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-4 transition-all resize-none overflow-hidden ${
+                                  isDark
+                                    ? `bg-gray-800 border-gray-700 text-white focus:ring-blue-900/50 focus:border-blue-700 ${!isEditMode ? 'opacity-70 cursor-not-allowed' : ''}`
+                                    : `bg-white border-blue-200 focus:ring-blue-100 focus:border-blue-500 ${!isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`
+                                }`}
+                                placeholder={t('prescriptionForm.instructionsPlaceholder', 'Nhập hướng dẫn sử dụng')}
+                                rows={1}
+                              />
+                            </div>
+                            <div className="col-span-1 flex items-center justify-center pt-2">
+                              <button
+                                type="button"
+                                onClick={() => removePrescriptionItem(index)}
+                                disabled={!isEditMode}
+                                className={`p-2 rounded-lg transition-all ${
+                                  !isEditMode 
+                                    ? 'opacity-50 cursor-not-allowed text-gray-400'
+                                    : isDark
+                                      ? 'text-red-400 hover:bg-red-900/30'
+                                      : 'text-red-500 hover:bg-red-50'
+                                }`}
+                                title={t('doctorRecords.modal.deleteDrug', 'Xóa')}
+                              >
+                                <X size={18} />
+                              </button>
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                     ))
                   )}

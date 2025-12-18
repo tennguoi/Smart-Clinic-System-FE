@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useMediaQuery } from 'react-responsive';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -20,6 +21,10 @@ export default function InvoicesSection({ isDoctorView = false }) {
   const { theme } = useTheme();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+
+  const isMobile = useMediaQuery({ maxWidth: 767 });
+  const isTablet = useMediaQuery({ minWidth: 768, maxWidth: 1023 });
+  const isDesktop = useMediaQuery({ minWidth: 1024 });
 
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -293,83 +298,135 @@ export default function InvoicesSection({ isDoctorView = false }) {
           </div>
         ) : (
           <>
-            <table className="w-full">
-              <thead className={`${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} border-b`}>
-                <tr>
-                  <th className={`text-center px-4 py-3 text-xs font-bold uppercase tracking-wider w-20 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.stt')}</th>
-                  <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.invoiceCode')}</th>
-                  <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.patient')}</th>
-                  <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.createdDate')}</th>
-                  <th className={`text-right px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.totalAmount')}</th>
-                  <th className={`text-center px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.status')}</th>
-                  <th className={`text-center px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.actions')}</th>
-                </tr>
-              </thead>
-              <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+            {isMobile ? (
+              // Mobile card view
+              <div className="p-4 space-y-4">
                 {paginatedInvoices.map((inv, index) => (
-                  <tr key={inv.billId} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition`}>
-                    <td className={`px-4 py-4 text-center font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {currentPage * ITEMS_PER_PAGE + index + 1}
-                    </td>
-                    <td className="px-6 py-4 font-mono text-blue-600 dark:text-blue-400 font-medium">
-                      #{inv.billId?.slice(0, 8).toUpperCase()}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{inv.patientName}</div>
-                      <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{inv.patientPhone}</div>
-                    </td>
-                    <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                  <div key={inv.billId} className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <div className="font-mono text-blue-600 dark:text-blue-400 font-medium">
+                          #{inv.billId?.slice(0, 8).toUpperCase()}
+                        </div>
+                        <div className="font-semibold text-lg mt-1">{inv.patientName}</div>
+                        <div className="text-sm text-gray-500">{inv.patientPhone}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-xl">{formatPrice(inv.totalAmount)}</div>
+                        <div className="mt-2">{getStatusBadge(inv.paymentStatus)}</div>
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                       {format(new Date(inv.createdAt), 'dd/MM/yyyy HH:mm', { locale: currentLocale })}
-                    </td>
-                    <td className={`px-6 py-4 text-right font-bold text-lg ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      {formatPrice(inv.totalAmount)}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      {getStatusBadge(inv.paymentStatus)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-3">
+                    </div>
+                    <div className="flex justify-end gap-3">
+                      <button
+                        onClick={() => handleViewDetail(inv)}
+                        className="p-2 text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded-full transition"
+                        title={t('invoices.tooltips.viewDetail')}
+                      >
+                        <Eye className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDownloadPdf(inv.billId, inv.patientName)}
+                        className="p-2 text-purple-600 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/30 rounded-full transition"
+                        title={t('invoices.tooltips.exportPdf')}
+                      >
+                        <Download className="w-5 h-5" />
+                      </button>
+                      {!isDoctorView && inv.paymentStatus !== 'Paid' && (
                         <button
-                          onClick={() => handleViewDetail(inv)}
-                          className="p-2.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded-full transition group relative"
-                          title={t('invoices.tooltips.viewDetail')}
+                          onClick={() => handlePayInvoice(inv)}
+                          className="p-2 text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900/30 rounded-full transition"
+                          title={t('invoices.tooltips.pay')}
                         >
-                          <Eye className="w-5 h-5" />
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
-                            {t('invoices.tooltips.viewDetail')}
-                          </span>
+                          <CreditCard className="w-5 h-5" />
                         </button>
-
-                        <button
-                          onClick={() => handleDownloadPdf(inv.billId, inv.patientName)}
-                          className="p-2.5 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/30 rounded-full transition group relative"
-                          title={t('invoices.tooltips.exportPdf')}
-                        >
-                          <Download className="w-5 h-5" />
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
-                            {t('invoices.tooltips.exportPdf')}
-                          </span>
-                        </button>
-
-                        {/* Chỉ lễ tân mới thấy nút thu tiền */}
-                        {!isDoctorView && inv.paymentStatus !== 'Paid' && (
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              // Tablet & Desktop table view
+              <table className="w-full">
+                <thead className={`${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} border-b`}>
+                  <tr>
+                    <th className={`text-center px-4 py-3 text-xs font-bold uppercase tracking-wider w-20 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.stt')}</th>
+                    <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.invoiceCode')}</th>
+                    <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.patient')}</th>
+                    <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.createdDate')}</th>
+                    <th className={`text-right px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.totalAmount')}</th>
+                    <th className={`text-center px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.status')}</th>
+                    <th className={`text-center px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.actions')}</th>
+                  </tr>
+                </thead>
+                <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                  {paginatedInvoices.map((inv, index) => (
+                    <tr key={inv.billId} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition`}>
+                      <td className={`px-4 py-4 text-center font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                        {currentPage * ITEMS_PER_PAGE + index + 1}
+                      </td>
+                      <td className="px-6 py-4 font-mono text-blue-600 dark:text-blue-400 font-medium">
+                        #{inv.billId?.slice(0, 8).toUpperCase()}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{inv.patientName}</div>
+                        <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{inv.patientPhone}</div>
+                      </td>
+                      <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {format(new Date(inv.createdAt), 'dd/MM/yyyy HH:mm', { locale: currentLocale })}
+                      </td>
+                      <td className={`px-6 py-4 text-right font-bold text-lg ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                        {formatPrice(inv.totalAmount)}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {getStatusBadge(inv.paymentStatus)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-center gap-3">
                           <button
-                            onClick={() => handlePayInvoice(inv)}
-                            className="p-2.5 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30 rounded-full transition group relative"
-                            title={t('invoices.tooltips.pay')}
+                            onClick={() => handleViewDetail(inv)}
+                            className="p-2.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded-full transition group relative"
+                            title={t('invoices.tooltips.viewDetail')}
                           >
-                            <CreditCard className="w-5 h-5" />
+                            <Eye className="w-5 h-5" />
                             <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
-                              {t('invoices.tooltips.pay')}
+                              {t('invoices.tooltips.viewDetail')}
                             </span>
                           </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+                          <button
+                            onClick={() => handleDownloadPdf(inv.billId, inv.patientName)}
+                            className="p-2.5 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/30 rounded-full transition group relative"
+                            title={t('invoices.tooltips.exportPdf')}
+                          >
+                            <Download className="w-5 h-5" />
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+                              {t('invoices.tooltips.exportPdf')}
+                            </span>
+                          </button>
+
+                          {/* Chỉ lễ tân mới thấy nút thu tiền */}
+                          {!isDoctorView && inv.paymentStatus !== 'Paid' && (
+                            <button
+                              onClick={() => handlePayInvoice(inv)}
+                              className="p-2.5 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30 rounded-full transition group relative"
+                              title={t('invoices.tooltips.pay')}
+                            >
+                              <CreditCard className="w-5 h-5" />
+                              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+                                {t('invoices.tooltips.pay')}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
 
             {/* PAGINATION NẰM TRONG BẢNG */}
             <div className={`border-t ${theme === 'dark' ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-gray-50'}`}>

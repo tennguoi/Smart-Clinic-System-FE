@@ -1,12 +1,16 @@
-
 // PatientSidebar.jsx
 import { User, Calendar, Clock, FileText } from 'lucide-react';
+import { useMediaQuery } from 'react-responsive';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 
 export default function PatientSidebar({ currentPatient, waitingQueue = [] /* aiAssistantOpen không còn ảnh hưởng layout */ }) {
   const { theme } = useTheme();
   const { t } = useTranslation();
+
+  // Media queries từ react-responsive
+  const isMobile = useMediaQuery({ query: '(max-width: 1023px)' });
+  const isDesktop = useMediaQuery({ query: '(min-width: 1024px)' });
 
   if (!currentPatient) return null;
 
@@ -20,7 +24,9 @@ export default function PatientSidebar({ currentPatient, waitingQueue = [] /* ai
 
   return (
     <aside
-      className={`w-96 shadow-xl border-r flex flex-col ${
+      className={`shadow-xl border-r flex flex-col ${
+        isDesktop ? 'w-96' : 'w-full'
+      } ${
         theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-blue-100'
       }`}
     >

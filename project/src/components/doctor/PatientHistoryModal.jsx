@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useMediaQuery } from 'react-responsive';
 import { X, Calendar, User, FileText, Download } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -9,6 +10,11 @@ import toast from 'react-hot-toast';
 const PatientHistoryModal = ({ patientId, patientName, onClose }) => {
   const { t } = useTranslation();
   const { theme } = useTheme();
+
+  // Media queries từ react-responsive
+  const isMobile = useMediaQuery({ query: '(max-width: 767px)' });
+  const isTabletOrAbove = useMediaQuery({ query: '(min-width: 768px)' });
+
   const [historyRecords, setHistoryRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [exportingId, setExportingId] = useState(null);
@@ -48,7 +54,7 @@ const PatientHistoryModal = ({ patientId, patientName, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fadeIn">
-      <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col transition-colors duration-300`}>
+      <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl w-full ${isTabletOrAbove ? 'max-w-4xl' : 'max-w-full'} max-h-[90vh] flex flex-col transition-colors duration-300`}>
 
         {/* Header */}
         <div className={`p-6 border-b flex justify-between items-center ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
@@ -89,9 +95,9 @@ const PatientHistoryModal = ({ patientId, patientName, onClose }) => {
                   key={record.recordId}
                   className={`border rounded-xl p-5 hover:shadow-md transition-shadow ${theme === 'dark' ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-white'}`}
                 >
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                  <div className={`flex ${isTabletOrAbove ? 'flex-row md:items-start' : 'flex-col'} justify-between gap-4`}>
                     <div className="flex-1 space-y-3">
-                      <div className="flex items-center gap-4 text-sm">
+                      <div className="flex flex-col gap-3 text-sm">
                         <div className={`flex items-center gap-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                           <Calendar className="w-4 h-4" />
                           <span className="font-medium">
@@ -157,7 +163,7 @@ const PatientHistoryModal = ({ patientId, patientName, onClose }) => {
                       )}
                     </div>
 
-                    <div className="flex items-start">
+                    <div className={`${isTabletOrAbove ? 'flex items-start' : 'flex items-center justify-start mt-4'}`}>
                       <button
                         onClick={() => handleExportPdf(record.recordId)}
                         disabled={exportingId === record.recordId}

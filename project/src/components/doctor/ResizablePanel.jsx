@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useMediaQuery } from 'react-responsive';
 
 export default function ResizablePanel({ children, isOpen }) {
   const [width, setWidth] = useState(() => {
@@ -6,6 +7,9 @@ export default function ResizablePanel({ children, isOpen }) {
     return saved ? Math.max(360, Math.min(960, parseInt(saved, 10))) : 500;
   });
   const [isResizing, setIsResizing] = useState(false);
+
+  // Media query từ react-responsive
+  const isDesktop = useMediaQuery({ query: '(min-width: 1024px)' });
 
   useEffect(() => {
     localStorage.setItem('ai-panel-width', width.toString());
@@ -35,9 +39,12 @@ export default function ResizablePanel({ children, isOpen }) {
 
   if (!isOpen) return null;
 
+  // Chỉ hiển thị panel khi isOpen và là desktop (lg trở lên)
+  if (!isDesktop) return null;
+
   return (
     <div
-      className="h-full bg-gray-50 border-l-4 border-transparent shadow-2xl flex flex-col relative hidden lg:flex"
+      className="h-full bg-gray-50 border-l-4 border-transparent shadow-2xl flex flex-col relative flex"
       style={{ width: `${width}px` }}
     >
       <div

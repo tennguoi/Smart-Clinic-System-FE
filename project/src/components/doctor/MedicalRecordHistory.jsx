@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useMediaQuery } from 'react-responsive';
 import { useTranslation } from 'react-i18next';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import { Search, ClipboardList, X, Eye } from 'lucide-react';
@@ -12,6 +13,10 @@ import PatientHistoryModal from './PatientHistoryModal';
 const MedicalRecordHistory = () => {
   const { theme } = useTheme();
   const { t } = useTranslation();
+
+  const isMobile = useMediaQuery({ maxWidth: 767 });
+  const isTabletOrLarger = useMediaQuery({ minWidth: 768 });
+
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -128,8 +133,8 @@ const MedicalRecordHistory = () => {
 
       {/* Bộ lọc tìm kiếm thống nhất */}
       <div className={`rounded-xl shadow-md border p-6 mb-6 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-4">
+        <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'lg:grid-cols-12 gap-4'}`}>
+          <div className={isMobile ? '' : 'lg:col-span-4'}>
             <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               {t('medicalRecords.filters.searchLabelDetail')}
             </label>
@@ -153,7 +158,7 @@ const MedicalRecordHistory = () => {
             </div>
           </div>
 
-          <div className="lg:col-span-3">
+          <div className={isMobile ? '' : 'lg:col-span-3'}>
             <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               {t('medicalRecords.filters.fromDate')}
             </label>
@@ -173,7 +178,7 @@ const MedicalRecordHistory = () => {
             />
           </div>
 
-          <div className="lg:col-span-3">
+          <div className={isMobile ? '' : 'lg:col-span-3'}>
             <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               {t('medicalRecords.filters.toDate')}
             </label>
@@ -193,7 +198,7 @@ const MedicalRecordHistory = () => {
             />
           </div>
 
-          <div className="lg:col-span-2">
+          <div className={isMobile ? '' : 'lg:col-span-2'}>
             <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>&nbsp;</label>
             <button
               onClick={handleClearFilters}
@@ -205,66 +210,55 @@ const MedicalRecordHistory = () => {
         </div>
       </div>
 
-
-
-      {/* Bảng dữ liệu */}
+      {/* Bảng dữ liệu / Card view */}
       <div className={`rounded-xl shadow-md border overflow-hidden ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-        <table className="w-full">
-          <thead className={`uppercase text-xs sticky top-0 ${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>
-            <tr>
-              <th className="px-4 py-3 text-center w-16">{t('medicalRecords.table.stt')}</th>
-              <th className="px-4 py-3 text-left w-48">{t('medicalRecords.table.patient')}</th>
-              <th className="px-4 py-3 text-left w-32">{t('medicalRecords.table.phone')}</th>
-              <th className="px-4 py-3 text-left w-32">{t('medicalRecords.table.idNumber')}</th>
-              <th className="px-4 py-3 text-left w-32">{t('medicalRecords.table.insurance')}</th>
-              <th className="px-4 py-3 text-center w-24">{t('medicalRecords.table.visitCount')}</th>
-              <th className="px-4 py-3 text-left w-32">{t('medicalRecords.table.lastVisit')}</th>
-              <th className="px-4 py-3 text-center w-24">{t('medicalRecords.common.actions')}</th>
-            </tr>
-          </thead>
-
-          <tbody>
+        {isMobile ? (
+          // Mobile Card View
+          <div className="p-4 space-y-4">
             {loading ? (
-              <tr>
-                <td colSpan="8" className={`px-4 py-10 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                  {t('medicalRecords.common.loading')}
-                </td>
-              </tr>
+              <div className="text-center py-10">
+                {t('medicalRecords.common.loading')}
+              </div>
             ) : currentPageRecords.length === 0 ? (
-              <tr>
-                <td colSpan="8" className={`px-4 py-10 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                  {searchTerm || filterStartDate || filterEndDate
-                    ? t('medicalRecords.noResults')
-                    : t('medicalRecords.noRecords')}
-                </td>
-              </tr>
+              <div className="text-center py-10">
+                {searchTerm || filterStartDate || filterEndDate
+                  ? t('medicalRecords.noResults')
+                  : t('medicalRecords.noRecords')}
+              </div>
             ) : (
               currentPageRecords.map((record, index) => (
-                <tr key={index} className={`border-b transition-colors ${theme === 'dark' ? 'border-gray-700 hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
-                  <td className={`px-4 py-3 text-center text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {currentPage * pageSize + index + 1}
-                  </td>
-                  <td className={`px-4 py-3 text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    {record.patientName || t('medicalRecords.walkInPatient')}
-                  </td>
-                  <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
-                    {record.phone || '-'}
-                  </td>
-                  <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
-                    {record.idNumber || '-'}
-                  </td>
-                  <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
-                    {record.insuranceNumber || '-'}
-                  </td>
-                  <td className={`px-4 py-3 text-center text-sm font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
-                    {record.visitCount}
-                  </td>
-                  <td className={`px-4 py-3 text-sm whitespace-nowrap ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                <div
+                  key={index}
+                  className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <div className="font-semibold text-lg">
+                        {record.patientName || t('medicalRecords.walkInPatient')}
+                      </div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        SĐT: {record.phone || '-'} | CMND/CCCD: {record.idNumber || '-'}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        BHYT: {record.insuranceNumber || '-'}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {record.visitCount}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {t('medicalRecords.table.visitCount')}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    {t('medicalRecords.table.lastVisit')}: {' '}
                     {record.lastVisitDate
                       ? new Date(record.lastVisitDate).toLocaleDateString('vi-VN')
                       : '-'}
-                  </td>
-                  <td className="px-4 py-3 text-center">
+                  </div>
+                  <div className="flex justify-end">
                     {record.patientId && (
                       <button
                         onClick={() => {
@@ -274,18 +268,97 @@ const MedicalRecordHistory = () => {
                           });
                           setShowHistoryModal(true);
                         }}
-                        className={`p-2 rounded-full transition-colors ${theme === 'dark' ? 'hover:bg-gray-600 text-blue-400' : 'hover:bg-gray-100 text-blue-600'}`}
-                        title={t('medicalRecords.viewHistory') || 'Xem lịch sử khám'}
+                        className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 ${theme === 'dark' ? 'bg-blue-900/50 text-blue-300 hover:bg-blue-900' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}
                       >
                         <Eye className="w-5 h-5" />
+                        {t('medicalRecords.viewHistory')}
                       </button>
                     )}
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))
             )}
-          </tbody>
-        </table>
+          </div>
+        ) : (
+          // Tablet & Desktop Table View
+          <table className="w-full">
+            <thead className={`uppercase text-xs sticky top-0 ${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>
+              <tr>
+                <th className="px-4 py-3 text-center w-16">{t('medicalRecords.table.stt')}</th>
+                <th className="px-4 py-3 text-left w-48">{t('medicalRecords.table.patient')}</th>
+                <th className="px-4 py-3 text-left w-32">{t('medicalRecords.table.phone')}</th>
+                <th className="px-4 py-3 text-left w-32">{t('medicalRecords.table.idNumber')}</th>
+                <th className="px-4 py-3 text-left w-32">{t('medicalRecords.table.insurance')}</th>
+                <th className="px-4 py-3 text-center w-24">{t('medicalRecords.table.visitCount')}</th>
+                <th className="px-4 py-3 text-left w-32">{t('medicalRecords.table.lastVisit')}</th>
+                <th className="px-4 py-3 text-center w-24">{t('medicalRecords.common.actions')}</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan="8" className={`px-4 py-10 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {t('medicalRecords.common.loading')}
+                  </td>
+                </tr>
+              ) : currentPageRecords.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className={`px-4 py-10 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {searchTerm || filterStartDate || filterEndDate
+                      ? t('medicalRecords.noResults')
+                      : t('medicalRecords.noRecords')}
+                  </td>
+                </tr>
+              ) : (
+                currentPageRecords.map((record, index) => (
+                  <tr key={index} className={`border-b transition-colors ${theme === 'dark' ? 'border-gray-700 hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
+                    <td className={`px-4 py-3 text-center text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {currentPage * pageSize + index + 1}
+                    </td>
+                    <td className={`px-4 py-3 text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      {record.patientName || t('medicalRecords.walkInPatient')}
+                    </td>
+                    <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
+                      {record.phone || '-'}
+                    </td>
+                    <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
+                      {record.idNumber || '-'}
+                    </td>
+                    <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>
+                      {record.insuranceNumber || '-'}
+                    </td>
+                    <td className={`px-4 py-3 text-center text-sm font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                      {record.visitCount}
+                    </td>
+                    <td className={`px-4 py-3 text-sm whitespace-nowrap ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {record.lastVisitDate
+                        ? new Date(record.lastVisitDate).toLocaleDateString('vi-VN')
+                        : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {record.patientId && (
+                        <button
+                          onClick={() => {
+                            setSelectedPatient({
+                              patientId: record.patientId,
+                              patientName: record.patientName
+                            });
+                            setShowHistoryModal(true);
+                          }}
+                          className={`p-2 rounded-full transition-colors ${theme === 'dark' ? 'hover:bg-gray-600 text-blue-400' : 'hover:bg-gray-100 text-blue-600'}`}
+                          title={t('medicalRecords.viewHistory') || 'Xem lịch sử khám'}
+                        >
+                          <Eye className="w-5 h-5" />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
 
         <Pagination
           currentPage={currentPage}
