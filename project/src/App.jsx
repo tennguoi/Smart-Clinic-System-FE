@@ -92,9 +92,8 @@ function App() {
             </PublicRoute>
           } 
         />
-        
         <Route path="/verify-2fa" element={<Verify2FA />} />
-
+        <Route path="/profile" element={<ProfilePage />} />
         {/* PUBLIC ROUTES */}
         <Route
           path="/*"
