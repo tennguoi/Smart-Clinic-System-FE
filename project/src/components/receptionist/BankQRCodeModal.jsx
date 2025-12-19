@@ -21,8 +21,8 @@ export default function BankQRCodeModal({ amount, billId, onClose, onConfirmPaym
 
   // CẬP NHẬT THÔNG TIN NGÂN HÀNG TẠI ĐÂY
   const bankInfo = {
-    bankCode: 'MB',
-    accountNo: '0332763869094',
+    bankCode: 'ICB', // VietinBank
+    accountNo: '108880226123',
     accountName: 'PHAM MINH DAN',
     template: 'compact2'
   };

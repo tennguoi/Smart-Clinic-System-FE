@@ -93,7 +93,7 @@ export default function AppointmentsSection() {
     const totalMinutes = hour * 60 + minute;
     const morningStart = 8 * 60;
     const morningEnd = 12 * 60;
-    const afternoonStart = 14 * 60;
+    const afternoonStart = 13 * 60;
     const afternoonEnd = 23 * 60;
     return (
       (totalMinutes >= morningStart && totalMinutes <= morningEnd) ||

@@ -2,7 +2,7 @@
 import { Routes, Route } from "react-router-dom";
 import StickyNavbar from "./components/StickyNavbar";
 import ProtectedRoute from "./components/ProtectedRoute";
-
+import PublicRoute from "./components/PublicRoute";
 // Public Pages
 import HomePage from "./pages/HomePage";
 import AboutPage from "./pages/AboutPage";
@@ -60,12 +60,40 @@ function App() {
       <Routes>
 
         {/* AUTH & PROFILE */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+         <Route 
+          path="/login" 
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          } 
+        />
+        <Route 
+          path="/forgot-password" 
+          element={
+            <PublicRoute>
+              <ForgotPassword />
+            </PublicRoute>
+          } 
+        />
+        <Route 
+          path="/verify-otp" 
+          element={
+            <PublicRoute>
+              <VerifyOTP />
+            </PublicRoute>
+          } 
+        />
+        <Route 
+          path="/reset-password" 
+          element={
+            <PublicRoute>
+              <ResetPassword />
+            </PublicRoute>
+          } 
+        />
+        
         <Route path="/verify-2fa" element={<Verify2FA />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/verify-otp" element={<VerifyOTP />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* PUBLIC ROUTES */}
         <Route
