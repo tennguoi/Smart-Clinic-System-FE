@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { useMediaQuery } from 'react-responsive';
 import { useTranslation } from 'react-i18next';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import CreateRecordForm from './CreateRecordForm';
@@ -17,12 +16,40 @@ import { toastConfig } from "../../config/toastConfig";
 
 const ITEMS_PER_PAGE = 10;
 
+// 🔥 Custom useMediaQuery hook
+const useMediaQuery = (query) => {
+  const [matches, setMatches] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia(query).matches;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(query);
+    const handler = (event) => setMatches(event.matches);
+    
+    // Set initial value
+    setMatches(mediaQuery.matches);
+    
+    // Listen for changes
+    mediaQuery.addEventListener('change', handler);
+    
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, [query]);
+
+  return matches;
+};
+
 const MedicalRecordsSection = () => {
   const { theme } = useTheme();
   const { t } = useTranslation();
 
-  const isMobile = useMediaQuery({ maxWidth: 767 });
-  const isTabletOrLarger = useMediaQuery({ minWidth: 768 });
+  // 🔥 Media Queries
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const isTablet = useMediaQuery('(min-width: 768px) and (max-width: 1023px)');
+  const isMobile = useMediaQuery('(max-width: 767px)');
+  const isSmallMobile = useMediaQuery('(max-width: 480px)');
 
   const [records, setRecords] = useState([]);
   const [recordsLoading, setRecordsLoading] = useState(false);
@@ -213,9 +240,10 @@ const MedicalRecordsSection = () => {
           />
         </div>
       )}
- {/* FILTERS */}
+
+      {/* FILTERS */}
       <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-md border p-6 mb-6 transition-colors duration-300`}>
-        <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 lg:grid-cols-4 gap-4'}`}>
+        <div className={`grid ${isSmallMobile ? 'grid-cols-1' : isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'grid-cols-4'} gap-4`}>
           {/* Search */}
           <div>
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
@@ -304,44 +332,24 @@ const MedicalRecordsSection = () => {
           </div>
         ) : (
           <>
-            {isMobile ? (
-              // Mobile Card View
+            {isMobile || isTablet ? (
+              // Mobile & Tablet Card View
               <div className="p-4 space-y-4">
                 {paginatedRecords.map((r, idx) => (
-                  <div
+                  <RecordRow
                     key={r.recordId}
-                    className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <div className="font-semibold text-lg">
-                          {r.patientName || t('doctorRecords.unknownPatient')}
-                        </div>
-                        <div className="text-sm text-gray-500 mt-1">
-                          {t('medicalRecords.table.diagnosis')}: {r.diagnosis?.slice(0, 50)}{r.diagnosis?.length > 50 ? '...' : ''}
-                        </div>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        #{currentPage * ITEMS_PER_PAGE + idx + 1}
-                      </div>
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                      {t('medicalRecords.table.treatmentNotes')}: {r.treatmentNotes?.slice(0, 80)}{r.treatmentNotes?.length > 80 ? '...' : ''}
-                    </div>
-                    <RecordRow
-                      index={currentPage * ITEMS_PER_PAGE + idx + 1}
-                      record={r}
-                      onUpdated={fetchMyRecords}
-                      onError={(msg) => toast.error(msg)}
-                      onDelete={(recordId) => patientNameMapRef.current.delete(recordId)}
-                      onViewHistory={handleViewHistory}
-                      isMobile={true}
-                    />
-                  </div>
+                    index={currentPage * ITEMS_PER_PAGE + idx + 1}
+                    record={r}
+                    onUpdated={fetchMyRecords}
+                    onError={(msg) => toast.error(msg)}
+                    onDelete={(recordId) => patientNameMapRef.current.delete(recordId)}
+                    onViewHistory={handleViewHistory}
+                    isMobile={true}
+                  />
                 ))}
               </div>
             ) : (
-              // Tablet & Desktop Table View
+              // Desktop Table View
               <div className="overflow-x-auto">
                 <table className="w-full table-fixed">
                   <thead className={`${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} border-b`}>
@@ -373,6 +381,7 @@ const MedicalRecordsSection = () => {
                         onError={(msg) => toast.error(msg)}
                         onDelete={(recordId) => patientNameMapRef.current.delete(recordId)}
                         onViewHistory={handleViewHistory}
+                        isMobile={false}
                       />
                     ))}
                   </tbody>
