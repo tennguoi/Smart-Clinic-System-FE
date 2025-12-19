@@ -1,5 +1,6 @@
 // src/components/doctor/CreateRecordForm.jsx
 import { useState, useEffect } from 'react';
+import { useMediaQuery } from 'react-responsive';
 import toast from 'react-hot-toast';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +15,10 @@ const CreateRecordForm = ({
 }) => {
   const { t } = useTranslation();
   const { theme } = useTheme();
+
+  // Media queries từ react-responsive
+  const isMobile = useMediaQuery({ query: '(max-width: 640px)' });
+  const isTabletOrAbove = useMediaQuery({ query: '(min-width: 641px)' });
 
   const [formPatientName, setFormPatientName] = useState(() => {
     const saved = localStorage.getItem('create_record_patient_name');
@@ -70,7 +75,7 @@ const CreateRecordForm = ({
       <div className="absolute inset-0 flex items-center justify-center px-4">
         <form
           onSubmit={handleSubmit}
-          className={`w-full max-w-lg border rounded-xl shadow-2xl p-6 space-y-4 ${
+          className={`w-full ${isTabletOrAbove ? 'max-w-lg' : 'max-w-full'} border rounded-xl shadow-2xl p-6 space-y-4 ${
             theme === 'dark' 
               ? 'bg-gray-800 border-gray-700' 
               : 'bg-white border-gray-200'

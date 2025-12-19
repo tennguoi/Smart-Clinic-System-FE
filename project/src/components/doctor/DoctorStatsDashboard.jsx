@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useMediaQuery } from 'react-responsive';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import {
@@ -34,10 +35,14 @@ const RANGE_OPTIONS = [
   { label: 'month', value: 'month' },
 ];
 
-
 export default function DoctorStatsDashboard() {
   const { theme } = useTheme();
   const { t } = useTranslation();
+
+  // Media queries từ react-responsive
+  const isMobile = useMediaQuery({ query: '(max-width: 640px)' });
+  const isTablet = useMediaQuery({ query: '(max-width: 1024px)' });
+  const isDesktop = useMediaQuery({ query: '(min-width: 1025px)' });
 
   // Load saved preferences from localStorage
   const [rangeType, setRangeType] = useState(() => {
@@ -57,10 +62,12 @@ export default function DoctorStatsDashboard() {
       return new Date();
     }
   });
+
   const formatPercentage = (value) => {
     if (value == null || value === 0) return t('doctorStats.noData');
     return `${Math.round(value * 100)}%`;
   };
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statsData, setStatsData] = useState(null);
@@ -167,7 +174,7 @@ export default function DoctorStatsDashboard() {
     if (rangeType === 'week')
       return { showWeekNumbers: true, dateFormat: `'${t('doctorStats.week')}' ww, yyyy` };
     return { dateFormat: 'dd/MM/yyyy' };
-  }, [rangeType]);
+  }, [rangeType, t]);
 
   if (loading) {
     return (
@@ -214,8 +221,8 @@ export default function DoctorStatsDashboard() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <div className={`flex rounded-full p-1 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
+        <div className={`flex ${isMobile ? 'flex-col w-full' : 'flex-row items-center'} gap-4`}>
+          <div className={`flex rounded-full p-1 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'} ${isMobile ? 'w-full justify-between' : ''}`}>
             {RANGE_OPTIONS.map((option) => (
               <button
                 key={option.value}
@@ -224,19 +231,19 @@ export default function DoctorStatsDashboard() {
                 className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${option.value === rangeType
                     ? (theme === 'dark' ? 'bg-gray-600 text-cyan-400 shadow' : 'bg-white text-cyan-600 shadow')
                     : (theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')
-                  }`}
+                  } ${isMobile ? 'flex-1' : ''}`}
               >
                 {t(`doctorStats.range.${option.label}`)}
               </button>
             ))}
           </div>
 
-          <div className={`flex items-center gap-2 rounded-full border px-4 py-2 shadow-sm ${theme === 'dark' ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-white'}`}>
+          <div className={`flex items-center gap-2 rounded-full border px-4 py-2 shadow-sm ${theme === 'dark' ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-white'} ${isMobile ? 'w-full' : ''}`}>
             <CalendarDays className={`h-5 w-5 ${theme === 'dark' ? 'text-cyan-400' : 'text-cyan-600'}`} />
             <DatePicker
               selected={selectedDate}
               onChange={(date) => date && setSelectedDate(date)}
-              className={`w-32 bg-transparent text-sm font-semibold focus:outline-none ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}
+              className={`bg-transparent text-sm font-semibold focus:outline-none ${theme === 'dark' ? 'text-white' : 'text-gray-800'} ${isMobile ? 'w-full' : 'w-32'}`}
               calendarClassName="rounded-xl border shadow-lg bg-white border-gray-200 text-gray-800"
               {...datePickerConfig}
             />
@@ -244,8 +251,8 @@ export default function DoctorStatsDashboard() {
         </div>
       </header>
 
-      {/* KPI Cards (always visible) */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* KPI Cards (responsive grid) */}
+      <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'grid-cols-3'}`}>
         {[
           {
             title: t('doctorStats.kpi.totalVisits.title'),
@@ -290,8 +297,8 @@ export default function DoctorStatsDashboard() {
         })}
       </div>
 
-      {/* Charts (always visible) */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* Charts (stack on mobile, side-by-side on larger screens) */}
+      <div className={`grid gap-6 ${isTablet ? 'grid-cols-1' : 'lg:grid-cols-2'}`}>
         {/* Bar Chart */}
         <div className={`rounded-2xl border p-6 shadow-sm transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
           <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>

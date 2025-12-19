@@ -1,7 +1,8 @@
-// src/components/common/Sidebar.jsx – MOBILE: THU NHỎ/MỞ RỘNG, DESKTOP: LUÔN HIỆN ĐẦY ĐỦ!
+// src/components/common/Sidebar.jsx
 import { Cloud, Menu } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useState, useEffect, useRef } from 'react';
+import { useMediaQuery } from 'react-responsive';
 
 const Sidebar = ({ 
   title = "HealthCare", 
@@ -11,25 +12,38 @@ const Sidebar = ({
   logo: LogoIcon = Cloud
 }) => {
   const { theme } = useTheme();
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const sidebarRef = useRef(null);
 
-  // Click outside để thu nhỏ - CHỈ TRÊN MOBILE
+  // ✅ react-responsive
+  const isDesktop = useMediaQuery({ minWidth: 1024 });
+  const isMobile = useMediaQuery({ maxWidth: 1023 });
+
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // ✅ Desktop luôn mở sidebar
   useEffect(() => {
+    if (isDesktop) {
+      setIsCollapsed(false);
+    }
+  }, [isDesktop]);
+
+  // ✅ Click outside để thu nhỏ – CHỈ MOBILE
+  useEffect(() => {
+    if (!isMobile) return;
+
     const handleClickOutside = (event) => {
-      // Chỉ áp dụng trên mobile (màn hình < 1024px)
-      if (window.innerWidth < 1024) {
-        if (sidebarRef.current && !sidebarRef.current.contains(event.target) && !isCollapsed) {
-          setIsCollapsed(true);
-        }
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target) &&
+        !isCollapsed
+      ) {
+        setIsCollapsed(true);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isCollapsed]);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isCollapsed, isMobile]);
 
   return (
     <aside 
@@ -42,15 +56,17 @@ const Sidebar = ({
     >
       {/* Header */}
       <div className={`p-6 flex items-center ${isCollapsed ? 'justify-center lg:gap-3' : 'gap-3'} ${theme === 'dark' ? 'border-b border-gray-700' : 'border-b border-blue-900'} flex-shrink-0 transition-colors duration-300`}>
-        {/* Desktop: luôn hiện, Mobile: ẩn khi collapsed */}
-        <LogoIcon className={`w-10 h-10 text-blue-300 ${isCollapsed ? 'hidden lg:block' : 'block'}`} />
-        <h1 className={`text-2xl font-bold tracking-tight ${isCollapsed ? 'hidden lg:block' : 'block'}`}>{title}</h1>
         
-        {/* Toggle Button - CHỈ HIỆN KHI COLLAPSED TRÊN MOBILE, ẨN TRÊN DESKTOP */}
-        {isCollapsed && (
+        <LogoIcon className={`w-10 h-10 text-blue-300 ${isCollapsed ? 'hidden lg:block' : 'block'}`} />
+        <h1 className={`text-2xl font-bold tracking-tight ${isCollapsed ? 'hidden lg:block' : 'block'}`}>
+          {title}
+        </h1>
+        
+        {/* Toggle – CHỈ MOBILE & COLLAPSED */}
+        {isCollapsed && isMobile && (
           <button
             onClick={() => setIsCollapsed(false)}
-            className="lg:hidden mx-auto p-2 rounded-lg hover:bg-blue-800/50 transition-all duration-200"
+            className="mx-auto p-2 rounded-lg hover:bg-blue-800/50 transition-all duration-200"
             title="Mở rộng"
           >
             <Menu className="w-6 h-6" />
@@ -58,13 +74,10 @@ const Sidebar = ({
         )}
       </div>
 
-      {/* Menu – BỎ THANH KÉO + IN ĐẬM SIÊU ĐẸP */}
+      {/* Menu */}
       <nav 
         className="flex-1 py-4 overflow-y-auto"
-        style={{
-          msOverflowStyle: 'none',
-          scrollbarWidth: 'none'
-        }}
+        style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
       >
         <style jsx>{`
           nav::-webkit-scrollbar {
@@ -81,8 +94,8 @@ const Sidebar = ({
               key={item.id}
               onClick={() => {
                 onMenuChange?.(item.id);
-                // Mở rộng khi click item ở mobile collapsed
-                if (isCollapsed && window.innerWidth < 1024) {
+                // ✅ Mobile: click item thì mở sidebar
+                if (isCollapsed && isMobile) {
                   setIsCollapsed(false);
                 }
               }}
@@ -97,12 +110,10 @@ const Sidebar = ({
               `}
               title={isCollapsed ? item.label : ''}
             >
-              {/* Hiệu ứng nền nhẹ */}
               <div className={`absolute inset-0 bg-white/10 ${isActive ? 'opacity-30' : 'opacity-0 group-hover:opacity-20'} transition-opacity`} />
               
               <Icon className={`w-6 h-6 relative z-10 ${isActive ? 'text-white' : 'text-blue-300 group-hover:text-white'} flex-shrink-0`} />
               
-              {/* Desktop: luôn hiện text, Mobile: ẩn khi collapsed */}
               <span className={`relative z-10 tracking-wide whitespace-nowrap ${isCollapsed ? 'hidden lg:block' : 'block'}`}>
                 {item.label}
               </span>
@@ -110,11 +121,6 @@ const Sidebar = ({
           );
         })}
       </nav>
-
-      {/* Footer - Desktop: luôn hiện, Mobile: ẩn khi collapsed */}
-      {/* <div className={`p-4 ${theme === 'dark' ? 'border-t border-gray-700' : 'border-t border-blue-900'} flex-shrink-0 transition-colors duration-300 ${isCollapsed ? 'hidden lg:block' : 'block'}`}>
-        <p className="text-xs text-blue-300 text-center">© 2025 HealthCare System</p>
-      </div> */}
     </aside>
   );
 };

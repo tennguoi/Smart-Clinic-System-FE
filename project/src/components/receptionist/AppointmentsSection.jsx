@@ -1,5 +1,5 @@
-// src/components/receptionist/AppointmentsSection.jsx
 import { useEffect, useState } from 'react';
+import { useMediaQuery } from 'react-responsive';
 import {
   Plus, X, Calendar, User, Phone, Mail,
   Loader2, Search, CheckCircle2, XCircle,
@@ -42,6 +42,9 @@ const toLocalDateTimeString = (localDate) => {
 export default function AppointmentsSection() {
   const { theme } = useTheme();
   const { t } = useTranslation();
+
+  const isMobile = useMediaQuery({ maxWidth: 767 });
+  const isTabletOrLarger = useMediaQuery({ minWidth: 768 });
 
   const [appointments, setAppointments] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState('Pending');
@@ -383,8 +386,8 @@ const handleConfirmFromModal = async () => {
       </div>
 
       <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-md border p-6 mb-6 transition-colors duration-300`}>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-4">
+        <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'lg:grid-cols-12 gap-4'}`}>
+          <div className={isMobile ? '' : 'lg:col-span-4'}>
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('appointmentManagement.searchLabel', 'Tìm kiếm')}</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -403,7 +406,7 @@ const handleConfirmFromModal = async () => {
             </div>
           </div>
 
-          <div className="lg:col-span-2">
+          <div className={isMobile ? '' : 'lg:col-span-2'}>
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('appointmentManagement.statusLabel', 'Trạng thái')}</label>
             <select value={selectedStatus} onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(0); }}
               className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}>
@@ -413,7 +416,7 @@ const handleConfirmFromModal = async () => {
             </select>
           </div>
 
-          <div className="lg:col-span-2">
+          <div className={isMobile ? '' : 'lg:col-span-2'}>
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('appointmentManagement.fromDate', 'Từ ngày')}</label>
             <input type="date" value={filterStartDate}
               onChange={(e) => {
@@ -429,7 +432,7 @@ const handleConfirmFromModal = async () => {
               className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`} />
           </div>
 
-          <div className="lg:col-span-2">
+          <div className={isMobile ? '' : 'lg:col-span-2'}>
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('appointmentManagement.toDate', 'Đến ngày')}</label>
             <input type="date" value={filterEndDate}
               onChange={(e) => {
@@ -445,7 +448,7 @@ const handleConfirmFromModal = async () => {
               className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`} />
           </div>
 
-          <div className="lg:col-span-2 flex items-end">
+          <div className={isMobile ? '' : 'lg:col-span-2 flex items-end'}>
             <button onClick={handleClearFilters}
               className={`w-full px-4 py-3 rounded-xl transition font-medium ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}>
               {t('appointmentManagement.clearFilters', 'Xóa lọc')}
@@ -461,30 +464,88 @@ const handleConfirmFromModal = async () => {
         </div>
       ) : (
         <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow border overflow-hidden transition-colors duration-300`}>
-          <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
-            <thead className={theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}>
-              <tr>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase w-20 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.stt', 'STT')}</th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.code', 'Mã lịch')}</th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.patient', 'Bệnh nhân')}</th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.phone', 'Số điện thoại')}</th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.time', 'Thời gian')}</th>
-                <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.services', 'Dịch vụ')}</th>
-                <th className={`px-4 py-3 text-center text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.status', 'Trạng thái')}</th>
-                <th className={`px-4 py-3 text-center text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.actions', 'Thao tác')}</th>
-              </tr>
-            </thead>
-            <tbody className={`${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
+          {isMobile ? (
+            // Mobile Card View
+            <div className="p-4 space-y-4">
               {appointments.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className={`px-4 py-16 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{t('appointmentManagement.noAppointments', 'Chưa có lịch hẹn nào')}</td>
-                </tr>
+                <div className="text-center py-12 text-gray-500">
+                  {t('appointmentManagement.noAppointments', 'Chưa có lịch hẹn nào')}
+                </div>
               ) : (
                 appointments.map((a, index) => {
                   const stt = currentPage * pageSize + index + 1;
                   return (
-                    <tr key={a.appointmentId} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}>
-                      <td className={`px-4 py-4 text-center text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{stt}</td>
+                    <div key={a.appointmentId} className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <div className="font-mono text-base font-bold text-blue-600 dark:text-blue-400">
+                            {a.appointmentCode}
+                          </div>
+                          <div className="font-semibold text-lg mt-1">{a.patientName}</div>
+                          <div className="text-sm text-gray-500">{a.phone}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-medium">{formatDateTime(a.appointmentTime)}</div>
+                          <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold ${
+                            a.status === 'Confirmed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
+                            a.status === 'Cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                            'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+                          }`}>
+                            {a.status === 'Pending' ? t('appointmentManagement.statusPending', 'Chờ xác nhận') : 
+                             a.status === 'Confirmed' ? t('appointmentManagement.statusConfirmed', 'Đã xác nhận') : 
+                             t('appointmentManagement.statusCancelled', 'Đã hủy')}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        {a.services?.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {a.services.map((svc, i) => (
+                              <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                                {svc.name}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="italic">{t('appointmentManagement.noService', 'Chưa chọn dịch vụ')}</span>
+                        )}
+                      </div>
+                      <div className="flex justify-end">
+                        <button onClick={() => handleOpenView(a)} className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-full">
+                          <Eye className="w-6 h-6" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          ) : (
+            // Tablet & Desktop Table View
+            <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+              <thead className={theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}>
+                <tr>
+                  <th className={`px-4 py-3 text-left text-xs font-semibold uppercase w-20 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.stt', 'STT')}</th>
+                  <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.code', 'Mã lịch')}</th>
+                  <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.patient', 'Bệnh nhân')}</th>
+                  <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.phone', 'Số điện thoại')}</th>
+                  <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.time', 'Thời gian')}</th>
+                  <th className={`px-4 py-3 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.services', 'Dịch vụ')}</th>
+                  <th className={`px-4 py-3 text-center text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.status', 'Trạng thái')}</th>
+                  <th className={`px-4 py-3 text-center text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('appointmentManagement.table.actions', 'Thao tác')}</th>
+                </tr>
+              </thead>
+              <tbody className={`${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
+                {appointments.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className={`px-4 py-16 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{t('appointmentManagement.noAppointments', 'Chưa có lịch hẹn nào')}</td>
+                  </tr>
+                ) : (
+                  appointments.map((a, index) => {
+                    const stt = currentPage * pageSize + index + 1;
+                    return (
+                      <tr key={a.appointmentId} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}>
+                        <td className={`px-4 py-4 text-center text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{stt}</td>
 <td className="px-4 py-4">
   <span className={`inline-flex px-4 py-2 rounded-md text-base font-mono font-bold border ${
     theme === 'dark' 
@@ -494,67 +555,68 @@ const handleConfirmFromModal = async () => {
     {a.appointmentCode}
   </span>
 </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
-                     
-                          <div className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{a.patientName}</div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
-                         
-                          <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{a.phone}</span>
-                        </div>
-                      </td>
-                      <td className={`px-4 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                        <div className="flex items-center gap-2">
-                          
-                          {formatDateTime(a.appointmentTime)}
-                        </div>
-                      </td>
-                      <td className={`px-4 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                        <div className="flex flex-wrap gap-1.5">
-                          {a.services?.length > 0 ? (
-                            <>
-                              {a.services.slice(0, 3).map((svc, i) => (
-                                <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800">
-                                  {svc.name}
-                                </span>
-                              ))}
-                              {a.services.length > 3 && (
-                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
-                                  +{a.services.length - 3} {t('appointmentManagement.moreServices', 'dịch vụ')}
-                                </span>
-                              )}
-                            </>
-                          ) : (
-                            <span className="text-gray-400 italic text-xs">{t('appointmentManagement.noService', 'Chưa chọn dịch vụ')}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 text-center">
-                        <span className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
-                          a.status === 'Confirmed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
-                          a.status === 'Cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
-                          'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
-                        }`}>
-                          {a.status === 'Pending' ? t('appointmentManagement.statusPending', 'Chờ xác nhận') : 
-                           a.status === 'Confirmed' ? t('appointmentManagement.statusConfirmed', 'Đã xác nhận') : 
-                           t('appointmentManagement.statusCancelled', 'Đã hủy')}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-center space-x-2">
-                        <button onClick={() => handleOpenView(a)} title={t('appointmentManagement.viewDetail', 'Xem chi tiết')}
-                          className="text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 p-2 rounded-full transition-colors">
-                          <Eye className="w-5 h-5" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2">
+                       
+                            <div className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{a.patientName}</div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2">
+                           
+                            <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{a.phone}</span>
+                          </div>
+                        </td>
+                        <td className={`px-4 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                          <div className="flex items-center gap-2">
+                            
+                            {formatDateTime(a.appointmentTime)}
+                          </div>
+                        </td>
+                        <td className={`px-4 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                          <div className="flex flex-wrap gap-1.5">
+                            {a.services?.length > 0 ? (
+                              <>
+                                {a.services.slice(0, 3).map((svc, i) => (
+                                  <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800">
+                                    {svc.name}
+                                  </span>
+                                ))}
+                                {a.services.length > 3 && (
+                                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
+                                    +{a.services.length - 3} {t('appointmentManagement.moreServices', 'dịch vụ')}
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              <span className="text-gray-400 italic text-xs">{t('appointmentManagement.noService', 'Chưa chọn dịch vụ')}</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-center">
+                          <span className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
+                            a.status === 'Confirmed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
+                            a.status === 'Cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                            'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+                          }`}>
+                            {a.status === 'Pending' ? t('appointmentManagement.statusPending', 'Chờ xác nhận') : 
+                             a.status === 'Confirmed' ? t('appointmentManagement.statusConfirmed', 'Đã xác nhận') : 
+                             t('appointmentManagement.statusCancelled', 'Đã hủy')}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-center space-x-2">
+                          <button onClick={() => handleOpenView(a)} title={t('appointmentManagement.viewDetail', 'Xem chi tiết')}
+                            className="text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 p-2 rounded-full transition-colors">
+                            <Eye className="w-5 h-5" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          )}
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       )}

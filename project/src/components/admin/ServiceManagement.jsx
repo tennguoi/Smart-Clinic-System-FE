@@ -4,6 +4,7 @@ import {
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
+import { useMediaQuery } from 'react-responsive';
 import { toastConfig } from '../../config/toastConfig';
 import AdminServiceApi from '../../api/AdminServiceApi';
 import CountBadge from '../common/CountBadge';
@@ -14,10 +15,16 @@ export default function ServiceManagement() {
   const { theme } = useTheme();
   const { t } = useTranslation();
 
+  // React Responsive Media Queries
+  const isDesktop = useMediaQuery({ minWidth: 1024 });
+  const isTablet = useMediaQuery({ minWidth: 768, maxWidth: 1023 });
+  const isMobile = useMediaQuery({ maxWidth: 767 });
+  const isSmallMobile = useMediaQuery({ maxWidth: 480 });
+
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState('create'); // create | edit | view
+  const [modalMode, setModalMode] = useState('create');
   const [selectedService, setSelectedService] = useState(null);
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -26,11 +33,11 @@ export default function ServiceManagement() {
   const [showToggleConfirmation, setShowToggleConfirmation] = useState(false);
   const [toggleTarget, setToggleTarget] = useState(null);
 
-  // Pagination
+  // Pagination - Responsive page size
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const pageSize = 8;
+  const pageSize = isMobile ? 5 : isTablet ? 6 : 8;
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,14 +59,12 @@ export default function ServiceManagement() {
     photoUrl: ''
   });
 
-  // Danh mục + dịch tự động
   const categoryOptions = [
     { value: 'Consultation', label: t('servicesManagement.categories.consultation') },
     { value: 'Test', label: t('servicesManagement.categories.test') },
     { value: 'Procedure', label: t('servicesManagement.categories.procedure') },
   ];
 
-  // KHOẢNG GIÁ ĐÃ DỊCH HOÀN TOÀN (không còn hardcode tiếng Việt)
   const priceRangeOptions = [
     { value: '', label: t('servicesManagement.common.all') },
     { value: '0-500000', label: t('servicesManagement.priceRanges.under500k') },
@@ -68,7 +73,6 @@ export default function ServiceManagement() {
     { value: '1500000-999999999', label: t('servicesManagement.priceRanges.over1_5m') },
   ];
 
-  // ==================== FETCH SERVICES ====================
   const fetchServices = async (page = 0) => {
     setLoading(true);
     let minPrice = null;
@@ -102,8 +106,7 @@ export default function ServiceManagement() {
 
   useEffect(() => {
     fetchServices(currentPage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, searchTerm, filterCategory, filterStatus, filterPriceRange]);
+  }, [currentPage, searchTerm, filterCategory, filterStatus, filterPriceRange, pageSize]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 0 && newPage < totalPages) setCurrentPage(newPage);
@@ -117,7 +120,6 @@ export default function ServiceManagement() {
     setCurrentPage(0);
   };
 
-  // ==================== DELETE ====================
   const handleDeleteClick = (service) => {
     setServiceToDelete(service);
     setShowDeleteConfirmation(true);
@@ -143,7 +145,6 @@ export default function ServiceManagement() {
     }
   };
 
-  // ==================== TOGGLE STATUS ====================
   const handleToggleStatusClick = (service) => {
     setToggleTarget({
       serviceId: service.serviceId,
@@ -173,7 +174,6 @@ export default function ServiceManagement() {
     }
   };
 
-  // ==================== MODAL ====================
   const handleOpenModal = (mode, service = null) => {
     setModalMode(mode);
     setSelectedService(service);
@@ -231,7 +231,6 @@ export default function ServiceManagement() {
       }
       const payload = { ...formData, price: parseFloat(formData.price), photoUrl };
 
-
       if (modalMode === 'edit') {
         await AdminServiceApi.updateService(selectedService.serviceId, payload);
         toast.success(t('servicesManagement.toast.updateSuccess'));
@@ -243,7 +242,6 @@ export default function ServiceManagement() {
         setTotalElements(prev => prev + 1);
       }
       handleCloseModal();
-
     } catch (err) {
       toast.error(err.response?.data?.message || t('common.error'));
     } finally {
@@ -270,28 +268,28 @@ export default function ServiceManagement() {
       <Toaster {...toastConfig} />
       <div className={`px-4 md:px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
 
-        {/* Header */}
+        {/* Header - Responsive */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="flex items-center gap-4">
-            <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 transition-colors duration-300`}>
-              <Briefcase className="w-9 h-9 text-blue-600" />
+            <h1 className={`${isSmallMobile ? 'text-2xl' : isMobile ? 'text-3xl' : 'text-4xl'} font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 transition-colors duration-300`}>
+              <Briefcase className={`${isSmallMobile ? 'w-7 h-7' : 'w-9 h-9'} text-blue-600`} />
               <span>{t('adminSidebar.services')}</span>
             </h1>
-            <CountBadge currentCount={services.length} totalCount={totalElements} label={t('servicesManagement.label')} />
+            {!isSmallMobile && <CountBadge currentCount={services.length} totalCount={totalElements} label={t('servicesManagement.label')} />}
           </div>
           <button
             onClick={() => handleOpenModal('create')}
-            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium"
+            className={`flex items-center gap-2 bg-blue-600 text-white ${isMobile ? 'px-4 py-2' : 'px-6 py-3'} rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium ${isMobile ? 'w-full justify-center' : ''}`}
           >
             <Plus className="w-5 h-5" /> {t('servicesManagement.createButton')}
           </button>
         </div>
 
-        {/* Bộ lọc */}
+        {/* Filters - Responsive Grid */}
         <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'} border rounded-lg p-5 mb-6 shadow-md transition-colors duration-300`}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
+          <div className={`grid ${isDesktop ? 'grid-cols-6' : isTablet ? 'grid-cols-3' : 'grid-cols-1'} gap-4 items-end`}>
             {/* Search */}
-            <div className="lg:col-span-2">
+            <div className={isDesktop ? 'col-span-2' : 'col-span-1'}>
               <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2 transition-colors duration-300`}>
                 {t('servicesManagement.searchLabel')}
               </label>
@@ -335,7 +333,7 @@ export default function ServiceManagement() {
               </select>
             </div>
 
-            {/* Price Range – ĐÃ DỊCH */}
+            {/* Price Range */}
             <div>
               <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                 {t('servicesManagement.priceRange')}
@@ -373,24 +371,32 @@ export default function ServiceManagement() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-16">
                       {t('servicesManagement.common.no')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">
-                      {t('servicesManagement.common.photo')}
-                    </th>
+                    {!isMobile && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">
+                        {t('servicesManagement.common.photo')}
+                      </th>
+                    )}
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       {t('servicesManagement.name')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">
-                      {t('servicesManagement.common.description')}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      {t('servicesManagement.category')}
-                    </th>
+                    {isDesktop && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        {t('servicesManagement.common.description')}
+                      </th>
+                    )}
+                    {!isMobile && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        {t('servicesManagement.category')}
+                      </th>
+                    )}
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       {t('servicesManagement.common.price')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      {t('servicesManagement.status')}
-                    </th>
+                    {!isMobile && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        {t('servicesManagement.status')}
+                      </th>
+                    )}
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">
                       {t('servicesManagement.common.actions')}
                     </th>
@@ -399,7 +405,7 @@ export default function ServiceManagement() {
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {services.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="text-center py-20 text-gray-500 dark:text-gray-400 text-lg">
+                      <td colSpan={isDesktop ? 8 : isMobile ? 4 : 6} className="text-center py-20 text-gray-500 dark:text-gray-400 text-lg">
                         {t('servicesManagement.noServices')}
                       </td>
                     </tr>
@@ -409,43 +415,51 @@ export default function ServiceManagement() {
                         <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                           {currentPage * pageSize + index + 1}
                         </td>
-                        <td className="px-6 py-4">
-                          {service.photoUrl ? (
-                            <img
-                              src={`${getImageUrl(service.photoUrl)}?t=${Date.now()}`}
-                              alt={service.name}
-                              className="h-14 w-14 object-cover rounded-lg shadow-sm mx-auto"
-                              onError={e => e.target.src = 'https://via.placeholder.com/64?text=No+Image'}
-                            />
-                          ) : (
-                            <div className="h-14 w-14 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center mx-auto">
-                              <ImageIcon className="w-8 h-8 text-gray-400" />
-                            </div>
-                          )}
-                        </td>
+                        {!isMobile && (
+                          <td className="px-6 py-4">
+                            {service.photoUrl ? (
+                              <img
+                                src={`${getImageUrl(service.photoUrl)}?t=${Date.now()}`}
+                                alt={service.name}
+                                className="h-14 w-14 object-cover rounded-lg shadow-sm mx-auto"
+                                onError={e => e.target.src = 'https://via.placeholder.com/64?text=No+Image'}
+                              />
+                            ) : (
+                              <div className="h-14 w-14 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center mx-auto">
+                                <ImageIcon className="w-8 h-8 text-gray-400" />
+                              </div>
+                            )}
+                          </td>
+                        )}
                         <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{service.name}</td>
-                        <td className="px-6 py-4 hidden md:table-cell text-gray-600 dark:text-gray-300 max-w-xs truncate">{service.description}</td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${getCategoryStyle(service.category)}`}>
-                            {getCategoryLabel(service.category)}
-                          </span>
-                        </td>
+                        {isDesktop && (
+                          <td className="px-6 py-4 text-gray-600 dark:text-gray-300 max-w-xs truncate">{service.description}</td>
+                        )}
+                        {!isMobile && (
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${getCategoryStyle(service.category)}`}>
+                              {getCategoryLabel(service.category)}
+                            </span>
+                          </td>
+                        )}
                         <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{formatPrice(service.price)}</td>
+                        {!isMobile && (
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex px-3 py-1.5 rounded-full text-xs font-bold ${service.isActive ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'}`}>
+                              {service.isActive ? t('servicesManagement.active') : t('servicesManagement.inactive')}
+                            </span>
+                          </td>
+                        )}
                         <td className="px-6 py-4">
-                          <span className={`inline-flex px-3 py-1.5 rounded-full text-xs font-bold ${service.isActive ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'}`}>
-                            {service.isActive ? t('servicesManagement.active') : t('servicesManagement.inactive')}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
+                          <div className={`flex items-center ${isMobile ? 'gap-2' : 'gap-3'}`}>
                             <button onClick={() => handleOpenModal('view', service)} title={t('servicesManagement.common.view')} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/30 transition">
-                              <Eye className="w-5 h-5" />
+                              <Eye className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
                             </button>
 
                             <button onClick={() => handleToggleStatusClick(service)}
                               title={service.isActive ? t('servicesManagement.deactivate') : t('servicesManagement.activate')}
                               className={`p-2 rounded-full transition ${service.isActive ? 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30' : 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30'}`}>
-                              <Power className="w-5 h-5" />
+                              <Power className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
                             </button>
                           </div>
                         </td>
@@ -456,17 +470,19 @@ export default function ServiceManagement() {
               </table>
             </div>
 
-            {/* Pagination - ĐÃ SỬA ĐẸP 100% */}
+            {/* Pagination - Responsive */}
             {totalPages > 1 && (
               <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
                 {/* First & Prev */}
-                <button
-                  onClick={() => handlePageChange(0)}
-                  disabled={currentPage === 0}
-                  className={`p-2.5 rounded-lg border ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'} disabled:opacity-50 disabled:cursor-not-allowed transition`}
-                >
-                  <ChevronsLeft className="w-5 h-5" />
-                </button>
+                {!isSmallMobile && (
+                  <button
+                    onClick={() => handlePageChange(0)}
+                    disabled={currentPage === 0}
+                    className={`p-2.5 rounded-lg border ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'} disabled:opacity-50 disabled:cursor-not-allowed transition`}
+                  >
+                    <ChevronsLeft className="w-5 h-5" />
+                  </button>
+                )}
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 0}
@@ -479,11 +495,11 @@ export default function ServiceManagement() {
                 <div className="flex items-center gap-1">
                   {(() => {
                     const pages = [];
-                    const startPage = Math.max(0, currentPage - 2);
-                    const endPage = Math.min(totalPages - 1, currentPage + 2);
+                    const maxVisible = isMobile ? 3 : 5;
+                    const startPage = Math.max(0, currentPage - Math.floor(maxVisible / 2));
+                    const endPage = Math.min(totalPages - 1, startPage + maxVisible - 1);
 
-                    // Luôn hiển thị trang 1
-                    if (startPage > 0) {
+                    if (startPage > 0 && !isMobile) {
                       pages.push(
                         <button
                           key={0}
@@ -499,13 +515,12 @@ export default function ServiceManagement() {
                       if (startPage > 1) pages.push(<span key="start-ellipsis" className="px-2 text-gray-500">...</span>);
                     }
 
-                    // Các trang ở giữa
                     for (let i = startPage; i <= endPage; i++) {
                       pages.push(
                         <button
                           key={i}
                           onClick={() => handlePageChange(i)}
-                          className={`px-4 py-2.5 rounded-lg border font-medium transition ${currentPage === i
+                          className={`${isMobile ? 'px-3 py-2' : 'px-4 py-2.5'} rounded-lg border font-medium transition ${currentPage === i
                               ? 'bg-blue-600 text-white border-blue-600'
                               : `${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'}`
                             }`}
@@ -515,8 +530,7 @@ export default function ServiceManagement() {
                       );
                     }
 
-                    // Trang cuối
-                    if (endPage < totalPages - 1) {
+                    if (endPage < totalPages - 1 && !isMobile) {
                       if (endPage < totalPages - 2) pages.push(<span key="end-ellipsis" className="px-2 text-gray-500">...</span>);
                       pages.push(
                         <button
@@ -544,63 +558,65 @@ export default function ServiceManagement() {
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
-                <button
-                  onClick={() => handlePageChange(totalPages - 1)}
-                  disabled={currentPage === totalPages - 1}
-                  className={`p-2.5 rounded-lg border ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'} disabled:opacity-50 disabled:cursor-not-allowed transition`}
-                >
-                  <ChevronsRight className="w-5 h-5" />
-                </button>
+                {!isSmallMobile && (
+                  <button
+                    onClick={() => handlePageChange(totalPages - 1)}
+                    disabled={currentPage === totalPages - 1}
+                    className={`p-2.5 rounded-lg border ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'} disabled:opacity-50 disabled:cursor-not-allowed transition`}
+                  >
+                    <ChevronsRight className="w-5 h-5" />
+                  </button>
+                )}
               </div>
             )}
           </>
         )}
 
-        {/* Modal Tạo / Sửa */}
+        {/* Modal Tạo / Sửa - Responsive */}
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transition-colors duration-300`}>
-              <div className={`flex justify-between items-center p-6 border-b sticky top-0 ${theme === 'dark' ? 'bg-gray-700' : 'bg-blue-50/80'} backdrop-blur`}>
-                <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-blue-700'}`}>
+            <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl ${isMobile ? 'max-w-full w-full' : 'max-w-2xl w-full'} max-h-[90vh] overflow-y-auto transition-colors duration-300`}>
+              <div className={`flex justify-between items-center ${isMobile ? 'p-4' : 'p-6'} border-b sticky top-0 ${theme === 'dark' ? 'bg-gray-700' : 'bg-blue-50/80'} backdrop-blur`}>
+                <h2 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold ${theme === 'dark' ? 'text-white' : 'text-blue-700'}`}>
                   {modalMode === 'create' ? t('servicesManagement.modal.createTitle') :
                     modalMode === 'view' ? t('servicesManagement.modal.viewTitle') :
                       t('servicesManagement.modal.editTitle')}
                 </h2>
                 <div className="flex items-center gap-3">
-                  {modalMode === 'view' && (
+                  {modalMode === 'view' && !isSmallMobile && (
                     <button onClick={handleSwitchToEdit} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                      <Edit className="w-5 h-5" /> {t('servicesManagement.common.edit')}
+                      <Edit className="w-5 h-5" /> {!isMobile && t('servicesManagement.common.edit')}
                     </button>
                   )}
                   <button onClick={handleCloseModal} className={`text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2 rounded-full ${theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-white/50'}`}>
-                    <X className="w-7 h-7" />
+                    <X className={`${isMobile ? 'w-6 h-6' : 'w-7 h-7'}`} />
                   </button>
                 </div>
               </div>
-              <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              <form onSubmit={handleSubmit} className={`${isMobile ? 'p-4' : 'p-6'} space-y-6`}>
                 {/* Image Upload */}
                 <div>
                   <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     {t('servicesManagement.modal.image')}
                   </label>
-                  <div className="flex items-center gap-4">
+                  <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} items-center gap-4`}>
                     <div className="flex-shrink-0">
                       {imagePreview ? (
-                        <img src={imagePreview.startsWith('data:') ? imagePreview : getImageUrl(imagePreview)} alt="Preview" className="h-32 w-32 object-cover rounded-lg border-2 border-gray-300 dark:border-gray-600" />
+                        <img src={imagePreview.startsWith('data:') ? imagePreview : getImageUrl(imagePreview)} alt="Preview" className={`${isMobile ? 'h-24 w-24' : 'h-32 w-32'} object-cover rounded-lg border-2 border-gray-300 dark:border-gray-600`} />
                       ) : (
-                        <div className={`h-32 w-32 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'} rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600`}>
-                          <ImageIcon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+                        <div className={`${isMobile ? 'h-24 w-24' : 'h-32 w-32'} ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'} rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600`}>
+                          <ImageIcon className={`${isMobile ? 'w-10 h-10' : 'w-12 h-12'} text-gray-400 dark:text-gray-500`} />
                         </div>
                       )}
                     </div>
                     {modalMode !== 'view' && (
-                      <div>
+                      <div className={isMobile ? 'w-full' : ''}>
                         <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="image-upload" />
-                        <label htmlFor="image-upload" className={`flex items-center gap-2 px-4 py-2 ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} rounded-lg cursor-pointer transition border`}>
+                        <label htmlFor="image-upload" className={`flex items-center ${isMobile ? 'justify-center w-full' : ''} gap-2 px-4 py-2 ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} rounded-lg cursor-pointer transition border`}>
                           <Upload className="w-5 h-5" />
                           {imagePreview ? t('servicesManagement.modal.changeImage') : t('servicesManagement.modal.chooseImage')}
                         </label>
-                        <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
+                        <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mt-1 ${isMobile ? 'text-center' : ''}`}>
                           PNG, JPG, GIF {t('servicesManagement.modal.maxSize')}
                         </p>
                       </div>
@@ -609,8 +625,8 @@ export default function ServiceManagement() {
                 </div>
 
                 {/* Form Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
+                <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
+                  <div className={isMobile ? 'col-span-1' : 'col-span-2'}>
                     <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       {t('servicesManagement.name')} <span className="text-red-500">*</span>
                     </label>
@@ -624,7 +640,7 @@ export default function ServiceManagement() {
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 dark:disabled:text-gray-300 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                     />
                   </div>
-                  <div className="md:col-span-2">
+                  <div className={isMobile ? 'col-span-1' : 'col-span-2'}>
                     <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       {t('servicesManagement.common.description')} <span className="text-red-500">*</span>
                     </label>
@@ -663,7 +679,6 @@ export default function ServiceManagement() {
                       value={formData.price}
                       onChange={handleInputChange}
                       min="0"
-
                       required
                       disabled={modalMode === 'view'}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 dark:disabled:text-gray-300 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
@@ -671,8 +686,15 @@ export default function ServiceManagement() {
                   </div>
                 </div>
 
+                {/* Edit Button for mobile view mode */}
+                {modalMode === 'view' && isSmallMobile && (
+                  <button type="button" onClick={handleSwitchToEdit} className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition">
+                    <Edit className="w-5 h-5" /> {t('servicesManagement.common.edit')}
+                  </button>
+                )}
+
                 {modalMode !== 'view' && (
-                  <div className="flex gap-3 pt-4">
+                  <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-3 pt-4`}>
                     <button type="submit" disabled={loading || uploadingImage} className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-70">
                       {uploadingImage ? t('servicesManagement.common.processing') : loading ? t('servicesManagement.common.processing') : modalMode === 'create' ? t('servicesManagement.createButton') : t('servicesManagement.common.save')}
                     </button>
@@ -686,18 +708,18 @@ export default function ServiceManagement() {
           </div>
         )}
 
-        {/* Confirm Delete Modal */}
+        {/* Confirm Delete Modal - Responsive */}
         {showDeleteConfirmation && serviceToDelete && (
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-            <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl max-w-sm w-full p-6 text-center transition-colors duration-300`}>
-              <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-              <h3 className={`text-xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl ${isMobile ? 'max-w-xs' : 'max-w-sm'} w-full ${isMobile ? 'p-5' : 'p-6'} text-center transition-colors duration-300`}>
+              <AlertTriangle className={`${isMobile ? 'w-10 h-10' : 'w-12 h-12'} text-red-500 mx-auto mb-4`} />
+              <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 {t('common.confirmDelete')}
               </h3>
-              <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-6`}>
+              <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-6 ${isMobile ? 'text-sm' : ''}`}>
                 {t('servicesManagement.confirm.deleteText', { name: serviceToDelete.name })}
               </p>
-              <div className="flex gap-3">
+              <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-3`}>
                 <button onClick={handleConfirmDelete} disabled={loading} className="flex-1 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 font-semibold transition disabled:opacity-70">
                   {loading ? t('servicesManagement.common.processing') : t('servicesManagement.common.delete')}
                 </button>
@@ -709,18 +731,18 @@ export default function ServiceManagement() {
           </div>
         )}
 
-        {/* Confirm Toggle Status Modal */}
+        {/* Confirm Toggle Status Modal - Responsive */}
         {showToggleConfirmation && toggleTarget && (
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-            <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl max-w-sm w-full p-6 text-center transition-colors duration-300`}>
-              <Power className={`w-12 h-12 mx-auto mb-4 ${toggleTarget.currentStatus ? 'text-red-500' : 'text-green-500'}`} />
-              <h3 className={`text-xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl ${isMobile ? 'max-w-xs' : 'max-w-sm'} w-full ${isMobile ? 'p-5' : 'p-6'} text-center transition-colors duration-300`}>
+              <Power className={`${isMobile ? 'w-10 h-10' : 'w-12 h-12'} mx-auto mb-4 ${toggleTarget.currentStatus ? 'text-red-500' : 'text-green-500'}`} />
+              <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 {toggleTarget.currentStatus ? t('servicesManagement.confirm.deactivateTitle') : t('servicesManagement.confirm.activateTitle')}
               </h3>
-              <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-6`}>
+              <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-6 ${isMobile ? 'text-sm' : ''}`}>
                 {t('servicesManagement.confirm.toggleText', { name: toggleTarget.name })}
               </p>
-              <div className="flex gap-3">
+              <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-3`}>
                 <button
                   onClick={handleConfirmToggle}
                   disabled={loading}

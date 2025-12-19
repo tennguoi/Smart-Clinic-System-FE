@@ -1,6 +1,6 @@
-
 // AIAssistantPanel.jsx
 import { useState, useEffect, useRef } from 'react';
+import { useMediaQuery } from 'react-responsive';
 import { Sparkles, Send, Menu, Plus, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -12,6 +12,10 @@ const API_BASE_URL = "http://localhost:8082/api/v1/tmh-assistant";
 export default function AIAssistantPanel({ onApplyTreatmentPlan }) {
   const { t } = useTranslation();
   const { theme } = useTheme();
+
+  // Media queries từ react-responsive
+  const isMobile = useMediaQuery({ query: '(max-width: 1023px)' });
+  const isDesktop = useMediaQuery({ query: '(min-width: 1024px)' });
 
   const [showHistory, setShowHistory] = useState(false);
   const [conversationHistory, setConversationHistory] = useState([]);
@@ -329,30 +333,30 @@ export default function AIAssistantPanel({ onApplyTreatmentPlan }) {
     <div className={`h-full flex flex-col relative ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
       {/* Header */}
       <div
-        className={`border-b px-4 lg:px-6 py-4 lg:py-5 shadow-sm flex items-center justify-between ${
+        className={`border-b px-4 ${isDesktop ? 'lg:px-6' : ''} py-4 ${isDesktop ? 'lg:py-5' : ''} shadow-sm flex items-center justify-between ${
           theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
         }`}
       >
-        <div className="flex items-center gap-2 lg:gap-4">
+        <div className={`flex items-center gap-2 ${isDesktop ? 'lg:gap-4' : ''}`}>
           <button
             onClick={() => setShowHistory(!showHistory)}
-            className={`p-2 lg:p-2.5 rounded-xl transition-colors ${
+            className={`p-2 ${isDesktop ? 'lg:p-2.5' : ''} rounded-xl transition-colors ${
               theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
             }`}
             title={t('aiAssistant.historyToggle')}
           >
-            <Menu className={`w-4 h-4 lg:w-5 lg:h-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
+            <Menu className={`w-4 h-4 ${isDesktop ? 'lg:w-5 lg:h-5' : ''} ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
           </button>
 
-          <div className="flex items-center gap-2 lg:gap-4">
+          <div className={`flex items-center gap-2 ${isDesktop ? 'lg:gap-4' : ''}`}>
             <div className="relative">
-              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-blue-600 to-sky-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <Sparkles className="w-5 h-5 lg:w-7 lg:h-7 text-white" />
+              <div className={`w-10 h-10 ${isDesktop ? 'lg:w-12 lg:h-12' : ''} bg-gradient-to-br from-blue-600 to-sky-600 rounded-2xl flex items-center justify-center shadow-lg`}>
+                <Sparkles className={`w-5 h-5 ${isDesktop ? 'lg:w-7 lg:h-7' : ''} text-white`} />
               </div>
-              <div className="absolute -bottom-1 -right-1 w-3 h-3 lg:w-4 lg:h-4 bg-green-500 rounded-full border-2 border-white animate-pulse" />
+              <div className={`absolute -bottom-1 -right-1 w-3 h-3 ${isDesktop ? 'lg:w-4 lg:h-4' : ''} bg-green-500 rounded-full border-2 border-white animate-pulse`} />
             </div>
             <div>
-              <h3 className={`text-base lg:text-lg font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+              <h3 className={`text-base ${isDesktop ? 'lg:text-lg' : ''} font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
                 {t('aiAssistant.title')}
               </h3>
               <p className={`text-xs font-semibold flex items-center gap-1 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
@@ -385,11 +389,11 @@ export default function AIAssistantPanel({ onApplyTreatmentPlan }) {
       {showHistory && (
         <div
           ref={historyRef}
-          className={`w-64 lg:w-80 absolute inset-y-0 left-0 z-20 shadow-2xl flex flex-col border-r ${
+          className={`w-64 ${isDesktop ? 'lg:w-80' : ''} absolute inset-y-0 left-0 z-20 shadow-2xl flex flex-col border-r ${
             theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
           }`}
         >
-          <div className={`p-4 lg:p-5 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+          <div className={`p-4 ${isDesktop ? 'lg:p-5' : ''} border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
             <button
               onClick={createNewConversation}
               disabled={isLoading}
@@ -440,12 +444,12 @@ export default function AIAssistantPanel({ onApplyTreatmentPlan }) {
       )}
 
       {/* Messages */}
-      <div className={`flex-1 overflow-y-auto p-3 lg:p-6 space-y-3 ${showHistory ? 'ml-64 lg:ml-80' : ''}`}>
+      <div className={`flex-1 overflow-y-auto p-3 ${isDesktop ? 'lg:p-6' : ''} space-y-3 ${showHistory ? `ml-64 ${isDesktop ? 'lg:ml-80' : ''}` : ''}`}>
         {messages.map((msg) => (
           <div key={msg.id}>
             <div className={`flex ${msg.role === 'doctor' ? 'justify-end' : 'justify-start'}`}>
               <div
-                className={`max-w-xs lg:max-w-2xl rounded-2xl px-4 py-3 shadow-md ${
+                className={`max-w-xs ${isDesktop ? 'lg:max-w-2xl' : ''} rounded-2xl px-4 py-3 shadow-md ${
                   msg.role === 'doctor'
                     ? 'bg-gradient-to-r from-blue-600 to-sky-600 text-white'
                     : msg.isError
@@ -453,7 +457,7 @@ export default function AIAssistantPanel({ onApplyTreatmentPlan }) {
                       : (theme === 'dark' ? 'bg-gray-800 border border-gray-700 text-gray-200' : 'bg-white border border-gray-200 text-gray-800')
                 }`}
               >
-                <p className="text-xs lg:text-sm leading-relaxed whitespace-pre-wrap">
+                <p className={`text-xs ${isDesktop ? 'lg:text-sm' : ''} leading-relaxed whitespace-pre-wrap`}>
                   {msg.displayedText !== undefined ? msg.displayedText : msg.content}
                   {typingMessageId === msg.id && (
                     <span className={`inline-block w-2 h-5 ml-1 animate-pulse ${theme === 'dark' ? 'bg-gray-400' : 'bg-gray-700'}`} />
@@ -495,7 +499,7 @@ export default function AIAssistantPanel({ onApplyTreatmentPlan }) {
       </div>
 
       {/* Input */}
-      <div className={`border-t p-3 lg:p-6 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+      <div className={`border-t p-3 ${isDesktop ? 'lg:p-6' : ''} ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         <div className="flex gap-2">
           <input
             type="text"

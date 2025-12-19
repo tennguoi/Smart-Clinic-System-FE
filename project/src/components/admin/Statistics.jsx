@@ -3,6 +3,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
     LineChart, Line
 } from 'recharts';
+import { useMediaQuery } from 'react-responsive';
 import axiosInstance from '../../utils/axiosConfig';
 import { 
     FaCalendarCheck, FaUserInjured, FaMoneyBillWave, FaUserMd, 
@@ -30,8 +31,14 @@ const StatisticsPage = () => {
     const { theme } = useTheme();
     const currentLang = i18n.language;
 
+    // Media queries using react-responsive
+    const isDesktop = useMediaQuery({ minWidth: 1024 });
+    const isTablet = useMediaQuery({ minWidth: 768, maxWidth: 1023 });
+    const isMobile = useMediaQuery({ maxWidth: 767 });
+    const isSmallMobile = useMediaQuery({ maxWidth: 480 });
+
     const [topServices, setTopServices] = useState([]);
-    const [statType, setStatType] = useState('appointment'); // 'appointment', 'medical_record', 'revenue'
+    const [statType, setStatType] = useState('appointment');
     const [kpi, setKpi] = useState({
         totalAppointmentsToday: 0,
         appointmentsGrowth: 0,
@@ -48,7 +55,6 @@ const StatisticsPage = () => {
     const [error, setError] = useState(null);
     const [exporting, setExporting] = useState(false);
     
-    // Date filter states
     const [rangeType, setRangeType] = useState(() => {
         try {
             return localStorage.getItem(RANGE_STORAGE_KEY) || 'day';
@@ -60,7 +66,6 @@ const StatisticsPage = () => {
     const [customStartDate, setCustomStartDate] = useState(new Date());
     const [customEndDate, setCustomEndDate] = useState(new Date());
 
-    // Derived startDate and endDate
     const { startDate, endDate } = useMemo(() => {
         let start = new Date(selectedDate);
         let end = new Date(selectedDate);
@@ -117,7 +122,6 @@ const StatisticsPage = () => {
 
     const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
-    // Process chart data with placeholder when empty
     const appointmentTrendData = useMemo(() => {
         if (!appointmentTrend || appointmentTrend.length === 0) {
             return [{ date: t('statistics.empty', { defaultValue: 'Chưa có dữ liệu' }), value: 0 }];
@@ -191,7 +195,6 @@ const StatisticsPage = () => {
         fetchData();
     }, [startDate, endDate, statType, currentLang, t]);
 
-    // Export Excel function
     const handleExportExcel = async () => {
         setExporting(true);
         try {
@@ -202,16 +205,12 @@ const StatisticsPage = () => {
                 endDate: rangeType === 'custom' ? endDate : undefined,
             };
 
-            // Remove undefined values
             Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
 
             const blob = await adminStatisticsApi.exportStatisticsToExcel(params);
-
-            // Tạo URL từ blob
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             
-            // Tạo tên file dựa trên khoảng thời gian
             let fileName = 'ThongKe.xlsx';
             if (rangeType === 'custom') {
                 fileName = `ThongKe_${startDate}_${endDate}.xlsx`;
@@ -229,7 +228,6 @@ const StatisticsPage = () => {
             link.click();
             document.body.removeChild(link);
             
-            // Giải phóng URL
             setTimeout(() => {
                 window.URL.revokeObjectURL(url);
             }, 100);
@@ -245,7 +243,6 @@ const StatisticsPage = () => {
         }
     };
 
-    // Refresh khi có thanh toán thành công
     useEffect(() => {
         const handlePaymentCompleted = () => {
             setLoading(true);
@@ -273,22 +270,24 @@ const StatisticsPage = () => {
         const isGood = isReverse ? !isPositive : isPositive;
 
         return (
-            <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-6 rounded-xl shadow-sm border flex items-center justify-between transition-colors duration-300`}>
-                <div>
-                    <p className={`text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{title}</p>
-                    <h3 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{value}</h3>
+            <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} ${isMobile ? 'p-4' : 'p-6'} rounded-xl shadow-sm border flex items-center justify-between transition-colors duration-300`}>
+                <div className="flex-1 min-w-0">
+                    <p className={`${isSmallMobile ? 'text-xs' : 'text-sm'} font-medium mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} truncate`}>{title}</p>
+                    <h3 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} truncate`}>{value}</h3>
                     <div className="flex items-center mt-2">
                         <span className={`flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${isGood ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
                             {isPositive ? <FaArrowUp size={10} className="mr-1"/> : <FaArrowDown size={10} className="mr-1"/>}
                             {Math.abs(growth).toFixed(1)}%
                         </span>
-                        <span className={`text-xs ml-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`}>
-                            {t('common.vsPrevious', { defaultValue: 'vs kỳ trước' })}
-                        </span>
+                        {!isSmallMobile && (
+                            <span className={`text-xs ml-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`}>
+                                {t('common.vsPrevious', { defaultValue: 'vs kỳ trước' })}
+                            </span>
+                        )}
                     </div>
                 </div>
-                <div className={`p-4 rounded-full ${bgColor} ${color}`}>
-                    <Icon size={24} />
+                <div className={`${isMobile ? 'p-3' : 'p-4'} rounded-full ${bgColor} ${color} flex-shrink-0 ml-2`}>
+                    <Icon size={isMobile ? 20 : 24} />
                 </div>
             </div>
         );
@@ -297,29 +296,29 @@ const StatisticsPage = () => {
     return (
         <div className="space-y-6 animate-fade-in pb-10">
             {/* Header */}
-            <header className={`flex flex-wrap items-center justify-between gap-4 rounded-2xl border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-4 shadow-sm transition-colors duration-300`}>
+            <header className={`flex flex-wrap items-center justify-between gap-4 rounded-2xl border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} ${isMobile ? 'p-3' : 'p-4'} shadow-sm transition-colors duration-300`}>
                 <div className="flex items-center gap-3">
-                    <div className={`rounded-full p-3 ${theme === 'dark' ? 'bg-blue-900/20 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
-                        <FaChartBar className="h-6 w-6" />
+                    <div className={`rounded-full ${isMobile ? 'p-2' : 'p-3'} ${theme === 'dark' ? 'bg-blue-900/20 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+                        <FaChartBar className={`${isMobile ? 'h-5 w-5' : 'h-6 w-6'}`} />
                     </div>
                     <div>
-                        <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <p className={`${isSmallMobile ? 'text-xs' : 'text-sm'} font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                             {t('adminSidebar.statistics', { defaultValue: 'Thống kê' })}
                         </p>
-                        <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                        <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                             {t('statistics.overview', { defaultValue: 'Thống kê tổng quan' })}
                         </h2>
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4">
-                    <div className={`flex rounded-full p-1 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                <div className={`flex ${isMobile ? 'flex-col w-full' : 'flex-wrap'} items-center gap-4`}>
+                    <div className={`flex ${isMobile ? 'w-full overflow-x-auto' : ''} rounded-full p-1 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
                         {RANGE_OPTIONS.map((option) => (
                             <button
                                 key={option.value}
                                 type="button"
                                 onClick={() => setRangeType(option.value)}
-                                className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${
+                                className={`${isSmallMobile ? 'px-2 py-1 text-xs' : 'px-4 py-1.5 text-sm'} font-semibold rounded-full transition-all whitespace-nowrap ${
                                     option.value === rangeType
                                         ? `${theme === 'dark' ? 'bg-gray-600 text-blue-300' : 'bg-white text-blue-600'} shadow`
                                         : `${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`
@@ -330,14 +329,14 @@ const StatisticsPage = () => {
                         ))}
                     </div>
 
-                    <div className={`flex items-center gap-2 rounded-full border px-4 py-2 shadow-sm ${theme === 'dark' ? 'border-gray-600 bg-gray-800' : 'border-gray-200 bg-white'}`}>
-                        <CalendarDays className="h-5 w-5 text-blue-600" />
+                    <div className={`flex items-center gap-2 rounded-full border ${isMobile ? 'w-full justify-center' : ''} ${isSmallMobile ? 'px-2 py-1.5' : 'px-4 py-2'} shadow-sm ${theme === 'dark' ? 'border-gray-600 bg-gray-800' : 'border-gray-200 bg-white'}`}>
+                        <CalendarDays className={`${isSmallMobile ? 'h-4 w-4' : 'h-5 w-5'} text-blue-600`} />
                         {rangeType === 'custom' ? (
                             <div className="flex items-center gap-2">
                                 <DatePicker
                                     selected={customStartDate}
                                     onChange={(date) => date && setCustomStartDate(date)}
-                                    className={`w-24 bg-transparent text-sm font-semibold focus:outline-none text-center ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}
+                                    className={`${isSmallMobile ? 'w-20 text-xs' : 'w-24 text-sm'} bg-transparent font-semibold focus:outline-none text-center ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}
                                     dateFormat="dd/MM/yyyy"
                                     placeholderText={t('common.fromDate', { defaultValue: 'Từ ngày' })}
                                 />
@@ -345,7 +344,7 @@ const StatisticsPage = () => {
                                 <DatePicker
                                     selected={customEndDate}
                                     onChange={(date) => date && setCustomEndDate(date)}
-                                    className={`w-24 bg-transparent text-sm font-semibold focus:outline-none text-center ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}
+                                    className={`${isSmallMobile ? 'w-20 text-xs' : 'w-24 text-sm'} bg-transparent font-semibold focus:outline-none text-center ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}
                                     dateFormat="dd/MM/yyyy"
                                     placeholderText={t('common.toDate', { defaultValue: 'Đến ngày' })}
                                     minDate={customStartDate}
@@ -355,26 +354,25 @@ const StatisticsPage = () => {
                             <DatePicker
                                 selected={selectedDate}
                                 onChange={(date) => date && setSelectedDate(date)}
-                                className={`w-32 bg-transparent text-sm font-semibold focus:outline-none ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}
+                                className={`${isSmallMobile ? 'w-24 text-xs' : 'w-32 text-sm'} bg-transparent font-semibold focus:outline-none ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}
                                 calendarClassName={`rounded-xl border shadow-lg ${theme === 'dark' ? 'border-gray-700 bg-gray-800 text-white' : 'border-gray-200 bg-white'}`}
                                 {...datePickerConfig}
                             />
                         )}
                     </div>
 
-                    {/* Export Excel Button */}
                     <button
                         onClick={handleExportExcel}
                         disabled={exporting}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-white transition-all shadow-sm ${
+                        className={`flex items-center gap-2 ${isMobile ? 'w-full justify-center' : ''} ${isSmallMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'} rounded-lg font-semibold text-white transition-all shadow-sm ${
                             exporting
                                 ? 'bg-gray-400 cursor-not-allowed'
                                 : 'bg-green-600 hover:bg-green-700 active:scale-95'
                         }`}
                         title={t('statistics.exportExcel', { defaultValue: 'Xuất file Excel' })}
                     >
-                        <FaFileExcel className="h-5 w-5" />
-                        <span className="hidden sm:inline">
+                        <FaFileExcel className={`${isSmallMobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
+                        <span className={isSmallMobile ? 'text-xs' : ''}>
                             {exporting 
                                 ? t('statistics.exporting', { defaultValue: 'Đang xuất...' })
                                 : t('statistics.export', { defaultValue: 'Xuất Excel' })
@@ -385,7 +383,7 @@ const StatisticsPage = () => {
             </header>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+            <div className={`grid ${isSmallMobile ? 'grid-cols-1' : isMobile ? 'grid-cols-2' : isTablet ? 'grid-cols-2' : 'grid-cols-4'} gap-${isMobile ? '4' : '6'} mt-6`}>
                 <StatCard 
                     title={t('statistics.todayAppointments', { defaultValue: 'Lịch Hẹn Hôm Nay' })} 
                     value={kpi.totalAppointmentsToday} 
@@ -422,17 +420,17 @@ const StatisticsPage = () => {
             </div>
 
             {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-                <div className={`p-6 rounded-xl shadow-sm border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} transition-colors duration-300`}>
-                    <h2 className={`text-lg font-semibold mb-6 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+            <div className={`grid grid-cols-1 ${isDesktop ? 'lg:grid-cols-2' : ''} gap-${isMobile ? '4' : '6'} mt-6`}>
+                <div className={`${isMobile ? 'p-4' : 'p-6'} rounded-xl shadow-sm border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} transition-colors duration-300`}>
+                    <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold mb-6 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                         {t('statistics.appointmentTrend', { defaultValue: 'Xu Hướng Lịch Hẹn (7 Ngày)' })}
                     </h2>
-                    <div className="h-[300px] w-full">
+                    <div className={`${isMobile ? 'h-[250px]' : 'h-[300px]'} w-full`}>
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={appointmentTrendData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
-                                <XAxis dataKey="date" tick={{fontSize: 12}} stroke={theme === 'dark' ? '#9ca3af' : '#4b5563'} />
-                                <YAxis tick={{fontSize: 12}} stroke={theme === 'dark' ? '#9ca3af' : '#4b5563'} />
+                                <XAxis dataKey="date" tick={{fontSize: isMobile ? 10 : 12}} stroke={theme === 'dark' ? '#9ca3af' : '#4b5563'} />
+                                <YAxis tick={{fontSize: isMobile ? 10 : 12}} stroke={theme === 'dark' ? '#9ca3af' : '#4b5563'} />
                                 <Tooltip 
                                     contentStyle={{ 
                                         borderRadius: '8px', 
@@ -442,23 +440,23 @@ const StatisticsPage = () => {
                                         color: theme === 'dark' ? 'white' : '#1f2937'
                                     }} 
                                 />
-                                <Line type="monotone" dataKey="value" name={t('common.appointments', { defaultValue: 'Lịch hẹn' })} stroke="#3B82F6" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} />
+                                <Line type="monotone" dataKey="value" name={t('common.appointments', { defaultValue: 'Lịch hẹn' })} stroke="#3B82F6" strokeWidth={isMobile ? 2 : 3} dot={{r: isMobile ? 3 : 4}} activeDot={{r: isMobile ? 5 : 6}} />
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                <div className={`p-6 rounded-xl shadow-sm border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} transition-colors duration-300`}>
-                    <h2 className={`text-lg font-semibold mb-6 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                <div className={`${isMobile ? 'p-4' : 'p-6'} rounded-xl shadow-sm border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} transition-colors duration-300`}>
+                    <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold mb-6 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                         {t('statistics.revenueTrend', { defaultValue: 'Xu Hướng Doanh Thu (7 Ngày)' })}
                     </h2>
-                    <div className="h-[300px] w-full">
+                    <div className={`${isMobile ? 'h-[250px]' : 'h-[300px]'} w-full`}>
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={revenueTrendData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
-                                <XAxis dataKey="date" tick={{fontSize: 12}} stroke={theme === 'dark' ? '#9ca3af' : '#4b5563'} />
+                                <XAxis dataKey="date" tick={{fontSize: isMobile ? 10 : 12}} stroke={theme === 'dark' ? '#9ca3af' : '#4b5563'} />
                                 <YAxis 
-                                    tick={{fontSize: 12}} 
+                                    tick={{fontSize: isMobile ? 10 : 12}} 
                                     stroke={theme === 'dark' ? '#9ca3af' : '#4b5563'}
                                     tickFormatter={(v) => new Intl.NumberFormat(currentLang === 'vi' ? 'vi-VN' : 'en-US', { notation: "compact" }).format(v)} 
                                 />
@@ -472,7 +470,7 @@ const StatisticsPage = () => {
                                         color: theme === 'dark' ? 'white' : '#1f2937'
                                     }}
                                 />
-                                <Bar dataKey="value" name={t('common.revenue', { defaultValue: 'Doanh thu' })} fill="#F59E0B" radius={[4, 4, 0, 0]} barSize={40} />
+                                <Bar dataKey="value" name={t('common.revenue', { defaultValue: 'Doanh thu' })} fill="#F59E0B" radius={[4, 4, 0, 0]} barSize={isMobile ? 30 : 40} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -480,36 +478,54 @@ const StatisticsPage = () => {
             </div>
 
             {/* Top Services */}
-            <div className={`p-6 rounded-xl shadow-sm border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} mt-6 transition-colors duration-300`}>
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+            <div className={`${isMobile ? 'p-4' : 'p-6'} rounded-xl shadow-sm border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} mt-6 transition-colors duration-300`}>
+                <div className={`flex ${isMobile ? 'flex-col gap-3' : 'flex-row justify-between items-center'} mb-6`}>
+                    <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                         {t('statistics.topServices', { defaultValue: 'Top 5 Dịch Vụ Phổ Biến' })}
                     </h2>
                     
-                    <div className={`flex p-1 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                        <button onClick={() => setStatType('appointment')} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${statType === 'appointment' ? `${theme === 'dark' ? 'bg-gray-600 text-blue-300' : 'bg-white text-blue-600'} shadow-sm` : `${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}`}>
-                            <FaCalendarCheck /> {t('statistics.byAppointment', { defaultValue: 'Đặt lịch' })}
+                    <div className={`flex ${isMobile ? 'w-full overflow-x-auto' : ''} p-1 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                        <button 
+                            onClick={() => setStatType('appointment')} 
+                            className={`${isSmallMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-xs'} font-medium rounded-md transition-all flex items-center gap-1 whitespace-nowrap ${statType === 'appointment' ? `${theme === 'dark' ? 'bg-gray-600 text-blue-300' : 'bg-white text-blue-600'} shadow-sm` : `${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}`}
+                        >
+                            <FaCalendarCheck size={isSmallMobile ? 12 : 14} /> {t('statistics.byAppointment', { defaultValue: 'Đặt lịch' })}
                         </button>
-                        <button onClick={() => setStatType('medical_record')} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${statType === 'medical_record' ? `${theme === 'dark' ? 'bg-gray-600 text-green-300' : 'bg-white text-green-600'} shadow-sm` : `${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}`}>
-                            <FaStethoscope /> {t('statistics.byExamination', { defaultValue: 'Khám thật' })}
+                        <button 
+                            onClick={() => setStatType('medical_record')} 
+                            className={`${isSmallMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-xs'} font-medium rounded-md transition-all flex items-center gap-1 whitespace-nowrap ${statType === 'medical_record' ? `${theme === 'dark' ? 'bg-gray-600 text-green-300' : 'bg-white text-green-600'} shadow-sm` : `${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}`}
+                        >
+                            <FaStethoscope size={isSmallMobile ? 12 : 14} /> {t('statistics.byExamination', { defaultValue: 'Khám thật' })}
                         </button>
-                        {/* <button onClick={() => setStatType('revenue')} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${statType === 'revenue' ? `${theme === 'dark' ? 'bg-gray-600 text-yellow-300' : 'bg-white text-yellow-600'} shadow-sm` : `${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}`}>
-                            <FaCoins /> {t('statistics.byRevenue', { defaultValue: 'Doanh thu' })}
+                        {/* <button 
+                            onClick={() => setStatType('revenue')} 
+                            className={`${isSmallMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-xs'} font-medium rounded-md transition-all flex items-center gap-1 whitespace-nowrap ${statType === 'revenue' ? `${theme === 'dark' ? 'bg-gray-600 text-yellow-300' : 'bg-white text-yellow-600'} shadow-sm` : `${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}`}
+                        >
+                            <FaCoins size={isSmallMobile ? 12 : 14} /> {t('statistics.byRevenue', { defaultValue: 'Doanh thu' })}
                         </button> */}
                     </div>
                 </div>
 
-                <div className="h-[400px] w-full">
+                <div className={`${isMobile ? 'h-[350px]' : 'h-[400px]'} w-full`}>
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart layout="vertical" data={topServices} margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                        <BarChart 
+                            layout="vertical" 
+                            data={topServices} 
+                            margin={{ 
+                                top: 5, 
+                                right: isMobile ? 10 : 30, 
+                                left: isMobile ? 20 : 40, 
+                                bottom: 5 
+                            }}
+                        >
                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
                             <XAxis type="number" hide />
                             <YAxis 
                                 dataKey="name" 
                                 type="category" 
-                                width={180} 
+                                width={isMobile ? 120 : 180} 
                                 tick={{
-                                    fontSize: 12, 
+                                    fontSize: isMobile ? 10 : 12, 
                                     fill: theme === 'dark' ? '#d1d5db' : '#4B5563', 
                                     fontWeight: 500
                                 }} 
@@ -521,11 +537,12 @@ const StatisticsPage = () => {
                                     border: 'none', 
                                     boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                                     backgroundColor: theme === 'dark' ? '#1f2937' : 'white',
-                                    color: theme === 'dark' ? 'white' : '#1f2937'
+                                    color: theme === 'dark' ? 'white' : '#1f2937',
+                                    fontSize: isMobile ? '12px' : '14px'
                                 }}
                                 formatter={(value, name, props) => [props.payload.displayValue, statType === 'revenue' ? t('common.revenue') : t('common.quantity')]}
                             />
-                            <Bar dataKey="usage" radius={[0, 4, 4, 0]} barSize={32}>
+                            <Bar dataKey="usage" radius={[0, 4, 4, 0]} barSize={isMobile ? 24 : 32}>
                                 {topServices.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}

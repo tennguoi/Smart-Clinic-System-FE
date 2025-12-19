@@ -79,6 +79,7 @@ export default function WaitingQueueScreen({ onCallNext, isLoading }) {
           </h1>
           <p className={`text-xl mt-2 font-medium ${theme === 'dark' ? 'text-blue-300' : 'text-blue-600'}`}>
             {t('waitingQueue.patientsWaiting', { count: totalElements })} 
+            {totalElements > 0 && ` (${t('waitingQueue.showing', 'Đang hiển thị')} ${currentPage * pageSize + 1}-${Math.min((currentPage + 1) * pageSize, totalElements)})`}
           </p>
         </div>
       </div>

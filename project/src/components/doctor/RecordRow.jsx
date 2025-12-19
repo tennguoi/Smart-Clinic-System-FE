@@ -1,5 +1,6 @@
 // src/components/doctor/RecordRow.jsx
 import { useState } from 'react';
+import { useMediaQuery } from 'react-responsive';
 import { Pencil, Trash2, Pill, Download, Eye } from 'lucide-react';
 import { medicalRecordApi } from '../../api/medicalRecordApi';
 import toast from 'react-hot-toast';
@@ -12,6 +13,10 @@ import { useTranslation } from 'react-i18next';
 const RecordRow = ({ index, record, onUpdated, onError, onDelete, onViewHistory }) => {
   const { t } = useTranslation();
   const { theme } = useTheme();
+
+  // Media queries từ react-responsive
+  const isMobile = useMediaQuery({ query: '(max-width: 767px)' });
+  const isTabletOrAbove = useMediaQuery({ query: '(min-width: 768px)' });
 
   const [editing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -157,7 +162,7 @@ const RecordRow = ({ index, record, onUpdated, onError, onDelete, onViewHistory 
               </button>
             </div>
           ) : (
-            <div className="flex items-center justify-center gap-2">
+            <div className={`flex items-center justify-center gap-2 ${isMobile ? 'flex-wrap' : ''}`}>
 
               {/* Nút Xuất PDF */}
               <button

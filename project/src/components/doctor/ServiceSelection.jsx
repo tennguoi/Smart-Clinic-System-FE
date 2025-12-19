@@ -1,6 +1,6 @@
-
 // ServiceSelection.jsx
 import { Search, Check, Loader2 } from 'lucide-react';
+import { useMediaQuery } from 'react-responsive';
 import { useTranslation } from 'react-i18next';
 import { formatPrice } from '../../utils/helpers';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -17,6 +17,10 @@ export default function ServiceSelection({
   const { t } = useTranslation();
   const { theme } = useTheme();
 
+  // Media queries từ react-responsive
+  const isMobile = useMediaQuery({ query: '(max-width: 1023px)' });
+  const isDesktop = useMediaQuery({ query: '(min-width: 1024px)' });
+
   const filteredServices = services.filter(s =>
     s.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -26,7 +30,7 @@ export default function ServiceSelection({
   );
 
   return (
-    <div className="space-y-8">
+    <div className={`space-y-8 ${aiAssistantOpen && isMobile ? 'pr-2' : ''}`}>
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />

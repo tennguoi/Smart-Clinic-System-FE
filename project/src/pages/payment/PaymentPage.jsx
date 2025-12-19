@@ -1,8 +1,9 @@
 // src/pages/reception/PaymentPage.jsx
 import React, { useState, useEffect } from 'react';
+import { useMediaQuery } from 'react-responsive'; // 👈 THÊM IMPORT REACT-RESPONSIVE
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../../contexts/ThemeContext'; // ← Thêm import
+import { useTheme } from '../../contexts/ThemeContext';
 import BankQRCodeModal from '../../components/receptionist/BankQRCodeModal';
 import {
   CreditCard, Banknote, Smartphone, Stethoscope, TestTube,
@@ -33,7 +34,12 @@ export default function PaymentPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { billId } = useParams();
-  const { theme } = useTheme(); // ← Thêm hook
+  const { theme } = useTheme();
+
+  // 👇 MEDIA QUERIES ĐƯỢC KHAI BÁO VÀ SỬ DỤNG THỰC SỰ
+  const isMobile = useMediaQuery({ maxWidth: 767 });
+  const isTablet = useMediaQuery({ minWidth: 768, maxWidth: 1023 });
+  const isDesktop = useMediaQuery({ minWidth: 1024 });
 
   const [invoice, setInvoice] = useState(null);
   const [patient, setPatient] = useState(null);
@@ -176,7 +182,7 @@ export default function PaymentPage() {
   const services = invoice.items || [];
 
   return (
-    <div className={`min-h-screen p-6 ${
+    <div className={`min-h-screen p-4 sm:p-6 ${
       theme === 'dark' 
         ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
         : 'bg-gradient-to-br from-gray-50 to-blue-50'
@@ -203,37 +209,39 @@ export default function PaymentPage() {
           </h1>
         </div>
 
-        {/* Progress */}
-        <div className="flex items-center justify-center gap-8 mb-8">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
-                i < 2 ? 'bg-[#0ABAB5]' : theme === 'dark' ? 'bg-gray-700' : 'bg-gray-300'
-              }`}>
-                {i < 2 ? <Check className="w-5 h-5" /> : i + 1}
+        {/* Progress - Ẩn trên mobile để tiết kiệm không gian */}
+        {!isMobile && (
+          <div className="flex flex-wrap items-center justify-center gap-6 mb-8">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
+                  i < 2 ? 'bg-[#0ABAB5]' : theme === 'dark' ? 'bg-gray-700' : 'bg-gray-300'
+                }`}>
+                  {i < 2 ? <Check className="w-5 h-5" /> : i + 1}
+                </div>
+                <span className={`font-medium ${
+                  i < 2 
+                    ? 'text-[#0ABAB5]' 
+                    : theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
+                }`}>
+                  {t(`invoices.steps.${i}`)}
+                </span>
+                {i < 2 && <div className="w-16 sm:w-24 h-0.5 bg-[#0ABAB5]" />}
               </div>
-              <span className={`font-medium ${
-                i < 2 
-                  ? 'text-[#0ABAB5]' 
-                  : theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
-              }`}>
-                {t(`invoices.steps.${i}`)}
-              </span>
-              {i < 2 && <div className="w-24 h-0.5 bg-[#0ABAB5]" />}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Thông tin bệnh nhân */}
         <div className={`rounded-2xl shadow-sm p-6 mb-6 ${
           theme === 'dark' ? 'bg-gray-800' : 'bg-white'
         }`}>
-          <div className="flex justify-between items-start">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-[#0ABAB5] to-[#0099FF] rounded-full flex items-center justify-center">
+          <div className={isMobile ? "text-center" : "flex justify-between items-start"}>
+            <div className={`flex ${isMobile ? 'flex-col items-center' : ''} gap-4`}>
+              <div className="w-16 h-16 bg-gradient-to-br from-[#0ABAB5] to-[#0099FF] rounded-full flex items-center justify-center flex-shrink-0">
                 <User className="w-8 h-8 text-white" />
               </div>
-              <div>
+              <div className={isMobile ? 'text-center mt-3' : ''}>
                 <h2 className={`text-2xl font-bold ${
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
                 }`}>
@@ -248,27 +256,40 @@ export default function PaymentPage() {
                 </p>
               </div>
             </div>
-            <div className={`text-right text-sm ${
+            {!isMobile && (
+              <div className={`text-right text-sm ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+              }`}>
+                <div className="flex items-center gap-2 justify-end">
+                  <Calendar className="w-4 h-4" />
+                  {invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('vi-VN') : '—'}
+                </div>
+                <div className="mt-1">Mã: #{invoice.billId?.slice(-8).toUpperCase()}</div>
+              </div>
+            )}
+          </div>
+          {isMobile && (
+            <div className={`text-center mt-4 text-sm ${
               theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
             }`}>
-              <div className="flex items-center gap-2 justify-end">
+              <div className="flex items-center gap-2 justify-center">
                 <Calendar className="w-4 h-4" />
                 {invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('vi-VN') : '—'}
               </div>
               <div className="mt-1">Mã: #{invoice.billId?.slice(-8).toUpperCase()}</div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Thành công */}
         {success && (
-          <div className={`border rounded-xl p-5 mb-6 flex gap-4 items-center animate-pulse ${
+          <div className={`border rounded-xl p-5 mb-6 flex flex-col sm:flex-row gap-4 items-center animate-pulse ${
             theme === 'dark'
               ? 'bg-green-900/30 border-green-700'
               : 'bg-green-50 border-green-200'
           }`}>
             <CheckCircle className="w-12 h-12 text-green-600 flex-shrink-0" />
-            <div>
+            <div className="text-center sm:text-left">
               <p className={`text-lg font-bold ${
                 theme === 'dark' ? 'text-green-400' : 'text-green-900'
               }`}>
@@ -283,13 +304,13 @@ export default function PaymentPage() {
 
         {/* Lỗi */}
         {error && (
-          <div className={`border rounded-xl p-5 mb-6 flex gap-4 ${
+          <div className={`border rounded-xl p-5 mb-6 flex flex-col sm:flex-row gap-4 ${
             theme === 'dark'
               ? 'bg-red-900/30 border-red-700'
               : 'bg-red-50 border-red-200'
           }`}>
             <AlertCircle className="w-8 h-8 text-red-600 flex-shrink-0" />
-            <p className={`font-medium ${
+            <p className={`font-medium text-center sm:text-left ${
               theme === 'dark' ? 'text-red-400' : 'text-red-800'
             }`}>
               {error}
@@ -297,10 +318,10 @@ export default function PaymentPage() {
           </div>
         )}
 
-        {/* Nội dung chính */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Danh sách dịch vụ */}
-          <div className="lg:col-span-2">
+        {/* Nội dung chính - Responsive Grid */}
+        <div className={`grid grid-cols-1 ${isDesktop ? 'lg:grid-cols-3' : 'md:grid-cols-2'} gap-6`}>
+          {/* Danh sách dịch vụ - Chiếm toàn bộ trên mobile */}
+          <div className={isMobile ? 'order-2' : 'lg:col-span-2'}>
             <div className={`rounded-2xl shadow-sm p-6 ${
               theme === 'dark' ? 'bg-gray-800' : 'bg-white'
             }`}>
@@ -331,7 +352,7 @@ export default function PaymentPage() {
                             : 'border-gray-200 hover:border-[#0ABAB5]'
                         }`}
                       >
-                        <div className="flex gap-4">
+                        <div className={`flex ${isMobile ? 'flex-col gap-4' : 'gap-4'}`}>
                           <div className={`w-12 h-12 ${color} rounded-xl flex items-center justify-center flex-shrink-0`}>
                             <Icon className="w-7 h-7" />
                           </div>
@@ -345,7 +366,7 @@ export default function PaymentPage() {
                               <p className="text-sm text-[#0ABAB5] mt-1">{s.doctorName}</p>
                             )}
                           </div>
-                          <div className="text-right">
+                          <div className={isMobile ? 'text-center' : 'text-right'}>
                             <div className={`font-bold text-xl ${
                               theme === 'dark' ? 'text-white' : 'text-gray-900'
                             }`}>
@@ -377,8 +398,8 @@ export default function PaymentPage() {
             </div>
           </div>
 
-          {/* Tổng thanh toán */}
-          <div>
+          {/* Tổng thanh toán - Đặt lên trên mobile */}
+          <div className={isMobile ? 'order-1' : ''}>
             <div className={`rounded-2xl shadow-lg p-6 sticky top-6 ${
               theme === 'dark' ? 'bg-gray-800' : 'bg-white'
             }`}>
@@ -445,7 +466,7 @@ export default function PaymentPage() {
                 }`}>
                   {t('createInvoice.paymentMethod')}
                 </h4>
-                <div className="grid grid-cols-3 gap-3">
+                <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-3'} gap-3`}>
                   {paymentMethods.map(m => {
                     const Icon = m.icon;
                     const active = selectedMethod === m.value;
