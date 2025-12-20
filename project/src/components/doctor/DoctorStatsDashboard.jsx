@@ -34,38 +34,49 @@ const RANGE_OPTIONS = [
   { label: 'month', value: 'month' },
 ];
 
-// Utility functions for safe localStorage access
-const getFromLocalStorage = (key, defaultValue) => {
-  if (typeof window === 'undefined') return defaultValue;
-  try {
-    const item = localStorage.getItem(key);
-    return item !== null ? item : defaultValue;
-  } catch (error) {
-    console.warn(`Error reading ${key} from localStorage:`, error);
-    return defaultValue;
-  }
+// Safe localStorage utilities - fallback to memory storage if localStorage is blocked
+const createStorage = () => {
+  const memoryStorage = {};
+  
+  return {
+    getItem: (key) => {
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          return localStorage.getItem(key);
+        }
+      } catch (e) {
+        // localStorage blocked in incognito
+      }
+      return memoryStorage[key] || null;
+    },
+    setItem: (key, value) => {
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          localStorage.setItem(key, value);
+          return;
+        }
+      } catch (e) {
+        // localStorage blocked in incognito
+      }
+      memoryStorage[key] = value;
+    }
+  };
 };
 
-const setToLocalStorage = (key, value) => {
-  if (typeof window === 'undefined') return false;
-  try {
-    localStorage.setItem(key, value);
-    return true;
-  } catch (error) {
-    console.warn(`Error writing ${key} to localStorage:`, error);
-    return false;
-  }
-};
+const storage = createStorage();
 
 export default function DoctorStatsDashboard() {
   const { theme } = useTheme();
   const { t } = useTranslation();
 
-  // Load saved preferences from localStorage with safe access
-  const [rangeType, setRangeType] = useState(() => getFromLocalStorage('doctorStatsRangeType', 'day'));
+  // Initialize with storage or defaults
+  const [rangeType, setRangeType] = useState(() => {
+    const saved = storage.getItem('doctorStatsRangeType');
+    return saved || 'day';
+  });
   
   const [selectedDate, setSelectedDate] = useState(() => {
-    const saved = getFromLocalStorage('doctorStatsSelectedDate', null);
+    const saved = storage.getItem('doctorStatsSelectedDate');
     try {
       return saved ? new Date(saved) : new Date();
     } catch {
@@ -74,7 +85,7 @@ export default function DoctorStatsDashboard() {
   });
 
   const formatPercentage = (value) => {
-    if (value == null || value === 0) return t('doctorStats.noData');
+    if (value == null || value === 0) return t('doctorStats.noData', { defaultValue: 'N/A' });
     return `${Math.round(value * 100)}%`;
   };
 
@@ -90,17 +101,17 @@ export default function DoctorStatsDashboard() {
     setMounted(true);
   }, []);
 
-  // Save rangeType to localStorage when it changes
+  // Save rangeType to storage when it changes
   useEffect(() => {
     if (!mounted) return;
-    setToLocalStorage('doctorStatsRangeType', rangeType);
+    storage.setItem('doctorStatsRangeType', rangeType);
   }, [rangeType, mounted]);
 
-  // Save selectedDate to localStorage when it changes
+  // Save selectedDate to storage when it changes
   useEffect(() => {
     if (!mounted) return;
     try {
-      setToLocalStorage('doctorStatsSelectedDate', selectedDate.toISOString());
+      storage.setItem('doctorStatsSelectedDate', selectedDate.toISOString());
     } catch (err) {
       console.error('Failed to save selectedDate:', err);
     }
@@ -122,12 +133,12 @@ export default function DoctorStatsDashboard() {
       const roles = authService.getRoles();
       const isDoctor = roles.includes('ROLE_BAC_SI') || roles.includes('ROLE_ADMIN');
       if (!isDoctor) {
-        setError(t('doctorStats.error.noPermission'));
+        setError(t('doctorStats.error.noPermission', { defaultValue: 'Không có quyền truy cập' }));
         setLoading(false);
       }
     } catch (error) {
       console.error('Error checking roles:', error);
-      setError(t('doctorStats.error.noPermission'));
+      setError(t('doctorStats.error.noPermission', { defaultValue: 'Không có quyền truy cập' }));
       setLoading(false);
     }
   }, [t]);
@@ -136,7 +147,7 @@ export default function DoctorStatsDashboard() {
     if (!mounted) return;
     
     if (!doctorId) {
-      setError(t('doctorStats.error.noDoctorInfo'));
+      setError(t('doctorStats.error.noDoctorInfo', { defaultValue: 'Không tìm thấy thông tin bác sĩ' }));
       setLoading(false);
       return;
     }
@@ -157,7 +168,7 @@ export default function DoctorStatsDashboard() {
         if (isForceRefresh) setIsForceRefresh(false);
       } catch (err) {
         console.error('Error fetching stats:', err);
-        const message = err.response?.data?.message || err.message || t('doctorStats.error.loadFailed');
+        const message = err.response?.data?.message || err.message || t('doctorStats.error.loadFailed', { defaultValue: 'Không thể tải dữ liệu' });
         setError(message);
         toast.error(message);
       } finally {
@@ -170,7 +181,6 @@ export default function DoctorStatsDashboard() {
 
   const chartData = useMemo(() => {
     if (!statsData?.series || !Array.isArray(statsData.series)) {
-      console.warn('Invalid chart data:', statsData);
       return [];
     }
     return statsData.series.map((item) => ({
@@ -210,7 +220,7 @@ export default function DoctorStatsDashboard() {
     if (rangeType === 'month')
       return { showMonthYearPicker: true, dateFormat: 'MM/yyyy' };
     if (rangeType === 'week')
-      return { showWeekNumbers: true, dateFormat: `'${t('doctorStats.week')}' ww, yyyy` };
+      return { showWeekNumbers: true, dateFormat: `'${t('doctorStats.week', { defaultValue: 'Tuần' })}' ww, yyyy` };
     return { dateFormat: 'dd/MM/yyyy' };
   }, [rangeType, t]);
 

@@ -1,4 +1,3 @@
-
 // src/components/AppointmentForm.jsx
 import { useState, useEffect, useMemo } from 'react';
 import { Send, Calendar, Clock, ChevronDown, Search, X, Check } from 'lucide-react';
@@ -133,11 +132,22 @@ export default function AppointmentForm() {
         serviceIds: []
       });
     } catch (error) {
-      setErrorMessage(
-        error.response?.data?.message ??
-        error.message ??
-        t('common.error')
-      );
+      // Xử lý lỗi 500 đặc biệt cho giờ không hợp lệ
+      if (error.response?.status === 500) {
+        const errorMsg = error.response?.data?.message || '';
+        if (errorMsg.toLowerCase().includes('time') || errorMsg.toLowerCase().includes('hour')) {
+          setErrorMessage(t('appointment.invalidTimeError'));
+          setTimeError(t('appointment.timeError'));
+        } else {
+          setErrorMessage(t('appointment.serverError'));
+        }
+      } else {
+        setErrorMessage(
+          error.response?.data?.message ??
+          error.message ??
+          t('common.error')
+        );
+      }
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
@@ -506,8 +516,6 @@ export default function AppointmentForm() {
             </div>
           </form>
         </div>
-
-        
       </div>
 
       <style jsx>{`

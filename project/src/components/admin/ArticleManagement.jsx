@@ -1,5 +1,5 @@
+
 import { useState, useEffect, useMemo } from "react";
-import { useMediaQuery } from 'react-responsive';
 import {
   Plus, Edit, Trash2, X, FileText, Upload, Image as ImageIcon,
   AlertTriangle, Eye
@@ -11,16 +11,55 @@ import axiosInstance from "../../utils/axiosConfig";
 import CountBadge from '../common/CountBadge';
 import Pagination from '../common/Pagination';
 import { useTheme } from '../../contexts/ThemeContext';
+import ReactQuill, { Quill } from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+
+// Register modules for Quill (Legacy modules need window.Quill)
+if (typeof window !== 'undefined') {
+  window.Quill = Quill;
+}
+
+// Register modules immediately if possible, or skip if already registered
+if (!Quill.imports['modules/imageDrop']) {
+  import('quill-image-drop-module').then(m => {
+    Quill.register('modules/imageDrop', m.ImageDrop);
+  }).catch(err => console.error("Failed to load ImageDrop", err));
+}
+if (!Quill.imports['modules/imageResize']) {
+  import('quill-image-resize-module').then(m => {
+    Quill.register('modules/imageResize', m.default);
+  }).catch(err => console.error("Failed to load ImageResize", err));
+}
 
 export default function ArticleManagement() {
   const { theme } = useTheme();
   const { t } = useTranslation();
 
-  // Media queries using react-responsive
-  const isDesktop = useMediaQuery({ minWidth: 1024 });
-  const isTablet = useMediaQuery({ minWidth: 768, maxWidth: 1023 });
-  const isMobile = useMediaQuery({ maxWidth: 767 });
-  const isSmallMobile = useMediaQuery({ maxWidth: 480 });
+  // Cấu hình Quill modules
+  const quillModules = useMemo(() => ({
+    toolbar: [
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'color': [] }, { 'background': [] }],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+      [{ 'align': [] }],
+      ['link', 'image', 'video'],
+      ['clean']
+    ],
+    imageDrop: true,
+    imageResize: {
+      parchment: Quill.import('parchment'),
+      modules: ['Resize', 'DisplaySize', 'Toolbar']
+    }
+  }), []);
+
+  const quillFormats = [
+    'header',
+    'bold', 'italic', 'underline', 'strike',
+    'color', 'background',
+    'list', 'bullet', 'align',
+    'link', 'image', 'video'
+  ];
 
   const [articles, setArticles] = useState([]);
   const [filteredArticles, setFilteredArticles] = useState([]);
@@ -47,7 +86,9 @@ export default function ArticleManagement() {
   const [filterStartDate, setFilterStartDate] = useState("");
   const [filterEndDate, setFilterEndDate] = useState("");
 
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState([
+    "Sức khỏe", "Tư vấn", "Điều trị", "Cảnh báo", "Công nghệ", "Tin tức", "Nghiên cứu", "Phòng bệnh"
+  ]);
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewImage, setPreviewImage] = useState("");
@@ -92,7 +133,7 @@ export default function ArticleManagement() {
       color: "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-800",
       key: "articles.categories.prevention"
     },
-    
+
     // Vietnamese keys (from backend)
     "sức khỏe": {
       color: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
@@ -143,20 +184,20 @@ export default function ArticleManagement() {
   // Hàm tự động gán màu cho danh mục
   const getCategoryColor = (category) => {
     if (!category) return "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600";
-    
+
     // Normalize: trim + lowercase
     const normalized = category.trim().toLowerCase();
-    
+
     // Tìm trong config
     if (categoryConfig[normalized]) {
       return categoryConfig[normalized].color;
     }
-    
+
     // Fallback: dùng hash
     const hash = normalized.split('').reduce((acc, char) => {
       return char.charCodeAt(0) + ((acc << 5) - acc);
     }, 0);
-    
+
     const index = Math.abs(hash) % colorPalette.length;
     return colorPalette[index];
   };
@@ -164,13 +205,13 @@ export default function ArticleManagement() {
   // Hàm dịch tên category
   const getCategoryLabel = (category) => {
     if (!category) return "—";
-    
+
     const normalized = category.trim().toLowerCase();
-    
+
     if (categoryConfig[normalized]) {
       return t(categoryConfig[normalized].key);
     }
-    
+
     return category;
   };
 
@@ -206,9 +247,11 @@ export default function ArticleManagement() {
 
       setArticles(list);
 
-      // Lấy tất cả categories từ toàn bộ articles (không filter)
-      const uniqueCats = [...new Set(list.map(a => a.category))].filter(Boolean);
-      setCategories(uniqueCats);
+      // Lấy tất cả categories từ toàn bộ articles và gộp với default
+      setCategories(prev => {
+        const fromArticles = list.map(a => a.category).filter(Boolean);
+        return [...new Set([...prev, ...fromArticles])];
+      });
 
       let filtered = [...list];
 
@@ -301,6 +344,10 @@ export default function ArticleManagement() {
     setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
   };
 
+  const handleEditorChange = (value) => {
+    setFormData(p => ({ ...p, content: value }));
+  };
+
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -391,29 +438,22 @@ export default function ArticleManagement() {
     <div className={`px-4 sm:px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
       <Toaster {...toastConfig} />
 
-      {/* Header - Responsive */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-4">
-          <h1 className={`${isSmallMobile ? 'text-2xl' : isMobile ? 'text-3xl' : 'text-4xl'} font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 transition-colors duration-300`}>
-            <FileText className={`${isSmallMobile ? 'w-6 h-6' : isMobile ? 'w-7 h-7' : 'w-9 h-9'} text-blue-600`} />
+          <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 transition-colors duration-300`}>
+            <FileText className="w-9 h-9 text-blue-600" />
             <span>{t("articles.pageTitle")}</span>
           </h1>
-          {isDesktop && <CountBadge currentCount={currentPageArticles.length} totalCount={totalElements} label={t("newsPage.title")} />}
+          <CountBadge currentCount={currentPageArticles.length} totalCount={totalElements} label={t("newsPage.title")} />
         </div>
         <button onClick={() => handleOpenModal("create")}
-          className={`flex items-center gap-2 bg-blue-600 text-white ${isMobile ? 'px-4 py-2 text-sm' : 'px-6 py-3'} rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium`}>
-          <Plus className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} /> {t("articles.createButton")}
+          className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium">
+          <Plus className="w-5 h-5" /> {t("articles.createButton")}
         </button>
       </div>
 
-      {/* Mobile Count Badge */}
-      {!isDesktop && (
-        <div className="mb-4">
-          <CountBadge currentCount={currentPageArticles.length} totalCount={totalElements} label={t("newsPage.title")} />
-        </div>
-      )}
-
-      {/* Filters - Responsive */}
+      {/* Filters */}
       <div className={`${theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'} rounded-2xl shadow-lg p-6 mb-6 transition-colors duration-300`}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
           <div className="lg:col-span-4">
@@ -445,11 +485,11 @@ export default function ArticleManagement() {
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
               {t("articles.filter.fromDate")}
             </label>
-            <input 
-              type="date" 
+            <input
+              type="date"
               value={filterStartDate}
               max={filterEndDate || undefined}
-              onChange={(e) => { 
+              onChange={(e) => {
                 const newStartDate = e.target.value;
                 if (filterEndDate && newStartDate > filterEndDate) {
                   toast.error(t("articles.errors.invalidDateRange"));
@@ -457,39 +497,39 @@ export default function ArticleManagement() {
                 }
                 setFilterStartDate(newStartDate);
                 setPage(0);
-              }} 
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 bg-white text-gray-900'}`} 
+              }}
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
             />
           </div>
           <div className="lg:col-span-2">
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
               {t("articles.filter.toDate")}
             </label>
-            <input 
-              type="date" 
-              value={filterEndDate} 
-              min={filterStartDate} 
-              onChange={(e) => { 
+            <input
+              type="date"
+              value={filterEndDate}
+              min={filterStartDate}
+              onChange={(e) => {
                 const newEndDate = e.target.value;
                 if (filterStartDate && newEndDate < filterStartDate) {
                   toast.error(t("articles.errors.invalidDateRange"));
                   return;
                 }
-                setFilterEndDate(newEndDate); 
-                setPage(0); 
-              }} 
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 bg-white text-gray-900'}`} 
+                setFilterEndDate(newEndDate);
+                setPage(0);
+              }}
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
             />
           </div>
           <div className="lg:col-span-1">
             <button onClick={resetFilter} className={`w-full px-4 py-3 rounded-xl transition font-medium ${theme === 'dark' ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}>
-              {isMobile ? t("articles.filter.clearFilter").split(' ')[0] : t("articles.filter.clearFilter")}
+              {t("articles.filter.clearFilter")}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Table - Responsive: On mobile show cards instead */}
+      {/* Table */}
       <div className={`${theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden transition-colors duration-300`}>
         {loading ? (
           <div className="text-center py-16">
@@ -498,52 +538,7 @@ export default function ArticleManagement() {
               {t("common.loading")}
             </p>
           </div>
-        ) : isMobile ? (
-          // Mobile Card View
-          <div className="p-4 space-y-4">
-            {currentPageArticles.length === 0 ? (
-              <div className="text-center py-16 text-gray-500">
-                <FileText className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                <p className="text-xl font-medium">{t("articles.noArticles")}</p>
-              </div>
-            ) : (
-              currentPageArticles.map((a, i) => (
-                <div key={a.id} className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} rounded-xl p-4 space-y-3`}>
-                  <div className="flex items-start gap-3">
-                    {a.image ? (
-                      <img src={getImageUrl(a.image)} alt={a.title} className="w-20 h-20 rounded-lg object-cover border shadow-sm dark:border-gray-700" />
-                    ) : (
-                      <div className="w-20 h-20 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-8 h-8 text-gray-500 dark:text-gray-400" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} line-clamp-2 mb-1`}>
-                        {a.title}
-                      </h3>
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium border ${getCategoryColor(a.category)}`}>
-                        {getCategoryLabel(a.category)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} space-y-1`}>
-                    <div><strong>{t("articles.table.author")}:</strong> {a.author || "—"}</div>
-                    <div><strong>{t("articles.table.publishedAt")}:</strong> {formatDate(a.publishedAt)}</div>
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <button onClick={() => handleOpenModal("view", a)} className="flex-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 px-3 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition font-medium text-sm">
-                      <Eye className="w-4 h-4 inline mr-1" /> {t("articles.common.view")}
-                    </button>
-                    <button onClick={() => handleDeleteClick(a)} className="flex-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition font-medium text-sm">
-                      <Trash2 className="w-4 h-4 inline mr-1" /> {t("articles.common.delete")}
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
         ) : (
-          // Desktop Table View
           <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'} transition-colors duration-300`}>
             <thead className={theme === 'dark' ? 'bg-gray-900' : 'bg-blue-50'}>
               <tr>
@@ -619,30 +614,30 @@ export default function ArticleManagement() {
 
       <Pagination currentPage={page} totalPages={totalPages} onPageChange={goToPage} theme={theme} />
 
-      {/* Modal Create / Edit / View - Responsive */}
+      {/* Modal Create / Edit / View */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-          <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl ${isMobile ? 'max-w-full w-full' : 'max-w-4xl w-full'} max-h-[95vh] overflow-y-auto transition-colors duration-300`}>
-            <div className={`flex justify-between items-center ${isMobile ? 'p-4' : 'p-6'} border-b sticky top-0 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-blue-50/80 border-gray-200'} backdrop-blur transition-colors duration-300`}>
-              <h2 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold ${theme === 'dark' ? 'text-white' : 'text-blue-700'} transition-colors duration-300`}>
+          <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto transition-colors duration-300`}>
+            <div className={`flex justify-between items-center p-6 border-b sticky top-0 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-blue-50/80 border-gray-200'} backdrop-blur transition-colors duration-300`}>
+              <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-blue-700'} transition-colors duration-300`}>
                 {isCreateMode ? t("articles.modal.createTitle") :
-                 isViewMode ? t("articles.modal.editTitle") + " (View)" :
-                 t("articles.modal.editTitle")}
+                  isViewMode ? t("articles.modal.editTitle") + " (View)" :
+                    t("articles.modal.editTitle")}
               </h2>
               <div className="flex items-center gap-3">
                 {isViewMode && (
                   <button onClick={handleSwitchToEdit}
-                    className={`flex items-center gap-2 bg-blue-600 text-white ${isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'} rounded-lg hover:bg-blue-700 transition font-medium`}>
-                    <Edit className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} /> {!isSmallMobile && t("articles.common.edit")}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
+                    <Edit className="w-4 h-4" /> {t("articles.common.edit")}
                   </button>
                 )}
                 <button onClick={handleCloseModal} className={`text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2 rounded-full hover:bg-white/50 dark:hover:bg-gray-600`}>
-                  <X className={`${isMobile ? 'w-5 h-5' : 'w-7 h-7'}`} />
+                  <X className="w-7 h-7" />
                 </button>
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className={`${isMobile ? 'p-4' : 'p-6'} space-y-6`}>
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
               {/* Ảnh bìa - Lên đầu */}
               <div className="md:col-span-2">
                 <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
@@ -650,7 +645,7 @@ export default function ArticleManagement() {
                 </label>
                 {previewImage && (
                   <div className="mb-4 relative">
-                    <img src={previewImage} alt="Preview" className={`w-full ${isMobile ? 'h-48' : 'h-64'} object-cover rounded-xl border-2 border-gray-300 dark:border-gray-600`} />
+                    <img src={previewImage} alt="Preview" className="w-full h-64 object-cover rounded-xl border-2 border-gray-300 dark:border-gray-600" />
                     {!isViewMode && (
                       <button type="button" onClick={() => { setPreviewImage(""); setSelectedFile(null); setFormData(p => ({ ...p, image: "" })); }} className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition">
                         <X className="w-5 h-5" />
@@ -661,21 +656,15 @@ export default function ArticleManagement() {
                 {!isViewMode && (
                   <>
                     <div className="flex items-center gap-4">
-                      <label className={`flex items-center gap-2 ${isMobile ? 'px-3 py-2 text-sm' : 'px-5 py-3'} bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-xl cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50 transition border-2 border-dashed border-blue-300 dark:border-blue-700`}>
-                        <Upload className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
+                      <label className={`flex items-center gap-2 px-5 py-3 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-xl cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50 transition border-2 border-dashed border-blue-300 dark:border-blue-700`}>
+                        <Upload className="w-5 h-5" />
                         <span className="font-medium">
                           {selectedFile ? t("articles.modal.changeImage") : t("articles.modal.chooseImage")}
                         </span>
                         <input type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
                       </label>
-                      {selectedFile && !isMobile && <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} flex items-center gap-2`}><ImageIcon className="w-4 h-4" />{selectedFile.name}</span>}
+                      {selectedFile && <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} flex items-center gap-2`}><ImageIcon className="w-4 h-4" />{selectedFile.name}</span>}
                     </div>
-                    {selectedFile && isMobile && (
-                      <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mt-2 flex items-center gap-1`}>
-                        <ImageIcon className="w-3 h-3" />
-                        {selectedFile.name}
-                      </p>
-                    )}
                     <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mt-2`}>
                       {t("articles.modal.imageHint")}
                     </p>
@@ -683,20 +672,20 @@ export default function ArticleManagement() {
                 )}
               </div>
 
-              <div className={`grid grid-cols-1 ${isTablet || isDesktop ? 'md:grid-cols-2' : ''} gap-6`}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     {t("articles.modal.title")} *
                   </label>
-                  <input 
-                    type="text" 
-                    name="title" 
-                    required 
-                    disabled={isViewMode} 
-                    value={formData.title} 
+                  <input
+                    type="text"
+                    name="title"
+                    required
+                    disabled={isViewMode}
+                    value={formData.title}
                     onChange={handleInputChange}
                     placeholder={t("articles.modal.titlePlaceholder")}
-                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`} 
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </div>
 
@@ -704,27 +693,35 @@ export default function ArticleManagement() {
                   <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     {t("articles.modal.content")} *
                   </label>
-                  <textarea 
-                    name="content" 
-                    rows={isMobile ? 6 : 8} 
-                    required 
-                    disabled={isViewMode} 
-                    value={formData.content} 
-                    onChange={handleInputChange}
-                    placeholder={t("articles.modal.contentPlaceholder")}
-                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`} 
-                  />
+                  {isViewMode ? (
+                    <div
+                      className={`w-full px-4 py-3 border rounded-xl min-h-[300px] overflow-y-auto ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}
+                      dangerouslySetInnerHTML={{ __html: formData.content }}
+                    />
+                  ) : (
+                    <div className={`quill-compact ${theme === 'dark' ? 'dark-quill' : ''}`}>
+                      <ReactQuill
+                        theme="snow"
+                        value={formData.content}
+                        onChange={handleEditorChange}
+                        modules={quillModules}
+                        formats={quillFormats}
+                        placeholder={t("articles.modal.contentPlaceholder")}
+                        className={`bg-white text-gray-900 rounded-xl overflow-hidden`}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div>
                   <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     {t("articles.modal.category")} *
                   </label>
-                  <select 
-                    name="category" 
-                    required 
-                    disabled={isViewMode} 
-                    value={formData.category} 
+                  <select
+                    name="category"
+                    required
+                    disabled={isViewMode}
+                    value={formData.category}
                     onChange={handleInputChange}
                     className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   >
@@ -737,15 +734,15 @@ export default function ArticleManagement() {
                   <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     {t("articles.modal.author")} *
                   </label>
-                  <input 
-                    type="text" 
-                    name="author" 
-                    required 
-                    disabled={isViewMode} 
-                    value={formData.author} 
+                  <input
+                    type="text"
+                    name="author"
+                    required
+                    disabled={isViewMode}
+                    value={formData.author}
                     onChange={handleInputChange}
                     placeholder={t("articles.modal.authorPlaceholder")}
-                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`} 
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </div>
 
@@ -753,24 +750,24 @@ export default function ArticleManagement() {
                   <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     {t("articles.modal.source")}
                   </label>
-                  <input 
-                    type="text" 
-                    name="source" 
-                    disabled={isViewMode} 
-                    value={formData.source} 
+                  <input
+                    type="text"
+                    name="source"
+                    disabled={isViewMode}
+                    value={formData.source}
                     onChange={handleInputChange}
                     placeholder="https://..."
-                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`} 
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </div>
               </div>
 
               {!isViewMode && (
-                <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-4 pt-6 border-t ${theme === 'dark' ? 'border-gray-700' : ''}`}>
-                  <button type="submit" disabled={loading || uploading} className={`${isMobile ? 'w-full' : 'flex-1'} bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-70 transition`}>
+                <div className={`flex gap-4 pt-6 border-t ${theme === 'dark' ? 'border-gray-700' : ''}`}>
+                  <button type="submit" disabled={loading || uploading} className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-70 transition">
                     {loading || uploading ? t("common.processing") : isCreateMode ? t("articles.createButton") : t("articles.common.save")}
                   </button>
-                  <button type="button" onClick={handleCloseModal} className={`${isMobile ? 'w-full' : 'flex-1'} bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-200 py-3 rounded-xl font-semibold hover:bg-gray-400 dark:hover:bg-gray-500 transition`}>
+                  <button type="button" onClick={handleCloseModal} className={`flex-1 bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-200 py-3 rounded-xl font-semibold hover:bg-gray-400 dark:hover:bg-gray-500 transition`}>
                     {t("articles.common.cancel")}
                   </button>
                 </div>
@@ -780,20 +777,20 @@ export default function ArticleManagement() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal - Responsive */}
+      {/* Delete Confirmation Modal */}
       {showDeleteConfirmation && articleToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-          <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl ${isMobile ? 'max-w-full' : 'max-w-sm'} w-full ${isMobile ? 'p-4' : 'p-6'} text-center transition-colors duration-300`}>
-            <AlertTriangle className={`${isMobile ? 'w-10 h-10' : 'w-12 h-12'} text-red-500 mx-auto mb-4`} />
-            <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>
+          <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl max-w-sm w-full p-6 text-center transition-colors duration-300`}>
+            <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h3 className={`text-xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>
               {t("articles.common.confirm")}
             </h3>
-            <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-6 transition-colors duration-300 ${isMobile ? 'text-sm' : ''}`}>
+            <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-6 transition-colors duration-300`}>
               {t("articles.toast.deleteSuccess", { title: "" }).replace(/^.*"/, '').replace(/".*$/, '')} <strong>{articleToDelete.title}</strong>?
             </p>
-            <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-3`}>
+            <div className="flex gap-3">
               <button onClick={handleConfirmDelete}
-                className={`${isMobile ? 'w-full' : 'flex-1'} bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition`}>
+                className="flex-1 bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition">
                 {t("articles.common.delete")}
               </button>
               <button
@@ -801,7 +798,7 @@ export default function ArticleManagement() {
                   setShowDeleteConfirmation(false);
                   setArticleToDelete(null);
                 }}
-                className={`${isMobile ? 'w-full' : 'flex-1'} bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-200 py-3 rounded-xl font-semibold hover:bg-gray-400 dark:hover:bg-gray-500 transition`}
+                className={`flex-1 bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-200 py-3 rounded-xl font-semibold hover:bg-gray-400 dark:hover:bg-gray-500 transition`}
               >
                 {t("articles.common.cancel")}
               </button>

@@ -39,7 +39,7 @@ export default function NewsPage() {
       'Điều Trị': 'treatment',
       'Cảnh báo': 'warning',
       'Tư Vấn': 'advice',
-  
+
     };
     const key = map[cat];
     return key ? t(`newsPage.categories.${key}`) : cat;
@@ -61,7 +61,7 @@ export default function NewsPage() {
       const response = await fetch(url);
       if (!response.ok) throw new Error('Load failed');
       const data = await response.json();
-console.log('Dữ liệu bài viết từ API:', data.content);
+      console.log('Dữ liệu bài viết từ API:', data.content);
       let articles = data.content || [];
 
       if (keyword.trim() && category) {
@@ -204,7 +204,7 @@ console.log('Dữ liệu bài viết từ API:', data.content);
                     {a.title}
                   </h2>
                   <p className="text-gray-600 dark:text-gray-300 text-base line-clamp-3 flex-1">
-                    {a.content}
+                    {a.content?.replace(/<[^>]+>/g, '')}
                   </p>
                 </div>
 
@@ -216,8 +216,8 @@ console.log('Dữ liệu bài viết từ API:', data.content);
 
         {totalPages > 1 && (
           <div className="flex justify-center items-center mt-12 gap-3 select-none">
-            <button 
-              onClick={() => setPage(0)} 
+            <button
+              onClick={() => setPage(0)}
               disabled={page === 0}
               className="w-11 h-11 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               title={t('newsPage.pagination.first')}
@@ -225,8 +225,8 @@ console.log('Dữ liệu bài viết từ API:', data.content);
               <ChevronsLeft className="w-5 h-5" />
             </button>
 
-            <button 
-              onClick={() => setPage(page - 1)} 
+            <button
+              onClick={() => setPage(page - 1)}
               disabled={page === 0}
               className="w-11 h-11 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               title={t('newsPage.pagination.previous')}
@@ -238,18 +238,17 @@ console.log('Dữ liệu bài viết từ API:', data.content);
               <button
                 key={p}
                 onClick={() => setPage(p)}
-                className={`w-11 h-11 rounded-lg font-medium transition-all ${
-                  p === page
+                className={`w-11 h-11 rounded-lg font-medium transition-all ${p === page
                     ? 'bg-gray-800 dark:bg-cyan-600 text-white border-gray-800 dark:border-cyan-600 shadow-md'
                     : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
+                  }`}
               >
                 {p + 1}
               </button>
             ))}
 
-            <button 
-              onClick={() => setPage(page + 1)} 
+            <button
+              onClick={() => setPage(page + 1)}
               disabled={page >= totalPages - 1}
               className="w-11 h-11 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               title={t('newsPage.pagination.next')}
@@ -257,8 +256,8 @@ console.log('Dữ liệu bài viết từ API:', data.content);
               <ChevronRight className="w-5 h-5" />
             </button>
 
-            <button 
-              onClick={() => setPage(totalPages - 1)} 
+            <button
+              onClick={() => setPage(totalPages - 1)}
               disabled={page >= totalPages - 1}
               className="w-11 h-11 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               title={t('newsPage.pagination.last')}

@@ -31,19 +31,10 @@ export default function NewsDetailPage() {
         {article.author} • {new Date(article.publishedAt).toLocaleDateString()}
       </p>
 
-      {/* Ảnh bài viết - thu nhỏ, căn giữa, responsive */}
-      <div className="flex justify-center mb-6">
-        <img
-          src={article.image || "https://via.placeholder.com/800x400"}
-          alt={article.title}
-          className="rounded-xl w-[70%] max-w-2xl object-contain shadow-md"
-        />
-      </div>
-
-      {/* Nội dung bài viết */}
-      <p className="leading-relaxed text-lg whitespace-pre-line text-justify">
-        {article.content}
-      </p>
+      <div
+        className="prose dark:prose-invert max-w-none leading-relaxed text-lg text-justify [&>p]:mb-4 [&>img]:rounded-xl [&>img]:shadow-md [&>img]:mx-auto [&>img]:max-w-full"
+        dangerouslySetInnerHTML={{ __html: article.content }}
+      />
     </div>
   );
 }
