@@ -38,14 +38,13 @@ const getStatusColor = (status) => {
 export default function QueueTable({
   queueList,
   currentPage = 0,
-  ITEMS_PER_PAGE = 10,
+  itemsPerPage = 10,
   onEdit,
   onDelete,
   onStatusChange,
 }) {
   const { t } = useTranslation();
 
-  // 👇 MEDIA QUERIES ĐƯỢC SỬ DỤNG THỰC SỰ
   const isMobile = useMediaQuery({ maxWidth: 767 });
   const isTablet = useMediaQuery({ minWidth: 768, maxWidth: 1023 });
   const isDesktop = useMediaQuery({ minWidth: 1024 });
@@ -67,10 +66,10 @@ export default function QueueTable({
     Cancelled: t('queueManagement.status.cancelled'),
   };
 
-  // Nếu là mobile → hiển thị dạng card thay vì bảng
+  // Mobile Card View
   if (isMobile) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 p-4">
         {queueList.length === 0 ? (
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             {t('queueManagement.noQueue', 'Chưa có bệnh nhân nào trong hàng đợi')}
@@ -84,7 +83,7 @@ export default function QueueTable({
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">
                   <div className="font-bold text-lg text-gray-900 dark:text-white">
-                    #{currentPage * ITEMS_PER_PAGE + index + 1} - {q.queueNumber || '—'}
+                    #{currentPage * itemsPerPage + index + 1} - {q.queueNumber || '—'}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                     {q.patientName || '—'}
@@ -103,7 +102,7 @@ export default function QueueTable({
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <span className="text-gray-500 dark:text-gray-400">NS:</span>{' '}
-                  <span className="font-medium">{q.dob ? new Date(q.dob).toLocaleDateString('vi-VN') : '—'}</span>
+                  <span className="font-medium">{q.dobFormatted || '—'}</span>
                 </div>
                 <div>
                   <span className="text-gray-500 dark:text-gray-400">SĐT:</span>{' '}
@@ -127,7 +126,7 @@ export default function QueueTable({
                   </span>
                 </div>
 
-                <div>
+                <div className="col-span-2">
                   <span className="text-gray-500 dark:text-gray-400">Trạng thái:</span>
                   <div className="mt-1">
                     <select
@@ -144,7 +143,7 @@ export default function QueueTable({
                   </div>
                 </div>
 
-                <div>
+                <div className="col-span-2">
                   <span className="text-gray-500 dark:text-gray-400">Check-in:</span>{' '}
                   <span className="font-medium">{formatDateTime(q.checkInTime)}</span>
                 </div>
@@ -156,7 +155,7 @@ export default function QueueTable({
     );
   }
 
-  // Tablet và Desktop: giữ nguyên bảng gốc (có thể ẩn một số cột nếu cần)
+  // Tablet & Desktop Table View
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -171,7 +170,7 @@ export default function QueueTable({
             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
               {t('queueManagement.table.patient')}
             </th>
-            {!isTablet && ( // Ẩn cột NS trên tablet nếu màn hình hẹp
+            {!isTablet && (
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                 {t('queueManagement.table.dob')}
               </th>
@@ -208,7 +207,7 @@ export default function QueueTable({
             queueList.map((q, index) => (
               <tr key={q.queueId} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                  {currentPage * ITEMS_PER_PAGE + index + 1}
+                  {currentPage * itemsPerPage + index + 1}
                 </td>
 
                 <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
@@ -223,7 +222,7 @@ export default function QueueTable({
 
                 {!isTablet && (
                   <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                    {q.dob ? new Date(q.dob).toLocaleDateString('vi-VN') : '—'}
+                    {q.dobFormatted || '—'}
                   </td>
                 )}
 

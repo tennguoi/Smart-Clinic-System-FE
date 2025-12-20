@@ -32,14 +32,21 @@ const sortQueueByPriority = (list) => {
   });
 };
 
+// ✅ FIX: Improved date formatting function
 const formatDateOfBirth = (dateString) => {
   if (!dateString) return '';
   try {
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString;
-    return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
+    if (isNaN(date.getTime())) return '';
+    
+    // Format as dd/MM/yyyy for display
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}/${month}/${year}`;
   } catch {
-    return dateString;
+    return '';
   }
 };
 
@@ -111,7 +118,8 @@ export default function PatientRecordsSection() {
         patientName: item.patientName || '',
         phone: item.phone || '',
         email: item.email || '',
-        dob: formatDateOfBirth(item.dob),
+        dob: item.dob || '', // ✅ Keep original ISO string
+        dobFormatted: formatDateOfBirth(item.dob), // ✅ Add formatted version
         gender: item.gender || 'male',
         address: item.address || '',
         priority: item.priority || 'Normal',
@@ -191,7 +199,7 @@ export default function PatientRecordsSection() {
         idNumber: full.idNumber || '',
         insuranceNumber: full.insuranceNumber || '',
         notes: full.notes || '',
-        services: full.services || [], // ✨ Map services if available
+        services: full.services || [],
       });
       setEditPatientId(full.queueId);
       setShowForm(true);
@@ -229,34 +237,35 @@ export default function PatientRecordsSection() {
       if (editPatientId) {
         const res = await queueApi.updatePatient(editPatientId, patientForm);
         setQueueList(prev => sortQueueByPriority(
-          prev.map(p => p.queueId === editPatientId ? { ...p, ...res, dob: formatDateOfBirth(res.dob) } : p)
+          prev.map(p => p.queueId === editPatientId ? { 
+            ...p, 
+            ...res, 
+            dob: res.dob || '',
+            dobFormatted: formatDateOfBirth(res.dob)
+          } : p)
         ));
         toast.success(t('patientRecords.toast.updateSuccess'));
         setShowForm(false);
       } else {
-        // Gọi API thêm bệnh nhân - sẽ kiểm tra trùng lặp
         const res = await queueApi.addPatient(patientForm);
 
-        // Kiểm tra nếu backend phát hiện bệnh nhân đã tồn tại
         if (res.existingPatientFound) {
-          // Lưu data và hiển thị modal thay vì window.confirm
           setDuplicateDialogData({
             existingPatient: res,
             newPatientForm: { ...patientForm }
           });
-          return; // Dừng lại, chờ user chọn trong modal
+          return;
         }
 
-        // Không có trùng lặp - xử lý bình thường
         const newItem = {
           ...res,
-          dob: formatDateOfBirth(res.dob),
+          dob: res.dob || '',
+          dobFormatted: formatDateOfBirth(res.dob),
           status: normalizeStatus(res.status),
         };
         setQueueList(prev => sortQueueByPriority([newItem, ...prev]));
         setCurrentPage(0);
 
-        // Toast với thời gian tùy chỉnh cho thông báo phòng khám
         const message = res.roomName
           ? t('patientRecords.toast.addSuccessWithRoom', {
             room: res.roomName,
@@ -275,7 +284,6 @@ export default function PatientRecordsSection() {
     }
   };
 
-  // Xử lý khi user chọn trong duplicate dialog
   const handleDuplicateConfirm = async (useExisting) => {
     if (!duplicateDialogData) return;
 
@@ -288,7 +296,8 @@ export default function PatientRecordsSection() {
 
       const newItem = {
         ...result,
-        dob: formatDateOfBirth(result.dob),
+        dob: result.dob || '',
+        dobFormatted: formatDateOfBirth(result.dob),
         status: normalizeStatus(result.status),
       };
       setQueueList(prev => sortQueueByPriority([newItem, ...prev]));
@@ -423,11 +432,9 @@ export default function PatientRecordsSection() {
       {/* Duplicate Patient Dialog Modal */}
       {duplicateDialogData && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60] p-4">
-          <div className={`rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'
-            }`}>
+          <div className={`rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
             {/* Header */}
-            <div className={`flex items-center gap-3 p-5 border-b ${theme === 'dark' ? 'border-gray-700 bg-amber-900/30' : 'border-amber-200 bg-amber-50'
-              }`}>
+            <div className={`flex items-center gap-3 p-5 border-b ${theme === 'dark' ? 'border-gray-700 bg-amber-900/30' : 'border-amber-200 bg-amber-50'}`}>
               <AlertTriangle className="w-8 h-8 text-amber-500" />
               <div className="flex-1">
                 <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-amber-300' : 'text-amber-800'}`}>
@@ -443,8 +450,7 @@ export default function PatientRecordsSection() {
               </div>
               <button
                 onClick={handleCloseDuplicateDialog}
-                className={`p-2 rounded-lg transition-colors ${theme === 'dark' ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
-                  }`}
+                className={`p-2 rounded-lg transition-colors ${theme === 'dark' ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -453,10 +459,8 @@ export default function PatientRecordsSection() {
             {/* Content - So sánh 2 thông tin */}
             <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Thông tin bệnh nhân đã có */}
-              <div className={`p-4 rounded-lg border-2 ${theme === 'dark' ? 'bg-blue-900/20 border-blue-700' : 'bg-blue-50 border-blue-200'
-                }`}>
-                <h3 className={`font-semibold mb-3 flex items-center gap-2 ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'
-                  }`}>
+              <div className={`p-4 rounded-lg border-2 ${theme === 'dark' ? 'bg-blue-900/20 border-blue-700' : 'bg-blue-50 border-blue-200'}`}>
+                <h3 className={`font-semibold mb-3 flex items-center gap-2 ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}`}>
                   <UserCheck className="w-5 h-5" />
                   {t('patientRecords.duplicateDialog.existingPatientTitle')}
                 </h3>
@@ -485,10 +489,8 @@ export default function PatientRecordsSection() {
               </div>
 
               {/* Thông tin mới nhập */}
-              <div className={`p-4 rounded-lg border-2 ${theme === 'dark' ? 'bg-green-900/20 border-green-700' : 'bg-green-50 border-green-200'
-                }`}>
-                <h3 className={`font-semibold mb-3 flex items-center gap-2 ${theme === 'dark' ? 'text-green-300' : 'text-green-700'
-                  }`}>
+              <div className={`p-4 rounded-lg border-2 ${theme === 'dark' ? 'bg-green-900/20 border-green-700' : 'bg-green-50 border-green-200'}`}>
+                <h3 className={`font-semibold mb-3 flex items-center gap-2 ${theme === 'dark' ? 'text-green-300' : 'text-green-700'}`}>
                   <RefreshCw className="w-5 h-5" />
                   {t('patientRecords.duplicateDialog.newPatientTitle')}
                 </h3>
@@ -524,7 +526,6 @@ export default function PatientRecordsSection() {
 
             {/* Action Buttons */}
             <div className="p-5 flex flex-col sm:flex-row gap-3">
-              {/* Dùng thông tin cũ */}
               <button
                 onClick={() => handleDuplicateConfirm(true)}
                 disabled={isProcessingDuplicate}
@@ -544,7 +545,6 @@ export default function PatientRecordsSection() {
                 </p>
               </button>
 
-              {/* Cập nhật thông tin mới */}
               <button
                 onClick={() => handleDuplicateConfirm(false)}
                 disabled={isProcessingDuplicate}
