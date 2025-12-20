@@ -4,22 +4,38 @@ import {
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
-import { useMediaQuery } from 'react-responsive';
 import { toastConfig } from '../../config/toastConfig';
 import AdminServiceApi from '../../api/AdminServiceApi';
 import CountBadge from '../common/CountBadge';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 
+// Custom hook for media queries
+function useMediaQuery(query) {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    if (media.matches !== matches) {
+      setMatches(media.matches);
+    }
+    const listener = () => setMatches(media.matches);
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
+  }, [matches, query]);
+
+  return matches;
+}
+
 export default function ServiceManagement() {
   const { theme } = useTheme();
   const { t } = useTranslation();
 
-  // React Responsive Media Queries
-  const isDesktop = useMediaQuery({ minWidth: 1024 });
-  const isTablet = useMediaQuery({ minWidth: 768, maxWidth: 1023 });
-  const isMobile = useMediaQuery({ maxWidth: 767 });
-  const isSmallMobile = useMediaQuery({ maxWidth: 480 });
+  // Media Queries
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const isTablet = useMediaQuery('(min-width: 768px) and (max-width: 1023px)');
+  const isMobile = useMediaQuery('(max-width: 767px)');
+  const isSmallMobile = useMediaQuery('(max-width: 480px)');
 
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
