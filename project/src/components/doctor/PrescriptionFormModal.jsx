@@ -1,0 +1,228 @@
+// src/components/doctor/PrescriptionFormModal.jsx
+import { useState } from 'react';
+import { useMediaQuery } from 'react-responsive';
+import { X, Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import toast, { Toaster } from 'react-hot-toast';
+import { toastConfig } from '../../config/toastConfig';
+import { medicalRecordApi } from '../../api/medicalRecordApi';
+import { useTheme } from '../../contexts/ThemeContext';
+
+const PrescriptionFormModal = ({ record, onClose, onSuccess, onError }) => {
+  const { t } = useTranslation();
+  const { theme } = useTheme();
+
+  // Media queries từ react-responsive
+  const isMobile = useMediaQuery({ query: '(max-width: 767px)' });
+  const isTabletOrAbove = useMediaQuery({ query: '(min-width: 768px)' });
+
+  const [medications, setMedications] = useState([
+    { id: 1, name: '', instruction: '' }
+  ]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const handleAddMedication = () => {
+    setMedications([...medications, { 
+      id: Date.now(), 
+      name: '', 
+      instruction: '' 
+    }]);
+  };
+
+  const handleRemoveMedication = (id) => {
+    if (medications.length > 1) {
+      setMedications(medications.filter(med => med.id !== id));
+    }
+  };
+
+  const handleUpdateMedication = (id, field, value) => {
+    setMedications(medications.map(med => 
+      med.id === id ? { ...med, [field]: value } : med
+    ));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    onError(null);
+
+    const hasEmpty = medications.some(med => !med.name.trim() || !med.instruction.trim());
+    if (hasEmpty) {
+      const errorMsg = t('prescriptionModal.validation.required');
+      setError(errorMsg);
+      toast.error(errorMsg);
+      return;
+    }
+
+    const drugs = medications.map((med, idx) => 
+      `${idx + 1}. ${med.name.trim()}`
+    ).join('\n');
+    
+    const instructions = medications.map((med, idx) => 
+      `${idx + 1}. ${med.instruction.trim()}`
+    ).join('\n');
+
+    setSubmitting(true);
+    try {
+      await medicalRecordApi.addPrescription({
+        recordId: record.recordId,
+        drugs: drugs,
+        instructions: instructions,
+      });
+
+      const successMsg = t('prescriptionModal.success');
+      setSuccess(successMsg);
+      toast.success(successMsg);
+      
+      setTimeout(() => {
+        onSuccess();
+      }, 1500);
+
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || t('prescriptionModal.error');
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <>
+      <Toaster {...toastConfig} />
+      <div className="fixed inset-0 z-40">
+        <div
+          className="absolute inset-0 bg-black/30"
+          onClick={onClose}
+        />
+        <div className="absolute inset-0 flex items-center justify-center px-4">
+          <form
+            onSubmit={handleSubmit}
+            className={`w-full ${isTabletOrAbove ? 'max-w-3xl' : 'max-w-full'} border rounded-xl shadow-2xl ${isMobile ? 'p-5' : 'p-6'} ${isTabletOrAbove ? 'p-8' : ''} space-y-5 ${isMobile ? 'space-y-6' : ''} max-h-[90vh] overflow-y-auto ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className={`text-lg ${isMobile ? 'text-xl' : ''} ${isTabletOrAbove ? 'text-2xl' : ''} font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+                {t('prescriptionModal.title')}: <span className="text-blue-600">{record.diagnosis}</span>
+              </h3>
+              <button
+                type="button"
+                onClick={onClose}
+                className={`px-3 py-1.5 rounded-md ${theme === 'dark' ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'}`}
+                aria-label={t('common.close')}
+              >
+                <X className={`w-5 h-5 ${isMobile ? 'w-6 h-6' : ''}`} />
+              </button>
+            </div>
+
+            {error && (
+              <div className={`border px-4 py-3 rounded-md text-sm ${isMobile ? 'text-base' : ''} ${theme === 'dark' ? 'bg-red-900/30 border-red-800 text-red-300' : 'bg-red-50 border-red-200 text-red-700'}`}>
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className={`border px-4 py-3 rounded-md text-sm ${isMobile ? 'text-base' : ''} ${theme === 'dark' ? 'bg-green-900/30 border-green-800 text-green-300' : 'bg-green-50 border-green-200 text-green-700'}`}>
+                {success}
+              </div>
+            )}
+
+            <div className={`border rounded-lg overflow-hidden ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+              <div className="overflow-x-auto">
+                <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                  <thead className={theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}>
+                    <tr>
+                      <th className={`px-3 ${isMobile ? 'px-4 py-3' : 'px-3 py-2'} text-left text-xs font-semibold uppercase w-12 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                        {t('prescriptionModal.table.stt')}
+                      </th>
+                      <th className={`px-3 ${isMobile ? 'px-4 py-3' : 'px-3 py-2'} text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                        {t('prescriptionModal.table.drugName')} <span className="text-red-500">*</span>
+                      </th>
+                      <th className={`px-3 ${isMobile ? 'px-4 py-3' : 'px-3 py-2'} text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                        {t('prescriptionModal.table.instructions')} <span className="text-red-500">*</span>
+                      </th>
+                      <th className={`px-3 ${isMobile ? 'px-4 py-3' : 'px-3 py-2'} text-center text-xs font-semibold uppercase w-16 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                        {t('prescriptionModal.table.actions')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y ${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
+                    {medications.map((med, index) => (
+                      <tr key={med.id} className={theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
+                        <td className={`px-3 ${isMobile ? 'px-4 py-4' : 'px-3 py-2'} text-sm text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {index + 1}
+                        </td>
+                        <td className={`px-3 ${isMobile ? 'px-4 py-3' : 'px-3 py-2'}`}>
+                          <input
+                            type="text"
+                            value={med.name}
+                            onChange={(e) => handleUpdateMedication(med.id, 'name', e.target.value)}
+                            placeholder={t('prescriptionModal.placeholder.drugName')}
+                            className={`w-full border rounded-md px-3 ${isMobile ? 'py-3 text-base' : 'py-1.5 text-sm'} focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300'}`}
+                            required
+                          />
+                        </td>
+                        <td className={`px-3 ${isMobile ? 'px-4 py-3' : 'px-3 py-2'}`}>
+                          <textarea
+                            value={med.instruction}
+                            onChange={(e) => handleUpdateMedication(med.id, 'instruction', e.target.value)}
+                            placeholder={t('prescriptionModal.placeholder.instructions')}
+                            rows={isMobile ? 3 : 2}
+                            className={`w-full border rounded-md px-3 ${isMobile ? 'py-3 text-base' : 'py-1.5 text-sm'} focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300'}`}
+                            required
+                          />
+                        </td>
+                        <td className={`px-3 ${isMobile ? 'px-4 py-4' : 'px-3 py-2'} text-center`}>
+                          {medications.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveMedication(med.id)}
+                              className={`p-2.5 rounded transition-colors ${theme === 'dark' ? 'text-red-400 hover:bg-red-900/30' : 'text-red-600 hover:bg-red-50'}`}
+                              aria-label={t('prescriptionModal.deleteButton')}
+                              title={t('prescriptionModal.deleteButton')}
+                            >
+                              <X className={`w-5 h-5 ${isMobile ? 'w-6 h-6' : ''}`} />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleAddMedication}
+              className={`w-full flex items-center justify-center gap-3 px-5 ${isMobile ? 'py-4 text-base' : 'py-3 text-sm'} border-2 border-dashed rounded-lg transition-colors font-medium ${theme === 'dark' ? 'border-gray-600 text-gray-300 hover:border-blue-500 hover:text-blue-400 hover:bg-gray-700' : 'border-gray-300 text-gray-600 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50'}`}
+            >
+              <Plus className={`w-6 h-6 ${isMobile ? 'w-7 h-7' : ''}`} />
+              <span>{t('prescriptionModal.addButton')}</span>
+            </button>
+
+            <div className={`flex ${isMobile ? 'flex-col-reverse gap-3' : 'flex-row justify-end gap-3'} pt-3`}>
+              <button
+                type="button"
+                onClick={onClose}
+                className={`w-full ${isMobile ? 'py-3.5 text-base' : 'px-6 py-2.5'} rounded-md ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className={`w-full ${isMobile ? 'py-3.5 text-base' : 'px-6 py-2.5'} bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-60 font-medium`}
+              >
+                {submitting ? t('prescriptionModal.saving') : t('prescriptionModal.saveButton')}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default PrescriptionFormModal;

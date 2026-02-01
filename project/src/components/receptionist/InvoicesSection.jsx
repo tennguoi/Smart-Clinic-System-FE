@@ -1,0 +1,474 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { useMediaQuery } from 'react-responsive';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../contexts/ThemeContext';
+import { billingApi } from '../../api/billingApi';
+import { format, parseISO } from 'date-fns';
+import { vi as dateFnsVi, enUS as dateFnsEn } from 'date-fns/locale';
+import CreateInvoiceModal from './CreateInvoiceModal';
+import InvoiceDetailModal from './InvoiceDetailModal';
+import { formatPrice } from '../../utils/formatPrice';
+import { FileText, Search, Plus, Eye, CreditCard, Receipt, Download } from 'lucide-react';
+import toast ,{ Toaster } from 'react-hot-toast';
+import { toastConfig } from '../../config/toastConfig';
+import CountBadge from '../common/CountBadge';
+import Pagination from '../common/Pagination';
+
+const ITEMS_PER_PAGE = 10;
+
+export default function InvoicesSection({ isDoctorView = false }) {
+  const { theme } = useTheme();
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+
+  const isMobile = useMediaQuery({ maxWidth: 767 });
+  const isTablet = useMediaQuery({ minWidth: 768, maxWidth: 1023 });
+  const isDesktop = useMediaQuery({ minWidth: 1024 });
+
+  const [invoices, setInvoices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+
+  // New states for date filtering
+  const [startDate, setStartDate] = useState(''); // yyyy-MM-dd
+  const [endDate, setEndDate] = useState(''); // yyyy-MM-dd
+
+  const currentLocale = i18n.language === 'en' ? dateFnsEn : dateFnsVi;
+
+  const fetchInvoices = async () => {
+    setLoading(true);
+    try {
+      // Note: existing API call - keep as-is for now and do client-side date filtering
+      const res = await billingApi.getMyBills(0, 1000, search.trim());
+      let data = res.content || res || [];
+
+      // status filtering (existing)
+      if (statusFilter === 'paid') {
+        data = data.filter(i => i.paymentStatus === 'Paid');
+      }
+      if (statusFilter === 'pending') {
+        data = data.filter(i => i.paymentStatus === 'Pending' || i.paymentStatus === 'PartiallyPaid');
+      }
+
+      // date filtering (client-side)
+      if (startDate || endDate) {
+        // Build inclusive start and end Date objects
+        let start = null;
+        let end = null;
+
+        if (startDate) {
+          // start of the day
+          const parsed = parseISO(startDate);
+          start = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate(), 0, 0, 0, 0);
+        }
+        if (endDate) {
+          // end of the day (inclusive)
+          const parsed = parseISO(endDate);
+          end = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate(), 23, 59, 59, 999);
+        }
+
+        // If only start provided, search invoices on that day as well
+        if (start && !end) {
+          end = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 23, 59, 59, 999);
+        }
+
+        if (start && end) {
+          data = data.filter(i => {
+            const created = i.createdAt ? new Date(i.createdAt) : null;
+            if (!created) return false;
+            return created >= start && created <= end;
+          });
+        }
+      }
+
+      setInvoices(data);
+      setCurrentPage(0);
+    } catch (err) {
+      console.error('Lỗi tải hóa đơn:', err);
+      toast.error(t('invoices.errors.loadFailed'), toastConfig.toastOptions.error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Debounced fetch when search/status/date filters change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchInvoices();
+    }, 300);
+    return () => clearTimeout(timer);
+    // include startDate and endDate so changing dates triggers refetch
+  }, [search, statusFilter, startDate, endDate, t]);
+
+  const paginatedInvoices = useMemo(() => {
+    const start = currentPage * ITEMS_PER_PAGE;
+    return invoices.slice(start, start + ITEMS_PER_PAGE);
+  }, [invoices, currentPage]);
+
+  const totalPages = Math.max(1, Math.ceil(invoices.length / ITEMS_PER_PAGE));
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'Paid':
+        return <span className={`px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 rounded-full`}>{t('invoices.status.paid')}</span>;
+      case 'Pending':
+        return <span className={`px-3 py-1.5 text-xs font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-full`}>{t('invoices.status.pending')}</span>;
+      case 'PartiallyPaid':
+        return <span className={`px-3 py-1.5 text-xs font-semibold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300 rounded-full`}>{t('invoices.status.partiallyPaid')}</span>;
+      default:
+        return <span className={`px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-full`}>—</span>;
+    }
+  };
+
+  const handleViewDetail = (invoice) => {
+    setSelectedInvoice(invoice);
+    setShowDetailModal(true);
+  };
+
+  const handlePayInvoice = (invoice) => {
+    navigate(`/reception/payment/${invoice.billId}`);
+  };
+
+  const handlePayFromDetail = (invoice) => {
+    setShowDetailModal(false);
+    navigate(`/reception/payment/${invoice.billId}`);
+  };
+
+  const handleDownloadPdf = async (billId, patientName) => {
+    try {
+      const response = await fetch(`http://localhost:8082/api/billing/${billId}/pdf`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(t('invoices.errors.pdfDownloadFailed'));
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `hoa-don-${patientName}-${new Date().getTime()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success(t('invoices.pdfDownloadSuccess'), toastConfig.toastOptions.success);
+    } catch (err) {
+      console.error('Lỗi tải PDF:', err);
+      toast.error(t('invoices.errors.pdfDownloadError'), toastConfig.toastOptions.error);
+    }
+  };
+
+  // Helper to reset filters including dates
+  const handleClearFilters = () => {
+    setSearch('');
+    setStatusFilter('all');
+    setStartDate('');
+    setEndDate('');
+  };
+
+  return (
+    <div className={`px-4 sm:px-8 pt-4 pb-8 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} flex items-center gap-3 transition-colors duration-300`}>
+          <Receipt className="w-9 h-9 text-blue-600" />
+          <span>{t('adminSidebar.invoices')}</span>
+          <CountBadge 
+            currentCount={paginatedInvoices.length} 
+            totalCount={invoices.length} 
+            label={t('invoices.label')} 
+          />
+        </h1>
+
+        {!isDoctorView && (
+          <button
+            onClick={() => setCreateModalOpen(true)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition hover:scale-105 font-medium flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            {t('invoices.createButton')}
+          </button>
+        )}
+      </div>
+
+      {/* Bộ lọc */}
+      <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-md border p-6 mb-6 transition-colors duration-300`}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-4">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>{t('invoices.filters.search')}</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder={t('invoices.filters.searchPlaceholder')}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className={`w-full pl-9 pr-4 px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'}`}
+              />
+            </div>
+          </div>
+
+          <div className="lg:col-span-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+              {t('invoices.filters.status')}
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+            >
+              <option value="all">{t('invoices.filters.allStatus')}</option>
+              <option value="paid">{t('invoices.filters.paid')}</option>
+              <option value="pending">{t('invoices.filters.pending')}</option>
+            </select>
+          </div>
+
+          {/* Date filters */}
+          <div className="lg:col-span-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}> {t('invoices.filters.startDate') || 'Start date'}</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => {
+                const sd = e.target.value;
+                setStartDate(sd);
+                // If endDate is before new startDate, bump endDate to startDate
+                if (sd && endDate && endDate < sd) {
+                  setEndDate(sd);
+                }
+              }}
+              className={`w-full px-3 py-2 border rounded-xl ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+              max={new Date().toISOString().split('T')[0]} // optional: prevent start in future
+            />
+          </div>
+
+          <div className="lg:col-span-2">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}> {t('invoices.filters.endDate') || 'End date'}</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className={`w-full px-3 py-2 border rounded-xl ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+              min={startDate || undefined} // ensure end cannot be earlier than start
+              max={new Date().toISOString().split('T')[0]} // optional: prevent end in future
+            />
+          </div>
+
+           <div className="lg:col-span-2 flex items-end">
+            <button
+              onClick={handleClearFilters}
+              className={`w-full px-4 py-3 rounded-xl transition font-medium flex items-center justify-center gap-2 ${theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
+            >
+              <span className="whitespace-nowrap">{t('invoices.filters.clear') || 'Xóa lọc'}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Bảng hóa đơn + Phân trang */}
+      <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-md border overflow-hidden transition-colors duration-300`}>
+        {loading ? (
+          <div className={`p-16 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+            <div className="inline-flex items-center gap-3">
+              <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+              <span>{t('invoices.loading')}</span>
+            </div>
+          </div>
+        ) : invoices.length === 0 ? (
+          <div className="p-16 text-center">
+            <FileText className={`w-16 h-16 mx-auto mb-4 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} />
+            <p className="text-red-600 font-semibold">
+              {(search || statusFilter !== 'all' || startDate || endDate) ? t('invoices.noResults') : t('invoices.noInvoices')}
+            </p>
+            <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+              {(search || statusFilter !== 'all' || startDate || endDate) ? t('invoices.tryDifferentFilter') : t('invoices.createFirstInvoice')}
+            </p>
+          </div>
+        ) : (
+          <>
+            {isMobile ? (
+              // Mobile card view
+              <div className="p-4 space-y-4">
+                {paginatedInvoices.map((inv, index) => (
+                  <div key={inv.billId} className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <div className="font-mono text-blue-600 dark:text-blue-400 font-medium">
+                          #{inv.billId?.slice(0, 8).toUpperCase()}
+                        </div>
+                        <div className="font-semibold text-lg mt-1">{inv.patientName}</div>
+                        <div className="text-sm text-gray-500">{inv.patientPhone}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-xl">{formatPrice(inv.totalAmount)}</div>
+                        <div className="mt-2">{getStatusBadge(inv.paymentStatus)}</div>
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      {format(new Date(inv.createdAt), 'dd/MM/yyyy HH:mm', { locale: currentLocale })}
+                    </div>
+                    <div className="flex justify-end gap-3">
+                      <button
+                        onClick={() => handleViewDetail(inv)}
+                        className="p-2 text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded-full transition"
+                        title={t('invoices.tooltips.viewDetail')}
+                      >
+                        <Eye className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDownloadPdf(inv.billId, inv.patientName)}
+                        className="p-2 text-purple-600 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/30 rounded-full transition"
+                        title={t('invoices.tooltips.exportPdf')}
+                      >
+                        <Download className="w-5 h-5" />
+                      </button>
+                      {!isDoctorView && inv.paymentStatus !== 'Paid' && (
+                        <button
+                          onClick={() => handlePayInvoice(inv)}
+                          className="p-2 text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900/30 rounded-full transition"
+                          title={t('invoices.tooltips.pay')}
+                        >
+                          <CreditCard className="w-5 h-5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              // Tablet & Desktop table view
+              <table className="w-full">
+                <thead className={`${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} border-b`}>
+                  <tr>
+                    <th className={`text-center px-4 py-3 text-xs font-bold uppercase tracking-wider w-20 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.stt')}</th>
+                    <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.invoiceCode')}</th>
+                    <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.patient')}</th>
+                    <th className={`text-left px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.createdDate')}</th>
+                    <th className={`text-right px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.totalAmount')}</th>
+                    <th className={`text-center px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.status')}</th>
+                    <th className={`text-center px-6 py-3 text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('invoices.table.actions')}</th>
+                  </tr>
+                </thead>
+                <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                  {paginatedInvoices.map((inv, index) => (
+                    <tr key={inv.billId} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition`}>
+                      <td className={`px-4 py-4 text-center font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                        {currentPage * ITEMS_PER_PAGE + index + 1}
+                      </td>
+                      <td className="px-6 py-4 font-mono text-blue-600 dark:text-blue-400 font-medium">
+                        #{inv.billId?.slice(0, 8).toUpperCase()}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{inv.patientName}</div>
+                        <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{inv.patientPhone}</div>
+                      </td>
+                      <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {format(new Date(inv.createdAt), 'dd/MM/yyyy HH:mm', { locale: currentLocale })}
+                      </td>
+                      <td className={`px-6 py-4 text-right font-bold text-lg ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                        {formatPrice(inv.totalAmount)}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {getStatusBadge(inv.paymentStatus)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-center gap-3">
+                          <button
+                            onClick={() => handleViewDetail(inv)}
+                            className="p-2.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded-full transition group relative"
+                            title={t('invoices.tooltips.viewDetail')}
+                          >
+                            <Eye className="w-5 h-5" />
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+                              {t('invoices.tooltips.viewDetail')}
+                            </span>
+                          </button>
+
+                          <button
+                            onClick={() => handleDownloadPdf(inv.billId, inv.patientName)}
+                            className="p-2.5 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/30 rounded-full transition group relative"
+                            title={t('invoices.tooltips.exportPdf')}
+                          >
+                            <Download className="w-5 h-5" />
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+                              {t('invoices.tooltips.exportPdf')}
+                            </span>
+                          </button>
+
+                          {/* Chỉ lễ tân mới thấy nút thu tiền */}
+                          {!isDoctorView && inv.paymentStatus !== 'Paid' && (
+                            <button
+                              onClick={() => handlePayInvoice(inv)}
+                              className="p-2.5 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30 rounded-full transition group relative"
+                              title={t('invoices.tooltips.pay')}
+                            >
+                              <CreditCard className="w-5 h-5" />
+                              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+                                {t('invoices.tooltips.pay')}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            {/* PAGINATION NẰM TRONG BẢNG */}
+            <div className={`border-t ${theme === 'dark' ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-gray-50'}`}>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Modals */}
+      {showDetailModal && selectedInvoice && (
+        <InvoiceDetailModal
+          invoice={selectedInvoice}
+          onClose={() => {
+            setShowDetailModal(false);
+            setSelectedInvoice(null);
+          }}
+          onUpdate={fetchInvoices}
+          onPay={handlePayFromDetail}
+        />
+      )}
+
+      {!isDoctorView && createModalOpen && (
+        <CreateInvoiceModal
+          isOpen={createModalOpen}
+          onClose={() => setCreateModalOpen(false)}
+          onSuccess={() => {
+            setCreateModalOpen(false);
+            fetchInvoices();
+          }}
+        />
+      )}
+      
+      <Toaster
+        position={toastConfig.position}
+        containerStyle={toastConfig.containerStyle}
+        toastOptions={toastConfig.toastOptions}
+      />
+    </div>
+  );
+}
