@@ -1,0 +1,392 @@
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Mail, Edit, X, Eye } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
+import { useMediaQuery } from 'react-responsive';
+import { toastConfig } from '../../config/toastConfig';
+import EmailTemplateApi from '../../api/EmailTemplateApi';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+ 
+export default function EmailTemplateManagement() {
+  const { theme } = useTheme();
+  const { t } = useTranslation();
+  const quillRef = useRef(null);
+ 
+  // React Responsive Media Queries
+  const isMobile = useMediaQuery({ maxWidth: 639 });
+  const isTablet = useMediaQuery({ minWidth: 640, maxWidth: 1023 });
+  const isDesktop = useMediaQuery({ minWidth: 1024 });
+  const isLargeDesktop = useMediaQuery({ minWidth: 1280 });
+ 
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState('view'); // 'view' | 'edit'
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+ 
+  const [formData, setFormData] = useState({
+    subject: '',
+    bodyContent: '',
+    isHtml: true,
+  });
+ 
+  // React Quill modules configuration
+  const quillModules = useMemo(
+    () => ({
+      toolbar: [
+        [{ header: [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ color: [] }, { background: [] }],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        [{ align: [] }],
+        ['link'],
+        ['clean'],
+      ],
+    }),
+    []
+  );
+ 
+  const quillFormats = [
+    'header',
+    'bold',
+    'italic',
+    'underline',
+    'strike',
+    'color',
+    'background',
+    'list',
+    'bullet',
+    'align',
+    'link',
+  ];
+ 
+  // Fetch all templates
+  const fetchTemplates = async () => {
+    setLoading(true);
+    try {
+      const data = await EmailTemplateApi.getAllTemplates();
+      setTemplates(Array.isArray(data) ? data : []);
+    } catch (err) {
+      toast.error(t('emailTemplates.errors.loadFailed'));
+    } finally {
+      setLoading(false);
+    }
+  };
+ 
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+ 
+  const handleOpenModal = (mode, template) => {
+    setModalMode(mode);
+    setSelectedTemplate(template);
+    setFormData({
+      subject: template?.subject ?? '',
+      bodyContent: template?.bodyContent ?? template?.content ?? '',
+      isHtml: !!template?.isHtml,
+    });
+    setShowModal(true);
+  };
+ 
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedTemplate(null);
+  };
+ 
+  const handleSwitchToEdit = () => setModalMode('edit');
+ 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+ 
+  const handleQuillChange = (value) => {
+    setFormData((prev) => ({ ...prev, bodyContent: value }));
+  };
+ 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.subject.trim() || !formData.bodyContent.trim()) {
+      toast.error(t('emailTemplates.errors.fillRequired'));
+      return;
+    }
+    setLoading(true);
+    try {
+      await EmailTemplateApi.updateTemplate(selectedTemplate.templateId, {
+        subject: formData.subject,
+        bodyContent: formData.bodyContent,
+        isHtml: formData.isHtml,
+      });
+      toast.success(t('emailTemplates.toast.updateSuccess'));
+      handleCloseModal();
+      fetchTemplates();
+    } catch (err) {
+      toast.error(err.response?.data?.message ?? t('emailTemplates.errors.updateFailed'));
+    } finally {
+      setLoading(false);
+    }
+  };
+ 
+  // Dynamic grid columns based on screen size
+  const getGridColumns = () => {
+    if (isMobile) return 'grid-cols-1';
+    if (isTablet) return 'grid-cols-2';
+    if (isLargeDesktop) return 'grid-cols-3';
+    return 'grid-cols-3';
+  };
+ 
+  return (
+    <>
+      <Toaster {...toastConfig} />
+      {/* Quill theme customizations + layout fixes */}
+      <style>{`
+        .quill-dark .ql-toolbar {
+          background: #374151;
+          border-color: #4B5563;
+        }
+        .quill-dark .ql-container {
+          background: #1F2937;
+          border-color: #4B5563;
+          color: #E5E7EB;
+        }
+        .quill-dark .ql-editor {
+          color: #E5E7EB;
+        }
+        .quill-dark .ql-editor.ql-blank::before {
+          color: #9CA3AF;
+        }
+        .quill-dark .ql-stroke { stroke: #E5E7EB; }
+        .quill-dark .ql-fill { fill: #E5E7EB; }
+        .quill-dark .ql-picker-label { color: #E5E7EB; }
+        .quill-dark .ql-picker-options {
+          background: #374151;
+          border-color: #4B5563;
+        }
+        .quill-dark .ql-picker-item { color: #E5E7EB; }
+        .quill-dark .ql-picker-item:hover { color: #60A5FA; }
+ 
+        /* View mode: hide toolbar */
+        .quill-view .ql-toolbar { display: none; }
+        .quill-view .ql-container {
+          border-top: 1px solid #ccc;
+          border-radius: 8px;
+        }
+        .quill-dark.quill-view .ql-container { border-color: #4B5563; }
+ 
+        /* Editor height optimization */
+        .quill-editor-wrapper .ql-container {
+          height: 24vh;
+          overflow-y: auto;
+          z-index: 0;
+        }
+        .quill-view .ql-container {
+          height: 25vh;
+          overflow-y: auto;
+        }
+      `}</style>
+ 
+      <div
+        className={`${isMobile ? 'px-4' : 'px-4 md:px-8'} pt-4 pb-8 min-h-screen ${
+          theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
+        } transition-colors duration-300`}
+      >
+        {/* Header */}
+        <div className={`flex items-center ${isMobile ? 'gap-2' : 'gap-4'} mb-6`}>
+          <h1
+            className={`${isMobile ? 'text-2xl' : 'text-4xl'} font-bold ${
+              theme === 'dark' ? 'text-white' : 'text-gray-800'
+            } flex items-center gap-3`}
+          >
+            <Mail className={`${isMobile ? 'w-6 h-6' : 'w-9 h-9'} text-blue-600`} />
+            <span>{t('emailTemplates.title')}</span>
+          </h1>
+        </div>
+ 
+        {/* Templates Grid */}
+        {loading && !showModal ? (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+            <p className={`mt-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+              {t('common.loading')}
+            </p>
+          </div>
+        ) : (
+          <div className={`grid ${getGridColumns()} gap-6`}>
+            {templates.map((template) => (
+              <div
+                key={template.templateId}
+                className={`${
+                  theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+                } border rounded-lg shadow-md ${isMobile ? 'p-4' : 'p-6'} hover:shadow-lg transition`}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <h3
+                    className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold ${
+                      theme === 'dark' ? 'text-white' : 'text-gray-800'
+                    }`}
+                  >
+                    {template.templateName}
+                  </h3>
+                </div>
+                <p
+                  className={`text-sm ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                  } mb-4 truncate`}
+                >
+                  <strong>{t('emailTemplates.subject')}:</strong> {template.subject}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleOpenModal('view', template)}
+                    className={`flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white ${
+                      isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'
+                    } rounded-lg hover:bg-blue-700 transition`}
+                  >
+                    <Eye className="w-4 h-4" /> {t('emailTemplates.common.view')}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+ 
+        {/* Modal View/Edit */}
+        {showModal && selectedTemplate && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div
+              className={`${
+                theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+              } rounded-lg shadow-xl ${
+                isMobile ? 'max-w-full' : isTablet ? 'max-w-2xl' : 'max-w-3xl'
+              } w-full max-h-[85vh] overflow-hidden`}
+            >
+              {/* Modal Header */}
+              <div
+                className={`flex justify-between items-center ${
+                  isMobile ? 'p-4' : 'p-6'
+                } border-b sticky top-0 z-10 ${
+                  theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-blue-50 border-blue-100'
+                } backdrop-blur`}
+              >
+                <h2
+                  className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold ${
+                    theme === 'dark' ? 'text-white' : 'text-blue-700'
+                  }`}
+                >
+                  {selectedTemplate.templateName}
+                </h2>
+                <div className={`flex items-center ${isMobile ? 'gap-2' : 'gap-3'}`}>
+                  {modalMode === 'view' && (
+                    <button
+                      onClick={handleSwitchToEdit}
+                      className={`flex items-center gap-2 bg-blue-600 text-white ${
+                        isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'
+                      } rounded-lg hover:bg-blue-700 transition`}
+                    >
+                      <Edit className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
+                      {!isMobile && t('emailTemplates.common.edit')}
+                    </button>
+                  )}
+                  <button
+                    onClick={handleCloseModal}
+                    className={`p-2 rounded-full ${
+                      theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-gray-200'
+                    }`}
+                  >
+                    <X className={`${isMobile ? 'w-5 h-5' : 'w-7 h-7'}`} />
+                  </button>
+                </div>
+              </div>
+ 
+              {/* Modal Body */}
+              <div className={`${isMobile ? 'p-4' : 'p-6'} flex items-start justify-center`}>
+                <div className="w-full max-w-xl">
+                  {/* Form */}
+                  <div className="flex flex-col">
+                    <div className="space-y-4">
+                      <div>
+                        <label
+                          className={`block text-sm font-medium ${
+                            theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                          } mb-1`}
+                        >
+                          {t('emailTemplates.subjectLabel')} <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="subject"
+                          value={formData.subject}
+                          onChange={handleInputChange}
+                          required
+                          disabled={modalMode === 'view'}
+                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-700 ${
+                            theme === 'dark'
+                              ? 'bg-gray-700 border-gray-600 text-white'
+                              : 'bg-white border-gray-300'
+                          }`}
+                        />
+                      </div>
+ 
+                      <div>
+                        <label
+                          className={`block text-sm font-medium ${
+                            theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                          } mb-1`}
+                        >
+                          {t('emailTemplates.contentLabel')} <span className="text-red-500">*</span>
+                        </label>
+ 
+                        {/* Editor */}
+                        <div
+                          className={`${theme === 'dark' ? 'quill-dark' : ''} ${
+                            modalMode === 'view' ? 'quill-view' : ''
+                          } quill-editor-wrapper`}
+                        >
+                          <ReactQuill
+                            ref={quillRef}
+                            theme="snow"
+                            value={formData.bodyContent}
+                            onChange={handleQuillChange}
+                            modules={quillModules}
+                            formats={quillFormats}
+                            readOnly={modalMode === 'view'}
+                          />
+                        </div>
+                      </div>
+                    </div>
+ 
+                    {/* Action Bar */}
+                    {modalMode === 'edit' && (
+                      <div
+                        className={`mt-4 sticky bottom-0 z-10 border-t pt-3 ${
+                          theme === 'dark'
+                            ? 'bg-gray-800/80 border-gray-700 backdrop-blur'
+                            : 'bg-white/80 border-gray-200 backdrop-blur'
+                        }`}
+                      >
+                        <div className="flex gap-3">
+                          <button
+                            type="button"
+                            onClick={handleSubmit}
+                            disabled={loading}
+                            className={`flex-1 bg-blue-600 text-white ${
+                              isMobile ? 'py-2 text-sm' : 'py-2.5'
+                            } rounded-lg hover:bg-blue-700 transition disabled:opacity-70`}
+                          >
+                            {loading ? t('common.processing') : t('emailTemplates.saveButton')}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}

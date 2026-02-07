@@ -1,0 +1,64 @@
+{
+  "queue": [
+    {
+      "id": "q1",
+      "queueId": "q1",
+      "queueNumber": "A001",
+      "fullName": "Nguyễn Văn An",
+      "phone": "0901234567",
+      "priority": "Normal",
+      "checkInTime": "2025-11-18T08:15:00",
+      "status": "Waiting"
+    },
+    {
+      "id": "q2",
+      "queueId": "q2",
+      "queueNumber": "A002",
+      "fullName": "Trần Thị Bé",
+      "phone": "0912345678",
+      "priority": "Urgent",
+      "checkInTime": "2025-11-18T08:30:00",
+      "status": "Waiting"
+    },
+    {
+      "id": "q3",
+      "queueId": "q3",
+      "queueNumber": "A003",
+      "fullName": "Lê Văn Cường",
+      "phone": "0923456789",
+      "priority": "Emergency",
+      "checkInTime": "2025-11-18T09:00:00",
+      "status": "Waiting"
+    },
+    {
+      "id": "q4",
+      "queueId": "q4",
+      "queueNumber": "A004",
+      "fullName": "Phạm Hồng Đào",
+      "phone": "0934567890",
+      "priority": "Normal",
+      "checkInTime": "2025-11-18T09:15:00",
+      "status": "Waiting"
+    },
+    {
+      "id": "q5",
+      "queueId": "q5",
+      "queueNumber": "A005",
+      "fullName": "Hoàng Minh Quân",
+      "phone": "0945678901",
+      "priority": "Normal",
+      "checkInTime": "2025-11-18T09:45:00",
+      "status": "Waiting"
+    }
+  ],
+  "currentPatient": {
+    "id": "q6",
+    "queueId": "q6",
+    "queueNumber": "A006",
+    "fullName": "Vũ Thị Lan Anh",
+    "phone": "0956789012",
+    "priority": "Urgent",
+    "startTime": "2025-11-18T10:05:00",
+    "symptoms": "Đau bụng dữ dội, nôn ói"
+  }
+}
